@@ -2,7 +2,7 @@ Name: bind
 %define vers_num 9.2.3
 %define vers_rc rel
 Version: %vers_num.%vers_rc
-Release: alt1
+Release: alt2
 
 Summary: The ISC BIND server
 License: BSD-like
@@ -67,12 +67,9 @@ PreReq: libisccfg0 = %version-%release
 PreReq: liblwres1 = %version-%release
 
 # due to %ROOT/dev/log
-BuildPreReq: /usr/bin/mksock
-## due to linux/capability.h
-#BuildPreReq: kernel-headers-std
+BuildPreReq: coreutils
 
-# Automatically added by buildreq on Tue Jul 29 2003
-BuildRequires: glibc-devel-static libdb4.0-devel libssl-devel openjade
+BuildPreReq: libssl-devel openjade
 
 %package slave
 Summary: The chroot jail part for ISC BIND slave server
@@ -248,6 +245,7 @@ find -type f -print0 |
 	--disable-ipv6 \
 	--disable-threads \
 	--disable-linux-caps \
+	 %{subst_enable static} \
 	#
 # SMP-incompatible build.
 make
@@ -376,8 +374,10 @@ fi
 %dir %docdir
 %docdir/README.bind-devel
 
+%if_enabled static
 %files devel-static
 %_libdir/*.a
+%endif
 
 %files
 %exclude %_sbindir/lwresd
@@ -442,6 +442,10 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Wed Mar 10 2004 Dmitry V. Levin <ldv@altlinux.org> 9.2.3.rel-alt2
+- Updated build dependencies.
+- Do not build static library by default.
+
 * Mon Nov 24 2003 Dmitry V. Levin <ldv@altlinux.org> 9.2.3.rel-alt1
 - Updated to 9.2.3 release.
 - Rediffed patches.
