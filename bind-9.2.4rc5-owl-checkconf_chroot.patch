@@ -1,0 +1,58 @@
+diff -uprk.orig bind-9.2.4rc5.orig/bin/check/named-checkconf.8 bind-9.2.4rc5/bin/check/named-checkconf.8
+--- bind-9.2.4rc5.orig/bin/check/named-checkconf.8	2004-06-03 09:21:07 +0400
++++ bind-9.2.4rc5/bin/check/named-checkconf.8	2004-06-30 18:26:49 +0400
+@@ -31,6 +31,7 @@ the semantics, of a named configuration 
+ chroot to \fIdirectory\fR so that include
+ directives in the configuration file are processed as if
+ run by a similarly chrooted named.
++By default, \fBnamed-checkconf\fR \fBchroot()\fR's to \fI@ROOT@\fR.
+ .TP
+ \fB-v\fR
+ Print the version of the \fBnamed-checkconf\fR
+diff -uprk.orig bind-9.2.4rc5.orig/bin/check/named-checkconf.c bind-9.2.4rc5/bin/check/named-checkconf.c
+--- bind-9.2.4rc5.orig/bin/check/named-checkconf.c	2004-03-09 09:09:09 +0300
++++ bind-9.2.4rc5/bin/check/named-checkconf.c	2004-06-30 18:26:49 +0400
+@@ -78,22 +78,12 @@ main(int argc, char **argv) {
+ 	isc_mem_t *mctx = NULL;
+ 	isc_result_t result;
+ 	int exit_status = 0;
++	const char *chroot_dir = "@ROOT@";
+ 
+ 	while ((c = isc_commandline_parse(argc, argv, "t:v")) != EOF) {
+ 		switch (c) {
+ 		case 't':
+-			result = isc_dir_chroot(isc_commandline_argument);
+-			if (result != ISC_R_SUCCESS) {
+-				fprintf(stderr, "isc_dir_chroot: %s\n",
+-					isc_result_totext(result));
+-				exit(1);
+-			}
+-			result = isc_dir_chdir("/");
+-			if (result != ISC_R_SUCCESS) {
+-				fprintf(stderr, "isc_dir_chdir: %s\n",
+-					isc_result_totext(result));
+-				exit(1);
+-			}
++			chroot_dir = isc_commandline_argument;
+ 			break;
+ 
+ 		case 'v':
+@@ -104,6 +94,18 @@ main(int argc, char **argv) {
+ 			usage();
+ 		}
+ 	}
++	result = isc_dir_chroot(chroot_dir);
++	if (result != ISC_R_SUCCESS) {
++		fprintf(stderr, "isc_dir_chroot: %s\n",
++			isc_result_totext(result));
++		exit(1);
++	}
++	result = isc_dir_chdir("/");
++	if (result != ISC_R_SUCCESS) {
++		fprintf(stderr, "isc_dir_chdir: %s\n",
++			isc_result_totext(result));
++		exit(1);
++	}
+ 
+ 	if (argv[isc_commandline_index] != NULL)
+ 		conffile = argv[isc_commandline_index];

@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: update.c,v 1.88.2.5 2003/07/22 04:03:34 marka Exp $ */
+/* $Id: update.c,v 1.88.2.10 2004/06/04 03:45:15 marka Exp $ */
 
 #include <config.h>
 
@@ -1027,14 +1027,16 @@ add_rr_prepare_action(void *data, rr_t *rr) {
 	isc_result_t result = ISC_R_SUCCESS;	
 	add_rr_prepare_ctx_t *ctx = data;
 	dns_difftuple_t *tuple = NULL;
+	isc_boolean_t equal;
 
 	/*
 	 * If the update RR is a "duplicate" of the update RR,
 	 * the update should be silently ignored.
 	 */
-	if (dns_rdata_compare(&rr->rdata, ctx->update_rr) == 0 &&
-	    rr->ttl == ctx->update_rr_ttl) {
+	equal = ISC_TF(dns_rdata_compare(&rr->rdata, ctx->update_rr) == 0);
+	if (equal && rr->ttl == ctx->update_rr_ttl) {
 		ctx->ignore_add = ISC_TRUE;
+		return (ISC_R_SUCCESS);
 	}
 
 	/*
@@ -1062,12 +1064,14 @@ add_rr_prepare_action(void *data, rr_t *rr) {
 					   &rr->rdata,
 					   &tuple));
 		dns_diff_append(&ctx->del_diff, &tuple);
-		CHECK(dns_difftuple_create(ctx->add_diff.mctx,
-					   DNS_DIFFOP_ADD, ctx->name,
-					   ctx->update_rr_ttl,
-					   &rr->rdata,
-					   &tuple));
-		dns_diff_append(&ctx->add_diff, &tuple);
+		if (!equal) {
+			CHECK(dns_difftuple_create(ctx->add_diff.mctx,
+						   DNS_DIFFOP_ADD, ctx->name,
+						   ctx->update_rr_ttl,
+						   &rr->rdata,
+						   &tuple));
+			dns_diff_append(&ctx->add_diff, &tuple);
+		}
 	}
  failure:
 	return (result);
@@ -1892,11 +1896,11 @@ send_update_event(ns_client_t *client, dns_zone_t *zone) {
 	event->ev_arg = evclient;
 
 	dns_zone_gettask(zone, &zonetask);
-	isc_task_send(zonetask, (isc_event_t **)&event);
+	isc_task_send(zonetask, ISC_EVENT_PTR(&event));
 
  failure:
 	if (event != NULL)
-		isc_event_free((isc_event_t **)&event);
+		isc_event_free(ISC_EVENT_PTR(&event));
 	return (result);
 }
 
@@ -1973,6 +1977,10 @@ ns_update_start(ns_client_t *client, isc_result_t sigresult) {
 		CHECK(send_update_event(client, zone));
 		break;
 	case dns_zone_slave:
+		if (dns_zone_getforwardacl(zone) == NULL) {
+			result = DNS_R_NOTIMP;
+			goto failure;
+		}
 		CHECK(ns_client_checkacl(client, "update forwarding",
 					 dns_zone_getforwardacl(zone),
 					 ISC_FALSE, ISC_LOG_ERROR));
@@ -2529,7 +2537,7 @@ forward_fail(isc_task_t *task, isc_event_t *event) {
 
 	respond(client, DNS_R_SERVFAIL);
 	ns_client_detach(&client);
-	isc_event_free((isc_event_t **)&event);
+	isc_event_free(&event);
 }
 
 
@@ -2547,7 +2555,7 @@ forward_callback(void *arg, isc_result_t result, dns_message_t *answer) {
 		uev->ev_action = forward_done;
 		uev->answer = answer;
 	}
-	isc_task_send(client->task, (isc_event_t**)&uev);
+	isc_task_send(client->task, ISC_EVENT_PTR(&uev));
 }
 
 static void
@@ -2559,7 +2567,7 @@ forward_done(isc_task_t *task, isc_event_t *event) {
 
 	ns_client_sendraw(client, uev->answer);
 	dns_message_destroy(&uev->answer);
-	isc_event_free((isc_event_t **)&event);
+	isc_event_free(&event);
 	ns_client_detach(&client);
 }
 
@@ -2601,10 +2609,10 @@ send_forward_event(ns_client_t *client, dns_zone_t *zone) {
 	event->ev_arg = evclient;
 
 	dns_zone_gettask(zone, &zonetask);
-	isc_task_send(zonetask, (isc_event_t **)&event);
+	isc_task_send(zonetask, ISC_EVENT_PTR(&event));
 
  failure:
 	if (event != NULL)
-		isc_event_free((isc_event_t **)&event);
+		isc_event_free(ISC_EVENT_PTR(&event));
 	return (result);
 }

@@ -1,16 +1,15 @@
 Name: bind
-%define vers_num 9.2.3
-%define vers_rc rel
+%define vers_num 9.2.4
+%define vers_rc rc5
 Version: %vers_num.%vers_rc
-Release: alt2.1
+Release: alt1
 
 Summary: The ISC BIND server
 License: BSD-like
 Group: System/Servers
 Url: http://www.isc.org/products/BIND/
-Packager: BIND Development Team <bind@packages.altlinux.org>
 
-%define srcname %name-%vers_num
+%define srcname %name-%vers_num%vers_rc
 Source0: ftp://ftp.isc.org/isc/bind9/%vers_num/%srcname.tar.bz2
 Source1: nslookup.1
 Source2: resolver.5
@@ -36,13 +35,13 @@ Source42: bind.localdomain
 Source43: bind.127.in-addr.arpa
 Source44: bind.empty
 
-Patch1: bind-9.2.3rc1-alt-man.patch
-Patch2: bind-9.2.2rc1-alt-isc-config.patch
-Patch3: bind-9.2.3rc4-alt-rndc-confgen.patch
-Patch4: bind-9.2.3rc4-alt-chroot.patch
-Patch5: bind-9.2.3rel-obsd-pidfile.patch
-Patch6: bind-9.2.3rc4-obsd-chroot_default.patch
-Patch7: bind-9.2.2-owl-checkconf_chroot.patch
+Patch1: bind-9.2.4rc5-alt-man.patch
+Patch2: bind-9.2.4rc5-alt-isc-config.patch
+Patch3: bind-9.2.4rc5-alt-rndc-confgen.patch
+Patch4: bind-9.2.4rc5-alt-chroot.patch
+Patch5: bind-9.2.4rc5-obsd-pidfile.patch
+Patch6: bind-9.2.4rc5-obsd-chroot_default.patch
+Patch7: bind-9.2.4rc5-owl-checkconf_chroot.patch
 
 # root directory for chrooted environment.
 %define ROOT %_localstatedir/bind
@@ -68,6 +67,9 @@ PreReq: liblwres1 = %version-%release
 
 # due to %ROOT/dev/log
 BuildPreReq: coreutils
+
+# due to broken configure script
+BuildPreReq: gcc-c++
 
 BuildPreReq: libssl-devel openjade
 
@@ -236,7 +238,6 @@ find -type f -print0 |
 	xargs -r0 %__subst -p 's|@DOCDIR@|%docdir|g' --
 
 %build
-%__install -p -m755 /usr/share/libtool/config.* .
 %configure \
 	--localstatedir=/var \
 	--with-libtool \
@@ -293,7 +294,7 @@ done
 # Package docs
 %__rm -rf $RPM_BUILD_ROOT%docdir
 %__mkdir_p $RPM_BUILD_ROOT%docdir
-%__cp -a CHANGES COPYRIGHT EXCLUDED FAQ README* \
+%__cp -a CHANGES COPYRIGHT FAQ README* \
 	doc/{arm,draft,misc,rfc} \
 	$RPM_BUILD_ROOT%docdir/
 %__install -p -m644 contrib/queryperf/README $RPM_BUILD_ROOT%docdir/README.queryperf
@@ -442,6 +443,10 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Wed Jun 30 2004 Dmitry V. Levin <ldv@altlinux.org> 9.2.4.rc5-alt1
+- Updated to 9.2.4rc5.
+- Updated patches.
+
 * Mon May 10 2004 ALT QA Team Robot <qa-robot@altlinux.org> 9.2.3.rel-alt2.1
 - Rebuilt with openssl-0.9.7d.
 

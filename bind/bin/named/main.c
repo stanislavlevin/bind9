@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: main.c,v 1.119.2.5 2003/10/09 07:32:33 marka Exp $ */
+/* $Id: main.c,v 1.119.2.10 2004/04/20 13:54:17 marka Exp $ */
 
 #include <config.h>
 
@@ -68,7 +68,8 @@
 static isc_boolean_t	want_stats = ISC_FALSE;
 static char		program_name[ISC_DIR_NAMEMAX] = "named";
 static char		absolute_conffile[ISC_DIR_PATHMAX];
-static char    		saved_command_line[512];
+static char		saved_command_line[512];
+static char		version[512];
 
 void
 ns_main_earlywarning(const char *format, ...) {
@@ -477,6 +478,13 @@ setup(void) {
 	 */
 	ns_os_inituserinfo(ns_g_username);
 
+	/*
+	 * Initialize time conversion information
+	 */
+	ns_os_tzset();
+
+	ns_os_opendevnull();
+
 	ns_os_chroot(ns_g_chrootdir);
 
 	/*
@@ -568,6 +576,17 @@ int
 main(int argc, char *argv[]) {
 	isc_result_t result;
 
+	/*
+	 * Record version in core image.
+	 * strings named.core | grep "named version:"
+	 */
+#ifdef __DATE__
+	strncat(version, "named version: BIND " VERSION " (" __DATE__ ")", 
+		sizeof(version));
+#else
+	strncat(version, "named version: BIND " VERSION, sizeof(version));
+#endif
+	version[sizeof(version) - 1] = '\0';
 	result = isc_file_progname(*argv, program_name, sizeof(program_name));
 	if (result != ISC_R_SUCCESS)
 		ns_main_earlyfatal("program name too long");
@@ -628,6 +647,8 @@ main(int argc, char *argv[]) {
 	isc_mem_destroy(&ns_g_mctx);
 
 	isc_app_finish();
+
+	ns_os_closedevnull();
 
 	ns_os_shutdown();
 

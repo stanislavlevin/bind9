@@ -1,4 +1,5 @@
 /*
+ * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
@@ -6,18 +7,16 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM AND
- * NETWORK ASSOCIATES DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
- * SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE CONSORTIUM OR NETWORK
- * ASSOCIATES BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
- * USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
- * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NETWORK ASSOCIATES DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE
+ * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnssec-signzone.c,v 1.139.2.2 2003/03/06 04:38:13 marka Exp $ */
+/* $Id: dnssec-signzone.c,v 1.139.2.5 2004/04/15 02:16:24 marka Exp $ */
 
 #include <config.h>
 
@@ -1242,7 +1241,7 @@ assignwork(isc_task_t *task, isc_task_t *worker) {
 	sevent->node = node;
 	sevent->fname = fname;
 	sevent->fnextname = fnextname;
-	isc_task_send(worker, (isc_event_t **)&sevent);
+	isc_task_send(worker, ISC_EVENT_PTR(&sevent));
 	assigned++;
 }
 
@@ -1309,7 +1308,7 @@ sign(isc_task_t *task, isc_event_t *event) {
 		fatal("failed to allocate event\n");
 	wevent->node = node;
 	wevent->fname = fname;
-	isc_task_send(master, (isc_event_t **)&wevent);
+	isc_task_send(master, ISC_EVENT_PTR(&wevent));
 }
 
 /*

@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: check.c,v 1.14.2.21 2003/09/19 13:41:36 marka Exp $ */
+/* $Id: check.c,v 1.14.2.24 2004/05/17 06:18:40 marka Exp $ */
 
 #include <config.h>
 
@@ -32,9 +32,17 @@
 #include <isc/util.h>
 
 #include <dns/fixedname.h>
+#include <dns/rdataclass.h>
 
 #include <isccfg/cfg.h>
 #include <isccfg/check.h>
+
+static void
+freekey(char *key, unsigned int type, isc_symvalue_t value, void *userarg) {
+	UNUSED(type);
+	UNUSED(value);
+	isc_mem_free(userarg, key);
+}
 
 static isc_result_t
 check_forward(cfg_obj_t *options, isc_log_t *logctx) {
@@ -268,7 +276,8 @@ check_zoneconf(cfg_obj_t *zconfig, isc_symtab_t *symtab, isc_log_t *logctx,
 				    "zone '%s': already exists ", zname);
 			result = ISC_R_FAILURE;
 		} else if (tresult != ISC_R_SUCCESS) {
-			isc_mem_strdup(mctx, key);
+			isc_mem_free(mctx, key);
+
 			return (tresult);
 		}
 	}
@@ -435,13 +444,6 @@ check_keylist(cfg_obj_t *keys, isc_symtab_t *symtab, isc_log_t *logctx) {
 	return (result);
 }
 
-static void
-freekey(char *key, unsigned int type, isc_symvalue_t value, void *userarg) {
-	UNUSED(type);
-	UNUSED(value);
-	isc_mem_free(userarg, key);
-}
-
 static isc_result_t
 check_servers(cfg_obj_t *servers, isc_log_t *logctx) {
 	isc_result_t result = ISC_R_SUCCESS;
@@ -493,7 +495,7 @@ check_viewconf(cfg_obj_t *config, cfg_obj_t *vconfig, isc_log_t *logctx, isc_mem
 	 * there are no duplicate zones.
 	 */
 	tresult = isc_symtab_create(mctx, 100, freekey, mctx,
-				    ISC_TRUE, &symtab);
+				    ISC_FALSE, &symtab);
 	if (tresult != ISC_R_SUCCESS)
 		return (ISC_R_NOMEMORY);
 
@@ -588,6 +590,7 @@ cfg_check_namedconf(cfg_obj_t *config, isc_log_t *logctx, isc_mem_t *mctx) {
 	cfg_listelt_t *velement;
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_result_t tresult;
+	isc_symtab_t *symtab = NULL;
 
 	static const char *builtin[] = { "localhost", "localnets",
 					 "any", "none" };
@@ -621,17 +624,51 @@ cfg_check_namedconf(cfg_obj_t *config, isc_log_t *logctx, isc_mem_t *mctx) {
 		}
 	}
 
+	tresult = isc_symtab_create(mctx, 100, NULL, NULL, ISC_TRUE, &symtab);
+	if (tresult != ISC_R_SUCCESS)
+		result = tresult;
 	for (velement = cfg_list_first(views);
 	     velement != NULL;
 	     velement = cfg_list_next(velement))
 	{
 		cfg_obj_t *view = cfg_listelt_value(velement);
+		cfg_obj_t *vname = cfg_tuple_get(view, "name");
 		cfg_obj_t *voptions = cfg_tuple_get(view, "options");
+		cfg_obj_t *vclassobj = cfg_tuple_get(view, "class");
+		dns_rdataclass_t vclass = dns_rdataclass_in;
+		isc_result_t tresult = ISC_R_SUCCESS;
+		const char *key = cfg_obj_asstring(vname);
+		isc_symvalue_t symvalue;
 
+		if (cfg_obj_isstring(vclassobj)) {
+			isc_textregion_t r;
+		
+			DE_CONST(cfg_obj_asstring(vclassobj), r.base);
+			r.length = strlen(r.base);
+			tresult = dns_rdataclass_fromtext(&vclass, &r);
+			if (tresult != ISC_R_SUCCESS)
+				cfg_obj_log(vclassobj, logctx, ISC_LOG_ERROR,
+					    "view '%s': invalid class %s",
+					    cfg_obj_asstring(vname), r.base);
+		}
+		if (tresult == ISC_R_SUCCESS && symtab != NULL) {
+			symvalue.as_pointer = view;
+			tresult = isc_symtab_define(symtab, key, vclass,
+						    symvalue,
+						    isc_symexists_reject);
+			if (tresult == ISC_R_EXISTS) {
+				cfg_obj_log(view, logctx, ISC_LOG_ERROR,
+					    "view '%s': already exists", key);
+				result = tresult;
+			} else if (result != ISC_R_SUCCESS)
+				result = tresult;
+		}
 		if (check_viewconf(config, voptions, logctx, mctx)
 		    != ISC_R_SUCCESS)
 			result = ISC_R_FAILURE;
 	}
+	if (symtab != NULL)
+		isc_symtab_destroy(&symtab);
 
 	if (views != NULL && options != NULL) {
 		obj = NULL;

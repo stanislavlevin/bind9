@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: client.c,v 1.176.2.13 2003/07/18 06:14:30 marka Exp $ */
+/* $Id: client.c,v 1.176.2.15 2004/04/28 14:17:03 marka Exp $ */
 
 #include <config.h>
 
@@ -1291,15 +1291,35 @@ client_request(isc_task_t *task, isc_event_t *event) {
 	}
 
 	/*
-	 * Determine the destination address.  For IPv6, we get this from the
-	 * pktinfo structure (if supported).  For IPv4, we have to make do with
+	 * Determine the destination address.  For TCP/IPv6, we get this from
+	 * the receiving socket.  For UDP/IPv6, we get it from the pktinfo
+	 * structure (if supported).  For IPv4, we have to do with
 	 * the address of the interface where the request was received.
 	 */
 	if (client->interface->addr.type.sa.sa_family == AF_INET6) {
-		if ((client->attributes & NS_CLIENTATTR_PKTINFO) != 0)
+		result = ISC_R_FAILURE;
+
+		if (TCP_CLIENT(client)) {
+			isc_sockaddr_t destsockaddr;
+
+			result = isc_socket_getsockname(client->tcpsocket,
+							&destsockaddr);
+			if (result == ISC_R_SUCCESS)
+				isc_netaddr_fromsockaddr(&destaddr,
+							 &destsockaddr);
+		}
+		if (result != ISC_R_SUCCESS &&
+		    (client->attributes & NS_CLIENTATTR_PKTINFO) != 0) {
 			isc_netaddr_fromin6(&destaddr, &client->pktinfo.ipi6_addr);
-		else
-			isc_netaddr_any6(&destaddr);
+			result = ISC_R_SUCCESS;
+		}
+		if (result != ISC_R_SUCCESS) {
+			UNEXPECTED_ERROR(__FILE__, __LINE__,
+					 "failed to get request's "
+					 "destination: %s",
+					 isc_result_totext(result));
+			goto cleanup;
+		}
 	} else {
 		isc_netaddr_fromsockaddr(&destaddr, &client->interface->addr);
 	}

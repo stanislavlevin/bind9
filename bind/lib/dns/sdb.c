@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sdb.c,v 1.35.2.2 2003/10/09 07:32:38 marka Exp $ */
+/* $Id: sdb.c,v 1.35.2.5 2004/04/15 01:38:08 marka Exp $ */
 
 #include <config.h>
 
@@ -283,7 +283,7 @@ dns_sdb_putrr(dns_sdblookup_t *lookup, const char *type, dns_ttl_t ttl,
 	dns_rdatalist_t *rdatalist;
 	dns_rdata_t *rdata;
 	dns_rdatatype_t typeval;
-	isc_consttextregion_t r;
+	isc_textregion_t r;
 	isc_buffer_t b;
 	isc_buffer_t *rdatabuf;
 	isc_lex_t *lex;
@@ -299,9 +299,9 @@ dns_sdb_putrr(dns_sdblookup_t *lookup, const char *type, dns_ttl_t ttl,
 
 	mctx = lookup->sdb->common.mctx;
 
-	r.base = type;
+	DE_CONST(type, r.base);
 	r.length = strlen(type);
-	result = dns_rdatatype_fromtext(&typeval, (isc_textregion_t *)&r);
+	result = dns_rdatatype_fromtext(&typeval, &r);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
@@ -661,7 +661,7 @@ destroynode(dns_sdbnode_t *node) {
 	DESTROYLOCK(&node->lock);
 	node->magic = 0;
 	isc_mem_put(mctx, node, sizeof(dns_sdbnode_t));
-	detach((dns_db_t **)&sdb);
+	detach((dns_db_t **) (void *)&sdb);
 }
 
 static isc_result_t
@@ -999,7 +999,7 @@ createiterator(dns_db_t *db, isc_boolean_t relative_names,
 	result = imp->methods->allnodes(sdb->zone, sdb->dbdata, sdbiter);
 	MAYBE_UNLOCK(sdb);
 	if (result != ISC_R_SUCCESS) {
-		dbiterator_destroy((dns_dbiterator_t **)&sdbiter);
+		dbiterator_destroy((dns_dbiterator_t **) (void *)&sdbiter);
 		return (result);
 	}
 
@@ -1145,6 +1145,12 @@ overmem(dns_db_t *db, isc_boolean_t overmem) {
 	UNUSED(overmem);
 }
 
+static void
+settask(dns_db_t *db, isc_task_t *task) {
+	UNUSED(db);
+	UNUSED(task);
+}
+
 
 static dns_dbmethods_t sdb_methods = {
 	attach,
@@ -1172,7 +1178,8 @@ static dns_dbmethods_t sdb_methods = {
 	issecure,
 	nodecount,
 	ispersistent,
-	overmem
+	overmem,
+	settask
 };
 
 static isc_result_t

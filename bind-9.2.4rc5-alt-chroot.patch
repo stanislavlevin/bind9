@@ -1,0 +1,158 @@
+diff -uprk.orig bind-9.2.4rc5.orig/bin/named/server.c bind-9.2.4rc5/bin/named/server.c
+--- bind-9.2.4rc5.orig/bin/named/server.c	2004-05-14 05:04:46 +0400
++++ bind-9.2.4rc5/bin/named/server.c	2004-06-30 17:31:06 +0400
+@@ -2076,8 +2076,12 @@ load_configuration(const char *filename,
+ 				      "no source of entropy found");
+ 		} else {
+ 			const char *randomdev = cfg_obj_asstring(obj);
+-			result = isc_entropy_createfilesource(ns_g_entropy,
++			if (strcmp(randomdev, PATH_RANDOMDEV))
++				result = isc_entropy_createfilesource(ns_g_entropy,
+ 							      randomdev);
++			else
++				result = isc_entropy_createfilefd(ns_g_entropy,
++							      ns_os_open_randomdev());
+ 			if (result != ISC_R_SUCCESS)
+ 				isc_log_write(ns_g_lctx,
+ 					      NS_LOGCATEGORY_GENERAL,
+@@ -2093,8 +2097,10 @@ load_configuration(const char *filename,
+ 	/*
+ 	 * Relinquish root privileges.
+ 	 */
+-	if (first_time)
++	if (first_time) {
+ 		ns_os_changeuser();
++		ns_os_dropprivs();
++	}
+ 
+ 	/*
+ 	 * Configure the logging system.
+diff -uprk.orig bind-9.2.4rc5.orig/bin/named/unix/include/named/os.h bind-9.2.4rc5/bin/named/unix/include/named/os.h
+--- bind-9.2.4rc5.orig/bin/named/unix/include/named/os.h	2004-03-09 09:09:24 +0300
++++ bind-9.2.4rc5/bin/named/unix/include/named/os.h	2004-06-30 17:31:06 +0400
+@@ -47,6 +47,12 @@ void
+ ns_os_minprivs(void);
+ 
+ void
++ns_os_dropprivs(void);
++
++int
++ns_os_open_randomdev(void);
++
++void
+ ns_os_writepidfile(const char *filename, isc_boolean_t first_time);
+ 
+ void
+diff -uprk.orig bind-9.2.4rc5.orig/bin/named/unix/os.c bind-9.2.4rc5/bin/named/unix/os.c
+--- bind-9.2.4rc5.orig/bin/named/unix/os.c	2004-04-15 09:36:13 +0400
++++ bind-9.2.4rc5/bin/named/unix/os.c	2004-06-30 18:16:03 +0400
+@@ -293,6 +293,19 @@ ns_os_init(const char *progname) {
+ #endif
+ }
+ 
++int
++ns_os_open_randomdev (void)
++{
++	static int fd = -1;
++
++#ifdef PATH_RANDOMDEV
++	if (fd < 0)
++		fd = open(PATH_RANDOMDEV, O_RDONLY | O_NONBLOCK, 0);
++#endif
++
++	return fd;
++}
++
+ void
+ ns_os_daemonize(void) {
+ 	pid_t pid;
+@@ -376,6 +389,7 @@ void
+ ns_os_chroot(const char *root) {
+ 	char strbuf[ISC_STRERRORSIZE];
+ 	if (root != NULL) {
++		ns_os_open_randomdev();
+ 		if (chroot(root) < 0) {
+ 			isc__strerror(errno, strbuf, sizeof(strbuf));
+ 			ns_main_earlyfatal("chroot(): %s", strbuf);
+@@ -458,6 +472,13 @@ ns_os_minprivs(void) {
+ #endif
+ }
+ 
++void
++ns_os_dropprivs(void) {
++#if defined(HAVE_LINUX_CAPABILITY_H) && !defined(HAVE_LINUXTHREADS)
++	linux_setcaps(0);
++#endif
++}
++
+ static int
+ safe_open(const char *filename, isc_boolean_t append) {
+ 	int fd;
+diff -uprk.orig bind-9.2.4rc5.orig/lib/isc/include/isc/entropy.h bind-9.2.4rc5/lib/isc/include/isc/entropy.h
+--- bind-9.2.4rc5.orig/lib/isc/include/isc/entropy.h	2004-03-09 09:11:55 +0300
++++ bind-9.2.4rc5/lib/isc/include/isc/entropy.h	2004-06-30 17:31:06 +0400
+@@ -166,6 +166,9 @@ isc_entropy_createfilesource(isc_entropy
+  * The file will never be opened/read again once EOF is reached.
+  */
+ 
++isc_result_t
++isc_entropy_createfilefd(isc_entropy_t *ent, int fd);
++
+ void
+ isc_entropy_destroysource(isc_entropysource_t **sourcep);
+ /*
+diff -uprk.orig bind-9.2.4rc5.orig/lib/isc/unix/entropy.c bind-9.2.4rc5/lib/isc/unix/entropy.c
+--- bind-9.2.4rc5.orig/lib/isc/unix/entropy.c	2004-03-09 09:12:09 +0300
++++ bind-9.2.4rc5/lib/isc/unix/entropy.c	2004-06-30 17:31:06 +0400
+@@ -288,23 +288,17 @@ make_nonblock(int fd) {
+ }
+ 
+ isc_result_t
+-isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname) {
+-	int fd;
++isc_entropy_createfilefd(isc_entropy_t *ent, int fd) {
+ 	isc_result_t ret;
+ 	isc_entropysource_t *source;
+ 
+ 	REQUIRE(VALID_ENTROPY(ent));
+-	REQUIRE(fname != NULL);
++	REQUIRE(fd >= 0);
+ 
+ 	LOCK(&ent->lock);
+ 
+ 	source = NULL;
+ 
+-	fd = open(fname, O_RDONLY | O_NONBLOCK, 0);
+-	if (fd < 0) {
+-		ret = isc__errno2result(errno);
+-		goto errout;
+-	}
+ 	ret = make_nonblock(fd);
+ 	if (ret != ISC_R_SUCCESS)
+ 		goto closefd;
+@@ -339,7 +333,6 @@ isc_entropy_createfilesource(isc_entropy
+  closefd:
+ 	close(fd);
+ 
+- errout:
+ 	if (source != NULL)
+ 		isc_mem_put(ent->mctx, source, sizeof(isc_entropysource_t));
+ 
+@@ -347,3 +340,17 @@ isc_entropy_createfilesource(isc_entropy
+ 
+ 	return (ret);
+ }
++
++isc_result_t
++isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname) {
++	int fd;
++
++	REQUIRE(VALID_ENTROPY(ent));
++	REQUIRE(fname != NULL);
++
++	fd = open(fname, O_RDONLY | O_NONBLOCK, 0);
++	if (fd < 0) {
++		return isc__errno2result(errno);
++	}
++	return isc_entropy_createfilefd(ent, fd);
++}
