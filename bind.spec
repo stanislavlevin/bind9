@@ -1,6 +1,6 @@
 Name: bind
 %define vers_num 9.2.3
-%define vers_rc rc4
+%define vers_rc rel
 Version: %vers_num.%vers_rc
 Release: alt1
 
@@ -10,7 +10,7 @@ Group: System/Servers
 Url: http://www.isc.org/products/BIND/
 Packager: BIND Development Team <bind@packages.altlinux.org>
 
-%define srcname %name-%vers_num%vers_rc
+%define srcname %name-%vers_num
 Source0: ftp://ftp.isc.org/isc/bind9/%vers_num/%srcname.tar.bz2
 Source1: nslookup.1
 Source2: resolver.5
@@ -38,14 +38,17 @@ Source44: bind.empty
 
 Patch1: bind-9.2.3rc1-alt-man.patch
 Patch2: bind-9.2.2rc1-alt-isc-config.patch
-Patch3: bind-9.2.2rc1-alt-rndc-confgen.patch
-Patch4: bind-9.2.2rc1-alt-chroot.patch
-Patch5: bind-9.2.2-obsd-pidfile.patch
-Patch6: bind-9.2.2-obsd-chroot_default.patch
+Patch3: bind-9.2.3rc4-alt-rndc-confgen.patch
+Patch4: bind-9.2.3rc4-alt-chroot.patch
+Patch5: bind-9.2.3rel-obsd-pidfile.patch
+Patch6: bind-9.2.3rc4-obsd-chroot_default.patch
 Patch7: bind-9.2.2-owl-checkconf_chroot.patch
 
 # root directory for chrooted environment.
 %define ROOT %_localstatedir/bind
+
+# common directory for bind docs.
+%define docdir %_docdir/bind-%version
 
 %ifndef timestamp
 %define timestamp %(LC_TIME=C date +%%Y%%m%%d)
@@ -214,15 +217,26 @@ the DNS protocol.
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
+find -type f -name \*.orig -print -delete
 
 %__install -p -m644 $RPM_SOURCE_DIR/rfc1912.txt doc/rfc/
 %__install -p -m644 $RPM_SOURCE_DIR/bind.README.bind-devel README.bind-devel
 %__install -p -m644 $RPM_SOURCE_DIR/bind.README.ALT README.ALT
-find -type f -name \*.orig -print -delete
+
+%__mkdir_p alt
+%__cp -p $RPM_SOURCE_DIR/{nslookup.1,resolver.5} alt/
+%__cp -p $RPM_SOURCE_DIR/{bind,lwresd}.init alt/
+%__cp -p $RPM_SOURCE_DIR/rndc.{conf,key} alt/
+%__cp -p $RPM_SOURCE_DIR/bind.{named,options,rndc,local,rfc1912,rfc1918}.conf alt/
+%__cp -p $RPM_SOURCE_DIR/bind.{localhost,localdomain,127.in-addr.arpa,empty} alt/
 
 find -type f -print0 |
 	xargs -r0 %__grep -FZl '@ROOT@' -- |
 	xargs -r0 %__subst -p 's|@ROOT@|%ROOT|g' --
+
+find -type f -print0 |
+	xargs -r0 %__grep -FZl '@DOCDIR@' -- |
+	xargs -r0 %__subst -p 's|@DOCDIR@|%docdir|g' --
 
 %build
 %__install -p -m755 /usr/share/libtool/config.* .
@@ -247,31 +261,27 @@ popd # contrib/queryperf
 %install
 %__mkdir_p $RPM_BUILD_ROOT{%_bindir,%_sbindir,%_libdir,%_mandir/{man{1,3,5,8}},%_localstatedir}
 
-%__install -p -m644 $RPM_SOURCE_DIR/nslookup.1 $RPM_BUILD_ROOT%_man1dir/
-%__install -p -m644 $RPM_SOURCE_DIR/resolver.5 $RPM_BUILD_ROOT%_man5dir/
+%__install -p -m644 alt/nslookup.1 $RPM_BUILD_ROOT%_man1dir/
+%__install -p -m644 alt/resolver.5 $RPM_BUILD_ROOT%_man5dir/
 %make_install install DESTDIR=$RPM_BUILD_ROOT
 
 %__install -p -m755 contrib/queryperf/queryperf $RPM_BUILD_ROOT%_sbindir/
 
-%__install -pD -m755 $RPM_SOURCE_DIR/bind.init $RPM_BUILD_ROOT%_initdir/bind
-%__install -pD -m755 $RPM_SOURCE_DIR/lwresd.init $RPM_BUILD_ROOT%_initdir/lwresd
-%__install -p -m600 $RPM_SOURCE_DIR/rndc.conf $RPM_BUILD_ROOT%_sysconfdir/
+%__install -pD -m755 alt/bind.init $RPM_BUILD_ROOT%_initdir/bind
+%__install -pD -m755 alt/lwresd.init $RPM_BUILD_ROOT%_initdir/lwresd
+%__install -p -m600 alt/rndc.conf $RPM_BUILD_ROOT%_sysconfdir/
 
 # Create chrooted environment
 %__mkdir_p $RPM_BUILD_ROOT%ROOT/{dev,etc,var/{run,tmp},zone/slave}
 for n in named options rndc local rfc1912 rfc1918; do
-	%__install -pD -m640 "$RPM_SOURCE_DIR/bind.$n.conf" "$RPM_BUILD_ROOT%ROOT%_sysconfdir/$n.conf"
+	%__install -pD -m640 "alt/bind.$n.conf" "$RPM_BUILD_ROOT%ROOT%_sysconfdir/$n.conf"
 done
 for n in localhost localdomain 127.in-addr.arpa empty; do
-        %__install -pD -m640 "$RPM_SOURCE_DIR/bind.$n" "$RPM_BUILD_ROOT%ROOT/zone/$n"
+        %__install -pD -m640 "alt/bind.$n" "$RPM_BUILD_ROOT%ROOT/zone/$n"
 	%__subst -p s/YYYYMMDDNN/%{timestamp}00/ "$RPM_BUILD_ROOT%ROOT/zone/$n"
 done
-%__install -p -m640 $RPM_SOURCE_DIR/rndc.key $RPM_BUILD_ROOT%ROOT%_sysconfdir/
+%__install -p -m640 alt/rndc.key $RPM_BUILD_ROOT%ROOT%_sysconfdir/
 %__ln_s %ROOT%_sysconfdir/named.conf $RPM_BUILD_ROOT%_sysconfdir/
-
-find $RPM_BUILD_ROOT{%_sysconfdir,%_mandir,%ROOT} -type f -print0 |
-	xargs -r0 %__grep -FZl '@ROOT@' |
-	xargs -r0 %__subst -p 's|@ROOT@|%ROOT|g' --
 
 # Make use of syslogd-1.4.1-alt11 /etc/syslog.d/ feature.
 /usr/bin/mksock $RPM_BUILD_ROOT%ROOT/dev/log
@@ -282,7 +292,6 @@ find $RPM_BUILD_ROOT{%_sysconfdir,%_mandir,%ROOT} -type f -print0 |
 %__ln_s rndc $RPM_BUILD_ROOT%_sbindir/ndc
 %__ln_s rndc.8 $RPM_BUILD_ROOT%_man8dir/ndc.8
 
-%define docdir %_docdir/bind-%version
 # Package docs
 %__rm -rf $RPM_BUILD_ROOT%docdir
 %__mkdir_p $RPM_BUILD_ROOT%docdir
@@ -361,7 +370,6 @@ fi
 
 %files devel
 %_libdir/*.so
-%_libdir/*.la
 %_bindir/isc-config.sh
 %_includedir/*
 %_man3dir/*
@@ -434,6 +442,12 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Mon Nov 24 2003 Dmitry V. Levin <ldv@altlinux.org> 9.2.3.rel-alt1
+- Updated to 9.2.3 release.
+- Rediffed patches.
+- Do not package .la files.
+- named.8: fixed reference to the BIND 9 Administrator Reference Manual.
+
 * Mon Sep 22 2003 Dmitry V. Levin <ldv@altlinux.org> 9.2.3.rc4-alt1
 - Updated to 9.2.3rc4.
 - Renamed subpackage according to soname change:

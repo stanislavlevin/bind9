@@ -33,7 +33,7 @@ diff -uprk.orig bind-9.2.3rc1.orig/bin/named/named.8 bind-9.2.3rc1/bin/named/nam
  \fBlwresd\fR(8),
 -\fIBIND 9 Administrator Reference Manual\fR.
 +\fIBIND 9 Administrator Reference Manual\fR
-+(\fB\fI/usr/share/doc/bind-9.2.2.rc1/arm/Bv9ARM.html\fR).
++(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
  .SH "AUTHOR"
  .PP
  Internet Software Consortium
