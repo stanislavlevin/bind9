@@ -2,7 +2,7 @@ Name: bind
 %define vers_num 9.2.4
 %define vers_rc rel
 Version: %vers_num.%vers_rc
-Release: alt1
+Release: alt2
 
 Summary: The ISC BIND server
 License: BSD-like
@@ -43,6 +43,7 @@ Patch4: bind-9.2.4rc5-alt-chroot.patch
 Patch5: bind-9.2.4rc5-obsd-pidfile.patch
 Patch6: bind-9.2.4rc5-obsd-chroot_default.patch
 Patch7: bind-9.2.4rc5-owl-checkconf_chroot.patch
+Patch8: bind-9.2.4-alt-queryperf-configure.patch
 
 # root directory for chrooted environment.
 %define ROOT %_localstatedir/bind
@@ -217,7 +218,8 @@ the DNS protocol.
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
-find -type f -name \*.orig -print -delete
+%patch8 -p1
+find -type f -name \*.orig -delete -print
 
 %__install -p -m644 $RPM_SOURCE_DIR/rfc1912.txt doc/rfc/
 %__install -p -m644 $RPM_SOURCE_DIR/bind.README.bind-devel README.bind-devel
@@ -254,6 +256,7 @@ make
 
 # Build queryperf
 pushd contrib/queryperf
+	subst -p 's/res_mkquery/__&/g' configure*
 	%configure
 	%make_build
 popd # contrib/queryperf
@@ -445,6 +448,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Sat Feb 12 2005 Dmitry V. Levin <ldv@altlinux.org> 9.2.4.rel-alt2
+- Fixed build of queryperf utility on x86_64 platform (closes #6083).
+
 * Fri Sep 24 2004 Dmitry V. Levin <ldv@altlinux.org> 9.2.4.rel-alt1
 - Updated to 9.2.4 release (== 9.2.4rc8).
 
