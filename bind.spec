@@ -2,7 +2,7 @@ Name: bind
 %define vers_num 9.2.3
 %define vers_rc rel
 Version: %vers_num.%vers_rc
-Release: alt2
+Release: alt2.1
 
 Summary: The ISC BIND server
 License: BSD-like
@@ -442,6 +442,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Mon May 10 2004 ALT QA Team Robot <qa-robot@altlinux.org> 9.2.3.rel-alt2.1
+- Rebuilt with openssl-0.9.7d.
+
 * Wed Mar 10 2004 Dmitry V. Levin <ldv@altlinux.org> 9.2.3.rel-alt2
 - Updated build dependencies.
 - Do not build static library by default.
