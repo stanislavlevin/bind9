@@ -1,6 +1,6 @@
 Name: bind
 %define vers_num 9.2.4
-%define vers_rc rc8
+%define vers_rc rel
 Version: %vers_num.%vers_rc
 Release: alt1
 
@@ -9,7 +9,8 @@ License: BSD-like
 Group: System/Servers
 Url: http://www.isc.org/products/BIND/
 
-%define srcname %name-%vers_num%vers_rc
+#%define srcname %name-%vers_num%vers_rc
+%define srcname %name-%vers_num
 Source0: ftp://ftp.isc.org/isc/bind9/%vers_num/%srcname.tar.bz2
 Source1: nslookup.1
 Source2: resolver.5
@@ -295,7 +296,7 @@ done
 # Package docs
 %__rm -rf $RPM_BUILD_ROOT%docdir
 %__mkdir_p $RPM_BUILD_ROOT%docdir
-%__cp -a CHANGES COPYRIGHT FAQ README* \
+%__cp -a CHANGES COPYRIGHT FAQ README* KNOWN_DEFECTS \
 	doc/{arm,draft,misc,rfc} \
 	$RPM_BUILD_ROOT%docdir/
 %__install -p -m644 contrib/queryperf/README $RPM_BUILD_ROOT%docdir/README.queryperf
@@ -444,6 +445,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Fri Sep 24 2004 Dmitry V. Levin <ldv@altlinux.org> 9.2.4.rel-alt1
+- Updated to 9.2.4 release (== 9.2.4rc8).
+
 * Sun Sep 05 2004 Dmitry V. Levin <ldv@altlinux.org> 9.2.4.rc8-alt1
 - Updated to 9.2.4rc8.
 - Renamed subpackage according to soname change:
