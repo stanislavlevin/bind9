@@ -1,0 +1,66 @@
+--- bind-8.2.2_P7/src/lib/resolv/Makefile	Thu Nov 16 04:06:10 2000
++++ bind-8.2.2_P7/src/lib/resolv/Makefile	Thu Nov 16 04:42:17 2000
+@@ -42,12 +42,12 @@
+ INSTALL_LIB=
+ THREADED= threaded
+ 
+-SRCS=	herror.c res_debug.c res_data.c res_comp.c res_init.c \
++SRCS=	herror.c res_debug.c res_data.c res_comp.c \
+ 	res_mkquery.c res_query.c res_send.c res_sendsigned.c \
+ 	res_mkupdate.c res_update.c \
+ 	res_findzonecut.c
+ 
+-OBJS=	herror.${O} res_debug.${O} res_data.${O} res_comp.${O} res_init.${O} \
++OBJS=	herror.${O} res_debug.${O} res_data.${O} res_comp.${O} \
+ 	res_mkquery.${O} res_query.${O} res_send.${O} res_sendsigned.${O} \
+ 	res_mkupdate.${O} res_update.${O} \
+ 	res_findzonecut.${O}
+--- bind-8.2.2_P7/src/lib/resolv/res_data.c	Wed Oct 13 21:11:31 1999
++++ bind-8.2.2_P7/src/lib/resolv/res_data.c	Thu Nov 16 05:00:32 2000
+@@ -82,46 +82,6 @@
+ int  res_ourserver_p(const res_state, const struct sockaddr_in *);
+ void res_pquery(const res_state, const u_char *, int, FILE *);
+ 
+-int
+-res_init(void) {
+-	extern int __res_vinit(res_state, int);
+-
+-	/*
+-	 * These three fields used to be statically initialized.  This made
+-	 * it hard to use this code in a shared library.  It is necessary,
+-	 * now that we're doing dynamic initialization here, that we preserve
+-	 * the old semantics: if an application modifies one of these three
+-	 * fields of _res before res_init() is called, res_init() will not
+-	 * alter them.  Of course, if an application is setting them to
+-	 * _zero_ before calling res_init(), hoping to override what used
+-	 * to be the static default, we can't detect it and unexpected results
+-	 * will follow.  Zero for any of these fields would make no sense,
+-	 * so one can safely assume that the applications were already getting
+-	 * unexpected results.
+-	 *
+-	 * _res.options is tricky since some apps were known to diddle the bits
+-	 * before res_init() was first called. We can't replicate that semantic
+-	 * with dynamic initialization (they may have turned bits off that are
+-	 * set in RES_DEFAULT).  Our solution is to declare such applications
+-	 * "broken".  They could fool us by setting RES_INIT but none do (yet).
+-	 */
+-	if (!_res.retrans)
+-		_res.retrans = RES_TIMEOUT;
+-	if (!_res.retry)
+-		_res.retry = 4;
+-	if (!(_res.options & RES_INIT))
+-		_res.options = RES_DEFAULT;
+-
+-	/*
+-	 * This one used to initialize implicitly to zero, so unless the app
+-	 * has set it to something in particular, we can randomize it now.
+-	 */
+-	if (!_res.id)
+-		_res.id = res_randomid();
+-
+-	return (__res_vinit(&_res, 1));
+-}
+-
+ void
+ p_query(const u_char *msg) {
+ 	fp_query(msg, stdout);

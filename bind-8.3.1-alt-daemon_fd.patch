@@ -1,0 +1,65 @@
+diff -ur bind-8.3.1~/src/bin/named/ns_main.c bind-8.3.1/src/bin/named/ns_main.c
+--- bind-8.3.1~/src/bin/named/ns_main.c	Tue Apr 16 16:36:38 2002
++++ bind-8.3.1/src/bin/named/ns_main.c	Tue Apr 16 17:36:29 2002
+@@ -238,9 +238,39 @@
+ 
+ static const char bad_directory[] = "chdir failed for directory '%s': %s";
+ 
++#include <paths.h>
++static int
++daemon_fd(int nochdir, int noclose, int fd)
++{
++	switch (fork()) {
++		case -1:
++			return -1;
++		case 0:
++			break;
++		default:
++			_exit(0);
++	}
++
++	if (setsid() == -1)
++		return -1;
++
++	if (!nochdir)
++		chdir("/");
++
++	if (!noclose) {
++		dup2(fd, STDIN_FILENO);
++		dup2(fd, STDOUT_FILENO);
++		dup2(fd, STDERR_FILENO);
++		if (fd > 2)
++			close (fd);
++	}
++	return 0;
++}
++
+ /*ARGSUSED*/
+ int
+ main(int argc, char *argv[]) {
++	int fdnull;
+ 	int n;
+ 	char *p;
+ 	int ch;
+@@ -414,6 +444,12 @@
+ 		    n != STDERR_FILENO)
+ 			(void) close(n);
+ 
++	fdnull = open(_PATH_DEVNULL, O_RDWR, 0);
++	if (fdnull < 0) {
++		fprintf(stderr, "open %s failed: %s\n", _PATH_DEVNULL,
++			strerror(errno));
++		exit(1);
++	}
+ 	/*
+ 	 * Chroot if desired.
+ 	 */
+@@ -495,7 +531,7 @@
+ 	 */
+ 
+ 	if (foreground == 0) {
+-		if (daemon(1, 0))
++		if (daemon_fd(1, 0, fdnull))
+ 			ns_panic(ns_log_default, 1, "daemon: %s",
+ 				 strerror(errno));
+ 		update_pid_file();

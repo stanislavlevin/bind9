@@ -1,0 +1,19 @@
+# $Header: /proj/cvs/isc/bind8/contrib/decwrl/Distfile.datadir,v 8.2 1996/10/25 17:03:10 vixie Exp $
+# $Source: /proj/cvs/isc/bind8/contrib/decwrl/Distfile.datadir,v $
+
+SERVERS = ( )
+ARCH = titan
+
+FILES = (	restart.named setup.secondary
+		cache.db hacks.db named.boot.secondary
+		named.boot.hesiod setup.hesiod
+	)
+
+BINARIES = (	mips/named{-xfer,}	)
+
+# Make the master files last because "special" keys on it.
+
+( ${FILES} ${ARCH} ) -> ( ${SERVERS} )
+	install /etc/wrl.named/. ;
+	special ( named.boot.secondary ${ARCH}/named )
+		"/etc/wrl.named/restart.named" ;

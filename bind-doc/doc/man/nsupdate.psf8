@@ -1,0 +1,294 @@
+%!PS-Adobe-3.0
+%%Creator: groff version 1.15
+%%CreationDate: Fri Feb  1 16:54:16 2002
+%%DocumentNeededResources: font Times-Roman
+%%DocumentSuppliedResources: procset grops 1.15 0
+%%Pages: 1
+%%PageOrder: Ascend
+%%Orientation: Portrait
+%%EndComments
+%%BeginProlog
+%%BeginResource: procset grops 1.15 0
+/setpacking where{
+pop
+currentpacking
+true setpacking
+}if
+/grops 120 dict dup begin
+/SC 32 def
+/A/show load def
+/B{0 SC 3 -1 roll widthshow}bind def
+/C{0 exch ashow}bind def
+/D{0 exch 0 SC 5 2 roll awidthshow}bind def
+/E{0 rmoveto show}bind def
+/F{0 rmoveto 0 SC 3 -1 roll widthshow}bind def
+/G{0 rmoveto 0 exch ashow}bind def
+/H{0 rmoveto 0 exch 0 SC 5 2 roll awidthshow}bind def
+/I{0 exch rmoveto show}bind def
+/J{0 exch rmoveto 0 SC 3 -1 roll widthshow}bind def
+/K{0 exch rmoveto 0 exch ashow}bind def
+/L{0 exch rmoveto 0 exch 0 SC 5 2 roll awidthshow}bind def
+/M{rmoveto show}bind def
+/N{rmoveto 0 SC 3 -1 roll widthshow}bind def
+/O{rmoveto 0 exch ashow}bind def
+/P{rmoveto 0 exch 0 SC 5 2 roll awidthshow}bind def
+/Q{moveto show}bind def
+/R{moveto 0 SC 3 -1 roll widthshow}bind def
+/S{moveto 0 exch ashow}bind def
+/T{moveto 0 exch 0 SC 5 2 roll awidthshow}bind def
+/SF{
+findfont exch
+[exch dup 0 exch 0 exch neg 0 0]makefont
+dup setfont
+[exch/setfont cvx]cvx bind def
+}bind def
+/MF{
+findfont
+[5 2 roll
+0 3 1 roll
+neg 0 0]makefont
+dup setfont
+[exch/setfont cvx]cvx bind def
+}bind def
+/level0 0 def
+/RES 0 def
+/PL 0 def
+/LS 0 def
+/MANUAL{
+statusdict begin/manualfeed true store end
+}bind def
+/PLG{
+gsave newpath clippath pathbbox grestore
+exch pop add exch pop
+}bind def
+/BP{
+/level0 save def
+1 setlinecap
+1 setlinejoin
+72 RES div dup scale
+LS{
+90 rotate
+}{
+0 PL translate
+}ifelse
+1 -1 scale
+}bind def
+/EP{
+level0 restore
+showpage
+}bind def
+/DA{
+newpath arcn stroke
+}bind def
+/SN{
+transform
+.25 sub exch .25 sub exch
+round .25 add exch round .25 add exch
+itransform
+}bind def
+/DL{
+SN
+moveto
+SN
+lineto stroke
+}bind def
+/DC{
+newpath 0 360 arc closepath
+}bind def
+/TM matrix def
+/DE{
+TM currentmatrix pop
+translate scale newpath 0 0 .5 0 360 arc closepath
+TM setmatrix
+}bind def
+/RC/rcurveto load def
+/RL/rlineto load def
+/ST/stroke load def
+/MT/moveto load def
+/CL/closepath load def
+/FL{
+currentgray exch setgray fill setgray
+}bind def
+/BL/fill load def
+/LW/setlinewidth load def
+/RE{
+findfont
+dup maxlength 1 index/FontName known not{1 add}if dict begin
+{
+1 index/FID ne{def}{pop pop}ifelse
+}forall
+/Encoding exch def
+dup/FontName exch def
+currentdict end definefont pop
+}bind def
+/DEFS 0 def
+/EBEGIN{
+moveto
+DEFS begin
+}bind def
+/EEND/end load def
+/CNT 0 def
+/level1 0 def
+/PBEGIN{
+/level1 save def
+translate
+div 3 1 roll div exch scale
+neg exch neg exch translate
+0 setgray
+0 setlinecap
+1 setlinewidth
+0 setlinejoin
+10 setmiterlimit
+[]0 setdash
+/setstrokeadjust where{
+pop
+false setstrokeadjust
+}if
+/setoverprint where{
+pop
+false setoverprint
+}if
+newpath
+/CNT countdictstack def
+userdict begin
+/showpage{}def
+}bind def
+/PEND{
+clear
+countdictstack CNT sub{end}repeat
+level1 restore
+}bind def
+end def
+/setpacking where{
+pop
+setpacking
+}if
+%%EndResource
+%%IncludeResource: font Times-Roman
+grops begin/DEFS 1 dict def DEFS begin/u{.001 mul}bind def end/RES 72
+def/PL 792 def/LS false def/ENC0[/asciicircum/asciitilde/Scaron/Zcaron
+/scaron/zcaron/Ydieresis/trademark/quotesingle/.notdef/.notdef/.notdef
+/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef
+/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef
+/.notdef/.notdef/space/exclam/quotedbl/numbersign/dollar/percent
+/ampersand/quoteright/parenleft/parenright/asterisk/plus/comma/hyphen
+/period/slash/zero/one/two/three/four/five/six/seven/eight/nine/colon
+/semicolon/less/equal/greater/question/at/A/B/C/D/E/F/G/H/I/J/K/L/M/N/O
+/P/Q/R/S/T/U/V/W/X/Y/Z/bracketleft/backslash/bracketright/circumflex
+/underscore/quoteleft/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y
+/z/braceleft/bar/braceright/tilde/.notdef/quotesinglbase/guillemotleft
+/guillemotright/bullet/florin/fraction/perthousand/dagger/daggerdbl
+/endash/emdash/ff/fi/fl/ffi/ffl/dotlessi/dotlessj/grave/hungarumlaut
+/dotaccent/breve/caron/ring/ogonek/quotedblleft/quotedblright/oe/lslash
+/quotedblbase/OE/Lslash/.notdef/exclamdown/cent/sterling/currency/yen
+/brokenbar/section/dieresis/copyright/ordfeminine/guilsinglleft
+/logicalnot/minus/registered/macron/degree/plusminus/twosuperior
+/threesuperior/acute/mu/paragraph/periodcentered/cedilla/onesuperior
+/ordmasculine/guilsinglright/onequarter/onehalf/threequarters
+/questiondown/Agrave/Aacute/Acircumflex/Atilde/Adieresis/Aring/AE
+/Ccedilla/Egrave/Eacute/Ecircumflex/Edieresis/Igrave/Iacute/Icircumflex
+/Idieresis/Eth/Ntilde/Ograve/Oacute/Ocircumflex/Otilde/Odieresis
+/multiply/Oslash/Ugrave/Uacute/Ucircumflex/Udieresis/Yacute/Thorn
+/germandbls/agrave/aacute/acircumflex/atilde/adieresis/aring/ae/ccedilla
+/egrave/eacute/ecircumflex/edieresis/igrave/iacute/icircumflex/idieresis
+/eth/ntilde/ograve/oacute/ocircumflex/otilde/odieresis/divide/oslash
+/ugrave/uacute/ucircumflex/udieresis/yacute/thorn/ydieresis]def
+/Times-Roman@0 ENC0/Times-Roman RE
+%%EndProlog
+%%Page: 1 1
+%%BeginPageSetup
+BP
+%%EndPageSetup
+/F0 10/Times-Roman@0 SF .607
+(is a program to update Internet domain name serv)72 12 R .607
+(ers supporting dynamic update.)-.15 F .607(uses the DNS resolv)5.607 F
+.607(er library to)-.15 F 1.023(pass messages to a DNS serv)72 24 R
+1.024(er requesting the additional or deletion of DNS resource records \
+\(RRs\).)-.15 F 1.024(reads input)6.024 F .863(from or standard input.)
+72 36 R .863(Sign updates with TSIG.)5.863 F(Deb)5.862 E .862(ug mode.)
+-.2 F -.6(Vi)5.862 G .862(rtual circuit - use TCP to communication with)
+.6 F(serv)72 48 Q(er)-.15 E 5.641(.D)-.55 G(ef)-5.641 E .641
+(ault is UDP)-.1 F 5.641(.r)-1.11 G .641
+(eads input records, one per line, each line contrib)-5.641 F .641
+(uting a resource record to an update re-)-.2 F 3.181(quest. All)72 60 R
+.681(domain names used in a single update request must belong to the sa\
+me DNS zone.)3.181 F .68(Updates are sent to)5.68 F .163
+(the master serv)72 72 R .163(er as de\214ned in the SO)-.15 F 2.664(AM)
+-.35 G -.35(NA)-2.664 G .164(ME \214eld.).35 F 2.664(Ab)5.164 G .164
+(lank line causes the accumulated records to be formated)-2.664 F .091
+(into a single update request and transmitted to the zone')72 84 R 2.591
+(sa)-.55 G(uthoritati)-2.591 E .391 -.15(ve n)-.25 H .091(ame serv).15 F
+2.591(ers. Additional)-.15 F .091(records may follo)2.591 F -.65(w,)-.25
+G .548(which are formed into additional, completely independent update \
+requests.)72 96 R -.15(Fo)5.548 G 3.048(rt).15 G .548
+(he last request to be transmitted, a)-3.048 F .099
+(blank line must end the input.)72 108 R .099(Records tak)5.099 F 2.599
+(eo)-.1 G .098(ne of tw)-2.599 F 2.598(og)-.1 G .098(eneral forms.)
+-2.598 F .098(records specify conditions that must be satis-)5.098 F
+.822(\214ed before the request will be processed.)72 120 R .822
+(records specify changes to be made to the DNS database.)5.822 F 3.323
+(Au)5.822 G .823(pdate re-)-3.323 F .234
+(quest consists of zero or more prerequisites and one or more updates.)
+72 132 R .234(Each update request is processed atomically -)5.234 F .862
+(all prerequisites must be satis\214ed, then all updates will be perfor\
+med.)72 144 R .862(understands the follo)5.862 F .862
+(wing input record for)-.25 F(-)-.2 E .563
+(mats: Requires that no RR of an)72 156 R 3.063(yt)-.15 G .563(ype e)
+-3.063 F .562
+(xists with name Requires that at least one RR named must e)-.15 F 3.062
+(xist. Requires)-.15 F .175(that no RR e)72 168 R .175
+(xists of the speci\214ed and Requires that a RR e)-.15 F .176
+(xists of the speci\214ed and If is speci\214ed, it must match e)-.15 F
+(x-)-.15 E(actly)72 180 Q 5.208(.D)-.65 G .208(eletes RRs named If \(an\
+d possibly is speci\214ed, only matching records will be deleted.)-5.208
+F .208(Adds a ne)5.208 F 2.707(wR)-.25 G 2.707(Rw)-2.707 G(ith)-2.707 E
+.417(speci\214ed and The follo)72 192 R .417(wing e)-.25 F .417
+(xample illustrates the interacti)-.15 F .717 -.15(ve u)-.25 H .417
+(se of to change an IP address by deleting an).15 F 2.918(ye)-.15 G
+(xist-)-3.068 E .306
+(ing A records for a domain name and then inserting a ne)72 204 R 2.805
+(wo)-.25 G 2.805(ne. Since)-2.805 F .305
+(no prerequisites are speci\214ed, the ne)2.805 F 2.805(wr)-.25 G(ecord)
+-2.805 E .015(will be added e)72 216 R -.15(ve)-.25 G 2.515(ni).15 G
+2.515(ft)-2.515 G .015(here were no e)-2.515 F .015
+(xisting records to delete.)-.15 F .016
+(Note the trailing blank line, required to process the re-)5.015 F 2.82
+(quest. $)72 228 R .32(nsupdate > update delete test.e)2.82 F .32
+(xample.com A > update add test.e)-.15 F .32
+(xample.com 3600 A 10.1.1.1 > In this e)-.15 F(x-)-.15 E .61
+(ample, a CN)72 240 R .61
+(AME alias is added to the database only if there are no e)-.35 F .611
+(xisting A or CN)-.15 F .611(AME records for the domain)-.35 F 2.617
+(name. $)72 252 R .117(nsupdate > prereq nxrrset www)2.617 F(.e)-.65 E
+.117(xample.com A > prereq nxrrset www)-.15 F(.e)-.65 E .116
+(xample.com CN)-.15 F .116(AME > update add)-.35 F(www)72 264 Q(.e)-.65
+E 1.348(xample.com 3600 CN)-.15 F 1.348(AME test.e)-.35 F 1.348
+(xample.com > In this e)-.15 F 1.348
+(xample, the nsupdate will be signed with the k)-.15 F -.15(ey)-.1 G
+("myk)72 276 Q -.15(ey)-.1 G .872(", which is in the directory "/v).15 F
+(ar/named/k)-.25 E -.15(ey)-.1 G 3.371(s". $).15 F .871(nsupdate -k /v)
+3.371 F(ar/named/k)-.25 E -.15(ey)-.1 G(s:myk).15 E 1.171 -.15(ey > u)
+-.1 H .871(pdate add ftp.e).15 F(x-)-.15 E .176
+(ample.com 60 A 192.168.5.1 > T)72 288 R .176
+(ypically indicates that the authoritati)-.8 F .476 -.15(ve n)-.25 H
+(ameserv).15 E .176(ers could not be reached T)-.15 F(ypically)-.8 E
+1.055(indicates that the nameserv)72 300 R 1.055
+(er has rejected the update, either because the nameserv)-.15 F 1.054
+(er doesn')-.15 F 3.554(ts)-.18 G 1.054(upport dynamic up-)-3.554 F .251
+(date, or due to an authentication f)72 312 R .251
+(ailure \(and no other messages\) The update w)-.1 F .251
+(as successfully recei)-.1 F -.15(ve)-.25 G 2.752(da).15 G .252
+(nd authenti-)-2.752 F .042(cated by the nameserv)72 324 R(er)-.15 E
+5.042(.T)-.55 G .042(he prerequisites, ho)-5.042 F(we)-.25 E -.15(ve)
+-.25 G .842 -.4(r, m).15 H .042(ay ha).4 F .342 -.15(ve p)-.2 H(re).15 E
+-.15(ve)-.25 G .042(nted the update from actually being performed.).15 F
+.979(The only w)72 336 R .979(ay to determine if the update w)-.1 F .979
+(as performed is to use deb)-.1 F .979(ug mode and e)-.2 F .979
+(xamine the status \214eld in the)-.15 F(nameserv)72 348 Q(er')-.15 E
+3.829(sr)-.55 G(eply)-3.829 E 6.329(.i)-.65 G 1.328
+(nitial domain name and name serv)-6.329 F 1.328
+(er addresses RFC-1034, RFC-1035, RFC-2136, Dynamic)-.15 F
+(Updates in the Domain Name System.)72 360 Q(Brent Baccala)5 E EP
+%%Trailer
+end
+%%EOF

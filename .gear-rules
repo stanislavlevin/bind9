@@ -1,0 +1,8 @@
+copy: *.all
+copy: *.conf
+copy: *.init
+copy: *.lib
+copy: *.patch
+tar.bz2: bind-contrib name=bind-contrib base=
+tar.bz2: bind-doc name=bind-doc base=
+tar.bz2: bind-src name=bind-src base=

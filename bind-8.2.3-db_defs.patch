@@ -1,0 +1,19 @@
+--- bind-8.2.3/src/bin/named/db_defs.h~	Wed Nov 29 09:55:46 2000
++++ bind-8.2.3/src/bin/named/db_defs.h	Wed Jan 31 04:25:05 2001
+@@ -313,14 +313,12 @@
+ 
+ #define DRCNTINC(x) \
+ 	do { \
+-		if (++((x)->d_rcnt) == 0) \
+-			ns_panic(ns_log_db, 1, "++d_rcnt == 0"); \
++		INSIST(!(++((x)->d_rcnt) == 0)); \
+ 	} while (0)
+ 
+ #define DRCNTDEC(x) \
+ 	do { \
+-		if (((x)->d_rcnt)-- == 0) \
+-			ns_panic(ns_log_db, 1, "d_rcnt-- == 0"); \
++		INSIST (!(((x)->d_rcnt)-- == 0)); \
+ 	} while (0)
+ 
+ #define ISVALIDGLUE(xdp) ((xdp)->d_type == T_NS || (xdp)->d_type == T_A \

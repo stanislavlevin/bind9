@@ -1,0 +1,30 @@
+--- bind-8.2.2-orig/doc/man/Makefile	Sat Sep 18 10:23:44 1999
++++ bind-8.2.2/doc/man/Makefile	Sun Oct 31 16:24:21 1999
+@@ -329,22 +329,27 @@
+ .${CMD_SRC_EXT}.${CMD_OUT_EXT}:
+ 	@echo "$*.${CMD_SRC_EXT} -> $*.${CMD_OUT_EXT}"
+ 	@${MK_MANFILE} <$*.${CMD_SRC_EXT} >$*.${CMD_OUT_EXT}
++	@touch -r $*.${CMD_SRC_EXT} $*.${CMD_OUT_EXT}
+ 
+ .${SYS_OPS_SRC_EXT}.${SYS_OPS_OUT_EXT}:
+ 	@echo "$*.${SYS_OPS_SRC_EXT} -> $*.${SYS_OPS_OUT_EXT}"
+ 	@${MK_MANFILE} <$*.${SYS_OPS_SRC_EXT} >$*.${SYS_OPS_OUT_EXT}
++	@touch -r $*.${SYS_OPS_SRC_EXT} $*.${SYS_OPS_OUT_EXT}
+ 
+ .${LIB_NETWORK_SRC_EXT}.${LIB_NETWORK_OUT_EXT}:
+ 	@echo "$*.${LIB_NETWORK_SRC_EXT} -> $*.${LIB_NETWORK_OUT_EXT}"
+ 	@${MK_MANFILE} <$*.${LIB_NETWORK_SRC_EXT} >$*.${LIB_NETWORK_OUT_EXT}
++	@touch -r $*.${LIB_NETWORK_SRC_EXT} $*.${LIB_NETWORK_OUT_EXT}
+ 
+ .${FORMAT_SRC_EXT}.${FORMAT_OUT_EXT}:
+ 	@echo "$*.${FORMAT_SRC_EXT} -> $*.${FORMAT_OUT_EXT}"
+ 	@${MK_MANFILE} <$*.${FORMAT_SRC_EXT} >$*.${FORMAT_OUT_EXT}
++	@touch -r $*.${FORMAT_SRC_EXT} $*.${FORMAT_OUT_EXT}
+ 
+ .${DESC_SRC_EXT}.${DESC_OUT_EXT}:
+ 	@echo "$*.${DESC_SRC_EXT} -> $*.${DESC_OUT_EXT}"
+ 	@${MK_MANFILE} <$*.${DESC_SRC_EXT} >$*.${DESC_OUT_EXT}
++	@touch -r $*.${DESC_SRC_EXT} $*.${DESC_OUT_EXT}
+ 
+ OUTFILES =	${CMD_OUT} ${NAMED_OUT} ${NAMED_XFER_OUT} ${NSLOOKUP_OUT} \
+ 		${NSUPDATE_OUT} ${LIB_NETWORK_OUT} ${FORMAT_OUT} ${DESC_OUT} \

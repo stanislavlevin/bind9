@@ -1,0 +1,11 @@
+--- bind-8.2.4/src/bin/named/ns_main.c~	Fri Mar 16 15:07:57 2001
++++ bind-8.2.4/src/bin/named/ns_main.c	Tue Jul 24 17:09:34 2001
+@@ -2777,7 +2777,7 @@
+ 	handlers[main_need_exit] = exit_handler;
+ 	handlers[main_need_qrylog] = toggle_qrylog;
+ 	handlers[main_need_debug] = use_desired_debug;
+-	handlers[main_need_restart] = ns_restart;
++	handlers[main_need_restart] = ns_reload;
+ 	handlers[main_need_reap] = reapchild;
+ 	handlers[main_need_noexpired] = ns_noexpired;
+ }

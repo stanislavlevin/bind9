@@ -1,0 +1,79 @@
+--- bind-8.2.1.desttmp/src/bin/named/pathtemplate.h	Fri Jan  8 22:28:30 1999
++++ bind-8.2.1/src/bin/named/pathtemplate.h	Fri Sep  3 01:26:05 1999
+@@ -26,11 +26,11 @@
+ #endif
+ 
+ #ifndef _PATH_DEBUG
+-#define _PATH_DEBUG	"named.run"
++#define _PATH_DEBUG	"%DESTTMP%/named.run"
+ #endif
+ 
+ #ifndef _PATH_DUMPFILE
+-#define _PATH_DUMPFILE	"named_dump.db"
++#define _PATH_DUMPFILE	"%DESTTMP%/named_dump.db"
+ #endif
+ 
+ #ifndef _PATH_NAMED
+@@ -46,15 +46,15 @@
+ #endif
+ 
+ #ifndef _PATH_STATS
+-#define _PATH_STATS	"named.stats"
++#define _PATH_STATS	"%DESTTMP%/named.stats"
+ #endif
+ 
+ #ifndef _PATH_MEMSTATS
+-#define _PATH_MEMSTATS	"named.memstats"
++#define _PATH_MEMSTATS	"%DESTTMP%/named.memstats"
+ #endif
+ 
+ #ifndef _PATH_TMPXFER
+-#define _PATH_TMPXFER	"xfer.ddt.XXXXXX"
++#define _PATH_TMPXFER	"%DESTTMP%/xfer.ddt.XXXXXX"
+ #endif
+ 
+ #ifndef _PATH_XFER
+@@ -62,11 +62,11 @@
+ #endif
+ 
+ #ifndef _PATH_XFERTRACE
+-#define _PATH_XFERTRACE	"xfer.trace"
++#define _PATH_XFERTRACE	"%DESTTMP%/xfer.trace"
+ #endif
+ 
+ #ifndef _PATH_XFERDDT
+-#define _PATH_XFERDDT	"xfer.ddt"
++#define _PATH_XFERDDT	"%DESTTMP%/xfer.ddt"
+ #endif
+ 
+ #ifndef _PATH_DEVNULL
+--- bind-8.2.1.desttmp/src/port/linux/Makefile.set	Fri Sep  3 00:52:29 1999
++++ bind-8.2.1/src/port/linux/Makefile.set	Fri Sep  3 01:28:44 1999
+@@ -9,6 +9,7 @@
+ 'DESTINC=/usr/lib/bind/include'
+ 'DESTETC=/etc'
+ 'DESTRUN=/var/run'
++'DESTTMP=/var/tmp'
+ 'LEX=flex -8 -I'
+ 'YACC=yacc -d'
+ 'SYSLIBS=-lfl'
+--- bind-8.2.1/src/bin/named/Makefile.desttmp	Mon Feb 22 05:47:55 1999
++++ bind-8.2.1/src/bin/named/Makefile	Fri Sep  3 01:49:48 1999
+@@ -94,6 +94,7 @@
+ 	    -e "s|%DESTEXEC%|${DESTEXEC}|" \
+ 	    -e "s|%DESTETC%|${DESTETC}|" \
+ 	    -e "s|%DESTRUN%|${DESTRUN}|" \
++	    -e "s|%DESTTMP%|${DESTTMP}|" \
+ 	    < pathtemplate.h > pathnames.h
+ 
+ pathnames${EXE}: pathnames.${O} pathnames.h ${LIBBIND} Makefile
+--- bind-8.2.1/src/bin/ndc/Makefile.desttmp	Mon Feb 22 05:47:56 1999
++++ bind-8.2.1/src/bin/ndc/Makefile	Fri Sep  3 01:51:01 1999
+@@ -65,6 +65,7 @@
+ 	    -e "s|%DESTEXEC%|${DESTEXEC}|" \
+ 	    -e "s|%DESTETC%|${DESTETC}|" \
+ 	    -e "s|%DESTRUN%|${DESTRUN}|" \
++	    -e "s|%DESTTMP%|${DESTTMP}|" \
+ 	    < ../named/pathtemplate.h > pathnames.h
+ 
+ distclean: clean

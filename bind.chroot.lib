@@ -1,0 +1,11 @@
+#!/bin/sh -e
+
+# Source functions library
+. /etc/chroot.d/functions
+
+cd %ROOT
+
+force=
+[ "$1" != "force" ] || force=-f
+
+CopyLibs $force -d lib usr/sbin/*

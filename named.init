@@ -1,0 +1,103 @@
+#!/bin/sh
+#
+# named           This shell script takes care of starting and stopping
+#                 named (BIND DNS server).
+#
+# chkconfig: 345 20 55
+# description: named (BIND) is a Domain Name Server (DNS) \
+# that is used to resolve host names to IP addresses.
+# probe: true
+
+# Source function library.
+. /etc/init.d/functions
+
+# Source networking configuration.
+SourceIfNotEmpty /etc/sysconfig/network && [ "$NETWORKING" != no ] || exit
+
+NAMED_EXE=/usr/sbin/named
+NAMED_ROOT="%ROOT"
+NAMED_CONF="$NAMED_ROOT/etc/named.conf"
+
+[ -x "$NAMED_EXE" -a -d "$NAMED_ROOT" -a -r "$NAMED_CONF" ] || exit
+
+LOCKFILE=/var/lock/subsys/named
+RETVAL=0
+
+adjust()
+{
+	action "Adjusting environment for named:" /etc/chroot.d/bind.all
+	RETVAL=$?
+	return $RETVAL
+}
+
+start()
+{
+	adjust || return
+	echo -n "Starting named: "
+	daemon "$NAMED_EXE" -u named -t "$NAMED_ROOT" -c "$NAMED_CONF"
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && touch "$LOCKFILE"
+	return $RETVAL
+}
+
+stop()
+{
+	echo -n "Shutting down named: "
+	killproc "$NAMED_EXE"
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && rm -f "$LOCKFILE"
+	return $RETVAL
+}
+
+restart()
+{
+	stop
+	start
+}
+
+# See how we were called.
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		restart
+		;;
+	status)
+		/usr/sbin/ndc status
+		RETVAL=$?
+		;;
+	reload)
+		/usr/sbin/ndc reload
+		RETVAL=$?
+		;; 
+	adjust)
+		adjust
+		;;
+	probe)
+		# named knows how to reload intelligently; we don't want linuxconf
+		# to offer to restart every time
+		/usr/sbin/ndc reload &>/dev/null || echo start
+		RETVAL=0
+		;;
+	condstop)
+		if [ -e "$LOCKFILE" ]; then
+			stop
+		fi
+		;;
+	condrestart)
+		if [ -e "$LOCKFILE" ]; then
+			restart
+		fi
+		;;
+	*)
+		echo "Usage: ${0##*/} {start|stop|restart|reload|status|adjust|condstop|condrestart}"
+		RETVAL=1
+esac
+
+exit $RETVAL
