@@ -1,6 +1,6 @@
 Name: bind
 %define vers_num 9.2.4
-%define vers_rc rc5
+%define vers_rc rc8
 Version: %vers_num.%vers_rc
 Release: alt1
 
@@ -59,7 +59,7 @@ Obsoletes: bind-chroot, caching-nameserver
 Conflicts: syslogd < 1.4.1-alt11
 PreReq: chrooted, chkconfig, shadow-utils, coreutils, grep, syslogd-daemon
 PreReq: %__subst, %post_service, %preun_service
-PreReq: libdns11 = %version-%release
+PreReq: libdns16 = %version-%release
 PreReq: libisc7 = %version-%release
 PreReq: libisccc0 = %version-%release
 PreReq: libisccfg0 = %version-%release
@@ -86,14 +86,14 @@ PreReq: %name = %version-%release
 %package utils
 Summary: Utilities provided with BIND
 Group: Networking/Other
-Requires: libdns11 = %version-%release
+Requires: libdns16 = %version-%release
 Requires: libisc7 = %version-%release
 Requires: liblwres1 = %version-%release
 
 %package devel
 Summary: BIND development libraries and headers
 Group: Development/C
-Requires: libdns11 = %version-%release
+Requires: libdns16 = %version-%release
 Requires: libisc7 = %version-%release
 Requires: libisccc0 = %version-%release
 Requires: libisccfg0 = %version-%release
@@ -109,7 +109,7 @@ Summary: Documentation for BIND
 Group: Development/Other
 Prefix: %prefix
 
-%package -n libdns11
+%package -n libdns16
 Summary: DNS shared library used by BIND
 Group: System/Libraries
 Provides: libdns = %version-%release
@@ -138,7 +138,7 @@ Provides: liblwres = %version-%release
 Summary: Lightweight resolver daemon
 Group: System/Servers
 PreReq: /var/resolv, chkconfig, shadow-utils
-Requires: libdns11 = %version-%release
+Requires: libdns16 = %version-%release
 Requires: libisc7 = %version-%release
 Requires: libisccc0 = %version-%release
 Requires: libisccfg0 = %version-%release
@@ -179,7 +179,7 @@ need more nameserver API than the resolver code provided in libc.
 This package provides various documents that are useful for maintaining a
 working BIND installation.
 
-%description -n libdns11
+%description -n libdns16
 This package contains the libdns shared library used by BIND's daemons
 and clients.
 
@@ -260,9 +260,10 @@ popd # contrib/queryperf
 %install
 %__mkdir_p $RPM_BUILD_ROOT{%_bindir,%_sbindir,%_libdir,%_mandir/{man{1,3,5,8}},%_localstatedir}
 
-%__install -p -m644 alt/nslookup.1 $RPM_BUILD_ROOT%_man1dir/
+#%__install -p -m644 alt/nslookup.1 $RPM_BUILD_ROOT%_man1dir/
 %__install -p -m644 alt/resolver.5 $RPM_BUILD_ROOT%_man5dir/
 %make_install install DESTDIR=$RPM_BUILD_ROOT
+%__mv $RPM_BUILD_ROOT{%_man8dir,%_man5dir}/named.conf.5
 
 %__install -p -m755 contrib/queryperf/queryperf $RPM_BUILD_ROOT%_sbindir/
 
@@ -302,8 +303,8 @@ done
 %__bzip2 $RPM_BUILD_ROOT%docdir/{*/*.txt,FAQ,CHANGES}
 %__rm -fv $RPM_BUILD_ROOT%docdir/*/{Makefile*,README-SGML,*.dsl*,*.sh*,*.xml}
 
-%post -n libdns11 -p %post_ldconfig
-%postun -n libdns11 -p %postun_ldconfig
+%post -n libdns16 -p %post_ldconfig
+%postun -n libdns16 -p %postun_ldconfig
 
 %post -n libisccc0 -p %post_ldconfig
 %postun -n libisccc0 -p %postun_ldconfig
@@ -347,7 +348,7 @@ fi
 %preun -n lwresd
 %preun_service lwresd
 
-%files -n libdns11
+%files -n libdns16
 %_libdir/libdns.so.*
 
 %files -n libisc7
@@ -388,7 +389,7 @@ fi
 %config %_initdir/bind
 %config(noreplace) %_sysconfdir/rndc.conf
 
-#%_man5dir/named.conf.*
+%_man5dir/named.conf.*
 %_man5dir/rndc.conf.*
 %_man8dir/dnssec*
 %_man8dir/named*
@@ -443,6 +444,12 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Sun Sep 05 2004 Dmitry V. Levin <ldv@altlinux.org> 9.2.4.rc8-alt1
+- Updated to 9.2.4rc8.
+- Renamed subpackage according to soname change:
+  libdns11 -> libdns16.
+- Updated startup script to make use of new "status --lockfile" option.
+
 * Wed Jun 30 2004 Dmitry V. Levin <ldv@altlinux.org> 9.2.4.rc5-alt1
 - Updated to 9.2.4rc5.
 - Updated patches.

@@ -1,4 +1,74 @@
 
+	--- 9.2.4rc8 released ---
+
+1709.	[port]		solaris: add SMF support from Sun.
+
+1708.	[cleanup]	Replaced dns_fullname_hash() with dns_name_fullhash()
+			for conformance to the name space convention.  Binary
+			backward compatibility to the old function name is
+			provided. [RT #12376]
+
+1707.	[contrib]	sdb/ldap updated to version 1.0-beta.
+
+1704.	[port]		lwres needed a snprintf() implementation for
+			platforms without snprintf(). [RT #12321]
+
+1701.	[doc]		A minimal named.conf man page.
+
+1700.	[func]		nslookup is no longer to be treated as deprecated.
+			Remove "deprecated" warning message.  Add man page.
+
+1698.	[doc]		Use reserved IPv6 documentation prefix.
+
+	--- 9.2.4rc7 released ---
+
+1694.	[bug]		Report if the builtin views of "_default" / "_bind"
+			are defined in named.conf. [RT #12023]
+
+1692.	[bug]		Don't set -I, -L and -R flags when libcrypto is in
+			/usr/lib. [RT #11971]
+
+1691.	[bug]		sdb's attachversion was not complete. [RT #11990]
+
+1690.	[bug]		Delay detaching view from the client until UPDATE
+			processing completes when shutting down. [RT #11714]
+
+1689.	[bug]		DNS_NAME_TOREGION() macros contained a gratuitous
+			semicolons. [RT #11707]
+
+1688.	[bug]		LDFLAGS was not supported.
+
+1687.	[bug]		Race condition in dispatch. [RT #10272]
+
+1686.	[bug]		Named sent a extraneous NOTIFY when it received a
+			redundant UPDATE request. [RT #11943]
+
+	--- 9.2.4rc6 released ---
+
+1685.	[bug]		Change #1679 loop tests weren't quite right.
+
+1682.	[port]		Update configure test for (long long) printf format.
+			[RT #5066]
+
+1681.	[bug]		Only set SO_REUSEADDR when a port is specified in
+			isc_socket_bind(). [RT #11742]
+
+1679.	[bug]		When there was a single nameserver with multiple
+			addresses for a zone not all addresses were tried.
+			[RT #11706]
+
+1672.	[cleanup]	Tests which only function in a threaded build
+			now return R:THREADONLY (rather than R:UNTESTED)
+			in a non-threaded build.
+
+1671.	[contrib]	queryperf: add NAPTR to the list of known types.
+
+1669.	[bug]		Restore "update forwarding denied" log messages
+			accidentally suppressed by change #1633. [RT# 11657]
+
+1660.	[bug]		win32: connection_reset_fix() was being called
+			unconditionally.  [RT #11595]
+
 	--- 9.2.4rc5 released ---
 
 1655.	[bug]		Logging multiple versions w/o a size was broken.

@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-AC_REVISION($Revision: 1.294.2.31 $)
+AC_REVISION($Revision: 1.294.2.35 $)
 
 AC_INIT(lib/dns/name.c)
 AC_PREREQ(2.13)
@@ -335,15 +335,21 @@ case "$use_openssl" in
 			fi
 		fi
 		USE_OPENSSL='-DOPENSSL'
-		DST_OPENSSL_INC="-I$use_openssl/include"
-		case $host in
-		*-solaris*)
-			DNS_OPENSSL_LIBS="-L$use_openssl/lib -R$use_openssl/lib -lcrypto"
-			;;
-		*)
-			DNS_OPENSSL_LIBS="-L$use_openssl/lib -lcrypto"
-			;;
-		esac
+		if test "$use_openssl" = "/usr"
+		then
+			DST_OPENSSL_INC=""
+			DNS_OPENSSL_LIBS="-lcrypto"
+		else
+			DST_OPENSSL_INC="-I$use_openssl/include"
+			case $host in
+			*-solaris*)
+				DNS_OPENSSL_LIBS="-L$use_openssl/lib -R$use_openssl/lib -lcrypto"
+				;;
+			*)
+				DNS_OPENSSL_LIBS="-L$use_openssl/lib -lcrypto"
+				;;
+			esac
+		fi
 		AC_MSG_RESULT(using openssl from $use_openssl/lib and $use_openssl/include)
 
 		saved_cflags="$CFLAGS"
@@ -785,6 +791,11 @@ AC_SUBST(ISC_PLATFORM_USETHREADS)
 
 ISC_THREAD_DIR=$thread_dir
 AC_SUBST(ISC_THREAD_DIR)
+
+#
+# In solaris 10, SMF can manage named service
+#
+AC_CHECK_LIB(scf, smf_enable_instance)
 
 #
 # flockfile is usually provided by pthreads, but we may want to use it
@@ -1497,30 +1508,46 @@ AC_TRY_LINK([#include <string.h>], [char *sp; char *foo = strsep(&sp, ".");],
 	[AC_MSG_RESULT(no); ISC_PLATFORM_NEEDSTRSEP="#define ISC_PLATFORM_NEEDSTRSEP 1"])
 
 AC_CHECK_FUNC(vsnprintf,
-	[ISC_PLATFORM_NEEDVSNPRINTF="#undef ISC_PLATFORM_NEEDVSNPRINTF"],
+	[ISC_PLATFORM_NEEDVSNPRINTF="#undef ISC_PLATFORM_NEEDVSNPRINTF"
+	  LWRES_PLATFORM_NEEDVSNPRINTF="#undef LWRES_PLATFORM_NEEDVSNPRINTF"],
 	[ISC_EXTRA_OBJS="$ISC_EXTRA_OBJS print.$O"
 	 ISC_EXTRA_SRCS="$ISC_EXTRA_SRCS print.c"
-	 ISC_PLATFORM_NEEDVSNPRINTF="#define ISC_PLATFORM_NEEDVSNPRINTF 1"])
+	 ISC_PLATFORM_NEEDVSNPRINTF="#define ISC_PLATFORM_NEEDVSNPRINTF 1"
+	 LWRES_PLATFORM_NEEDVSNPRINTF="#define LWRES_PLATFORM_NEEDVSNPRINTF 1"])
 AC_SUBST(ISC_PLATFORM_NEEDSTRSEP)
 AC_SUBST(ISC_PLATFORM_NEEDVSNPRINTF)
+AC_SUBST(LWRES_PLATFORM_NEEDVSNPRINTF)
 AC_CHECK_FUNC(strerror, AC_DEFINE(HAVE_STRERROR))
 
 AC_SUBST(ISC_EXTRA_OBJS)
 AC_SUBST(ISC_EXTRA_SRCS)
 
-#
 # Determine the printf format characters to use when printing
-# values of type isc_int64_t.  We make the assumption that platforms
-# where a "long long" is the same size as a "long" (e.g., Alpha/OSF1)
-# want "%ld" and everyone else can use "%lld".  Win32 uses "%I64d",
-# but that's defined elsewhere since we don't use configure on Win32.
+# values of type isc_int64_t. This will normally be "ll", but where
+# the compiler treats "long long" as a alias for "long" and printf
+# doesn't know about "long long" use "l".  Hopefully the sprintf
+# will produce a inconsistant result in the later case.  If the compiler
+# fails due to seeing "%lld" we fall back to "l".
+#
+# Win32 uses "%I64d", but that's defined elsewhere since we don't use
+# configure on Win32.
 #
 AC_MSG_CHECKING(printf format modifier for 64-bit integers)
-AC_TRY_RUN([main() { exit(!(sizeof(long long int) == sizeof(long int))); }],
-	[AC_MSG_RESULT(l)
-	ISC_PLATFORM_QUADFORMAT='#define ISC_PLATFORM_QUADFORMAT "l"'],
+AC_TRY_RUN([
+#include <stdio.h>
+main() {
+	long long int j = 0;
+	char buf[100];
+	buf[0] = 0;
+	sprintf(buf, "%lld", j);
+	exit((sizeof(long long int) != sizeof(long int))? 0 :
+	     (strcmp(buf, "0") != 0));
+} 
+],
 	[AC_MSG_RESULT(ll)
 	ISC_PLATFORM_QUADFORMAT='#define ISC_PLATFORM_QUADFORMAT "ll"'],
+	[AC_MSG_RESULT(l)
+	ISC_PLATFORM_QUADFORMAT='#define ISC_PLATFORM_QUADFORMAT "l"'],
 	[AC_MSG_RESULT(assuming target platform uses ll)
 	ISC_PLATFORM_QUADFORMAT='#define ISC_PLATFORM_QUADFORMAT "ll"'])
 AC_SUBST(ISC_PLATFORM_QUADFORMAT)

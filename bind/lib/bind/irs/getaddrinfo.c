@@ -1092,7 +1092,8 @@ ip6_str2scopeid(char *scope, struct sockaddr_in6 *sin6,
 		return (0);
 
 #ifdef USE_IFNAMELINKID
-	if (IN6_IS_ADDR_LINKLOCAL(a6) || IN6_IS_ADDR_MC_LINKLOCAL(a6)) {
+	if (IN6_IS_ADDR_LINKLOCAL(a6) || IN6_IS_ADDR_MC_LINKLOCAL(a6) ||
+	    IN6_IS_ADDR_MC_NODELOCAL(a6)) {
 		/*
 		 * Using interface names as link indices can be allowed
 		 * only when we can assume a one-to-one mappings between
@@ -1100,6 +1101,7 @@ ip6_str2scopeid(char *scope, struct sockaddr_in6 *sin6,
 		 */
 		scopeid = if_nametoindex(scope);
 		if (scopeid == 0)
+			goto trynumeric;
 		*scopeidp = scopeid;
 		return (1);
 	}

@@ -17,8 +17,8 @@ and install.
 
 
 Index: README.idnkit
---- /dev/null	Thu Apr 29 11:15:03 2004
-+++ README.idnkit	Thu Apr 29 11:05:40 2004
+--- /dev/null	Wed Sep  1 17:46:18 2004
++++ README.idnkit	Wed Sep  1 17:33:56 2004
 @@ -0,0 +1,113 @@
 +
 +			BIND-9 IDN patch
@@ -136,15 +136,15 @@ Index: README.idnkit
 Index: configure
 ===================================================================
 RCS file: /proj/cvs/prod/bind9/configure,v
-retrieving revision 1.284.2.28
-diff -U2 -r1.284.2.28 configure
---- configure	10 Mar 2004 03:25:48 -0000	1.284.2.28
-+++ configure	29 Apr 2004 01:16:48 -0000
+retrieving revision 1.284.2.32
+diff -U2 -r1.284.2.32 configure
+--- configure	1 Sep 2004 07:11:22 -0000	1.284.2.32
++++ configure	1 Sep 2004 07:50:08 -0000
 @@ -466,5 +466,5 @@
  #endif"
  
--ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE RANLIB ac_ct_RANLIB INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA STD_CINCLUDES STD_CDEFINES STD_CWARNINGS CCOPT AR ARFLAGS LN ETAGS PERL CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP ISC_PLATFORM_HAVELONGLONG ISC_PLATFORM_NEEDSYSSELECTH LWRES_PLATFORM_NEEDSYSSELECTH DST_OPENSSL_INC DNS_OPENSSL_LIBS USE_OPENSSL USE_GSSAPI DST_GSSAPI_INC DNS_GSSAPI_LIBS ALWAYS_DEFINES ISC_PLATFORM_USETHREADS ISC_THREAD_DIR MKDEPCC MKDEPCFLAGS MKDEPPROG IRIX_DNSSEC_WARNINGS_HACK purify_path PURIFY LN_S ECHO ac_ct_AR STRIP ac_ct_STRIP CXX CXXFLAGS ac_ct_CXX CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL O A SA LIBTOOL_MKDEP_SED LIBTOOL_MODE_COMPILE LIBTOOL_MODE_INSTALL LIBTOOL_MODE_LINK LIBBIND ISC_PLATFORM_HAVEIPV6 LWRES_PLATFORM_HAVEIPV6 ISC_PLATFORM_NEEDNETINETIN6H LWRES_PLATFORM_NEEDNETINETIN6H ISC_PLATFORM_NEEDNETINET6IN6H LWRES_PLATFORM_NEEDNETINET6IN6H ISC_PLATFORM_HAVEINADDR6 LWRES_PLATFORM_HAVEINADDR6 ISC_PLATFORM_NEEDIN6ADDRANY LWRES_PLATFORM_NEEDIN6ADDRANY ISC_PLATFORM_NEEDIN6ADDRLOOPBACK LWRES_PLATFORM_NEEDIN6ADDRLOOPBACK ISC_PLATFORM_HAVEIN6PKTINFO ISC_PLATFORM_FIXIN6ISADDR ISC_IPV6_H ISC_IPV6_O ISC_ISCIPV6_O ISC_IPV6_C LWRES_HAVE_SIN6_SCOPE_ID ISC_PLATFORM_NEEDNTOP ISC_PLATFORM_NEEDPTON ISC_PLATFORM_NEEDATON ISC_PLATFORM_HAVESALEN LWRES_PLATFORM_HAVESALEN ISC_PLATFORM_MSGHDRFLAVOR ISC_PLATFORM_NEEDPORTT ISC_LWRES_NEEDADDRINFO ISC_LWRES_NEEDRRSETINFO ISC_LWRES_SETHOSTENTINT ISC_LWRES_ENDHOSTENTINT ISC_LWRES_GETNETBYADDRINADDR ISC_LWRES_SETNETENTINT ISC_LWRES_ENDNETENTINT ISC_LWRES_GETHOSTBYADDRVOID ISC_LWRES_NEEDHERRNO ISC_LWRES_GETIPNODEPROTO ISC_LWRES_GETADDRINFOPROTO ISC_LWRES_GETNAMEINFOPROTO ISC_PLATFORM_NEEDSTRSEP ISC_PLATFORM_NEEDVSNPRINTF ISC_EXTRA_OBJS ISC_EXTRA_SRCS ISC_PLATFORM_QUADFORMAT ISC_PLATFORM_RLIMITTYPE ISC_PLATFORM_USEDECLSPEC LWRES_PLATFORM_USEDECLSPEC ISC_PLATFORM_BRACEPTHREADONCEINIT OPENJADE JADETEX PDFJADETEX SGMLCATALOG HTMLSTYLE PRINTSTYLE XMLDCL DOCBOOK2MANSPEC BIND9_TOP_BUILDDIR BIND9_ISC_BUILDINCLUDE BIND9_ISCCC_BUILDINCLUDE BIND9_ISCCFG_BUILDINCLUDE BIND9_DNS_BUILDINCLUDE BIND9_LWRES_BUILDINCLUDE BIND9_VERSION LIBOBJS LTLIBOBJS'
-+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE RANLIB ac_ct_RANLIB INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA STD_CINCLUDES STD_CDEFINES STD_CWARNINGS CCOPT AR ARFLAGS LN ETAGS PERL CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP ISC_PLATFORM_HAVELONGLONG ISC_PLATFORM_NEEDSYSSELECTH LWRES_PLATFORM_NEEDSYSSELECTH DST_OPENSSL_INC DNS_OPENSSL_LIBS USE_OPENSSL USE_GSSAPI DST_GSSAPI_INC DNS_GSSAPI_LIBS ALWAYS_DEFINES ISC_PLATFORM_USETHREADS ISC_THREAD_DIR MKDEPCC MKDEPCFLAGS MKDEPPROG IRIX_DNSSEC_WARNINGS_HACK purify_path PURIFY LN_S ECHO ac_ct_AR STRIP ac_ct_STRIP CXX CXXFLAGS ac_ct_CXX CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL O A SA LIBTOOL_MKDEP_SED LIBTOOL_MODE_COMPILE LIBTOOL_MODE_INSTALL LIBTOOL_MODE_LINK LIBBIND ISC_PLATFORM_HAVEIPV6 LWRES_PLATFORM_HAVEIPV6 ISC_PLATFORM_NEEDNETINETIN6H LWRES_PLATFORM_NEEDNETINETIN6H ISC_PLATFORM_NEEDNETINET6IN6H LWRES_PLATFORM_NEEDNETINET6IN6H ISC_PLATFORM_HAVEINADDR6 LWRES_PLATFORM_HAVEINADDR6 ISC_PLATFORM_NEEDIN6ADDRANY LWRES_PLATFORM_NEEDIN6ADDRANY ISC_PLATFORM_NEEDIN6ADDRLOOPBACK LWRES_PLATFORM_NEEDIN6ADDRLOOPBACK ISC_PLATFORM_HAVEIN6PKTINFO ISC_PLATFORM_FIXIN6ISADDR ISC_IPV6_H ISC_IPV6_O ISC_ISCIPV6_O ISC_IPV6_C LWRES_HAVE_SIN6_SCOPE_ID ISC_PLATFORM_NEEDNTOP ISC_PLATFORM_NEEDPTON ISC_PLATFORM_NEEDATON ISC_PLATFORM_HAVESALEN LWRES_PLATFORM_HAVESALEN ISC_PLATFORM_MSGHDRFLAVOR ISC_PLATFORM_NEEDPORTT ISC_LWRES_NEEDADDRINFO ISC_LWRES_NEEDRRSETINFO ISC_LWRES_SETHOSTENTINT ISC_LWRES_ENDHOSTENTINT ISC_LWRES_GETNETBYADDRINADDR ISC_LWRES_SETNETENTINT ISC_LWRES_ENDNETENTINT ISC_LWRES_GETHOSTBYADDRVOID ISC_LWRES_NEEDHERRNO ISC_LWRES_GETIPNODEPROTO ISC_LWRES_GETADDRINFOPROTO ISC_LWRES_GETNAMEINFOPROTO ISC_PLATFORM_NEEDSTRSEP ISC_PLATFORM_NEEDVSNPRINTF ISC_EXTRA_OBJS ISC_EXTRA_SRCS ISC_PLATFORM_QUADFORMAT ISC_PLATFORM_RLIMITTYPE ISC_PLATFORM_USEDECLSPEC LWRES_PLATFORM_USEDECLSPEC ISC_PLATFORM_BRACEPTHREADONCEINIT OPENJADE JADETEX PDFJADETEX SGMLCATALOG HTMLSTYLE PRINTSTYLE XMLDCL DOCBOOK2MANSPEC IDNLIBS BIND9_TOP_BUILDDIR BIND9_ISC_BUILDINCLUDE BIND9_ISCCC_BUILDINCLUDE BIND9_ISCCFG_BUILDINCLUDE BIND9_DNS_BUILDINCLUDE BIND9_LWRES_BUILDINCLUDE BIND9_VERSION LIBOBJS LTLIBOBJS'
+-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE RANLIB ac_ct_RANLIB INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA STD_CINCLUDES STD_CDEFINES STD_CWARNINGS CCOPT AR ARFLAGS LN ETAGS PERL CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP ISC_PLATFORM_HAVELONGLONG ISC_PLATFORM_NEEDSYSSELECTH LWRES_PLATFORM_NEEDSYSSELECTH DST_OPENSSL_INC DNS_OPENSSL_LIBS USE_OPENSSL USE_GSSAPI DST_GSSAPI_INC DNS_GSSAPI_LIBS ALWAYS_DEFINES ISC_PLATFORM_USETHREADS ISC_THREAD_DIR MKDEPCC MKDEPCFLAGS MKDEPPROG IRIX_DNSSEC_WARNINGS_HACK purify_path PURIFY LN_S ECHO ac_ct_AR STRIP ac_ct_STRIP CXX CXXFLAGS ac_ct_CXX CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL O A SA LIBTOOL_MKDEP_SED LIBTOOL_MODE_COMPILE LIBTOOL_MODE_INSTALL LIBTOOL_MODE_LINK LIBBIND ISC_PLATFORM_HAVEIPV6 LWRES_PLATFORM_HAVEIPV6 ISC_PLATFORM_NEEDNETINETIN6H LWRES_PLATFORM_NEEDNETINETIN6H ISC_PLATFORM_NEEDNETINET6IN6H LWRES_PLATFORM_NEEDNETINET6IN6H ISC_PLATFORM_HAVEINADDR6 LWRES_PLATFORM_HAVEINADDR6 ISC_PLATFORM_NEEDIN6ADDRANY LWRES_PLATFORM_NEEDIN6ADDRANY ISC_PLATFORM_NEEDIN6ADDRLOOPBACK LWRES_PLATFORM_NEEDIN6ADDRLOOPBACK ISC_PLATFORM_HAVEIN6PKTINFO ISC_PLATFORM_FIXIN6ISADDR ISC_IPV6_H ISC_IPV6_O ISC_ISCIPV6_O ISC_IPV6_C LWRES_HAVE_SIN6_SCOPE_ID ISC_PLATFORM_NEEDNTOP ISC_PLATFORM_NEEDPTON ISC_PLATFORM_NEEDATON ISC_PLATFORM_HAVESALEN LWRES_PLATFORM_HAVESALEN ISC_PLATFORM_MSGHDRFLAVOR ISC_PLATFORM_NEEDPORTT ISC_LWRES_NEEDADDRINFO ISC_LWRES_NEEDRRSETINFO ISC_LWRES_SETHOSTENTINT ISC_LWRES_ENDHOSTENTINT ISC_LWRES_GETNETBYADDRINADDR ISC_LWRES_SETNETENTINT ISC_LWRES_ENDNETENTINT ISC_LWRES_GETHOSTBYADDRVOID ISC_LWRES_NEEDHERRNO ISC_LWRES_GETIPNODEPROTO ISC_LWRES_GETADDRINFOPROTO ISC_LWRES_GETNAMEINFOPROTO ISC_PLATFORM_NEEDSTRSEP ISC_PLATFORM_NEEDVSNPRINTF LWRES_PLATFORM_NEEDVSNPRINTF ISC_EXTRA_OBJS ISC_EXTRA_SRCS ISC_PLATFORM_QUADFORMAT ISC_PLATFORM_RLIMITTYPE ISC_PLATFORM_USEDECLSPEC LWRES_PLATFORM_USEDECLSPEC ISC_PLATFORM_BRACEPTHREADONCEINIT OPENJADE JADETEX PDFJADETEX SGMLCATALOG HTMLSTYLE PRINTSTYLE XMLDCL DOCBOOK2MANSPEC BIND9_TOP_BUILDDIR BIND9_ISC_BUILDINCLUDE BIND9_ISCCC_BUILDINCLUDE BIND9_ISCCFG_BUILDINCLUDE BIND9_DNS_BUILDINCLUDE BIND9_LWRES_BUILDINCLUDE BIND9_VERSION LIBOBJS LTLIBOBJS'
++ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE RANLIB ac_ct_RANLIB INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA STD_CINCLUDES STD_CDEFINES STD_CWARNINGS CCOPT AR ARFLAGS LN ETAGS PERL CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP ISC_PLATFORM_HAVELONGLONG ISC_PLATFORM_NEEDSYSSELECTH LWRES_PLATFORM_NEEDSYSSELECTH DST_OPENSSL_INC DNS_OPENSSL_LIBS USE_OPENSSL USE_GSSAPI DST_GSSAPI_INC DNS_GSSAPI_LIBS ALWAYS_DEFINES ISC_PLATFORM_USETHREADS ISC_THREAD_DIR MKDEPCC MKDEPCFLAGS MKDEPPROG IRIX_DNSSEC_WARNINGS_HACK purify_path PURIFY LN_S ECHO ac_ct_AR STRIP ac_ct_STRIP CXX CXXFLAGS ac_ct_CXX CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL O A SA LIBTOOL_MKDEP_SED LIBTOOL_MODE_COMPILE LIBTOOL_MODE_INSTALL LIBTOOL_MODE_LINK LIBBIND ISC_PLATFORM_HAVEIPV6 LWRES_PLATFORM_HAVEIPV6 ISC_PLATFORM_NEEDNETINETIN6H LWRES_PLATFORM_NEEDNETINETIN6H ISC_PLATFORM_NEEDNETINET6IN6H LWRES_PLATFORM_NEEDNETINET6IN6H ISC_PLATFORM_HAVEINADDR6 LWRES_PLATFORM_HAVEINADDR6 ISC_PLATFORM_NEEDIN6ADDRANY LWRES_PLATFORM_NEEDIN6ADDRANY ISC_PLATFORM_NEEDIN6ADDRLOOPBACK LWRES_PLATFORM_NEEDIN6ADDRLOOPBACK ISC_PLATFORM_HAVEIN6PKTINFO ISC_PLATFORM_FIXIN6ISADDR ISC_IPV6_H ISC_IPV6_O ISC_ISCIPV6_O ISC_IPV6_C LWRES_HAVE_SIN6_SCOPE_ID ISC_PLATFORM_NEEDNTOP ISC_PLATFORM_NEEDPTON ISC_PLATFORM_NEEDATON ISC_PLATFORM_HAVESALEN LWRES_PLATFORM_HAVESALEN ISC_PLATFORM_MSGHDRFLAVOR ISC_PLATFORM_NEEDPORTT ISC_LWRES_NEEDADDRINFO ISC_LWRES_NEEDRRSETINFO ISC_LWRES_SETHOSTENTINT ISC_LWRES_ENDHOSTENTINT ISC_LWRES_GETNETBYADDRINADDR ISC_LWRES_SETNETENTINT ISC_LWRES_ENDNETENTINT ISC_LWRES_GETHOSTBYADDRVOID ISC_LWRES_NEEDHERRNO ISC_LWRES_GETIPNODEPROTO ISC_LWRES_GETADDRINFOPROTO ISC_LWRES_GETNAMEINFOPROTO ISC_PLATFORM_NEEDSTRSEP ISC_PLATFORM_NEEDVSNPRINTF LWRES_PLATFORM_NEEDVSNPRINTF ISC_EXTRA_OBJS ISC_EXTRA_SRCS ISC_PLATFORM_QUADFORMAT ISC_PLATFORM_RLIMITTYPE ISC_PLATFORM_USEDECLSPEC LWRES_PLATFORM_USEDECLSPEC ISC_PLATFORM_BRACEPTHREADONCEINIT OPENJADE JADETEX PDFJADETEX SGMLCATALOG HTMLSTYLE PRINTSTYLE XMLDCL DOCBOOK2MANSPEC IDNLIBS BIND9_TOP_BUILDDIR BIND9_ISC_BUILDINCLUDE BIND9_ISCCC_BUILDINCLUDE BIND9_ISCCFG_BUILDINCLUDE BIND9_DNS_BUILDINCLUDE BIND9_LWRES_BUILDINCLUDE BIND9_VERSION LIBOBJS LTLIBOBJS'
  ac_subst_files='BIND9_INCLUDES BIND9_MAKE_RULES LIBISC_API LIBISCCC_API LIBISCCFG_API LIBDNS_API LIBLWRES_API'
  
 @@ -1048,4 +1048,8 @@
@@ -156,183 +156,183 @@ diff -U2 -r1.284.2.28 configure
 +  --with-idnlib=ARG    specify libidnkit
  
  Some influential environment variables:
-@@ -7675,5 +7679,5 @@
+@@ -7759,5 +7763,5 @@
  *-*-irix6*)
    # Find out which ABI we are using.
--  echo '#line 7677 "configure"' > conftest.$ac_ext
-+  echo '#line 7681 "configure"' > conftest.$ac_ext
+-  echo '#line 7761 "configure"' > conftest.$ac_ext
++  echo '#line 7765 "configure"' > conftest.$ac_ext
    if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
    (eval $ac_compile) 2>&5
-@@ -8665,5 +8669,5 @@
+@@ -8749,5 +8753,5 @@
  
  # Provide some information about the compiler.
--echo "$as_me:8667:" \
-+echo "$as_me:8671:" \
+-echo "$as_me:8751:" \
++echo "$as_me:8755:" \
       "checking for Fortran 77 compiler version" >&5
  ac_compiler=`set X $ac_compile; echo $2`
-@@ -9703,9 +9707,9 @@
+@@ -9787,9 +9791,9 @@
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
--   (eval echo "\"\$as_me:9705: $lt_compile\"" >&5)
-+   (eval echo "\"\$as_me:9709: $lt_compile\"" >&5)
+-   (eval echo "\"\$as_me:9789: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:9793: $lt_compile\"" >&5)
     (eval "$lt_compile" 2>conftest.err)
     ac_status=$?
     cat conftest.err >&5
--   echo "$as_me:9709: \$? = $ac_status" >&5
-+   echo "$as_me:9713: \$? = $ac_status" >&5
+-   echo "$as_me:9793: \$? = $ac_status" >&5
++   echo "$as_me:9797: \$? = $ac_status" >&5
     if (exit $ac_status) && test -s "$ac_outfile"; then
       # The compiler can only warn and ignore the option if not recognized
-@@ -9936,9 +9940,9 @@
+@@ -10020,9 +10024,9 @@
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
--   (eval echo "\"\$as_me:9938: $lt_compile\"" >&5)
-+   (eval echo "\"\$as_me:9942: $lt_compile\"" >&5)
+-   (eval echo "\"\$as_me:10022: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:10026: $lt_compile\"" >&5)
     (eval "$lt_compile" 2>conftest.err)
     ac_status=$?
     cat conftest.err >&5
--   echo "$as_me:9942: \$? = $ac_status" >&5
-+   echo "$as_me:9946: \$? = $ac_status" >&5
+-   echo "$as_me:10026: \$? = $ac_status" >&5
++   echo "$as_me:10030: \$? = $ac_status" >&5
     if (exit $ac_status) && test -s "$ac_outfile"; then
       # The compiler can only warn and ignore the option if not recognized
-@@ -9996,9 +10000,9 @@
+@@ -10080,9 +10084,9 @@
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
--   (eval echo "\"\$as_me:9998: $lt_compile\"" >&5)
-+   (eval echo "\"\$as_me:10002: $lt_compile\"" >&5)
+-   (eval echo "\"\$as_me:10082: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:10086: $lt_compile\"" >&5)
     (eval "$lt_compile" 2>out/conftest.err)
     ac_status=$?
     cat out/conftest.err >&5
--   echo "$as_me:10002: \$? = $ac_status" >&5
-+   echo "$as_me:10006: \$? = $ac_status" >&5
+-   echo "$as_me:10086: \$? = $ac_status" >&5
++   echo "$as_me:10090: \$? = $ac_status" >&5
     if (exit $ac_status) && test -s out/conftest2.$ac_objext
     then
-@@ -12180,5 +12184,5 @@
+@@ -12264,5 +12268,5 @@
    lt_status=$lt_dlunknown
    cat > conftest.$ac_ext <<EOF
--#line 12182 "configure"
-+#line 12186 "configure"
+-#line 12266 "configure"
++#line 12270 "configure"
  #include "confdefs.h"
  
-@@ -12278,5 +12282,5 @@
+@@ -12362,5 +12366,5 @@
    lt_status=$lt_dlunknown
    cat > conftest.$ac_ext <<EOF
--#line 12280 "configure"
-+#line 12284 "configure"
+-#line 12364 "configure"
++#line 12368 "configure"
  #include "confdefs.h"
  
-@@ -14461,9 +14465,9 @@
+@@ -14545,9 +14549,9 @@
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
--   (eval echo "\"\$as_me:14463: $lt_compile\"" >&5)
-+   (eval echo "\"\$as_me:14467: $lt_compile\"" >&5)
+-   (eval echo "\"\$as_me:14547: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:14551: $lt_compile\"" >&5)
     (eval "$lt_compile" 2>conftest.err)
     ac_status=$?
     cat conftest.err >&5
--   echo "$as_me:14467: \$? = $ac_status" >&5
-+   echo "$as_me:14471: \$? = $ac_status" >&5
+-   echo "$as_me:14551: \$? = $ac_status" >&5
++   echo "$as_me:14555: \$? = $ac_status" >&5
     if (exit $ac_status) && test -s "$ac_outfile"; then
       # The compiler can only warn and ignore the option if not recognized
-@@ -14521,9 +14525,9 @@
+@@ -14605,9 +14609,9 @@
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
--   (eval echo "\"\$as_me:14523: $lt_compile\"" >&5)
-+   (eval echo "\"\$as_me:14527: $lt_compile\"" >&5)
+-   (eval echo "\"\$as_me:14607: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:14611: $lt_compile\"" >&5)
     (eval "$lt_compile" 2>out/conftest.err)
     ac_status=$?
     cat out/conftest.err >&5
--   echo "$as_me:14527: \$? = $ac_status" >&5
-+   echo "$as_me:14531: \$? = $ac_status" >&5
+-   echo "$as_me:14611: \$? = $ac_status" >&5
++   echo "$as_me:14615: \$? = $ac_status" >&5
     if (exit $ac_status) && test -s out/conftest2.$ac_objext
     then
-@@ -15882,5 +15886,5 @@
+@@ -15966,5 +15970,5 @@
    lt_status=$lt_dlunknown
    cat > conftest.$ac_ext <<EOF
--#line 15884 "configure"
-+#line 15888 "configure"
+-#line 15968 "configure"
++#line 15972 "configure"
  #include "confdefs.h"
  
-@@ -15980,5 +15984,5 @@
+@@ -16064,5 +16068,5 @@
    lt_status=$lt_dlunknown
    cat > conftest.$ac_ext <<EOF
--#line 15982 "configure"
-+#line 15986 "configure"
+-#line 16066 "configure"
++#line 16070 "configure"
  #include "confdefs.h"
  
-@@ -16807,9 +16811,9 @@
+@@ -16891,9 +16895,9 @@
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
--   (eval echo "\"\$as_me:16809: $lt_compile\"" >&5)
-+   (eval echo "\"\$as_me:16813: $lt_compile\"" >&5)
+-   (eval echo "\"\$as_me:16893: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:16897: $lt_compile\"" >&5)
     (eval "$lt_compile" 2>conftest.err)
     ac_status=$?
     cat conftest.err >&5
--   echo "$as_me:16813: \$? = $ac_status" >&5
-+   echo "$as_me:16817: \$? = $ac_status" >&5
+-   echo "$as_me:16897: \$? = $ac_status" >&5
++   echo "$as_me:16901: \$? = $ac_status" >&5
     if (exit $ac_status) && test -s "$ac_outfile"; then
       # The compiler can only warn and ignore the option if not recognized
-@@ -16867,9 +16871,9 @@
+@@ -16951,9 +16955,9 @@
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
--   (eval echo "\"\$as_me:16869: $lt_compile\"" >&5)
-+   (eval echo "\"\$as_me:16873: $lt_compile\"" >&5)
+-   (eval echo "\"\$as_me:16953: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:16957: $lt_compile\"" >&5)
     (eval "$lt_compile" 2>out/conftest.err)
     ac_status=$?
     cat out/conftest.err >&5
--   echo "$as_me:16873: \$? = $ac_status" >&5
-+   echo "$as_me:16877: \$? = $ac_status" >&5
+-   echo "$as_me:16957: \$? = $ac_status" >&5
++   echo "$as_me:16961: \$? = $ac_status" >&5
     if (exit $ac_status) && test -s out/conftest2.$ac_objext
     then
-@@ -18905,9 +18909,9 @@
+@@ -18989,9 +18993,9 @@
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
--   (eval echo "\"\$as_me:18907: $lt_compile\"" >&5)
-+   (eval echo "\"\$as_me:18911: $lt_compile\"" >&5)
+-   (eval echo "\"\$as_me:18991: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:18995: $lt_compile\"" >&5)
     (eval "$lt_compile" 2>conftest.err)
     ac_status=$?
     cat conftest.err >&5
--   echo "$as_me:18911: \$? = $ac_status" >&5
-+   echo "$as_me:18915: \$? = $ac_status" >&5
+-   echo "$as_me:18995: \$? = $ac_status" >&5
++   echo "$as_me:18999: \$? = $ac_status" >&5
     if (exit $ac_status) && test -s "$ac_outfile"; then
       # The compiler can only warn and ignore the option if not recognized
-@@ -19138,9 +19142,9 @@
+@@ -19222,9 +19226,9 @@
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
--   (eval echo "\"\$as_me:19140: $lt_compile\"" >&5)
-+   (eval echo "\"\$as_me:19144: $lt_compile\"" >&5)
+-   (eval echo "\"\$as_me:19224: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:19228: $lt_compile\"" >&5)
     (eval "$lt_compile" 2>conftest.err)
     ac_status=$?
     cat conftest.err >&5
--   echo "$as_me:19144: \$? = $ac_status" >&5
-+   echo "$as_me:19148: \$? = $ac_status" >&5
+-   echo "$as_me:19228: \$? = $ac_status" >&5
++   echo "$as_me:19232: \$? = $ac_status" >&5
     if (exit $ac_status) && test -s "$ac_outfile"; then
       # The compiler can only warn and ignore the option if not recognized
-@@ -19198,9 +19202,9 @@
+@@ -19282,9 +19286,9 @@
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
--   (eval echo "\"\$as_me:19200: $lt_compile\"" >&5)
-+   (eval echo "\"\$as_me:19204: $lt_compile\"" >&5)
+-   (eval echo "\"\$as_me:19284: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:19288: $lt_compile\"" >&5)
     (eval "$lt_compile" 2>out/conftest.err)
     ac_status=$?
     cat out/conftest.err >&5
--   echo "$as_me:19204: \$? = $ac_status" >&5
-+   echo "$as_me:19208: \$? = $ac_status" >&5
+-   echo "$as_me:19288: \$? = $ac_status" >&5
++   echo "$as_me:19292: \$? = $ac_status" >&5
     if (exit $ac_status) && test -s out/conftest2.$ac_objext
     then
-@@ -21382,5 +21386,5 @@
+@@ -21466,5 +21470,5 @@
    lt_status=$lt_dlunknown
    cat > conftest.$ac_ext <<EOF
--#line 21384 "configure"
-+#line 21388 "configure"
+-#line 21468 "configure"
++#line 21472 "configure"
  #include "confdefs.h"
  
-@@ -21480,5 +21484,5 @@
+@@ -21564,5 +21568,5 @@
    lt_status=$lt_dlunknown
    cat > conftest.$ac_ext <<EOF
--#line 21482 "configure"
-+#line 21486 "configure"
+-#line 21566 "configure"
++#line 21570 "configure"
  #include "confdefs.h"
  
-@@ -25777,4 +25781,354 @@
+@@ -25877,4 +25881,354 @@
  
  #
 +# IDN support
@@ -687,7 +687,7 @@ diff -U2 -r1.284.2.28 configure
 +#
  # Substitutions
  #
-@@ -26639,4 +26993,5 @@
+@@ -26740,4 +27094,5 @@
  s,@XMLDCL@,$XMLDCL,;t t
  s,@DOCBOOK2MANSPEC@,$DOCBOOK2MANSPEC,;t t
 +s,@IDNLIBS@,$IDNLIBS,;t t
@@ -696,11 +696,11 @@ diff -U2 -r1.284.2.28 configure
 Index: configure.in
 ===================================================================
 RCS file: /proj/cvs/prod/bind9/configure.in,v
-retrieving revision 1.294.2.31
-diff -U2 -r1.294.2.31 configure.in
---- configure.in	10 Mar 2004 03:24:06 -0000	1.294.2.31
-+++ configure.in	29 Apr 2004 01:16:52 -0000
-@@ -1756,4 +1756,80 @@
+retrieving revision 1.294.2.35
+diff -U2 -r1.294.2.35 configure.in
+--- configure.in	1 Sep 2004 07:08:33 -0000	1.294.2.35
++++ configure.in	1 Sep 2004 07:50:15 -0000
+@@ -1783,4 +1783,80 @@
  
  #
 +# IDN support
@@ -784,18 +784,18 @@ diff -U2 -r1.294.2.31 configure.in
 Index: config.h.in
 ===================================================================
 RCS file: /proj/cvs/prod/bind9/config.h.in,v
-retrieving revision 1.47.2.8
-diff -U2 -r1.47.2.8 config.h.in
---- config.h.in	15 Mar 2004 05:00:23 -0000	1.47.2.8
-+++ config.h.in	29 Apr 2004 01:16:52 -0000
+retrieving revision 1.47.2.9
+diff -U2 -r1.47.2.9 config.h.in
+--- config.h.in	1 Sep 2004 07:11:22 -0000	1.47.2.9
++++ config.h.in	1 Sep 2004 07:50:16 -0000
 @@ -17,5 +17,5 @@
   */
  
--/* $Id: config.h.in,v 1.47.2.8 2004/03/15 05:00:23 marka Exp $ */
+-/* $Id: config.h.in,v 1.47.2.9 2004/09/01 07:11:22 marka Exp $ */
 +/* $Id: acconfig.h,v 1.35.2.8 2004/03/09 06:09:07 marka Exp $ */
  
  /***
-@@ -159,7 +159,13 @@
+@@ -162,7 +162,13 @@
  #undef HAVE_LINUX_CAPABILITY_H
  
 +/* Define to 1 if you have the <locale.h> header file. */
@@ -809,21 +809,21 @@ diff -U2 -r1.47.2.8 config.h.in
 +
  /* Define to 1 if you have the <stdint.h> header file. */
  #undef HAVE_STDINT_H
-@@ -222,4 +228,7 @@
+@@ -224,4 +230,7 @@
+ /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
  #undef TIME_WITH_SYS_TIME
- 
++
 +/* define if idnkit support is to be included. */
 +#undef WITH_IDN
-+
+ 
  /* Define to 1 if your processor stores words with the most significant byte
-    first (like Motorola and SPARC, unlike Intel and VAX). */
 Index: bin/dig/Makefile.in
 ===================================================================
 RCS file: /proj/cvs/prod/bind9/bin/dig/Makefile.in,v
-retrieving revision 1.25.2.2
-diff -U2 -r1.25.2.2 Makefile.in
---- bin/dig/Makefile.in	9 Mar 2004 06:09:10 -0000	1.25.2.2
-+++ bin/dig/Makefile.in	29 Apr 2004 01:16:52 -0000
+retrieving revision 1.25.2.4
+diff -U2 -r1.25.2.4 Makefile.in
+--- bin/dig/Makefile.in	18 Aug 2004 23:22:52 -0000	1.25.2.4
++++ bin/dig/Makefile.in	1 Sep 2004 07:50:16 -0000
 @@ -37,5 +37,5 @@
  DEPLIBS =	${DNSDEPLIBS} ${ISCDEPLIBS}
  
@@ -834,10 +834,10 @@ diff -U2 -r1.25.2.2 Makefile.in
 Index: bin/dig/dig.1
 ===================================================================
 RCS file: /proj/cvs/prod/bind9/bin/dig/dig.1,v
-retrieving revision 1.14.2.5
-diff -U2 -r1.14.2.5 dig.1
---- bin/dig/dig.1	15 Mar 2004 04:44:38 -0000	1.14.2.5
-+++ bin/dig/dig.1	29 Apr 2004 01:16:53 -0000
+retrieving revision 1.14.2.6
+diff -U2 -r1.14.2.6 dig.1
+--- bin/dig/dig.1	26 Aug 2004 02:25:52 -0000	1.14.2.6
++++ bin/dig/dig.1	1 Sep 2004 07:50:18 -0000
 @@ -355,4 +355,15 @@
  will not print the initial query when it looks up the NS records for
  isc.org.
@@ -857,10 +857,10 @@ diff -U2 -r1.14.2.5 dig.1
 Index: bin/dig/dig.docbook
 ===================================================================
 RCS file: /proj/cvs/prod/bind9/bin/dig/dig.docbook,v
-retrieving revision 1.4.2.8
-diff -U2 -r1.4.2.8 dig.docbook
---- bin/dig/dig.docbook	9 Mar 2004 06:09:12 -0000	1.4.2.8
-+++ bin/dig/dig.docbook	29 Apr 2004 01:16:55 -0000
+retrieving revision 1.4.2.9
+diff -U2 -r1.4.2.9 dig.docbook
+--- bin/dig/dig.docbook	26 Aug 2004 01:33:50 -0000	1.4.2.9
++++ bin/dig/dig.docbook	1 Sep 2004 07:50:20 -0000
 @@ -530,4 +530,19 @@
  
  <refsect1>
@@ -887,7 +887,7 @@ RCS file: /proj/cvs/prod/bind9/bin/dig/dighost.c,v
 retrieving revision 1.221.2.22
 diff -U2 -r1.221.2.22 dighost.c
 --- bin/dig/dighost.c	15 Apr 2004 06:53:18 -0000	1.221.2.22
-+++ bin/dig/dighost.c	29 Apr 2004 01:17:00 -0000
++++ bin/dig/dighost.c	1 Sep 2004 07:50:27 -0000
 @@ -33,4 +33,15 @@
  #include <limits.h>
  
@@ -1126,7 +1126,7 @@ RCS file: /proj/cvs/prod/bind9/bin/dig/host.1,v
 retrieving revision 1.11.2.2
 diff -U2 -r1.11.2.2 host.1
 --- bin/dig/host.1	15 Mar 2004 04:44:38 -0000	1.11.2.2
-+++ bin/dig/host.1	29 Apr 2004 01:17:01 -0000
++++ bin/dig/host.1	1 Sep 2004 07:50:28 -0000
 @@ -122,4 +122,15 @@
  will be set to the number of seconds given by the hardware's maximum
  value for an integer quantity.
@@ -1149,7 +1149,7 @@ RCS file: /proj/cvs/prod/bind9/bin/dig/host.docbook,v
 retrieving revision 1.2.2.3
 diff -U2 -r1.2.2.3 host.docbook
 --- bin/dig/host.docbook	9 Mar 2004 06:09:13 -0000	1.2.2.3
-+++ bin/dig/host.docbook	29 Apr 2004 01:17:01 -0000
++++ bin/dig/host.docbook	1 Sep 2004 07:50:29 -0000
 @@ -182,4 +182,19 @@
  
  <refsect1>
@@ -1173,12 +1173,12 @@ diff -U2 -r1.2.2.3 host.docbook
 Index: lib/dns/name.c
 ===================================================================
 RCS file: /proj/cvs/prod/bind9/lib/dns/name.c,v
-retrieving revision 1.127.2.9
-diff -U2 -r1.127.2.9 name.c
---- lib/dns/name.c	9 Mar 2004 06:11:03 -0000	1.127.2.9
-+++ lib/dns/name.c	29 Apr 2004 01:17:07 -0000
-@@ -196,4 +196,11 @@
- dns_name_t *dns_wildcardname = &wild;
+retrieving revision 1.127.2.10
+diff -U2 -r1.127.2.10 name.c
+--- lib/dns/name.c	1 Sep 2004 05:22:51 -0000	1.127.2.10
++++ lib/dns/name.c	1 Sep 2004 07:50:40 -0000
+@@ -199,4 +199,11 @@
+ dns_fullname_hash(dns_name_t *name, isc_boolean_t case_sensitive);
  
 +#ifdef WITH_IDN
 +/*
@@ -1189,7 +1189,7 @@ diff -U2 -r1.127.2.9 name.c
 +
  static void
  set_offsets(const dns_name_t *name, unsigned char *offsets,
-@@ -1700,4 +1707,7 @@
+@@ -1715,4 +1722,7 @@
  	isc_boolean_t saw_root = ISC_FALSE;
  	char num[4];
 +#ifdef WITH_IDN
@@ -1197,7 +1197,7 @@ diff -U2 -r1.127.2.9 name.c
 +#endif
  
  	/*
-@@ -1877,4 +1887,8 @@
+@@ -1892,4 +1902,8 @@
  	isc_buffer_add(target, tlen - trem);
  
 +#ifdef WITH_IDN
@@ -1206,7 +1206,7 @@ diff -U2 -r1.127.2.9 name.c
 +#endif
  	return (ISC_R_SUCCESS);
  }
-@@ -3341,2 +3355,8 @@
+@@ -3356,2 +3370,8 @@
  }
  
 +#ifdef WITH_IDN
@@ -1218,10 +1218,10 @@ diff -U2 -r1.127.2.9 name.c
 Index: lib/dns/include/dns/name.h
 ===================================================================
 RCS file: /proj/cvs/prod/bind9/lib/dns/include/dns/name.h,v
-retrieving revision 1.95.2.5
-diff -U2 -r1.95.2.5 name.h
---- lib/dns/include/dns/name.h	9 Mar 2004 06:11:19 -0000	1.95.2.5
-+++ lib/dns/include/dns/name.h	29 Apr 2004 01:17:09 -0000
+retrieving revision 1.95.2.8
+diff -U2 -r1.95.2.8 name.h
+--- lib/dns/include/dns/name.h	1 Sep 2004 05:22:51 -0000	1.95.2.8
++++ lib/dns/include/dns/name.h	1 Sep 2004 07:50:42 -0000
 @@ -220,4 +220,15 @@
  #define DNS_NAME_MAXWIRE 255
  
@@ -1238,9 +1238,10 @@ diff -U2 -r1.95.2.5 name.h
 +
  /***
   *** Initialization
-@@ -1262,4 +1273,12 @@
+@@ -1264,4 +1275,12 @@
+  *
   */
- 
++
 +#ifdef WITH_IDN
 +void
 +dns_name_settotextfilter(dns_name_totextfilter_t proc);
@@ -1248,6 +1249,5 @@ diff -U2 -r1.95.2.5 name.h
 + * Call 'proc' at the end of dns_name_totext.
 + */
 +#endif /* WITH_IDN */
-+
+ 
  #define DNS_NAME_FORMATSIZE (DNS_NAME_MAXTEXT + 1)
- /*

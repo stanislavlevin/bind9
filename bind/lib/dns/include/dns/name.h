@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.h,v 1.95.2.5 2004/03/09 06:11:19 marka Exp $ */
+/* $Id: name.h,v 1.95.2.8 2004/09/01 05:22:51 marka Exp $ */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -391,7 +391,7 @@ dns_name_hash(dns_name_t *name, isc_boolean_t case_sensitive);
  */
 
 unsigned int
-dns_fullname_hash(dns_name_t *name, isc_boolean_t case_sensitive);
+dns_name_fullhash(dns_name_t *name, isc_boolean_t case_sensitive);
 /*
  * Provide a hash value for 'name'.  Unlike dns_name_hash(), this function
  * always takes into account of the entire name to calculate the hash value.
@@ -662,6 +662,9 @@ dns_name_getlabelsequence(const dns_name_t *source, unsigned int first,
  *
  * Notes:
  *	Numbering starts at 0.
+ *
+ *	Given "rc.vix.com.", the label 0 is "rc", and label 3 is the
+ *	root label.
  *
  *	'target' refers to the same memory as 'source', so 'source'
  *	must not be changed while 'target' is still in use.
@@ -1341,7 +1344,7 @@ do { \
 do { \
 	(r)->base = (n)->ndata; \
 	(r)->length = (n)->length; \
-} while (0);
+} while (0)
 
 
 #ifdef DNS_NAME_USEINLINE

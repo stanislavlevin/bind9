@@ -82,7 +82,7 @@ case "$1" in
 		restart
 		;;
 	status)
-		status named
+		status --lockfile "$LOCKFILE" --expect-user named named
 		RETVAL=$?
 		;;
 	reload)

@@ -11,4 +11,4 @@ copy: *.localdomain
 copy: *.localhost
 copy: *.patch
 copy: *.txt
-tar.bz2: bind name=bind-9.2.4rc5
+tar.bz2: bind name=bind-9.2.4rc8
