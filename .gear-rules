@@ -1,8 +1,14 @@
-copy: *.all
+copy: *.1
+copy: *.5
+copy: *.ALT
+copy: *.arpa
+copy: *.bind-devel
 copy: *.conf
+copy: *.empty
 copy: *.init
-copy: *.lib
+copy: *.key
+copy: *.localdomain
+copy: *.localhost
 copy: *.patch
-tar.bz2: bind-contrib name=bind-contrib base=
-tar.bz2: bind-doc name=bind-doc base=
-tar.bz2: bind-src name=bind-src base=
+copy: *.txt
+tar.bz2: bind name=bind-9.2.2rc1

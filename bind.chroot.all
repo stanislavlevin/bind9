@@ -1,4 +1,0 @@
-#!/bin/sh -e
-
-/etc/chroot.d/bind.conf "$@"
-/etc/chroot.d/bind.lib "$@"

@@ -1,0 +1,94 @@
+#!/bin/sh
+#
+# lwresd           This shell script takes care of starting and stopping
+#                 lwresd (Lightweight Resolver Daemon).
+#
+# chkconfig: 345 21 54
+# description: lwresd is the daemon providing name lookup services
+# to clients that use the BIND 9 lightweight resolver library.
+
+# Source function library.
+. /etc/init.d/functions
+
+# Source networking configuration.
+SourceIfNotEmpty /etc/sysconfig/network && [ "$NETWORKING" != no ] || exit
+
+NAMED_EXE=/usr/sbin/lwresd
+NAMED_ROOT="/var/resolv"
+
+LOCKFILE=/var/lock/subsys/lwresd
+RETVAL=0
+
+adjust()
+{
+	action "Adjusting environment for lwresd:" /etc/chroot.d/resolv.conf
+	RETVAL=$?
+	return $RETVAL
+}
+
+start()
+{
+	adjust || return
+	echo -n "Starting lwresd: "
+	daemon "$NAMED_EXE" -u lwresd -t "$NAMED_ROOT"
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && touch "$LOCKFILE"
+	return $RETVAL
+}
+
+stop()
+{
+	echo -n "Shutting down lwresd: "
+	killproc "$NAMED_EXE"
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && rm -f "$LOCKFILE"
+	return $RETVAL
+}
+
+restart()
+{
+	stop
+	start
+}
+
+# See how we were called.
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart|reload)
+		restart
+		;;
+	status)
+		status lwresd
+		RETVAL=$?
+		;;
+	adjust)
+		adjust
+		;;
+	condstop)
+		if [ -e "$LOCKFILE" ]; then
+			stop
+		fi
+		;;
+	condrestart)
+		if [ -e "$LOCKFILE" ]; then
+			restart
+		fi
+		;;
+	condreload)
+		if [ -e "$LOCKFILE" ]; then
+			reload
+		fi
+		;;
+	*)
+		echo "Usage: ${0##*/} {start|stop|restart|reload|status|adjust|condstop|condrestart}"
+		RETVAL=1
+esac
+
+exit $RETVAL
