@@ -7,13 +7,14 @@
 # description: lwresd is the daemon providing name lookup services
 # to clients that use the BIND 9 lightweight resolver library.
 
+WITHOUT_RC_COMPAT=1
+
 # Source function library.
 . /etc/init.d/functions
 
 # Source networking configuration.
-SourceIfNotEmpty /etc/sysconfig/network && [ "$NETWORKING" != no ] || exit
+SourceIfNotEmpty /etc/sysconfig/network
 
-NAMED_EXE=/usr/sbin/lwresd
 NAMED_ROOT="/var/resolv"
 
 LOCKFILE=/var/lock/subsys/lwresd
@@ -28,22 +29,19 @@ adjust()
 
 start()
 {
+	is_yes "$NETWORKING" || return 0
+
 	adjust || return
-	echo -n "Starting lwresd: "
-	daemon "$NAMED_EXE" -u lwresd -t "$NAMED_ROOT"
+
+	start_daemon --lockfile "$LOCKFILE" --expect-user lwresd -- lwresd -u lwresd -t "$NAMED_ROOT"
 	RETVAL=$?
-	echo
-	[ $RETVAL -eq 0 ] && touch "$LOCKFILE"
 	return $RETVAL
 }
 
 stop()
 {
-	echo -n "Shutting down lwresd: "
-	killproc "$NAMED_EXE"
+	stop_daemon --lockfile "$LOCKFILE" --expect-user lwresd -- lwresd
 	RETVAL=$?
-	echo
-	[ $RETVAL -eq 0 ] && rm -f "$LOCKFILE"
 	return $RETVAL
 }
 
@@ -87,7 +85,7 @@ case "$1" in
 		fi
 		;;
 	*)
-		echo "Usage: ${0##*/} {start|stop|restart|reload|status|adjust|condstop|condrestart}"
+		msg_usage "${0##*/} {start|stop|restart|reload|status|adjust|condstop|condrestart}"
 		RETVAL=1
 esac
 

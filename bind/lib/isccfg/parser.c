@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2002  Internet Software Consortium.
+ * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: parser.c,v 1.70.2.14 2002/02/08 03:57:47 marka Exp $ */
+/* $Id: parser.c,v 1.70.2.22 2003/09/19 13:41:36 marka Exp $ */
 
 #include <config.h>
 
@@ -755,7 +755,7 @@ static cfg_type_t cfg_type_forwardtype = {
 };
 
 static const char *zonetype_enums[] = {
-	"master", "slave", "stub", "hint", "forward", NULL };
+	"master", "slave", "stub", "hint", "forward", "delegation-only", NULL };
 static cfg_type_t cfg_type_zonetype = {
 	"zonetype", parse_enum, print_ustring, &cfg_rep_string,
 	&zonetype_enums
@@ -799,7 +799,12 @@ namedconf_or_view_clauses[] = {
 	{ "key", &cfg_type_key, CFG_CLAUSEFLAG_MULTI },
 	{ "zone", &cfg_type_zone, CFG_CLAUSEFLAG_MULTI },
 	{ "server", &cfg_type_server, CFG_CLAUSEFLAG_MULTI },
+#ifdef ISC_RFC2535
 	{ "trusted-keys", &cfg_type_trustedkeys, CFG_CLAUSEFLAG_MULTI },
+#else
+	{ "trusted-keys", &cfg_type_trustedkeys,
+		 CFG_CLAUSEFLAG_MULTI|CFG_CLAUSEFLAG_OBSOLETE },
+#endif
 	{ NULL, NULL, 0 }
 };
 
@@ -850,6 +855,17 @@ options_clauses[] = {
 	{ NULL, NULL, 0 }
 };
 
+
+static cfg_type_t cfg_type_namelist = {
+	"namelist", parse_bracketed_list, print_bracketed_list,
+	&cfg_rep_list, &cfg_type_qstring };
+
+static keyword_type_t exclude_kw = { "exclude", &cfg_type_namelist };
+
+static cfg_type_t cfg_type_optional_exclude = {
+	"optional_exclude", parse_optional_keyvalue, print_keyvalue,
+	&cfg_rep_list, &exclude_kw };
+
 /*
  * Clauses that can be found within the 'view' statement,
  * with defaults in the 'options' statement.
@@ -886,6 +902,7 @@ view_clauses[] = {
 	{ "check-names", &cfg_type_checknames,
 	  CFG_CLAUSEFLAG_MULTI | CFG_CLAUSEFLAG_NOTIMP },
 	{ "cache-file", &cfg_type_qstring, 0 },
+	{ "root-delegation-only",  &cfg_type_optional_exclude, 0 },
 	{ NULL, NULL, 0 }
 };
 
@@ -950,6 +967,7 @@ zone_only_clauses[] = {
 	  CFG_CLAUSEFLAG_MULTI | CFG_CLAUSEFLAG_OBSOLETE },
 	{ "update-policy", &cfg_type_updatepolicy, 0 },
 	{ "database", &cfg_type_astring, 0 },
+	{ "delegation-only", &cfg_type_boolean, 0 },
 	/*
 	 * Note that the format of the check-names option is different between
 	 * the zone options and the global/view options.  Ugh.
@@ -1195,7 +1213,8 @@ create_tuple(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	CLEANUP_OBJ(obj);
+	if (obj != NULL)
+		isc_mem_put(pctx->mctx, obj, sizeof(*obj));
 	return (result);
 }
 
@@ -1660,6 +1679,10 @@ parse_sizeval(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	UNUSED(type);
 
 	CHECK(cfg_gettoken(pctx, 0));
+	if (pctx->token.type != isc_tokentype_string) {
+		result = ISC_R_UNEXPECTEDTOKEN;
+		goto cleanup;
+	}
 	CHECK(parse_unitstring(pctx->token.value.as_pointer, &val));
 
 	CHECK(create_cfgobj(pctx, &cfg_type_uint64, &obj));
@@ -1769,7 +1792,7 @@ create_string(cfg_parser_t *pctx, const char *contents, const cfg_type_t *type,
 	obj->value.string.length = len;
 	obj->value.string.base = isc_mem_get(pctx->mctx, len + 1);
 	if (obj->value.string.base == 0) {
-		CLEANUP_OBJ(obj);
+		isc_mem_put(pctx->mctx, obj, sizeof(*obj));
 		return (ISC_R_NOMEMORY);
 	}
 	memcpy(obj->value.string.base, contents, len);
@@ -2102,24 +2125,26 @@ parse_list(cfg_parser_t *pctx, const cfg_type_t *listtype, cfg_obj_t **ret)
 	cfg_obj_t *listobj = NULL;
 	const cfg_type_t *listof = listtype->of;
 	isc_result_t result;
+	cfg_listelt_t *elt = NULL;
 
 	CHECK(create_list(pctx, listtype, &listobj));
 
 	for (;;) {
-		cfg_listelt_t *elt = NULL;
-
 		CHECK(cfg_peektoken(pctx, 0));
 		if (pctx->token.type == isc_tokentype_special &&
-		    pctx->token.value.as_char == '}')
+		    pctx->token.value.as_char == /*{*/ '}')
 			break;
 		CHECK(parse_list_elt(pctx, listof, &elt));
 		CHECK(parse_semicolon(pctx));
 		ISC_LIST_APPEND(listobj->value.list, elt, link);
+		elt = NULL;
 	}
 	*ret = listobj;
 	return (ISC_R_SUCCESS);
 
  cleanup:
+	if (elt != NULL)
+		free_list_elt(pctx, elt);
 	CLEANUP_OBJ(listobj);
 	return (result);
 }
@@ -2422,7 +2447,6 @@ parse_symtab_elt(cfg_parser_t *pctx, const char *name,
 	CHECK(isc_symtab_define(symtab, name,
 				1, symval,
 				isc_symexists_reject));
-	obj = NULL;
 	return (ISC_R_SUCCESS);
 
  cleanup:
@@ -2761,7 +2785,7 @@ token_addr(cfg_parser_t *pctx, unsigned int flags, isc_netaddr_t *na) {
 			}
 		}
 		if ((flags & V4PREFIXOK) != 0 &&
-		    strlen(s) <= 15) {
+		    strlen(s) <= 15U) {
 			char buf[64];
 			int i;
 
@@ -2820,7 +2844,7 @@ get_port(cfg_parser_t *pctx, unsigned int flags, in_port_t *port) {
 			     "expected port number or '*'");
 		return (ISC_R_UNEXPECTEDTOKEN);
 	}
-	if (pctx->token.value.as_ulong >= 65536) {
+	if (pctx->token.value.as_ulong >= 65536U) {
 		parser_error(pctx, LOG_NEAR,
 			     "port number out of range");
 		return (ISC_R_UNEXPECTEDTOKEN);
@@ -3751,7 +3775,8 @@ create_map(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	CLEANUP_OBJ(obj);
+	if (obj != NULL)
+		isc_mem_put(pctx->mctx, obj, sizeof(*obj));
 	return (result);
 }
 

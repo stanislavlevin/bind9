@@ -7,13 +7,14 @@
 # description: named (BIND) is a Domain Name Server (DNS) \
 # that is used to resolve host names to IP addresses.
 
+WITHOUT_RC_COMPAT=1
+
 # Source function library.
 . /etc/init.d/functions
 
 # Source networking configuration.
-SourceIfNotEmpty /etc/sysconfig/network && [ "$NETWORKING" != no ] || exit
+SourceIfNotEmpty /etc/sysconfig/network
 
-NAMED_EXE=/usr/sbin/named
 NAMED_ROOT=@ROOT@
 
 LOCKFILE=/var/lock/subsys/bind
@@ -21,7 +22,7 @@ RETVAL=0
 
 rndc_keygen()
 {
-	local rndc=@ROOT@/etc/rndc.key
+	local rndc="$NAMED_ROOT/etc/rndc.key"
 	if [ -w "$rndc" ] && grep -qs '^	secret "@RNDC_KEY@";$' "$rndc"; then
 		echo -n "Generating RNDC key: "
 		local key
@@ -39,23 +40,19 @@ rndc_keygen()
 
 start()
 {
+	is_yes "$NETWORKING" || return 0
+
 	rndc_keygen
 
-	echo -n "Starting named: "
-	daemon "$NAMED_EXE" -u named -t "$NAMED_ROOT"
+	start_daemon --lockfile "$LOCKFILE" --expect-user named -- named
 	RETVAL=$?
-	echo
-	[ $RETVAL -eq 0 ] && touch "$LOCKFILE"
 	return $RETVAL
 }
 
 stop()
 {
-	echo -n "Shutting down named: "
-	killproc "$NAMED_EXE"
+	stop_daemon --lockfile "$LOCKFILE" --expect-user named -- named
 	RETVAL=$?
-	echo
-	[ $RETVAL -eq 0 ] && rm -f "$LOCKFILE"
 	return $RETVAL
 }
 
@@ -67,9 +64,10 @@ restart()
 
 reload()
 {
-	killproc "$NAMED_EXE" -HUP
-	RETVAL=$?
-	return $RETVAL
+        msg_reloading named
+        stop_daemon --expect-user named -HUP -- named
+        RETVAL=$?
+        return $RETVAL
 }
 
 # See how we were called.
@@ -84,7 +82,7 @@ case "$1" in
 		restart
 		;;
 	status)
-		status "$NAMED_EXE"
+		status named
 		RETVAL=$?
 		;;
 	reload)
@@ -106,7 +104,7 @@ case "$1" in
 		fi
 		;;
 	*)
-		echo "Usage: ${0##*/} {start|stop|restart|reload|status|condstop|condrestart}"
+		msg_usage "${0##*/} {start|stop|restart|reload|status|condstop|condrestart}"
 		RETVAL=1
 esac
 

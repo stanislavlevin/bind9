@@ -129,16 +129,6 @@ diff -uprk.orig bind-9.2.2rc1.orig/bin/named/unix/os.c bind-9.2.2rc1/bin/named/u
  static int
  safe_open(const char *filename, isc_boolean_t append) {
  	int fd;
-@@ -477,6 +521,9 @@ ns_os_writepidfile(const char *filename,
- 	char strbuf[ISC_STRERRORSIZE];
- 	void (*report)(const char *, ...);
- 
-+	if (!filename || !*filename)
-+		return;
-+
- 	/*
- 	 * The caller must ensure any required synchronization.
- 	 */
 diff -uprk.orig bind-9.2.2rc1.orig/lib/isc/include/isc/entropy.h bind-9.2.2rc1/lib/isc/include/isc/entropy.h
 --- bind-9.2.2rc1.orig/lib/isc/include/isc/entropy.h	2001-09-06 04:14:18 +0400
 +++ bind-9.2.2rc1/lib/isc/include/isc/entropy.h	2003-02-09 21:51:02 +0300

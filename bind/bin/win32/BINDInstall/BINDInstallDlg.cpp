@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2001, 2002  Internet Software Consortium.
+ * Portions Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: BINDInstallDlg.cpp,v 1.6.2.3 2002/02/20 02:17:22 marka Exp $ */
+/* $Id: BINDInstallDlg.cpp,v 1.6.2.8 2003/09/09 03:47:31 marka Exp $ */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation
@@ -68,14 +68,14 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-typedef struct _exception
+typedef struct _xexception
 {
-	_exception(UINT string, ...);
+	_xexception(UINT string, ...);
 	
 	CString resString;
 } Exception;
 
-_exception::_exception(UINT string, ...)
+_xexception::_xexception(UINT string, ...)
 {
 	CString format;
 	va_list va;
@@ -109,13 +109,15 @@ const FileData installFiles[] =
 	{"msvcrt.dll", FileData::WinSystem, FileData::Critical, TRUE},
 #  endif
 #endif
+	{"mfc70.dll", FileData::WinSystem, FileData::Critical, TRUE},
+	{"msvcr70.dll", FileData::WinSystem, FileData::Critical, TRUE},
 	{"bindevt.dll", FileData::WinSystem, FileData::Normal, FALSE},
 	{"libisc.dll", FileData::WinSystem, FileData::Critical, FALSE},
 	{"libisccfg.dll", FileData::WinSystem, FileData::Critical, FALSE},
 	{"libisccc.dll", FileData::WinSystem, FileData::Critical, FALSE},
 	{"libdns.dll", FileData::WinSystem, FileData::Critical, FALSE},
 	{"liblwres.dll", FileData::WinSystem, FileData::Critical, FALSE},
-	{"libeay32.dll", FileData::WinSystem, FileData::Critical, FALSE},
+	{"libeay32.dll", FileData::BinDir, FileData::Critical, FALSE},
 	{"named.exe", FileData::BinDir, FileData::Critical, FALSE},
 	{"nsupdate.exe", FileData::BinDir, FileData::Normal, FALSE},
 	{"BINDInstall.exe", FileData::BinDir, FileData::Normal, FALSE},
@@ -310,14 +312,14 @@ void CBINDInstallDlg::OnUninstall()
 		if(CheckBINDService())
 			StopBINDService();
 
-		HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+		SC_HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 		if(!hSCManager)
 		{
 			MsgBox(IDS_ERR_OPEN_SCM, GetErrMessage());
 			return;
 		}
 		
-		HANDLE hService = OpenService(hSCManager, BIND_SERVICE_NAME, SERVICE_ALL_ACCESS);
+		SC_HANDLE hService = OpenService(hSCManager, BIND_SERVICE_NAME, SERVICE_ALL_ACCESS);
 		if(!hService && GetLastError() != ERROR_SERVICE_DOES_NOT_EXIST)
 		{
 			MsgBox(IDS_ERR_OPEN_SERVICE, GetErrMessage());
@@ -599,8 +601,8 @@ void CBINDInstallDlg::DeleteFiles(BOOL uninstall)
 
 void CBINDInstallDlg::RegisterService()
 {
-	HANDLE hSCManager;
-	HANDLE hService;
+	SC_HANDLE hSCManager;
+	SC_HANDLE hService;
 
 	SetCurrent(IDS_OPEN_SCM);
 	hSCManager= OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
@@ -635,8 +637,8 @@ void CBINDInstallDlg::RegisterService()
 void CBINDInstallDlg::UnregisterService(BOOL uninstall)
 {
 	BOOL rc = FALSE;
-	HANDLE hSCManager;
-	HANDLE hService;
+	SC_HANDLE hSCManager;
+	SC_HANDLE hService;
 
 	while(1)
 	{
@@ -835,13 +837,13 @@ void CBINDInstallDlg::StopBINDService()
 	
 	SetCurrent(IDS_STOP_SERVICE);
 
-	HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	SC_HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 	if(!hSCManager)
 	{
 		MsgBox(IDS_ERR_OPEN_SCM, GetErrMessage());
 	}
 	
-	HANDLE hBINDSvc = OpenService(hSCManager, BIND_SERVICE_NAME, SERVICE_ALL_ACCESS);
+	SC_HANDLE hBINDSvc = OpenService(hSCManager, BIND_SERVICE_NAME, SERVICE_ALL_ACCESS);
 	if(!hBINDSvc)
 	{
 		MsgBox(IDS_ERR_OPEN_SERVICE, GetErrMessage());
@@ -857,13 +859,13 @@ void CBINDInstallDlg::StartBINDService()
 {
 	SetCurrent(IDS_START_SERVICE);
 
-	HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	SC_HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 	if(!hSCManager)
 	{
 		MsgBox(IDS_ERR_OPEN_SCM, GetErrMessage());
 	}
 	
-	HANDLE hBINDSvc = OpenService(hSCManager, BIND_SERVICE_NAME, SERVICE_ALL_ACCESS);
+	SC_HANDLE hBINDSvc = OpenService(hSCManager, BIND_SERVICE_NAME, SERVICE_ALL_ACCESS);
 	if(!hBINDSvc)
 	{
 		MsgBox(IDS_ERR_OPEN_SERVICE, GetErrMessage());
@@ -878,10 +880,10 @@ BOOL CBINDInstallDlg::CheckBINDService()
 {
 	SERVICE_STATUS svcStatus;
 
-	HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	SC_HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 	if(hSCManager)
 	{
-		HANDLE hBINDSvc = OpenService(hSCManager, BIND_SERVICE_NAME, SERVICE_ALL_ACCESS);
+		SC_HANDLE hBINDSvc = OpenService(hSCManager, BIND_SERVICE_NAME, SERVICE_ALL_ACCESS);
 		if(hBINDSvc)
 		{
 			BOOL rc = ControlService(hBINDSvc, SERVICE_CONTROL_INTERROGATE, &svcStatus);

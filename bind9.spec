@@ -1,8 +1,8 @@
 Name: bind
-%define vers_num 9.2.2
-%define vers_rc rc1
+%define vers_num 9.2.3
+%define vers_rc rc4
 Version: %vers_num.%vers_rc
-Release: alt2
+Release: alt1
 
 Summary: The ISC BIND server
 License: BSD-like
@@ -10,8 +10,8 @@ Group: System/Servers
 Url: http://www.isc.org/products/BIND/
 Packager: BIND Development Team <bind@packages.altlinux.org>
 
-%define srcname bind-%vers_num%vers_rc
-Source0: ftp://ftp.isc.org/isc/bind9/%vers_num.%vers_rc/%srcname.tar.bz2
+%define srcname %name-%vers_num%vers_rc
+Source0: ftp://ftp.isc.org/isc/bind9/%vers_num/%srcname.tar.bz2
 Source1: nslookup.1
 Source2: resolver.5
 Source3: rfc1912.txt
@@ -36,11 +36,13 @@ Source42: bind.localdomain
 Source43: bind.127.in-addr.arpa
 Source44: bind.empty
 
-Patch1: bind-9.2.2rc1-alt-man.patch
+Patch1: bind-9.2.3rc1-alt-man.patch
 Patch2: bind-9.2.2rc1-alt-isc-config.patch
-Patch3: bind-9.2.2rc1-alt-lib_dns_rootns.patch
-Patch4: bind-9.2.2rc1-alt-rndc-confgen.patch
-Patch5: bind-9.2.2rc1-alt-chroot.patch
+Patch3: bind-9.2.2rc1-alt-rndc-confgen.patch
+Patch4: bind-9.2.2rc1-alt-chroot.patch
+Patch5: bind-9.2.2-obsd-pidfile.patch
+Patch6: bind-9.2.2-obsd-chroot_default.patch
+Patch7: bind-9.2.2-owl-checkconf_chroot.patch
 
 # root directory for chrooted environment.
 %define ROOT %_localstatedir/bind
@@ -53,17 +55,21 @@ Provides: bind-chroot(%ROOT)
 Obsoletes: bind-chroot, caching-nameserver
 # Because of /etc/syslog.d/ feature.
 Conflicts: syslogd < 1.4.1-alt11
-PreReq: chrooted, chkconfig, shadow-utils, coreutils, grep, %__subst, syslogd-daemon
-PreReq: libdns8 = %version-%release
-PreReq: libisc4 = %version-%release
+PreReq: chrooted, chkconfig, shadow-utils, coreutils, grep, syslogd-daemon
+PreReq: %__subst, %post_service, %preun_service
+PreReq: libdns11 = %version-%release
+PreReq: libisc7 = %version-%release
 PreReq: libisccc0 = %version-%release
 PreReq: libisccfg0 = %version-%release
 PreReq: liblwres1 = %version-%release
 
+# due to %ROOT/dev/log
 BuildPreReq: /usr/bin/mksock
+## due to linux/capability.h
+#BuildPreReq: kernel-headers-std
 
-# Automatically added by buildreq on Mon Feb 10 2003
-BuildRequires: emacs-common glibc-devel-static jadetex libdb4-devel libssl-devel openjade
+# Automatically added by buildreq on Tue Jul 29 2003
+BuildRequires: glibc-devel-static libdb4.0-devel libssl-devel openjade
 
 %package slave
 Summary: The chroot jail part for ISC BIND slave server
@@ -78,15 +84,15 @@ PreReq: %name = %version-%release
 %package utils
 Summary: Utilities provided with BIND
 Group: Networking/Other
-Requires: libdns8 = %version-%release
-Requires: libisc4 = %version-%release
+Requires: libdns11 = %version-%release
+Requires: libisc7 = %version-%release
 Requires: liblwres1 = %version-%release
 
 %package devel
 Summary: BIND development libraries and headers
 Group: Development/C
-Requires: libdns8 = %version-%release
-Requires: libisc4 = %version-%release
+Requires: libdns11 = %version-%release
+Requires: libisc7 = %version-%release
 Requires: libisccc0 = %version-%release
 Requires: libisccfg0 = %version-%release
 Requires: liblwres1 = %version-%release
@@ -101,12 +107,12 @@ Summary: Documentation for BIND
 Group: Development/Other
 Prefix: %prefix
 
-%package -n libdns8
+%package -n libdns11
 Summary: DNS shared library used by BIND
 Group: System/Libraries
 Provides: libdns = %version-%release
 
-%package -n libisc4
+%package -n libisc7
 Summary: ISC shared library used by BIND
 Group: System/Libraries
 Provides: libisc = %version-%release
@@ -130,8 +136,8 @@ Provides: liblwres = %version-%release
 Summary: Lightweight resolver daemon
 Group: System/Servers
 PreReq: /var/resolv, chkconfig, shadow-utils
-Requires: libdns8 = %version-%release
-Requires: libisc4 = %version-%release
+Requires: libdns11 = %version-%release
+Requires: libisc7 = %version-%release
 Requires: libisccc0 = %version-%release
 Requires: libisccfg0 = %version-%release
 Requires: liblwres1 = %version-%release
@@ -171,11 +177,11 @@ need more nameserver API than the resolver code provided in libc.
 This package provides various documents that are useful for maintaining a
 working BIND installation.
 
-%description -n libdns8
+%description -n libdns11
 This package contains the libdns shared library used by BIND's daemons
 and clients.
 
-%description -n libisc4
+%description -n libisc7
 This package contains the libisc shared library used by BIND's daemons
 and clients.
 
@@ -206,9 +212,17 @@ the DNS protocol.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
+%patch6 -p1
+%patch7 -p1
+
 %__install -p -m644 $RPM_SOURCE_DIR/rfc1912.txt doc/rfc/
 %__install -p -m644 $RPM_SOURCE_DIR/bind.README.bind-devel README.bind-devel
 %__install -p -m644 $RPM_SOURCE_DIR/bind.README.ALT README.ALT
+find -type f -name \*.orig -print -delete
+
+find -type f -print0 |
+	xargs -r0 %__grep -FZl '@ROOT@' -- |
+	xargs -r0 %__subst -p 's|@ROOT@|%ROOT|g' --
 
 %build
 %__install -p -m755 /usr/share/libtool/config.* .
@@ -219,6 +233,7 @@ the DNS protocol.
 	--with-randomdev=/dev/random \
 	--disable-ipv6 \
 	--disable-threads \
+	--disable-linux-caps \
 	#
 # SMP-incompatible build.
 make
@@ -279,8 +294,8 @@ find $RPM_BUILD_ROOT{%_sysconfdir,%_mandir,%ROOT} -type f -print0 |
 %__bzip2 $RPM_BUILD_ROOT%docdir/{*/*.txt,FAQ,CHANGES}
 %__rm -fv $RPM_BUILD_ROOT%docdir/*/{Makefile*,README-SGML,*.dsl*,*.sh*,*.xml}
 
-%post -n libdns8 -p %post_ldconfig
-%postun -n libdns8 -p %postun_ldconfig
+%post -n libdns11 -p %post_ldconfig
+%postun -n libdns11 -p %postun_ldconfig
 
 %post -n libisccc0 -p %post_ldconfig
 %postun -n libisccc0 -p %postun_ldconfig
@@ -288,14 +303,14 @@ find $RPM_BUILD_ROOT{%_sysconfdir,%_mandir,%ROOT} -type f -print0 |
 %post -n libisccfg0 -p %post_ldconfig
 %postun -n libisccfg0 -p %postun_ldconfig
 
-%post -n libisc4 -p %post_ldconfig
-%postun -n libisc4 -p %postun_ldconfig
+%post -n libisc7 -p %post_ldconfig
+%postun -n libisc7 -p %postun_ldconfig
 
 %post -n liblwres1 -p %post_ldconfig
 %postun -n liblwres1 -p %postun_ldconfig
 
 %pre
-/usr/sbin/groupadd -r -f named >/dev/null 2>&1
+/usr/sbin/groupadd -r -f named
 /usr/sbin/useradd -r -g named -d %ROOT -s /dev/null -n -c "Domain Name Server" named >/dev/null 2>&1 ||:
 [ -f %_initdir/named -a ! -L %_initdir/named ] && /sbin/chkconfig --del named ||:
 
@@ -315,7 +330,7 @@ fi
 %post_service bind
 
 %pre -n lwresd
-/usr/sbin/groupadd -r -f lwresd >/dev/null 2>&1
+/usr/sbin/groupadd -r -f lwresd
 /usr/sbin/useradd -r -g lwresd -d / -s /dev/null -n -c "Lightweight Resolver Daemon" lwresd >/dev/null 2>&1 ||:
 
 %post -n lwresd
@@ -324,10 +339,10 @@ fi
 %preun -n lwresd
 %preun_service lwresd
 
-%files -n libdns8
+%files -n libdns11
 %_libdir/libdns.so.*
 
-%files -n libisc4
+%files -n libisc7
 %_libdir/libisc.so.*
 
 %files -n libisccc0
@@ -419,6 +434,42 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Mon Sep 22 2003 Dmitry V. Levin <ldv@altlinux.org> 9.2.3.rc4-alt1
+- Updated to 9.2.3rc4.
+- Renamed subpackage according to soname change:
+  libdns10 -> libdns11.
+- Replaced "delegation-only" defaults implemented in previous release
+  with new option, root-delegation-only, and enabled it by default.
+
+* Thu Sep 18 2003 Dmitry V. Levin <ldv@altlinux.org> 9.2.3.rc2-alt1
+- Updated to 9.2.3rc2.
+- Renamed subpackage according to soname change:
+  libdns9 -> libdns10.
+- Marked all known gTLDs and ccTLDs as delegation-only by default.
+
+* Thu Sep 11 2003 Dmitry V. Levin <ldv@altlinux.org> 9.2.3.rc1-alt2
+- Merged patches from OpenBSD, thanks to Jarno Huuskonen:
+  + write pidfile before chroot (#2866);
+  + use chroot jailing by default, no -u/-t options are necessary;
+- Make named-checkconf use chroot jail by default (Jarno Huuskonen).
+- options.conf: added few samples (#2968).
+
+* Tue Aug 26 2003 Dmitry V. Levin <ldv@altlinux.org> 9.2.3.rc1-alt1
+- Updated to 9.2.3rc1.
+- Removed alt-lib_dns_rootns patch (merged upstream).
+- Explicitly disable use of linux capabilities.
+- Renamed subpackages according to soname changes:
+  libdns8 -> libdns9, libisc4 -> libisc7.
+
+* Tue Jul 29 2003 Dmitry V. Levin <ldv@altlinux.org> 9.2.2.rel-alt2
+- Fixed message from 'service bind reload' (#0002411).
+- Moved 'include "/etc/rfc1912.conf";' directive
+  from bind.conf to local.conf (#0002791).
+- Rewritten start/stop script to new rc scheme.
+
+* Tue Mar 04 2003 Dmitry V. Levin <ldv@altlinux.org> 9.2.2.rel-alt1
+- Updated to 9.2.2 release.
+
 * Wed Feb 12 2003 Dmitry V. Levin <ldv@altlinux.org> 9.2.2.rc1-alt2
 - Relocated initial rndc key generation from %%post to startup script.
 - Added some information about ALT specific to named(8) and rndc(8).

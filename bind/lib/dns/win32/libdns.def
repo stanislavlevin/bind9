@@ -42,6 +42,7 @@ dns_byaddr_create
 dns_byaddr_cancel
 dns_byaddr_destroy
 dns_byaddr_createptrname
+dns_byaddr_createptrname2
 dns_cache_create
 dns_cache_attach
 dns_cache_detach
@@ -547,6 +548,11 @@ dns_view_checksig
 dns_view_dialup
 dns_view_dumpdbtostream
 dns_view_flushcache
+dns_view_isdelegationonly
+dns_view_adddelegationonly
+dns_view_excludedelegationonly
+dns_view_setrootdelonly
+dns_view_getrootdelonly
 dns_xfrin_create
 dns_xfrin_shutdown
 dns_xfrin_detach

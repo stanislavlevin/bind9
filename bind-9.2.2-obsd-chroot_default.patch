@@ -1,0 +1,63 @@
+diff -ur bind-9.2.2.orig/bin/named/include/named/globals.h bind-9.2.2/bin/named/include/named/globals.h
+--- bind-9.2.2.orig/bin/named/include/named/globals.h	Wed Jun  4 15:15:47 2003
++++ bind-9.2.2/bin/named/include/named/globals.h	Wed Jun  4 15:11:36 2003
+@@ -98,7 +98,7 @@
+  * Misc.
+  */
+ EXTERN isc_boolean_t		ns_g_coreok		INIT(ISC_TRUE);
+-EXTERN const char *		ns_g_chrootdir		INIT(NULL);
++EXTERN const char *		ns_g_chrootdir		INIT("@ROOT@");
+ EXTERN isc_boolean_t		ns_g_foreground		INIT(ISC_FALSE);
+ EXTERN isc_boolean_t		ns_g_logstderr		INIT(ISC_FALSE);
+ 
+@@ -108,7 +108,7 @@
+ 							    "/run/lwresd.pid");
+ EXTERN const char *		ns_g_pidfile		INIT(NS_LOCALSTATEDIR
+ 								"/run/named.pid");
+-EXTERN const char *		ns_g_username		INIT(NULL);
++EXTERN const char *		ns_g_username		INIT("named");
+ 
+ #undef EXTERN
+ #undef INIT
+diff -ur bind-9.2.2.orig/bin/named/named.8 bind-9.2.2/bin/named/named.8
+--- bind-9.2.2.orig/bin/named/named.8	Mon Jun 11 22:01:40 2001
++++ bind-9.2.2/bin/named/named.8	Wed Jun  4 15:24:12 2003
+@@ -27,18 +27,19 @@
+ information on the DNS, see RFCs 1033, 1034, and 1035.
+ .PP
+ When invoked without arguments, \fBnamed\fR will
++\fBchroot()\fR to \fI@ROOT@\fR,
+ read the default configuration file
+-\fI/etc/named.conf\fR, read any initial
++\fI@ROOT@/etc/named.conf\fR, read any initial
+ data, and listen for queries.
+ .SH "OPTIONS"
+ .TP
+ \fB-c \fIconfig-file\fB\fR
+ Use \fIconfig-file\fR as the
+ configuration file instead of the default,
+-\fI/etc/named.conf\fR. To
++\fI@ROOT@/etc/named.conf\fR. To
+ ensure that reloading the configuration file continues
+ to work after the server has changed its working
+-directory due to to a possible
++directory due to a possible
+ \fBdirectory\fR option in the configuration
+ file, \fIconfig-file\fR should be
+ an absolute pathname.
+@@ -81,6 +82,7 @@
+ \fBchroot()\fR to \fIdirectory\fR after
+ processing the command line arguments, but before
+ reading the configuration file.
++By default, \fBnamed\fR \fBchroot()\fR's to \fI@ROOT@\fR.
+ .sp
+ .RS
+ .B "Warning:"
+@@ -97,6 +99,7 @@
+ \fBsetuid()\fR to \fIuser\fR after completing
+ privileged operations, such as creating sockets that
+ listen on privileged ports.
++By default, \fBnamed\fR will run as user \fInamed\fR.
+ .sp
+ .RS
+ .B "Note:"
