@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket.c,v 1.207.2.29 2004/07/01 04:51:44 marka Exp $ */
+/* $Id: socket.c,v 1.207.2.19.2.15 2004/11/18 21:31:16 marka Exp $ */
 
 #include <config.h>
 
@@ -62,11 +62,7 @@
  * some as socklen_t.  This is here so it can be easily changed if needed.
  */
 #ifndef ISC_SOCKADDR_LEN_T
-#ifdef _BSD_SOCKLEN_T_
-#define ISC_SOCKADDR_LEN_T _BSD_SOCKLEN_T_
-#else
 #define ISC_SOCKADDR_LEN_T unsigned int
-#endif
 #endif
 
 /*
@@ -322,7 +318,7 @@ wakeup_socket(isc_socketmgr_t *manager, int fd, int msg) {
 		manager->fdstate[fd] = CLOSED;
 		FD_CLR(fd, &manager->read_fds);
 		FD_CLR(fd, &manager->write_fds);
-		close(fd);
+		(void)close(fd);
 		return;
 	}
 	if (manager->fdstate[fd] != MANAGED)
@@ -506,7 +502,7 @@ static void
 process_cmsg(isc_socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 #ifdef USE_CMSG
 	struct cmsghdr *cmsgp;
-#ifdef ISC_PLATFORM_HAVEIPV6
+#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 	struct in6_pktinfo *pktinfop;
 #endif
 #ifdef SO_TIMESTAMP
@@ -545,7 +541,7 @@ process_cmsg(isc_socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 #ifdef SO_TIMESTAMP
 	timevalp = NULL;
 #endif
-#ifdef ISC_PLATFORM_HAVEIPV6
+#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 	pktinfop = NULL;
 #endif
 
@@ -555,7 +551,7 @@ process_cmsg(isc_socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 			   isc_msgcat, ISC_MSGSET_SOCKET, ISC_MSG_PROCESSCMSG,
 			   "processing cmsg %p", cmsgp);
 
-#ifdef ISC_PLATFORM_HAVEIPV6
+#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 		if (cmsgp->cmsg_level == IPPROTO_IPV6
 		    && cmsgp->cmsg_type == IPV6_PKTINFO) {
 
@@ -680,7 +676,7 @@ build_msghdr_send(isc_socket_t *sock, isc_socketevent_t *dev,
 	msg->msg_control = NULL;
 	msg->msg_controllen = 0;
 	msg->msg_flags = 0;
-#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIPV6)
+#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
 	if ((sock->type == isc_sockettype_udp)
 	    && ((dev->attributes & ISC_SOCKEVENTATTR_PKTINFO) != 0)) {
 		struct cmsghdr *cmsgp;
@@ -875,7 +871,7 @@ dump_msg(struct msghdr *msg) {
 	printf("MSGHDR %p\n", msg);
 	printf("\tname %p, namelen %d\n", msg->msg_name, msg->msg_namelen);
 	printf("\tiov %p, iovlen %d\n", msg->msg_iov, msg->msg_iovlen);
-	for (i = 0 ; i < (unsigned int)msg->msg_iovlen ; i++)
+	for (i = 0; i < (unsigned int)msg->msg_iovlen; i++)
 		printf("\t\t%d\tbase %p, len %d\n", i,
 		       msg->msg_iov[i].iov_base,
 		       msg->msg_iov[i].iov_len);
@@ -1219,7 +1215,7 @@ allocate_socket(isc_socketmgr_t *manager, isc_sockettype_t type,
 	 * set up cmsg buffers
 	 */
 	cmsgbuflen = 0;
-#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIPV6)
+#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
 	cmsgbuflen = cmsg_space(sizeof(struct in6_pktinfo));
 #endif
 #if defined(USE_CMSG) && defined(SO_TIMESTAMP)
@@ -1233,7 +1229,7 @@ allocate_socket(isc_socketmgr_t *manager, isc_sockettype_t type,
 	}
 
 	cmsgbuflen = 0;
-#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIPV6)
+#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
 	cmsgbuflen = cmsg_space(sizeof(struct in6_pktinfo));
 #endif
 	sock->sendcmsgbuflen = cmsgbuflen;
@@ -1477,6 +1473,7 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 					 "No buffer available to receive "
 					 "IPv6 destination");
 		}
+#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 #ifdef IPV6_RECVPKTINFO
 		/* 2292bis */
 		if ((pf == AF_INET6)
@@ -1508,6 +1505,7 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 					 strbuf);
 		}
 #endif /* IPV6_RECVPKTINFO */
+#endif /* ISC_PLATFORM_HAVEIN6PKTINFO */
 #ifdef IPV6_USE_MIN_MTU        /*2292bis, not too common yet*/
 		/* use minimum MTU */
 		if (pf == AF_INET6) {
@@ -1918,7 +1916,7 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 	UNLOCK(&sock->lock);
 
 	if (fd != -1 && (make_nonblock(fd) != ISC_R_SUCCESS)) {
-		close(fd);
+		(void)close(fd);
 		fd = -1;
 		result = ISC_R_UNEXPECTED;
 	}
@@ -2105,7 +2103,7 @@ process_fds(isc_socketmgr_t *manager, int maxfd,
 	 * Process read/writes on other fds here.  Avoid locking
 	 * and unlocking twice if both reads and writes are possible.
 	 */
-	for (i = 0 ; i < maxfd ; i++) {
+	for (i = 0; i < maxfd; i++) {
 #ifdef ISC_PLATFORM_USETHREADS
 		if (i == manager->pipe_fds[0] || i == manager->pipe_fds[1])
 			continue;
@@ -2116,7 +2114,7 @@ process_fds(isc_socketmgr_t *manager, int maxfd,
 			FD_CLR(i, &manager->read_fds);
 			FD_CLR(i, &manager->write_fds);
 
-			close(i);
+			(void)close(i);
 
 			continue;
 		}
@@ -2360,8 +2358,8 @@ isc_socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp) {
 	 */
 	if (isc_thread_create(watcher, manager, &manager->watcher) !=
 	    ISC_R_SUCCESS) {
-		close(manager->pipe_fds[0]);
-		close(manager->pipe_fds[1]);
+		(void)close(manager->pipe_fds[0]);
+		(void)close(manager->pipe_fds[1]);
 		DESTROYLOCK(&manager->lock);
 		isc_mem_put(mctx, manager, sizeof(*manager));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -2453,14 +2451,14 @@ isc_socketmgr_destroy(isc_socketmgr_t **managerp) {
 	 * Clean up.
 	 */
 #ifdef ISC_PLATFORM_USETHREADS
-	close(manager->pipe_fds[0]);
-	close(manager->pipe_fds[1]);
+	(void)close(manager->pipe_fds[0]);
+	(void)close(manager->pipe_fds[1]);
 	(void)isc_condition_destroy(&manager->shutdown_ok);
 #endif /* ISC_PLATFORM_USETHREADS */
 
-	for (i = 0 ; i < (int)FD_SETSIZE ; i++)
+	for (i = 0; i < (int)FD_SETSIZE; i++)
 		if (manager->fdstate[i] == CLOSE_PENDING)
-			close(i);
+			(void)close(i);
 
 	DESTROYLOCK(&manager->lock);
 	manager->magic = 0;
@@ -2662,18 +2660,22 @@ socket_send(isc_socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 
 	set_dev_address(address, sock, dev);
 	if (pktinfo != NULL) {
-		socket_log(sock, NULL, TRACE, isc_msgcat, ISC_MSGSET_SOCKET,
-			   ISC_MSG_PKTINFOPROVIDED,
-			   "pktinfo structure provided, ifindex %u (set to 0)",
-			   pktinfo->ipi6_ifindex);
-
 		dev->attributes |= ISC_SOCKEVENTATTR_PKTINFO;
 		dev->pktinfo = *pktinfo;
-		/*
-		 * Set the pktinfo index to 0 here, to let the kernel decide
-		 * what interface it should send on.
-		 */
-		dev->pktinfo.ipi6_ifindex = 0;
+
+		if (!isc_sockaddr_issitelocal(address) &&
+		    !isc_sockaddr_islinklocal(address)) {
+			socket_log(sock, NULL, TRACE, isc_msgcat,
+				   ISC_MSGSET_SOCKET, ISC_MSG_PKTINFOPROVIDED,
+				   "pktinfo structure provided, ifindex %u "
+				   "(set to 0)", pktinfo->ipi6_ifindex);
+
+			/*
+			 * Set the pktinfo index to 0 here, to let the
+			 * kernel decide what interface it should send on.
+			 */
+			dev->pktinfo.ipi6_ifindex = 0;
+		}
 	}
 
 	if (sock->type == isc_sockettype_udp)
@@ -2892,6 +2894,35 @@ isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *sockaddr) {
 
 	UNLOCK(&sock->lock);
 	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_socket_filter(isc_socket_t *sock, const char *filter) {
+#ifdef SO_ACCEPTFILTER
+	char strbuf[ISC_STRERRORSIZE];
+	struct accept_filter_arg afa;
+#else
+	UNUSED(sock);
+	UNUSED(filter);
+#endif
+
+	REQUIRE(VALID_SOCKET(sock));
+
+#ifdef SO_ACCEPTFILTER
+	bzero(&afa, sizeof(afa));
+	strncpy(afa.af_name, filter, sizeof(afa.af_name));
+	if (setsockopt(sock->fd, SOL_SOCKET, SO_ACCEPTFILTER,
+			 &afa, sizeof(afa)) == -1) {
+		isc__strerror(errno, strbuf, sizeof(strbuf));
+		socket_log(sock, NULL, CREATION, isc_msgcat, ISC_MSGSET_SOCKET,
+			   ISC_MSG_FILTER, "setsockopt(SO_ACCEPTFILTER): %s",
+			   strbuf);
+		return (ISC_R_FAILURE);
+	}
+	return (ISC_R_SUCCESS);
+#else
+	return (ISC_R_NOTIMPLEMENTED);
+#endif
 }
 
 /*
@@ -3426,6 +3457,25 @@ isc_socket_isbound(isc_socket_t *sock) {
 	UNLOCK(&sock->lock);
 
 	return (val);
+}
+
+void
+isc_socket_ipv6only(isc_socket_t *sock, isc_boolean_t yes) {
+#if defined(IPV6_V6ONLY)
+	int onoff = yes ? 1 : 0;
+#else
+	UNUSED(yes);
+	UNUSED(sock);
+#endif
+
+	REQUIRE(VALID_SOCKET(sock));
+
+#ifdef IPV6_V6ONLY
+	if (sock->pf == AF_INET6) {
+		(void)setsockopt(sock->fd, IPPROTO_IPV6, IPV6_V6ONLY,
+				 (void *)&onoff, sizeof(onoff));
+	}
+#endif
 }
 
 #ifndef ISC_PLATFORM_USETHREADS

@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2002  Internet Software Consortium.
+ * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: result.c,v 1.56.2.5 2004/06/11 00:35:05 marka Exp $ */
+/* $Id: result.c,v 1.56.2.2.8.7 2004/06/11 00:31:01 marka Exp $ */
 
 #include <config.h>
 
@@ -96,7 +96,8 @@ static const char *text[ISC_R_NRESULTS] = {
 	"soft quota reached",			/* 55 */
 	"not a valid number",			/* 56 */
 	"disabled",				/* 57 */
-	"max size"				/* 58 */
+	"max size",				/* 58 */
+	"invalid address format"		/* 59 */
 };
 
 #define ISC_RESULT_RESULTSET			2
@@ -120,7 +121,7 @@ register_table(unsigned int base, unsigned int nresults, const char **text,
 	 * We use malloc() here because we we want to be able to use
 	 * isc_result_totext() even if there is no memory context.
 	 */
-	table = malloc(sizeof *table);
+	table = malloc(sizeof(*table));
 	if (table == NULL)
 		return (ISC_R_NOMEMORY);
 	table->base = base;

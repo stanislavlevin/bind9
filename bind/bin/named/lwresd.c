@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lwresd.c,v 1.37.2.3 2004/03/09 06:09:19 marka Exp $ */
+/* $Id: lwresd.c,v 1.37.2.2.2.5 2004/03/08 04:04:19 marka Exp $ */
 
 /*
  * Main program for the Lightweight Resolver Daemon.
@@ -38,7 +38,7 @@
 #include <isc/task.h>
 #include <isc/util.h>
 
-#include <isccfg/cfg.h>
+#include <isccfg/namedconf.h>
 
 #include <dns/log.h>
 #include <dns/result.h>
@@ -152,7 +152,7 @@ ns_lwresd_parseeresolvconf(isc_mem_t *mctx, cfg_parser_t *pctx,
 	if (lwc->nsnext > 0) {
 		CHECK(buffer_putstr(&b, "\tforwarders {\n"));
 
-		for (i = 0 ; i < lwc->nsnext ; i++) {
+		for (i = 0; i < lwc->nsnext; i++) {
 			CHECK(lwaddr_sockaddr_fromlwresaddr(
 							&sa,
 							&lwc->nameservers[i],
@@ -173,7 +173,7 @@ ns_lwresd_parseeresolvconf(isc_mem_t *mctx, cfg_parser_t *pctx,
 		CHECK(buffer_putstr(&b, "\t\t{\n"));
 		CHECK(buffer_putstr(&b, "\t\t\tany;\n"));
 		CHECK(buffer_putstr(&b, "\t\t\t{\n"));
-		for (i = 0 ; i < lwc->sortlistnxt; i++) {
+		for (i = 0; i < lwc->sortlistnxt; i++) {
 			lwres_addr_t *lwaddr = &lwc->sortlist[i].addr;
 			lwres_addr_t *lwmask = &lwc->sortlist[i].mask;
 			unsigned int mask;
@@ -245,7 +245,7 @@ ns_lwresd_parseeresolvconf(isc_mem_t *mctx, cfg_parser_t *pctx,
 	if (lwc->lwnext > 0) {
 		CHECK(buffer_putstr(&b, "\tlisten-on {\n"));
 
-		for (i = 0 ; i < lwc->lwnext ; i++) {
+		for (i = 0; i < lwc->lwnext; i++) {
 			CHECK(lwaddr_sockaddr_fromlwresaddr(&sa,
 							    &lwc->lwservers[i],
 							    0));
@@ -341,7 +341,7 @@ ns_lwdmanager_create(isc_mem_t *mctx, cfg_obj_t *lwres,
 	}
 
 	searchobj = NULL;
-	cfg_map_get(lwres, "search", &searchobj);
+	(void)cfg_map_get(lwres, "search", &searchobj);
 	if (searchobj != NULL) {
 		lwresd->search = NULL;
 		result = ns_lwsearchlist_create(lwresd->mctx,
@@ -602,7 +602,7 @@ listener_startclients(ns_lwreslistener_t *listener) {
 	 * Create the client managers.
 	 */
 	result = ISC_R_SUCCESS;
-	for (i = 0 ; i < NTASKS && result == ISC_R_SUCCESS; i++)
+	for (i = 0; i < NTASKS && result == ISC_R_SUCCESS; i++)
 		result = ns_lwdclientmgr_create(listener, NRECVS,
 						ns_g_taskmgr);
 
@@ -618,7 +618,13 @@ listener_startclients(ns_lwreslistener_t *listener) {
 	LOCK(&listener->lock);
 	cm = ISC_LIST_HEAD(listener->cmgrs);
 	while (cm != NULL) {
-		ns_lwdclient_startrecv(cm);
+		result = ns_lwdclient_startrecv(cm);
+		if (result != ISC_R_SUCCESS)
+			isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+				      NS_LOGMODULE_LWRESD, ISC_LOG_ERROR,
+				      "could not start lwres "
+				      "client handler: %s",
+				      isc_result_totext(result));
 		cm = ISC_LIST_NEXT(cm, link);
 	}
 	UNLOCK(&listener->lock);
@@ -785,7 +791,7 @@ ns_lwresd_configure(isc_mem_t *mctx, cfg_obj_t *config) {
 			port = LWRES_UDP_PORT;
 
 		listenerslist = NULL;
-		cfg_map_get(lwres, "listen-on", &listenerslist);
+		(void)cfg_map_get(lwres, "listen-on", &listenerslist);
 		if (listenerslist == NULL) {
 			struct in_addr localhost;
 			isc_sockaddr_t address;

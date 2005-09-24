@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: zone_test.c,v 1.26.2.3 2004/03/09 06:09:36 marka Exp $ */
+/* $Id: zone_test.c,v 1.26.2.2.8.3 2004/03/08 04:04:28 marka Exp $ */
 
 #include <config.h>
 
@@ -184,7 +184,7 @@ query(void) {
 		FD_ZERO(&rfdset);
 		FD_SET(0, &rfdset);
 		select(1, &rfdset, NULL, NULL, NULL);
-		if (fgets(buf, sizeof buf, stdin) == NULL) {
+		if (fgets(buf, sizeof(buf), stdin) == NULL) {
 			fprintf(stdout, "\n");
 			break;
 		}
@@ -259,7 +259,7 @@ main(int argc, char **argv) {
 			filename = isc_commandline_argument;
 			break;
 		case 'm':
-			memset(&addr, 0, sizeof addr);
+			memset(&addr, 0, sizeof(addr));
 			addr.type.sin.sin_family = AF_INET;
 			inet_pton(AF_INET, isc_commandline_argument,
 				  &addr.type.sin.sin_addr);

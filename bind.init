@@ -4,8 +4,10 @@
 #                 named (BIND DNS server).
 #
 # chkconfig: 345 20 55
-# description: named (BIND) is a Domain Name Server (DNS) \
-# that is used to resolve host names to IP addresses.
+# description: \
+#	named (BIND) is a Domain Name Server (DNS) that is used to \
+#	resolve host names to IP addresses.
+# processname: named
 
 WITHOUT_RC_COMPAT=1
 
@@ -15,25 +17,24 @@ WITHOUT_RC_COMPAT=1
 # Source networking configuration.
 SourceIfNotEmpty /etc/sysconfig/network
 
-NAMED_ROOT=@ROOT@
-
 LOCKFILE=/var/lock/subsys/bind
 RETVAL=0
 
 rndc_keygen()
 {
-	local rndc="$NAMED_ROOT/etc/rndc.key"
-	if [ -w "$rndc" ] && grep -qs '^	secret "@RNDC_KEY@";$' "$rndc"; then
+	local rndc="@ROOT@/etc/rndc.key"
+	if [ -w "$rndc" ] && grep -Eqs '^[[:space:]]*secret[[:space:]]+"@RNDC_KEY@";$' "$rndc"; then
 		echo -n "Generating RNDC key: "
 		local key
-		if key=`/usr/sbin/rndc-confgen -A` &&
-		   subst "s|^	secret \"@RNDC_KEY@\";\$|	secret \"$key\";|" "$rndc"; then
+		if key=`rndc-confgen -A` &&
+		   subst "s,^\([[:space:]]*secret[[:space:]]\+\)\"@RNDC_KEY@\";,\1\"$key\";," "$rndc"; then
 			success "RNDC key generation"
 			echo
 		else
 			failure "RNDC key generation"
 			echo
-			exit 1
+			RETVAL=1
+			return $RETVAL
 		fi
 	fi
 }
@@ -42,7 +43,7 @@ start()
 {
 	is_yes "$NETWORKING" || return 0
 
-	rndc_keygen
+	rndc_keygen || return 1
 
 	start_daemon --lockfile "$LOCKFILE" --expect-user named -- named
 	RETVAL=$?

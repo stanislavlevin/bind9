@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mutex.c,v 1.6.2.1 2004/03/09 06:12:06 marka Exp $ */
+/* $Id: mutex.c,v 1.6.26.3 2004/03/08 09:04:55 marka Exp $ */
 
 #include <config.h>
 
@@ -213,6 +213,25 @@ isc_mutex_statsprofile(FILE *fp) {
 }
 
 #endif /* ISC_MUTEX_PROFILE */
+
+#if ISC_MUTEX_DEBUG && defined(PTHREAD_MUTEX_ERRORCHECK)
+isc_result_t
+isc_mutex_init_errcheck(isc_mutex_t *mp)
+{
+	pthread_mutexattr_t attr;
+
+	if (pthread_mutexattr_init(&attr) != 0)
+		return ISC_R_UNEXPECTED;
+
+	if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK) != 0)
+		return ISC_R_UNEXPECTED;
+  
+	if (pthread_mutex_init(mp, &attr) != 0)
+		return ISC_R_UNEXPECTED;
+
+	return ISC_R_SUCCESS;
+}
+#endif
 
 #if ISC_MUTEX_DEBUG && defined(__NetBSD__) && defined(PTHREAD_MUTEX_ERRORCHECK)
 pthread_mutexattr_t isc__mutex_attrs = {

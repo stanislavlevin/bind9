@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: t_api.c,v 1.48.2.4 2004/06/21 07:08:36 marka Exp $ */
+/* $Id: t_api.c,v 1.48.2.1.2.6 2004/08/28 06:25:27 marka Exp $ */
 
 #include <config.h>
 
@@ -33,6 +33,7 @@
 
 #include <isc/boolean.h>
 #include <isc/commandline.h>
+#include <isc/print.h>
 #include <isc/string.h>
 
 #include <dns/compress.h>
@@ -253,7 +254,7 @@ main(int argc, char **argv) {
 	 * Output start stanza to journal.
 	 */
 
-	sprintf(T_buf, "%s:", argv[0]);
+	snprintf(T_buf, sizeof(T_buf), "%s:", argv[0]);
 	len = strlen(T_buf);
 	(void) t_getdate(T_buf + len, T_BIGBUF - len);
 	t_putinfo("S", T_buf);
@@ -334,7 +335,7 @@ main(int argc, char **argv) {
 		++tnum;
 	}
 
-	sprintf(T_buf, "%s:", argv[0]);
+	snprintf(T_buf, sizeof(T_buf), "%s:", argv[0]);
 	len = strlen(T_buf);
 	(void) t_getdate(T_buf + len, T_BIGBUF - len);
 	t_putinfo("E", T_buf);
@@ -353,7 +354,7 @@ t_assert(const char *component, int anum, int class, const char *what, ...) {
 	 * Format text to a buffer.
 	 */
 	va_start(args, what);
-	(void)vsprintf(T_buf, what, args);
+	(void)vsnprintf(T_buf, sizeof(T_buf), what, args);
 	va_end(args);
 
 	(void)t_putinfo("A", T_buf);
@@ -365,7 +366,7 @@ t_info(const char *format, ...) {
 	va_list	args;
 
 	va_start(args, format);
-	(void) vsprintf(T_buf, format, args);
+	(void) vsnprintf(T_buf, sizeof(T_buf), format, args);
 	va_end(args);
 	(void) t_putinfo("I", T_buf);
 }
@@ -591,8 +592,8 @@ struct dns_errormap {
 	{ ISC_R_RANGE,			"ISC_R_RANGE"		},
 	{ DNS_R_LABELTOOLONG,		"DNS_R_LABELTOOLONG"	},
 	{ DNS_R_BADESCAPE,		"DNS_R_BADESCAPE"	},
-	{ DNS_R_BADBITSTRING,		"DNS_R_BADBITSTRING"	},
-	{ DNS_R_BITSTRINGTOOLONG,	"DNS_R_BITSTRINGTOOLONG"},
+	/* { DNS_R_BADBITSTRING,	"DNS_R_BADBITSTRING"	}, */
+	/* { DNS_R_BITSTRINGTOOLONG,	"DNS_R_BITSTRINGTOOLONG"}, */
 	{ DNS_R_EMPTYLABEL,		"DNS_R_EMPTYLABEL"	},
 	{ DNS_R_BADDOTTEDQUAD,		"DNS_R_BADDOTTEDQUAD"	},
 	{ DNS_R_UNKNOWN,		"DNS_R_UNKNOWN"		},

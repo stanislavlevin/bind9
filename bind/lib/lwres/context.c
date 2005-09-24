@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: context.c,v 1.41.2.3 2004/03/09 06:12:32 marka Exp $ */
+/* $Id: context.c,v 1.41.2.1.2.4 2004/09/17 05:50:31 marka Exp $ */
 
 #include <config.h>
 
@@ -60,8 +60,8 @@ do { \
 } while (0)
 #endif
 
-lwres_uint16_t lwres_udp_port = LWRES_UDP_PORT;
-const char *lwres_resolv_conf = LWRES_RESOLV_CONF;
+LIBLWRES_EXTERNAL_DATA lwres_uint16_t lwres_udp_port = LWRES_UDP_PORT;
+LIBLWRES_EXTERNAL_DATA const char *lwres_resolv_conf = LWRES_RESOLV_CONF;
 
 static void *
 lwres_malloc(void *, size_t);
@@ -128,7 +128,7 @@ lwres_context_destroy(lwres_context_t **contextp) {
 	*contextp = NULL;
 
 	if (ctx->sock != -1) {
-		close(ctx->sock);
+		(void)close(ctx->sock);
 		ctx->sock = -1;
 	}
 
@@ -237,7 +237,7 @@ context_connect(lwres_context_t *ctx) {
 
 	ret = connect(s, sa, salen);
 	if (ret != 0) {
-		close(s);
+		(void)close(s);
 		return (LWRES_R_IOERROR);
 	}
 
@@ -346,13 +346,12 @@ lwres_context_sendrecv(lwres_context_t *ctx,
 	struct timeval timeout;
 
 	/*
-	 * Type of tv_sec is long, so make sure the unsigned long timeout
-	 * does not overflow it.
+	 * Type of tv_sec is 32 bits long. 
 	 */
-	if (ctx->timeout <= (unsigned int)LONG_MAX)
-		timeout.tv_sec = (long)ctx->timeout;
+	if (ctx->timeout <= 0x7FFFFFFFU)
+		timeout.tv_sec = (int)ctx->timeout;
 	else
-		timeout.tv_sec = LONG_MAX;
+		timeout.tv_sec = 0x7FFFFFFF;
 
 	timeout.tv_usec = 0;
 

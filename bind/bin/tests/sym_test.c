@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sym_test.c,v 1.22.2.1 2004/03/09 06:09:35 marka Exp $ */
+/* $Id: sym_test.c,v 1.22.12.3 2004/03/08 04:04:27 marka Exp $ */
 
 #include <config.h>
 
@@ -71,7 +71,7 @@ main(int argc, char *argv[]) {
 	RUNTIME_CHECK(isc_symtab_create(mctx, 691, undefine_action, NULL,
 					case_sensitive, &st) == ISC_R_SUCCESS);
 
-	while (fgets(s, sizeof s, stdin) != NULL) {
+	while (fgets(s, sizeof(s), stdin) != NULL) {
 		len = strlen(s);
 		if (len > 0 && s[len - 1] == '\n') {
 			s[len - 1] = '\0';

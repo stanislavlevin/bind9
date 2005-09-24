@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: aclconf.h,v 1.12.2.1 2004/03/09 06:09:21 marka Exp $ */
+/* $Id: aclconf.h,v 1.12.208.1 2004/03/06 10:21:23 marka Exp $ */
 
 #ifndef NS_ACLCONF_H
 #define NS_ACLCONF_H 1

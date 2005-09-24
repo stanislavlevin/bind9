@@ -4,8 +4,8 @@ extra privileges.
 To configure named as master or caching-only DNS, you don't need to create
 files and/or directories writable by named.
 
-To configure named as slave DNS in chroot jail, additional package
-bind-slave have to be installed.
+To configure named as slave DNS in chroot jail,
+use control(8) for the bind-slave facility.
 
-To debug named with rndc, additional package bind-debug have to be
-installed.
+To debug named with rndc(8),
+use control(8) for the bind-debug facility.

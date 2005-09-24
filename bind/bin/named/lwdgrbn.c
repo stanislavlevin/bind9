@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lwdgrbn.c,v 1.11.2.1 2004/03/09 06:09:18 marka Exp $ */
+/* $Id: lwdgrbn.c,v 1.11.208.3 2004/03/08 04:04:19 marka Exp $ */
 
 #include <config.h>
 
@@ -100,7 +100,7 @@ iterate_node(lwres_grbnresponse_t *grbn, dns_db_t *db, dns_dbnode_t *node,
 		dns_rdataset_init(&set);
 		dns_rdatasetiter_current(iter, &set);
 
-		if (set.type != dns_rdatatype_sig) {
+		if (set.type != dns_rdatatype_rrsig) {
 			dns_rdataset_disassociate(&set);
 			continue;
 		}

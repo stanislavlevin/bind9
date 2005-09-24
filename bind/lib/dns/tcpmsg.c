@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tcpmsg.c,v 1.24.2.1 2004/03/09 06:11:08 marka Exp $ */
+/* $Id: tcpmsg.c,v 1.24.206.1 2004/03/06 08:13:46 marka Exp $ */
 
 #include <config.h>
 

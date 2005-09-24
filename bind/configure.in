@@ -13,7 +13,12 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-AC_REVISION($Revision: 1.294.2.35 $)
+dnl
+AC_DIVERT_PUSH(1)dnl
+esyscmd([sed "s/^/# /" COPYRIGHT])dnl
+AC_DIVERT_POP()dnl
+
+AC_REVISION($Revision: 1.294.2.23.2.39 $)
 
 AC_INIT(lib/dns/name.c)
 AC_PREREQ(2.13)
@@ -188,6 +193,17 @@ fi
 AC_PROG_CC
 
 #
+# gcc's optimiser is broken at -02 for ultrasparc
+#
+if test "$ac_env_CFLAGS_set" != set -a "X$GCC" = "Xyes"; then
+	case "$host" in
+	sparc-*)
+		CCFLAGS="-g -O1"
+		;;
+	esac
+fi
+
+#
 # OS dependent CC flags
 #
 case "$host" in
@@ -212,7 +228,7 @@ esac
 
 AC_HEADER_STDC
 
-AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h sys/sockio.h sys/select.h sys/param.h sys/sysctl.h,,,
+AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h sys/sockio.h sys/select.h sys/param.h sys/sysctl.h net/if6.h,,,
 [$ac_includes_default
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -245,6 +261,23 @@ AC_TRY_COMPILE(, [
 
 AC_TYPE_SIZE_T
 AC_CHECK_TYPE(ssize_t, int)
+AC_CHECK_TYPE(socklen_t,
+[AC_DEFINE(ISC_SOCKADDR_LEN_T, socklen_t)],
+[
+AC_TRY_COMPILE(
+[
+#include <sys/types.h>
+#include <sys/socket.h>
+int getsockname(int, struct sockaddr *, size_t *);
+],[],
+[AC_DEFINE(ISC_SOCKADDR_LEN_T, size_t)],
+[AC_DEFINE(ISC_SOCKADDR_LEN_T, int)])
+],
+[
+#include <sys/types.h>
+#include <sys/socket.h>
+])
+AC_SUBST(ISC_SOCKADDR_LEN_T)
 AC_HEADER_TIME
 AC_MSG_CHECKING(for long long)
 AC_TRY_COMPILE([],[long long i = 0; return (0);],
@@ -253,6 +286,27 @@ AC_TRY_COMPILE([],[long long i = 0; return (0);],
 	[AC_MSG_RESULT(no)
 		ISC_PLATFORM_HAVELONGLONG="#undef ISC_PLATFORM_HAVELONGLONG"])
 AC_SUBST(ISC_PLATFORM_HAVELONGLONG)
+
+#
+# check if we have lifconf
+#
+AC_MSG_CHECKING(for struct lifconf)
+AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
+],
+[
+struct lifconf lifconf;
+lifconf.lifc_len = 0;
+]
+,
+	[AC_MSG_RESULT(yes)
+		ISC_PLATFORM_HAVELIFCONF="#define ISC_PLATFORM_HAVELIFCONF 1"],
+	[AC_MSG_RESULT(no)
+		ISC_PLATFORM_HAVELIFCONF="#undef ISC_PLATFORM_HAVELIFCONF"])
+AC_SUBST(ISC_PLATFORM_HAVELIFCONF)
+
 
 #
 # check if we need to #include sys/select.h explicitly
@@ -306,19 +360,35 @@ AC_MSG_CHECKING(for OpenSSL library)
 AC_ARG_WITH(openssl,
 [  --with-openssl[=PATH]   Build with OpenSSL [yes|no|path].
                           (Required for DNSSEC)],
-    use_openssl="$withval", use_openssl="no")
+    use_openssl="$withval", use_openssl="auto")
 
+openssldirs="/usr /usr/local /usr/local/ssl /usr/pkg"
+if test "$use_openssl" = "auto"
+then
+	for d in $openssldirs
+	do
+		if test -f $d/include/openssl/opensslv.h
+		then
+			use_openssl=$d
+			break
+		fi
+	done
+fi
 case "$use_openssl" in
 	no)
 		AC_MSG_RESULT(no)
 		DST_OPENSSL_INC=""
 		USE_OPENSSL=""
 		;;
+	auto)
+		DST_OPENSSL_INC=""
+		USE_OPENSSL=""
+		AC_MSG_RESULT(not found)
+		;;
 	*)
 		if test "$use_openssl" = "yes"
 		then
 		    	# User did not specify a path - guess it
-			openssldirs="/usr /usr/local /usr/local/ssl /usr/pkg"
 			for d in $openssldirs
 			do
 				if test -f $d/include/openssl/opensslv.h
@@ -436,6 +506,14 @@ int main() {
 		[AC_MSG_RESULT(not compatible)
 		 AC_MSG_ERROR(you need OpenSSL 0.9.6e/0.9.7-beta2 (or newer): CERT CA-2002-23)],
 		[AC_MSG_RESULT(assuming target platform has compatible version)]))
+		AC_MSG_CHECKING(for OpenSSL DSA support)
+		if test -f $use_openssl/include/openssl/dsa.h
+		then
+			AC_DEFINE(HAVE_OPENSSL_DSA)
+			AC_MSG_RESULT(yes)
+		else
+			AC_MSG_RESULT(no)
+		fi
 		CFLAGS="$saved_cflags"
 		LIBS="$saved_libs"
 		;;
@@ -446,9 +524,9 @@ esac
 # it as needed) if it is found.
 #
 
-AC_SUBST(DST_OPENSSL_INC)
-AC_SUBST(DNS_OPENSSL_LIBS)
 AC_SUBST(USE_OPENSSL)
+AC_SUBST(DST_OPENSSL_INC)
+DNS_CRYPTO_LIBS="$DNS_CRYPTO_LIBS $DNS_OPENSSL_LIBS"
 
 #
 # was --with-gssapi specified?
@@ -482,7 +560,13 @@ DNS_GSSAPI_LIBS=''
 
 AC_SUBST(USE_GSSAPI)
 AC_SUBST(DST_GSSAPI_INC)
-AC_SUBST(DNS_GSSAPI_LIBS)
+DNS_CRYPTO_LIBS="$DNS_CRYPTO_LIBS $DNS_GSSAPI_LIBS"
+
+#
+# Applications linking with libdns also need to link with these libraries.
+#
+
+AC_SUBST(DNS_CRYPTO_LIBS)
 
 #
 # was --with-randomdev specified?
@@ -553,9 +637,12 @@ case $host in
 	use_threads=true ;;
 *-sgi-irix*)
 	use_threads=true ;;
-*-sco-sysv*uw*)
+*-sco-sysv*uw*|*-*-sysv*UnixWare*)
         # UnixWare
 	use_threads=false ;;
+*-*-sysv*OpenUNIX*)
+        # UnixWare
+	use_threads=true ;;
 *-netbsd*)
 	if test -r /usr/lib/libpthread.so ; then
 	    use_threads=true
@@ -702,6 +789,11 @@ then
 		#
 		*-freebsd*)
 			AC_CHECK_LIB(c_r, sigwait, AC_DEFINE(HAVE_SIGWAIT),)
+			case $host in
+			*-freebsd5.3|*-freebsd5.3.*)
+				AC_DEFINE(NEED_PTHREAD_SCOPE_SYSTEM)
+				;;
+			esac
 			;;
 		#
 		# BSDI 3.0 through 4.0.1 needs pthread_init() to be
@@ -730,7 +822,7 @@ then
 		#
 		# UnixWare does things its own way.
 		#
-		*-sco-sysv*uw*)
+		*-sco-sysv*uw*|*-*-sysv*UnixWare*|*-*-sysv*OpenUNIX*)
 			AC_DEFINE(HAVE_UNIXWARE_SIGWAIT)
 			;;
 	esac
@@ -771,9 +863,13 @@ then
 		*-ibm-aix*)
 			STD_CDEFINES="$STD_CDEFINES -D_THREAD_SAFE"
 			;;
-		*-sco-sysv*uw*)
+		*-sco-sysv*uw*|*-*-sysv*UnixWare*)
 			CC="$CC -Kthread"
 			CCOPT="$CCOPT -Kthread"
+			;;
+		*-*-sysv*OpenUNIX*)
+			CC="$CC -Kpthread"
+			CCOPT="$CCOPT -Kpthread"
 			;;
 		esac
 	fi
@@ -820,6 +916,19 @@ fi
 #
 
 #
+# Large File
+#
+AC_ARG_ENABLE(largefile, [  --enable-largefile	  64-bit file support],
+	      want_largefile="yes", want_largefile="no")
+case $want_largefile in
+	yes)
+		ALWAYS_DEFINES="$ALWAYS_DEFINES -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+		;;
+	*)
+		;;
+esac
+
+#
 # Additional compiler settings.
 #
 MKDEPCC="$CC"
@@ -828,6 +937,11 @@ IRIX_DNSSEC_WARNINGS_HACK=""
 
 if test "X$GCC" = "Xyes"; then
 	STD_CWARNINGS="$STD_CWARNINGS -W -Wall -Wmissing-prototypes -Wcast-qual -Wwrite-strings -Wformat"
+	case "$host" in
+	*-hp-hpux*)
+		LDFLAGS="-Wl,+vnocompatwarnings $LDFALGS"
+		;;
+	esac
 else
 	case $host in
 	*-dec-osf*)
@@ -851,7 +965,7 @@ else
 			;;
 		esac
 		CCOPT="$CCOPT -Ae -z"
-		LIBS="-Wl,+vnocompatwarnings $LIBS"
+		LDFLAGS="-Wl,+vnocompatwarnings $LDFALGS"
 		MKDEPPROG='cc -Ae -E -Wp,-M >/dev/null 2>>$TMP'
 		;;
 	*-sgi-irix*)
@@ -868,7 +982,7 @@ else
 	*-solaris*)
 		MKDEPCFLAGS="-xM"
 		;;
-	*-sco-sysv*uw*)
+	*-sco-sysv*uw*|*-*-sysv*UnixWare*|*-*-sysv*OpenUNIX*)
                 # UnixWare
 		CC="$CC -w"
 		;;
@@ -962,6 +1076,13 @@ case $use_libtool in
 		LIBTOOL_MODE_COMPILE='--mode=compile'
 		LIBTOOL_MODE_INSTALL='--mode=install'
 		LIBTOOL_MODE_LINK='--mode=link'
+		case "$host" in
+		*) LIBTOOL_ALLOW_UNDEFINED= ;;
+		esac
+		case "$host" in
+		*-ibm-aix*) LIBTOOL_IN_MAIN="-Wl,-bI:T_testlist.imp" ;;
+		*) LIBTOOL_IN_MAIN= ;;
+		esac;
 		;;
 	*)
 		O=o
@@ -972,6 +1093,8 @@ case $use_libtool in
 		LIBTOOL_MODE_COMPILE=
 		LIBTOOL_MODE_INSTALL=
 		LIBTOOL_MODE_LINK=
+		LIBTOOL_ALLOW_UNDEFINED=
+		LIBTOOL_IN_MAIN=
 		;;
 esac
 
@@ -988,6 +1111,8 @@ AC_SUBST(LIBTOOL_MKDEP_SED)
 AC_SUBST(LIBTOOL_MODE_COMPILE)
 AC_SUBST(LIBTOOL_MODE_INSTALL)
 AC_SUBST(LIBTOOL_MODE_LINK)
+AC_SUBST(LIBTOOL_ALLOW_UNDEFINED)
+AC_SUBST(LIBTOOL_IN_MAIN)
 
 #
 # build libbind?
@@ -1104,7 +1229,7 @@ changequote([, ])
 # This is similar to the netinet6/in6.h issue.
 #
 case "$host" in
-*-sco-sysv*uw*)
+*-sco-sysv*uw*|*-*-sysv*UnixWare*|*-*-sysv*OpenUNIX*)
         # UnixWare
 	ISC_PLATFORM_NEEDNETINETIN6H="#define ISC_PLATFORM_NEEDNETINETIN6H 1"
 	LWRES_PLATFORM_NEEDNETINETIN6H="#define LWRES_PLATFORM_NEEDNETINETIN6H 1"
@@ -1189,8 +1314,10 @@ $isc_netinet6in6_hack
 ],
 		[struct sockaddr_in6 xyzzy; xyzzy.sin6_scope_id = 0; return (0);],
 			[AC_MSG_RESULT(yes)
+			 ISC_PLATFORM_HAVESCOPEID="#define ISC_PLATFORM_HAVESCOPEID 1"
 			 result="#define LWRES_HAVE_SIN6_SCOPE_ID 1"],
 			[AC_MSG_RESULT(no)
+			 ISC_PLATFORM_HAVESCOPEID="#undef ISC_PLATFORM_HAVESCOPEID"
 			 result="#undef LWRES_HAVE_SIN6_SCOPE_ID"])
 		LWRES_HAVE_SIN6_SCOPE_ID="$result"
 
@@ -1215,6 +1342,7 @@ $isc_netinet6in6_hack
 		LWRES_PLATFORM_NEEDIN6ADDRANY="#undef LWRES_PLATFORM_NEEDIN6ADDRANY"
 		ISC_PLATFORM_HAVEIN6PKTINFO="#undef ISC_PLATFORM_HAVEIN6PKTINFO"
 		LWRES_HAVE_SIN6_SCOPE_ID="#define LWRES_HAVE_SIN6_SCOPE_ID 1"
+		ISC_PLATFORM_HAVESCOPEID="#define ISC_PLATFORM_HAVESCOPEID 1"
 		ISC_IPV6_H="ipv6.h"
 		ISC_IPV6_O="ipv6.$O"
 		ISC_ISCIPV6_O="unix/ipv6.$O"
@@ -1241,6 +1369,29 @@ AC_SUBST(ISC_IPV6_O)
 AC_SUBST(ISC_ISCIPV6_O)
 AC_SUBST(ISC_IPV6_C)
 AC_SUBST(LWRES_HAVE_SIN6_SCOPE_ID)
+AC_SUBST(ISC_PLATFORM_HAVESCOPEID)
+
+AC_MSG_CHECKING([for struct if_laddrreq])
+AC_TRY_LINK([
+#include <sys/types.h>
+#include <net/if6.h>
+],[ struct if_laddrreq a; ],
+	[AC_MSG_RESULT(yes)
+	ISC_PLATFORM_HAVEIF_LADDRREQ="#define ISC_PLATFORM_HAVEIF_LADDRREQ 1"],
+	[AC_MSG_RESULT(no)
+	ISC_PLATFORM_HAVEIF_LADDRREQ="#undef ISC_PLATFORM_HAVEIF_LADDRREQ"])
+AC_SUBST(ISC_PLATFORM_HAVEIF_LADDRREQ)
+
+AC_MSG_CHECKING([for struct if_laddrconf])
+AC_TRY_LINK([
+#include <sys/types.h>
+#include <net/if6.h>
+],[ struct if_laddrconf a; ],
+	[AC_MSG_RESULT(yes)
+	ISC_PLATFORM_HAVEIF_LADDRCONF="#define ISC_PLATFORM_HAVEIF_LADDRCONF 1"],
+	[AC_MSG_RESULT(no)
+	ISC_PLATFORM_HAVEIF_LADDRCONF="#undef ISC_PLATFORM_HAVEIF_LADDRCONF"])
+AC_SUBST(ISC_PLATFORM_HAVEIF_LADDRCONF)
 
 #
 # Check for network functions that are often missing.  We do this
@@ -1472,6 +1623,44 @@ AC_SUBST(ISC_LWRES_GETIPNODEPROTO)
 AC_SUBST(ISC_LWRES_GETADDRINFOPROTO)
 AC_SUBST(ISC_LWRES_GETNAMEINFOPROTO)
 
+AC_ARG_ENABLE(getifaddrs,
+[  --enable-getifaddrs    Enable the use of getifaddrs() [[yes|no|glibc]].
+             glibc: Use getifaddrs() in glibc if you know it supports IPv6.],
+    want_getifaddrs="$enableval",  want_getifaddrs="yes")
+
+case $want_getifaddrs in
+yes|glibc)
+#
+# Do we have getifaddrs() ?
+#
+case $host in
+*-linux*)
+	# Some recent versions of glibc support getifaddrs() which does not
+	# provide AF_INET6 addresses while the function provided by the USAGI
+	# project handles the AF_INET6 case correctly.  We need to avoid
+	# using the former but prefer the latter unless overridden by
+	# --enable-getifaddrs=glibc.
+	if test $want_getifaddrs = glibc
+	then
+		AC_CHECK_FUNC(getifaddrs, AC_DEFINE(HAVE_GETIFADDRS))
+	else
+		save_LIBS="$LIBS"
+		LIBS="-L/usr/local/v6/lib $LIBS"
+		AC_CHECK_LIB(inet6, getifaddrs,
+			LIBS="$LIBS -linet6"
+			AC_DEFINE(HAVE_GETIFADDRS),
+			LIBS=${save_LIBS})
+	fi
+	;;
+*)
+	AC_CHECK_FUNC(getifaddrs, AC_DEFINE(HAVE_GETIFADDRS))
+	;;
+esac
+;;
+no)
+;;
+esac
+
 #
 # Look for a sysctl call to get the list of network interfaces.
 #
@@ -1506,17 +1695,59 @@ AC_MSG_CHECKING(for correctly declared strsep())
 AC_TRY_LINK([#include <string.h>], [char *sp; char *foo = strsep(&sp, ".");],
 	[AC_MSG_RESULT(yes); ISC_PLATFORM_NEEDSTRSEP="#undef ISC_PLATFORM_NEEDSTRSEP"],
 	[AC_MSG_RESULT(no); ISC_PLATFORM_NEEDSTRSEP="#define ISC_PLATFORM_NEEDSTRSEP 1"])
+AC_SUBST(ISC_PLATFORM_NEEDSTRSEP)
+
+AC_CHECK_FUNC(memmove,
+	[ISC_PLATFORM_NEEDMEMMOVE="#undef ISC_PLATFORM_NEEDMEMMOVE"],
+	[ISC_PLATFORM_NEEDMEMMOVE="#define ISC_PLATFORM_NEEDMEMMOVE 1"])
+AC_SUBST(ISC_PLATFORM_NEEDMEMMOVE)
+
+AC_CHECK_FUNC(strtoul,
+	[ISC_PLATFORM_NEEDSTRTOUL="#undef ISC_PLATFORM_NEEDSTRTOUL"],
+	[ISC_PLATFORM_NEEDSTRTOUL="#define ISC_PLATFORM_NEEDSTRTOUL 1"])
+AC_SUBST(ISC_PLATFORM_NEEDSTRTOUL)
+
+AC_CHECK_FUNC(strlcpy,
+	[ISC_PLATFORM_NEEDSTRLCPY="#undef ISC_PLATFORM_NEEDSTRLCPY"],
+	[ISC_PLATFORM_NEEDSTRLCPY="#define ISC_PLATFORM_NEEDSTRLCPY 1"])
+AC_SUBST(ISC_PLATFORM_NEEDSTRLCPY)
+
+AC_CHECK_FUNC(strlcat,
+	[ISC_PLATFORM_NEEDSTRLCAT="#undef ISC_PLATFORM_NEEDSTRLCAT"],
+	[ISC_PLATFORM_NEEDSTRLCAT="#define ISC_PLATFORM_NEEDSTRLCAT 1"])
+AC_SUBST(ISC_PLATFORM_NEEDSTRLCAT)
+
+ISC_PRINT_OBJS=
+ISC_PRINT_SRCS=
+AC_MSG_CHECKING(sprintf)
+AC_TRY_COMPILE([
+#include <stdio.h>
+],
+[ char buf[2]; return(*sprintf(buf,"x"));],
+[
+ISC_PRINT_OBJS="print.$O"
+ISC_PRINT_SRCS="print.c"
+ISC_PLATFORM_NEEDSPRINTF="#define ISC_PLATFORM_NEEDSPRINTF"
+LWRES_PLATFORM_NEEDSPRINTF="#define LWRES_PLATFORM_NEEDSPRINTF"
+],
+[ISC_PLATFORM_NEEDSPRINTF="#undef ISC_PLATFORM_NEEDSPRINTF"
+ LWRES_PLATFORM_NEEDSPRINTF="#undef LWRES_PLATFORM_NEEDSPRINTF"]
+)
+AC_SUBST(ISC_PLATFORM_NEEDSPRINTF)
+AC_SUBST(LWRES_PLATFORM_NEEDSPRINTF)
 
 AC_CHECK_FUNC(vsnprintf,
 	[ISC_PLATFORM_NEEDVSNPRINTF="#undef ISC_PLATFORM_NEEDVSNPRINTF"
-	  LWRES_PLATFORM_NEEDVSNPRINTF="#undef LWRES_PLATFORM_NEEDVSNPRINTF"],
-	[ISC_EXTRA_OBJS="$ISC_EXTRA_OBJS print.$O"
-	 ISC_EXTRA_SRCS="$ISC_EXTRA_SRCS print.c"
+	 LWRES_PLATFORM_NEEDVSNPRINTF="#undef LWRES_PLATFORM_NEEDVSNPRINTF"],
+	[ISC_PRINT_OBJS="print.$O"
+	 ISC_PRINT_SRCS="print.c"
 	 ISC_PLATFORM_NEEDVSNPRINTF="#define ISC_PLATFORM_NEEDVSNPRINTF 1"
 	 LWRES_PLATFORM_NEEDVSNPRINTF="#define LWRES_PLATFORM_NEEDVSNPRINTF 1"])
-AC_SUBST(ISC_PLATFORM_NEEDSTRSEP)
 AC_SUBST(ISC_PLATFORM_NEEDVSNPRINTF)
 AC_SUBST(LWRES_PLATFORM_NEEDVSNPRINTF)
+ISC_EXTRA_OBJS="$ISC_EXTRA_OBJS $ISC_PRINT_OBJS"
+ISC_EXTRA_SRCS="$ISC_EXTRA_SRCS $ISC_PRINT_SRCS"
+
 AC_CHECK_FUNC(strerror, AC_DEFINE(HAVE_STRERROR))
 
 AC_SUBST(ISC_EXTRA_OBJS)
@@ -1617,6 +1848,20 @@ ISC_PLATFORM_RLIMITTYPE="#define ISC_PLATFORM_RLIMITTYPE long long int"],
 AC_SUBST(ISC_PLATFORM_RLIMITTYPE)
 
 #
+# Compaq TruCluster requires more code for handling cluster IP aliases
+#
+case "$host" in
+	*-dec-osf*)
+		AC_CHECK_LIB(clua, clua_getaliasaddress, LIBS="-lclua $LIBS")
+		AC_CHECK_FUNC(clua_getaliasaddress,
+				AC_DEFINE(HAVE_TRUCLUSTER, 1,
+					[Define if running under Compaq TruCluster]))
+		;;
+	*)
+		;;
+esac
+
+#
 # Microsoft has their own way of handling shared libraries that requires
 # additional qualifiers on extern variables.  Unix systems don't need it.
 #
@@ -1633,6 +1878,9 @@ AC_SUBST(ISC_PLATFORM_BRACEPTHREADONCEINIT)
 ISC_PLATFORM_BRACEPTHREADONCEINIT="#undef ISC_PLATFORM_BRACEPTHREADONCEINIT"
 
 case "$host" in
+	*-aix5.1.*)
+		hack_shutup_pthreadonceinit=yes
+		;;
 	*-bsdi3.1*)
 		hack_shutup_sputaux=yes
 		;;
@@ -1640,7 +1888,7 @@ case "$host" in
 		hack_shutup_sigwait=yes
 		hack_shutup_sputaux=yes
 		;;
-	[*-bsdi4[12]*])
+	[*-bsdi4.[12]*])
 		hack_shutup_stdargcast=yes
 		;;
 	[*-solaris2.[89]])
@@ -1685,13 +1933,38 @@ case "$hack_shutup_stdargcast" in
 esac
 
 #
+# Check for if_nametoindex() for IPv6 scoped addresses support
+#
+AC_CHECK_FUNC(if_nametoindex, ac_cv_have_if_nametoindex=yes,
+		ac_cv_have_if_nametoindex=no)
+case $ac_cv_have_if_nametoindex in
+no)
+	case "$host" in
+  	*-hp-hpux*)
+  		AC_CHECK_LIB(ipv6, if_nametoindex,
+				ac_cv_have_if_nametoindex=yes
+				LIBS="-lipv6 $LIBS",)
+  	;;
+	esac
+esac
+case $ac_cv_have_if_nametoindex in
+yes)
+	ISC_PLATFORM_HAVEIFNAMETOINDEX="#define ISC_PLATFORM_HAVEIFNAMETOINDEX 1"
+	;;
+*)
+	ISC_PLATFORM_HAVEIFNAMETOINDEX="#undef ISC_PLATFORM_HAVEIFNAMETOINDEX"
+	;;
+esac
+AC_SUBST(ISC_PLATFORM_HAVEIFNAMETOINDEX)
+
+#
 # The following sections deal with tools used for formatting
 # the documentation.  They are all optional, unless you are
 # a developer editing the documentation source.
 #
 
 # Directory trees where SGML files are commonly found.
-sgmltrees="/usr/pkg/share/sgml /usr/local/share/sgml"
+sgmltrees="/usr/pkg/share/sgml /usr/local/share/sgml /usr/share/sgml"
 
 #
 # Look for openjade.  Plain jade is no longer supported.
@@ -1744,16 +2017,35 @@ fi
 AC_SUBST($1)
 ])
 
-NOM_PATH_FILE(SGMLCATALOG, catalog, $sgmltrees)
+#
+# Look for the SGML catalog.
+# Its location varies, so far we have seen:
+#
+# 	NetBSD 	/usr/pkg/share/sgml/docbook/catalog
+# 	FreeBSD	/usr/local/share/sgml/docbook/catalog
+#	Linux	/usr/local/share/dsssl/docbook/catalog
+#		/usr/share/sgml/docbook/dsssl-stylesheets/catalog
+#
+catalogpath=""
+for d in $sgmltrees 
+do
+	catalogpath="$catalogpath $d"
+	for s in docbook/dsssl-stylesheets
+	do
+		catalogpath="$catalogpath $d/$s"
+	done
+done
+NOM_PATH_FILE(SGMLCATALOG, catalog, $catalogpath)
 
 #
 # Look for the HTML stylesheet html/docbook.dsl, used for
 # formatting man pages in HTML.  Its location varies,
 # so far we have seen:
 #
-# 	NetBSD 	/usr/pkg/share/docbook/dsssl/modular/
-# 	FreeBSD	/usr/local/share/docbook/dsssl/modular/
+# 	NetBSD 	/usr/pkg/share/sgml/docbook/dsssl/modular/
+# 	FreeBSD	/usr/local/share/sgml/docbook/dsssl/modular/
 #	Linux	/usr/local/share/dsssl/docbook/
+#		/usr/share/sgml/docbook/dsssl-stylesheets/
 #
 # Ditto for the print stylesheet print/docbook.dsl.
 #
@@ -1761,7 +2053,7 @@ NOM_PATH_FILE(SGMLCATALOG, catalog, $sgmltrees)
 stylepath=""
 for d in $sgmltrees 
 do
-	for s in docbook/dsssl/modular dsssl/docbook
+	for s in docbook/dsssl/modular dsssl/docbook docbook/dsssl-stylesheets
 	do
 		stylepath="$stylepath $d/$s"
 	done
@@ -1770,10 +2062,24 @@ NOM_PATH_FILE(HTMLSTYLE, html/docbook.dsl, $stylepath)
 NOM_PATH_FILE(PRINTSTYLE, print/docbook.dsl, $stylepath)
 
 #
-# Look for XML declarations
+# Look for XML declarations.
+# Its location varies, so far we have seen:
+#
+# 	NetBSD 	/usr/pkg/share/sgml/docbook/dsssl/modular/dtds/decls/
+# 	FreeBSD	/usr/local/share/sgml/docbook/dsssl/modular/dtds/decls/
+#	Linux	/usr/local/share/dsssl/docbook/dtds/decls/
+#		/usr/share/sgml/docbook/dsssl-stylesheets/dtds/decls/
 #
 
-NOM_PATH_FILE(XMLDCL, docbook/dsssl/modular/dtds/decls/xml.dcl, $sgmltrees)
+xmlpath=""
+for d in $sgmltrees 
+do
+	for s in docbook/dsssl/modular dsssl/docbook docbook/dsssl-stylesheets
+	do
+		xmlpath="$xmlpath $d/$s"
+	done
+done
+NOM_PATH_FILE(XMLDCL, dtds/decls/xml.dcl, $xmlpath)
 
 #
 # Look for docbook2man-spec.pl
@@ -1792,22 +2098,25 @@ AC_SUBST(BIND9_ISCCC_BUILDINCLUDE)
 AC_SUBST(BIND9_ISCCFG_BUILDINCLUDE)
 AC_SUBST(BIND9_DNS_BUILDINCLUDE)
 AC_SUBST(BIND9_LWRES_BUILDINCLUDE)
+AC_SUBST(BIND9_BIND9_BUILDINCLUDE)
 if test "X$srcdir" != "X"; then
 	BIND9_ISC_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isc/include"
 	BIND9_ISCCC_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isccc/include"
 	BIND9_ISCCFG_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isccfg/include"
 	BIND9_DNS_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/dns/include"
 	BIND9_LWRES_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/lwres/include"
+	BIND9_BIND9_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/bind9/include"
 else
 	BIND9_ISC_BUILDINCLUDE=""
 	BIND9_ISCCC_BUILDINCLUDE=""
 	BIND9_ISCCFG_BUILDINCLUDE=""
 	BIND9_DNS_BUILDINCLUDE=""
 	BIND9_LWRES_BUILDINCLUDE=""
+	BIND9_BIND9_BUILDINCLUDE=""
 fi
 
-AC_SUBST_FILE(BIND9_INCLUDES)
-BIND9_INCLUDES=$BIND9_TOP_BUILDDIR/make/includes
+AC_SUBST_FILE(BIND9_MAKE_INCLUDES)
+BIND9_MAKE_INCLUDES=$BIND9_TOP_BUILDDIR/make/includes
 
 AC_SUBST_FILE(BIND9_MAKE_RULES)
 BIND9_MAKE_RULES=$BIND9_TOP_BUILDDIR/make/rules
@@ -1827,6 +2136,9 @@ LIBISCCFG_API=$srcdir/lib/isccfg/api
 
 AC_SUBST_FILE(LIBDNS_API)
 LIBDNS_API=$srcdir/lib/dns/api
+
+AC_SUBST_FILE(LIBBIND9_API)
+LIBBIND9_API=$srcdir/lib/bind9/api
 
 AC_SUBST_FILE(LIBLWRES_API)
 LIBLWRES_API=$srcdir/lib/lwres/api
@@ -1858,10 +2170,10 @@ AC_OUTPUT(
 	lib/dns/Makefile
 	lib/dns/include/Makefile
 	lib/dns/include/dns/Makefile
-	lib/dns/sec/Makefile
-	lib/dns/sec/dst/Makefile
-	lib/dns/sec/dst/include/Makefile
-	lib/dns/sec/dst/include/dst/Makefile
+	lib/dns/include/dst/Makefile
+	lib/bind9/Makefile
+	lib/bind9/include/Makefile
+	lib/bind9/include/bind9/Makefile
 	lib/lwres/Makefile
 	lib/lwres/include/Makefile
 	lib/lwres/include/lwres/Makefile

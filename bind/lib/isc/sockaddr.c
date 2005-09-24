@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.c,v 1.48.2.5 2004/03/09 06:11:51 marka Exp $ */
+/* $Id: sockaddr.c,v 1.48.2.1.2.10 2004/05/15 03:46:12 jinmei Exp $ */
 
 #include <config.h>
 
@@ -57,6 +57,10 @@ isc_sockaddr_equal(const isc_sockaddr_t *a, const isc_sockaddr_t *b) {
 		if (memcmp(&a->type.sin6.sin6_addr, &b->type.sin6.sin6_addr,
 			   sizeof(a->type.sin6.sin6_addr)) != 0)
 			return (ISC_FALSE);
+#ifdef ISC_PLATFORM_HAVESCOPEID
+		if (a->type.sin6.sin6_scope_id != b->type.sin6.sin6_scope_id)
+			return (ISC_FALSE);
+#endif
 		if (a->type.sin6.sin6_port != b->type.sin6.sin6_port)
 			return (ISC_FALSE);
 		break;
@@ -86,6 +90,10 @@ isc_sockaddr_eqaddr(const isc_sockaddr_t *a, const isc_sockaddr_t *b) {
 		if (memcmp(&a->type.sin6.sin6_addr, &b->type.sin6.sin6_addr,
 			   sizeof(a->type.sin6.sin6_addr)) != 0)
 			return (ISC_FALSE);
+#ifdef ISC_PLATFORM_HAVESCOPEID
+		if (a->type.sin6.sin6_scope_id != b->type.sin6.sin6_scope_id)
+			return (ISC_FALSE);
+#endif
 		break;
 	default:
 		if (memcmp(&a->type, &b->type, a->length) != 0)
@@ -121,10 +129,10 @@ isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target) {
 	 */
 	switch (sockaddr->type.sa.sa_family) {
 	case AF_INET:
-		sprintf(pbuf, "%u", ntohs(sockaddr->type.sin.sin_port));
+		snprintf(pbuf, sizeof(pbuf), "%u", ntohs(sockaddr->type.sin.sin_port));
 		break;
 	case AF_INET6:
-		sprintf(pbuf, "%u", ntohs(sockaddr->type.sin6.sin6_port));
+		snprintf(pbuf, sizeof(pbuf), "%u", ntohs(sockaddr->type.sin6.sin6_port));
 		break;
 	default:
 		return (ISC_R_FAILURE);
@@ -155,7 +163,7 @@ isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target) {
 }
 
 void
-isc_sockaddr_format(isc_sockaddr_t *sa, char *array, unsigned int size) {
+isc_sockaddr_format(const isc_sockaddr_t *sa, char *array, unsigned int size) {
 	isc_result_t result;
 	isc_buffer_t buf;
 
@@ -184,6 +192,7 @@ isc_sockaddr_hash(const isc_sockaddr_t *sockaddr, isc_boolean_t address_only) {
 	const struct in6_addr *in6;
 
 	REQUIRE(sockaddr != NULL);
+
 	switch (sockaddr->type.sa.sa_family) {
 	case AF_INET:
 		s = (const unsigned char *)&sockaddr->type.sin.sin_addr;
@@ -204,8 +213,8 @@ isc_sockaddr_hash(const isc_sockaddr_t *sockaddr, isc_boolean_t address_only) {
 	default:
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 isc_msgcat_get(isc_msgcat,
-					        ISC_MSGSET_SOCKADDR,
-				       		ISC_MSG_UNKNOWNFAMILY,
+						ISC_MSGSET_SOCKADDR,
+						ISC_MSG_UNKNOWNFAMILY,
 						"unknown address family: %d"),
 					     (int)sockaddr->type.sa.sa_family);
 		s = (const unsigned char *)&sockaddr->type;
@@ -361,6 +370,9 @@ isc_sockaddr_fromnetaddr(isc_sockaddr_t *sockaddr, const isc_netaddr_t *na,
 		sockaddr->type.sin6.sin6_len = sizeof(sockaddr->type.sin6);
 #endif
 		memcpy(&sockaddr->type.sin6.sin6_addr, &na->type.in6, 16);
+#ifdef ISC_PLATFORM_HAVESCOPEID
+		sockaddr->type.sin6.sin6_scope_id = isc_netaddr_getzone(na);
+#endif
 		sockaddr->type.sin6.sin6_port = htons(port);
 		break;
         default:
@@ -424,6 +436,28 @@ isc_sockaddr_isexperimental(isc_sockaddr_t *sockaddr) {
 	if (sockaddr->type.sa.sa_family == AF_INET) {
 		isc_netaddr_fromsockaddr(&netaddr, sockaddr);
 		return (isc_netaddr_isexperimental(&netaddr));
+	}
+	return (ISC_FALSE);
+}
+
+isc_boolean_t
+isc_sockaddr_issitelocal(isc_sockaddr_t *sockaddr) {
+	isc_netaddr_t netaddr;
+
+	if (sockaddr->type.sa.sa_family == AF_INET6) {
+		isc_netaddr_fromsockaddr(&netaddr, sockaddr);
+		return (isc_netaddr_issitelocal(&netaddr));
+	}
+	return (ISC_FALSE);
+}
+
+isc_boolean_t
+isc_sockaddr_islinklocal(isc_sockaddr_t *sockaddr) {
+	isc_netaddr_t netaddr;
+
+	if (sockaddr->type.sa.sa_family == AF_INET6) {
+		isc_netaddr_fromsockaddr(&netaddr, sockaddr);
+		return (isc_netaddr_islinklocal(&netaddr));
 	}
 	return (ISC_FALSE);
 }

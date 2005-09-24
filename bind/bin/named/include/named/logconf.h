@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: logconf.h,v 1.10.2.1 2004/03/09 06:09:22 marka Exp $ */
+/* $Id: logconf.h,v 1.10.208.1 2004/03/06 10:21:24 marka Exp $ */
 
 #ifndef NAMED_LOGCONF_H
 #define NAMED_LOGCONF_H 1

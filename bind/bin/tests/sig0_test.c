@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sig0_test.c,v 1.9.2.1 2004/03/09 06:09:35 marka Exp $ */
+/* $Id: sig0_test.c,v 1.9.12.3 2004/03/08 04:04:27 marka Exp $ */
 
 #include <config.h>
 
@@ -155,7 +155,7 @@ buildquery(void) {
 	CHECK("dns_message_gettempname", result);
 	isc_buffer_init(&namesrc, nametext, strlen(nametext));
 	isc_buffer_add(&namesrc, strlen(nametext));
-	isc_buffer_init(&namedst, namedata, sizeof namedata);
+	isc_buffer_init(&namedst, namedata, sizeof(namedata));
 	dns_name_init(qname, NULL);
 	result = dns_name_fromtext(qname, &namesrc, dns_rootname, ISC_FALSE,
 				   &namedst);

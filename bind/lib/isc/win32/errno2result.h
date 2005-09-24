@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: errno2result.h,v 1.4.2.1 2004/03/09 06:12:17 marka Exp $ */
+/* $Id: errno2result.h,v 1.4.12.3 2004/03/08 09:04:59 marka Exp $ */
 
 #ifndef UNIX_ERRNO2RESULT_H
 #define UNIX_ERRNO2RESULT_H 1
@@ -31,15 +31,6 @@ ISC_LANG_BEGINDECLS
 
 isc_result_t
 isc__errno2result(int posixerrno);
-
-char *
-isc_FormatError(int error);
-
-char *
-GetWSAErrorMessage(int errval);
-
-char *  __cdecl
-NTstrerror(int err);
 
 ISC_LANG_ENDDECLS
 

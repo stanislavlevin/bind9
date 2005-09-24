@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: platform.h,v 1.4.2.1 2004/03/09 06:12:44 marka Exp $ */
+/* $Id: platform.h,v 1.4.206.1 2004/03/06 08:15:46 marka Exp $ */
 
 #ifndef LWRES_PLATFORM_H
 #define LWRES_PLATFORM_H 1

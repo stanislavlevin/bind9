@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rbt_test.c,v 1.42.2.1 2004/03/09 06:09:34 marka Exp $ */
+/* $Id: rbt_test.c,v 1.42.12.3 2004/03/08 04:04:26 marka Exp $ */
 
 #include <config.h>
 
@@ -292,7 +292,7 @@ main(int argc, char **argv) {
 	/*
 	 * So isc_mem_stats() can report any allocation leaks.
 	 */
-	isc_mem_debugging = 2;
+	isc_mem_debugging = ISC_MEM_DEBUGRECORD;
 
 	result = isc_mem_create(0, 0, &mctx);
 	if (result != ISC_R_SUCCESS) {

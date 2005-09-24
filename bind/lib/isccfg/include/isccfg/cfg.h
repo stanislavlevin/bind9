@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cfg.h,v 1.30.2.1 2004/03/09 06:12:31 marka Exp $ */
+/* $Id: cfg.h,v 1.30.12.4 2004/03/08 09:05:07 marka Exp $ */
 
 #ifndef ISCCFG_CFG_H
 #define ISCCFG_CFG_H 1
@@ -27,7 +27,6 @@
 /*
  * This is the new, table-driven, YACC-free configuration file parser.
  */
-
 
 /***
  *** Imports
@@ -398,20 +397,18 @@ cfg_obj_log(cfg_obj_t *obj, isc_log_t *lctx, int level, const char *fmt, ...)
  * with the file name(s) and line number where 'obj' was defined.
  */
 
+const char *
+cfg_obj_file(cfg_obj_t *obj);
 /*
- * Configuration object types.
+ * Return the file that defined this object.
  */
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_namedconf;
-/* A complete named.conf file. */
 
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_rndcconf;
-/* A complete rndc.conf file. */
+unsigned int
+cfg_obj_line(cfg_obj_t *obj);
+/*
+ * Return the line in file where this object was defined.
+ */
 
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_rndckey;
-/* A complete rndc.key file. */
-
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_keyref;
-/* A key reference, used as an ACL element */
 
 ISC_LANG_ENDDECLS
 

@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: shutdown_test.c,v 1.18.2.1 2004/03/09 06:09:35 marka Exp $ */
+/* $Id: shutdown_test.c,v 1.18.12.5 2004/08/28 06:25:31 marka Exp $ */
 
 #include <config.h>
 
@@ -24,6 +24,7 @@
 
 #include <isc/app.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/task.h>
 #include <isc/time.h>
 #include <isc/timer.h>
@@ -79,7 +80,7 @@ shutdown_action(isc_task_t *task, isc_event_t *event) {
 		isc_timer_detach(&info->timer);
 		nevent = isc_event_allocate(info->mctx, info, T2_SHUTDOWNOK,
 					    t2_shutdown, &tasks[1],
-					    sizeof *event);
+					    sizeof(*event));
 		RUNTIME_CHECK(nevent != NULL);
 		info->exiting = ISC_TRUE;
 		isc_task_sendanddetach(&info->peer, &nevent);
@@ -94,8 +95,7 @@ foo_event(isc_task_t *task, isc_event_t *event) {
 }
 
 static void
-tick(isc_task_t *task, isc_event_t *event)
-{
+tick(isc_task_t *task, isc_event_t *event) {
 	t_info *info = event->ev_arg;
 	isc_event_t *nevent;
 
@@ -113,7 +113,7 @@ tick(isc_task_t *task, isc_event_t *event)
 			nevent = isc_event_allocate(info->mctx, info,
 						    T2_SHUTDOWNDONE,
 						    t1_shutdown, &tasks[0],
-						    sizeof *event);
+						    sizeof(*event));
 			RUNTIME_CHECK(nevent != NULL);
 			isc_task_send(info->peer, &nevent);
 			isc_task_detach(&info->peer);
@@ -123,7 +123,7 @@ tick(isc_task_t *task, isc_event_t *event)
 		nevent = isc_event_allocate(info->mctx, info,
 					    FOO_EVENT,
 					    foo_event, task,
-					    sizeof *event);
+					    sizeof(*event));
 		RUNTIME_CHECK(nevent != NULL);
 		isc_task_sendanddetach(&task, &nevent);
 	}

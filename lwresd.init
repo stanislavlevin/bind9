@@ -1,11 +1,13 @@
 #!/bin/sh
 #
-# lwresd           This shell script takes care of starting and stopping
+# lwresd          This shell script takes care of starting and stopping
 #                 lwresd (Lightweight Resolver Daemon).
 #
 # chkconfig: 345 21 54
-# description: lwresd is the daemon providing name lookup services
-# to clients that use the BIND 9 lightweight resolver library.
+# description: \
+#	lwresd is the daemon providing name lookup services to \
+#	clients that use the BIND 9 lightweight resolver library.
+# processname: lwresd
 
 WITHOUT_RC_COMPAT=1
 
@@ -15,7 +17,7 @@ WITHOUT_RC_COMPAT=1
 # Source networking configuration.
 SourceIfNotEmpty /etc/sysconfig/network
 
-NAMED_ROOT="/var/resolv"
+LWRESD_ROOT="/var/resolv"
 
 LOCKFILE=/var/lock/subsys/lwresd
 RETVAL=0

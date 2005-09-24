@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,29 +15,26 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: controlconf.c,v 1.28.2.10 2004/03/09 06:09:18 marka Exp $ */
+/* $Id: controlconf.c,v 1.28.2.9.2.6 2004/03/08 09:04:14 marka Exp $ */
 
 #include <config.h>
 
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/event.h>
-#include <isc/file.h>
-#include <isc/fsaccess.h>
 #include <isc/mem.h>
 #include <isc/net.h>
 #include <isc/netaddr.h>
-#include <isc/print.h>
 #include <isc/random.h>
 #include <isc/result.h>
-#include <isc/stdio.h>
 #include <isc/stdtime.h>
 #include <isc/string.h>
 #include <isc/timer.h>
 #include <isc/util.h>
 
-#include <isccfg/cfg.h>
-#include <isccfg/check.h>
+#include <isccfg/namedconf.h>
+
+#include <bind9/check.h>
 
 #include <isccc/alist.h>
 #include <isccc/cc.h>
@@ -48,10 +45,7 @@
 #include <isccc/symtab.h>
 #include <isccc/util.h>
 
-#include <dns/keyvalues.h>
 #include <dns/result.h>
-
-#include <dst/dst.h>
 
 #include <named/config.h>
 #include <named/control.h>
@@ -835,7 +829,7 @@ get_rndckey(isc_mem_t *mctx, controlkeylist_t *keyids) {
 	if (keyid->keyname == NULL) 
 		CHECK(ISC_R_NOMEMORY);
 
-	CHECK(cfg_check_key(key, ns_g_lctx));
+	CHECK(bind9_check_key(key, ns_g_lctx));
 
 	(void)cfg_map_get(key, "algorithm", &algobj);
 	(void)cfg_map_get(key, "secret", &secretobj);

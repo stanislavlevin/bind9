@@ -142,7 +142,7 @@ CLASS="acronym"
 > version 9 software package for system
     administrators.</P
 ><P
->This version of the manual corresponds to BIND version 9.2.</P
+>This version of the manual corresponds to BIND version 9.3.</P
 ></DIV
 ><DIV
 CLASS="sect1"
@@ -494,16 +494,27 @@ CLASS="emphasis"
 > and interprets the responses.
 The <ACRONYM
 CLASS="acronym"
->BIND 9</ACRONYM
-> software distribution contains both a 
-name server and a resolver library.</P
+>BIND</ACRONYM
+> 9 software distribution contains a
+name server, <B
+CLASS="command"
+>named</B
+>, and two resolver
+libraries, <B
+CLASS="command"
+>liblwres</B
+> and <B
+CLASS="command"
+>libbind</B
+>.
+</P
 ></DIV
 ><DIV
 CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN121"
+NAME="AEN124"
 >1.4.2. Domains and Domain Names</A
 ></H2
 ><P
@@ -617,7 +628,7 @@ HREF="Bv9ARM.ch06.html#types_of_resource_records_and_when_to_use_them"
 the DNS protocol, please refer to the standards documents listed in
 <A
 HREF="Bv9ARM.ch09.html#rfcs"
->Section A.4.1</A
+>Section A.3.1</A
 >.</P
 ></DIV
 ><DIV
@@ -625,7 +636,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN145"
+NAME="AEN148"
 >1.4.3. Zones</A
 ></H2
 ><P
@@ -746,7 +757,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN168"
+NAME="AEN171"
 >1.4.4. Authoritative Name Servers</A
 ></H2
 ><P
@@ -771,14 +782,14 @@ CLASS="command"
 >dig</B
 > (<A
 HREF="Bv9ARM.ch03.html#diagnostic_tools"
->Section 3.4.1.1</A
+>Section 3.3.1.1</A
 >).</P
 ><DIV
 CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN175"
+NAME="AEN178"
 >1.4.4.1. The Primary Master</A
 ></H3
 ><P
@@ -818,7 +829,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN182"
+NAME="AEN185"
 >1.4.4.2. Slave Servers</A
 ></H3
 ><P
@@ -853,7 +864,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN188"
+NAME="AEN191"
 >1.4.4.3. Stealth Servers</A
 ></H3
 ><P
@@ -910,7 +921,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN197"
+NAME="AEN200"
 >1.4.5. Caching Name Servers</A
 ></H2
 ><P
@@ -967,7 +978,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN207"
+NAME="AEN210"
 >1.4.5.1. Forwarding</A
 ></H3
 ><P
@@ -1015,7 +1026,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN215"
+NAME="AEN218"
 >1.4.6. Name Servers in Multiple Roles</A
 ></H2
 ><P

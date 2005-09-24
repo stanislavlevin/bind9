@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: db.h,v 1.67.2.4 2004/03/09 06:11:14 marka Exp $ */
+/* $Id: db.h,v 1.67.12.8 2004/05/14 05:06:41 marka Exp $ */
 
 #ifndef DNS_DB_H
 #define DNS_DB_H 1
@@ -187,6 +187,8 @@ struct dns_db {
 #define DNS_DBFIND_NOWILD		0x04
 #define DNS_DBFIND_PENDINGOK		0x08
 #define DNS_DBFIND_NOEXACT		0x10
+#define DNS_DBFIND_FORCENSEC		0x20
+#define DNS_DBFIND_COVERINGNSEC		0x40
 
 /*
  * Options that can be specified for dns_db_addrdataset().
@@ -288,7 +290,7 @@ dns_db_ondestroy(dns_db_t *db, isc_task_t *task, isc_event_t **eventp);
  * Causes 'eventp' to be sent to be sent to 'task' when the database is
  * destroyed.
  *
- * Note; ownrship of the eventp is taken from the caller (and *eventp is
+ * Note; ownership of the eventp is taken from the caller (and *eventp is
  * set to NULL). The sender field of the event is set to 'db' before it is
  * sent to the task.
  */
@@ -641,6 +643,17 @@ dns_db_find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
  *	If the DNS_DBFIND_NOWILD option is set, then wildcard matching will
  *	be disabled.  This option is only meaningful for zone databases.
  *
+ *	If the DNS_DBFIND_FORCENSEC option is set, the database is assumed to
+ *	have NSEC records, and these will be returned when appropriate.  This
+ *	is only necessary when querying a database that was not secure
+ *	when created.
+ *
+ *	If the DNS_DBFIND_COVERINGNSEC option is set, then look for a
+ *	NSEC record that potentially covers 'name' if a answer cannot
+ *	be found.  Note the returned NSEC needs to be checked to ensure
+ *	that it is correct.  This only affects answers returned from the
+ *	cache.
+ *
  *	To respond to a query for SIG records, the caller should create a
  *	rdataset iterator and extract the signatures from each rdataset.
  *
@@ -683,6 +696,14 @@ dns_db_find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
  *
  *		ISC_R_SUCCESS			The desired node and type were
  *						found.
+ *
+ *		DNS_R_WILDCARD			The desired node and type were
+ *						found after performing
+ *						wildcard matching.  This is
+ *						only returned if the
+ *						DNS_DBFIND_INDICATEWILD
+ *						option is set; otherwise
+ *						ISC_R_SUCCESS is returned.
  *
  *		DNS_R_GLUE			The desired node and type were
  *						found, but are glue.  This
@@ -753,12 +774,18 @@ dns_db_find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
  *						name, and 'rdataset' contains
  *						the negative caching proof.
  *
+ *		DNS_R_EMPTYNAME			The name exists but there is
+ *						no data at the name. 
+ *
+ *		DNS_R_COVERINGNSEC		The returned data is a NSEC
+ *						that potentially covers 'name'.
+ *
  *	Error results:
  *
  *		ISC_R_NOMEMORY
  *
  *		DNS_R_BADDB			Data that is required to be
- *						present in the DB, e.g. an NXT
+ *						present in the DB, e.g. an NSEC
  *						record in a secure zone, is not
  *						present.
  *

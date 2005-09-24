@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: getnameinfo.c,v 1.30.2.5 2004/08/28 06:15:28 marka Exp $ */
+/* $Id: getnameinfo.c,v 1.30.2.3.2.4 2004/08/28 06:25:24 marka Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,9 +61,9 @@
 #include <lwres/lwres.h>
 #include <lwres/net.h>
 #include <lwres/netdb.h>
+#include "print_p.h"
 
 #include "assert_p.h"
-#include "print_p.h"
 
 #define SUCCESS 0
 
@@ -169,7 +169,7 @@ lwres_getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
 		 */
 	} else if ((flags & NI_NUMERICSERV) != 0 ||
 		   (sp = getservbyport(port, proto)) == NULL) {
-		sprintf(numserv, "%d", ntohs(port));
+		snprintf(numserv, sizeof(numserv), "%d", ntohs(port));
 		if ((strlen(numserv) + 1) > servlen)
 			ERR(ENI_MEMORY);
 		strcpy(serv, numserv);

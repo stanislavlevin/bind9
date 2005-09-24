@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tkeyconf.h,v 1.9.2.1 2004/03/09 06:09:23 marka Exp $ */
+/* $Id: tkeyconf.h,v 1.9.208.1 2004/03/06 10:21:26 marka Exp $ */
 
 #ifndef NS_TKEYCONF_H
 #define NS_TKEYCONF_H 1

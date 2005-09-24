@@ -1,6 +1,6 @@
 <!--
  - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- - Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
+ - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $Id: dig.html,v 1.6.2.7 2004/08/26 02:25:51 marka Exp $ -->
+<!-- $Id: dig.html,v 1.6.2.4.2.7 2004/08/22 23:38:57 marka Exp $ -->
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
@@ -104,6 +104,12 @@ CLASS="OPTION"
 CLASS="REPLACEABLE"
 >name:key</VAR
 ></VAR
+>] [<VAR
+CLASS="OPTION"
+>-4</VAR
+>] [<VAR
+CLASS="OPTION"
+>-6</VAR
 >] [name] [type] [class] [queryopt...]</P
 ><P
 ><B
@@ -122,7 +128,7 @@ CLASS="COMMAND"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN51"
+NAME="AEN55"
 ></A
 ><H2
 >DESCRIPTION</H2
@@ -174,7 +180,7 @@ CLASS="FILENAME"
 >When no command line arguments or options are given, will perform an
 NS query for "." (the root).</P
 ><P
->It is possible to set per user defaults for <B
+>It is possible to set per-user defaults for <B
 CLASS="COMMAND"
 >dig</B
 > via
@@ -187,7 +193,7 @@ are applied before the command line arguments.</P
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN68"
+NAME="AEN72"
 ></A
 ><H2
 >SIMPLE USAGE</H2
@@ -276,7 +282,7 @@ CLASS="COMMAND"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN97"
+NAME="AEN101"
 ></A
 ><H2
 >OPTIONS</H2
@@ -289,7 +295,8 @@ to <VAR
 CLASS="PARAMETER"
 >address</VAR
 >.  This must be a valid address on
-one of the host's network interfaces.</P
+one of the host's network interfaces or "0.0.0.0" or "::".  An optional port
+may be specified by appending "#&lt;port&gt;"</P
 ><P
 >The default query class (IN for internet) is overridden by the
 <VAR
@@ -335,6 +342,22 @@ CLASS="COMMAND"
 instead of the standard DNS port number 53.  This option would be used
 to test a name server that has been configured to listen for queries
 on a non-standard port number.</P
+><P
+>The <VAR
+CLASS="OPTION"
+>-4</VAR
+> option forces <B
+CLASS="COMMAND"
+>dig</B
+> to only
+use IPv4 query transport.  The <VAR
+CLASS="OPTION"
+>-6</VAR
+> option forces
+<B
+CLASS="COMMAND"
+>dig</B
+> to only use IPv6 query transport.</P
 ><P
 >The <VAR
 CLASS="OPTION"
@@ -395,12 +418,13 @@ CLASS="LITERAL"
 >11.12.13.10.in-addr.arpa</VAR
 > and sets the query type and
 class to PTR and IN respectively.  By default, IPv6 addresses are
-looked up using the IP6.ARPA domain and binary labels as defined in
-RFC2874.  To use the older RFC1886 method using the IP6.INT domain and
-"nibble" labels, specify the <VAR
+looked up using nibble format under the IP6.ARPA domain.
+To use the older RFC1886 method using the IP6.INT domain 
+specify the <VAR
 CLASS="OPTION"
->-n</VAR
-> (nibble) option.</P
+>-i</VAR
+> option.  Bit string labels (RFC2874)
+are now experimental and are not attempted.</P
 ><P
 >To sign the DNS queries sent by <B
 CLASS="COMMAND"
@@ -464,7 +488,7 @@ CLASS="FILENAME"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN147"
+NAME="AEN156"
 ></A
 ><H2
 >QUERY OPTIONS</H2
@@ -592,12 +616,19 @@ CLASS="OPTION"
 ></DT
 ><DD
 ><P
->This option does nothing.  It is provided for compatibility with old
-versions of <B
-CLASS="COMMAND"
->dig</B
-> where it set an unimplemented
-resolver flag.</P
+>Sets the "aa" flag in the query.</P
+></DD
+><DT
+><VAR
+CLASS="OPTION"
+>+[no]aaflag</VAR
+></DT
+><DD
+><P
+>A synonym for <VAR
+CLASS="PARAMETER"
+>+[no]aaonly</VAR
+>.</P
 ></DD
 ><DT
 ><VAR
@@ -620,6 +651,24 @@ CLASS="OPTION"
 ><P
 >Set [do not set] the CD (checking disabled) bit in the query.  This
 requests the server to not perform DNSSEC validation of responses.</P
+></DD
+><DT
+><VAR
+CLASS="OPTION"
+>+[no]cl</VAR
+></DT
+><DD
+><P
+>Display [do not display] the CLASS when printing the record.</P
+></DD
+><DT
+><VAR
+CLASS="OPTION"
+>+[no]ttlid</VAR
+></DT
+><DD
+><P
+>Display [do not display] the TTL when printing the record.</P
 ></DD
 ><DT
 ><VAR
@@ -819,7 +868,7 @@ CLASS="OPTION"
 ></DT
 ><DD
 ><P
->Sets the number of times to retry UDP queries to server to
+>Sets the number of times to try UDP queries to server to
 <VAR
 CLASS="PARAMETER"
 >T</VAR
@@ -828,7 +877,25 @@ CLASS="PARAMETER"
 CLASS="PARAMETER"
 >T</VAR
 > is less than or equal to zero, the number of
-retries is silently rounded up to 1.</P
+tries is silently rounded up to 1.</P
+></DD
+><DT
+><VAR
+CLASS="OPTION"
+>+retry=T</VAR
+></DT
+><DD
+><P
+>Sets the number of times to retry UDP queries to server to
+<VAR
+CLASS="PARAMETER"
+>T</VAR
+> instead of the default, 2.  Unlike
+<VAR
+CLASS="PARAMETER"
+>+tries</VAR
+>, this does not include the initial
+query.</P
 ></DD
 ><DT
 ><VAR
@@ -925,6 +992,39 @@ CLASS="OPTION"
 >Requests DNSSEC records be sent by setting the DNSSEC OK bit (DO)
 in the OPT record in the additional section of the query.</P
 ></DD
+><DT
+><VAR
+CLASS="OPTION"
+>+[no]sigchase</VAR
+></DT
+><DD
+><P
+>Chase DNSSEC signature chains.  Requires dig be compiled with
+-DDIG_SIGCHASE.</P
+></DD
+><DT
+><VAR
+CLASS="OPTION"
+>+trusted-key=####</VAR
+></DT
+><DD
+><P
+>Specify a trusted key to be used with <VAR
+CLASS="OPTION"
+>+sigchase</VAR
+>.
+Requires dig be compiled with -DDIG_SIGCHASE.</P
+></DD
+><DT
+><VAR
+CLASS="OPTION"
+>+[no]topdown</VAR
+></DT
+><DD
+><P
+>When chasing DNSSEC signature chains perform a top down validation.
+Requires dig be compiled with -DDIG_SIGCHASE.</P
+></DD
 ></DL
 ></DIV
 >&#13;</P
@@ -932,7 +1032,7 @@ in the OPT record in the additional section of the query.</P
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN338"
+NAME="AEN385"
 ></A
 ><H2
 >MULTIPLE QUERIES</H2
@@ -1010,7 +1110,7 @@ CLASS="LITERAL"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN356"
+NAME="AEN403"
 ></A
 ><H2
 >FILES</H2
@@ -1028,7 +1128,7 @@ CLASS="FILENAME"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN362"
+NAME="AEN409"
 ></A
 ><H2
 >SEE ALSO</H2
@@ -1062,7 +1162,7 @@ CLASS="CITETITLE"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN375"
+NAME="AEN422"
 ></A
 ><H2
 >BUGS </H2

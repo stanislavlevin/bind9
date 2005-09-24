@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: control.h,v 1.6.2.3 2004/03/09 06:09:21 marka Exp $ */
+/* $Id: control.h,v 1.6.2.2.2.7 2004/09/03 03:43:32 marka Exp $ */
 
 #ifndef NAMED_CONTROL_H
 #define NAMED_CONTROL_H 1
@@ -36,13 +36,19 @@
 #define NS_COMMAND_RELOAD	"reload"
 #define NS_COMMAND_RECONFIG	"reconfig"
 #define NS_COMMAND_REFRESH	"refresh"
+#define NS_COMMAND_RETRANSFER	"retransfer"
 #define NS_COMMAND_DUMPSTATS	"stats"
 #define NS_COMMAND_QUERYLOG	"querylog"
 #define NS_COMMAND_DUMPDB	"dumpdb"
 #define NS_COMMAND_TRACE	"trace"
 #define NS_COMMAND_NOTRACE	"notrace"
 #define NS_COMMAND_FLUSH	"flush"
+#define NS_COMMAND_FLUSHNAME	"flushname"
 #define NS_COMMAND_STATUS	"status"
+#define NS_COMMAND_FREEZE	"freeze"
+#define NS_COMMAND_UNFREEZE	"unfreeze"
+#define NS_COMMAND_THAW		"thaw"
+#define NS_COMMAND_RECURSING	"recursing"
 #define NS_COMMAND_NULL		"null"
 
 isc_result_t

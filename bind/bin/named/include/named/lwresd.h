@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lwresd.h,v 1.12.2.1 2004/03/09 06:09:22 marka Exp $ */
+/* $Id: lwresd.h,v 1.12.208.1 2004/03/06 10:21:25 marka Exp $ */
 
 #ifndef NAMED_LWRESD_H
 #define NAMED_LWRESD_H 1

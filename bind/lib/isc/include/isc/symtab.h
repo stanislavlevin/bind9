@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: symtab.h,v 1.16.2.1 2004/03/09 06:12:02 marka Exp $ */
+/* $Id: symtab.h,v 1.16.206.1 2004/03/06 08:14:49 marka Exp $ */
 
 #ifndef ISC_SYMTAB_H
 #define ISC_SYMTAB_H 1

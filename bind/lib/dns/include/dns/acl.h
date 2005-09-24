@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: acl.h,v 1.20.2.1 2004/03/09 06:11:12 marka Exp $ */
+/* $Id: acl.h,v 1.20.52.3 2004/03/08 09:04:34 marka Exp $ */
 
 #ifndef DNS_ACL_H
 #define DNS_ACL_H 1
@@ -197,6 +197,23 @@ dns_aclelement_match(isc_netaddr_t *reqaddr,
  * caller should examine e->negative.  Since the element 'e' may be
  * a reference to a named ACL or a nested ACL, the matching element
  * returned through 'matchelt' is not necessarily 'e' itself.
+ */
+
+isc_result_t
+dns_acl_elementmatch(dns_acl_t *acl,
+		     dns_aclelement_t *elt,
+		     dns_aclelement_t **matchelt);
+/*
+ * Search for an ACL element in 'acl' which is exactly the same as 'elt'.
+ * If there is one, and 'matchelt' is non NULL, then '*matchelt' will point
+ * to the entry.
+ *
+ * This function is intended to be used for avoiding duplicated ACL entries
+ * before adding an entry.
+ *
+ * Returns:
+ *	ISC_R_SUCCESS		Match succeeds.
+ *	ISC_R_NOTFOUND		Match fails.
  */
 
 ISC_LANG_ENDDECLS

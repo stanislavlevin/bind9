@@ -15,13 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: print.c,v 1.22.2.4 2004/03/09 06:11:50 marka Exp $ */
+/* $Id: print.c,v 1.22.2.3.2.3 2004/03/06 08:14:33 marka Exp $ */
 
 #include <config.h>
 
 #include <ctype.h>
 #include <stdio.h>		/* for sprintf */
-#include <stdlib.h>
 
 #define	ISC__PRINT_SOURCE	/* Used to get the isc_print_* prototypes. */
 
@@ -29,7 +28,18 @@
 #include <isc/int.h>
 #include <isc/msgs.h>
 #include <isc/print.h>
+#include <isc/stdlib.h>
 #include <isc/util.h>
+
+int
+isc_print_sprintf(char *str, const char *format, ...) {
+	va_list ap;
+
+	va_start(ap, format);
+	vsprintf(str, format, ap);
+	va_end(ap);
+	return (strlen(str));
+}
 
 /*
  * Return length of string that would have been written if not truncated.

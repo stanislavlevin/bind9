@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_mkupdate.c,v 1.1.2.4 2004/06/03 04:45:16 marka Exp $";
+static const char rcsid[] = "$Id: res_mkupdate.c,v 1.1.2.1.4.3 2004/06/03 04:44:48 marka Exp $";
 #endif /* not lint */
 
 #include "port_before.h"

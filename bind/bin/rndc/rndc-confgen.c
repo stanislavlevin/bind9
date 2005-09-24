@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rndc-confgen.c,v 1.9.2.7 2004/03/09 06:09:26 marka Exp $ */
+/* $Id: rndc-confgen.c,v 1.9.2.6.2.5 2004/09/28 07:14:57 marka Exp $ */
 
 #include <config.h>
 
@@ -105,6 +105,7 @@ write_key_file(const char *keyfile, const char *user,
 		fatal("write to %s failed\n", keyfile);
 	if (fclose(fd))
 		fatal("fclose(%s) failed\n", keyfile);
+	fprintf(stderr, "wrote key file \"%s\"\n", keyfile);
 }
 
 int
@@ -171,7 +172,7 @@ main(int argc, char **argv) {
 			keyname = isc_commandline_argument;
 			break;
 		case 'M':
-			isc_mem_debugging = 1;
+			isc_mem_debugging = ISC_MEM_DEBUGTRACE;
 			break;
 
 		case 'm':
@@ -272,7 +273,8 @@ main(int argc, char **argv) {
 			buf = isc_mem_get(mctx, len);
 			if (buf == NULL)
 				fatal("isc_mem_get(%d) failed\n", len);
-			snprintf(buf, len, "%s/%s", chrootdir, keyfile);
+			snprintf(buf, len, "%s%s%s", chrootdir,
+				 (*keyfile != '/') ? "/" : "", keyfile);
 			
 			write_key_file(buf, user, keyname, &key_txtbuffer);
 			isc_mem_put(mctx, buf, len);

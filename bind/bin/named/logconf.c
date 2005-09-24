@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: logconf.c,v 1.30.2.5 2004/03/09 06:09:18 marka Exp $ */
+/* $Id: logconf.c,v 1.30.2.3.10.2 2004/03/06 10:21:18 marka Exp $ */
 
 #include <config.h>
 

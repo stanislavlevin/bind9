@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sock_test.c,v 1.47.2.1 2004/03/09 06:09:35 marka Exp $ */
+/* $Id: sock_test.c,v 1.47.12.4 2004/08/28 06:25:32 marka Exp $ */
 
 #include <config.h>
 
@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/task.h>
 #include <isc/socket.h>
 #include <isc/timer.h>
@@ -82,12 +83,12 @@ my_recv(isc_task_t *task, isc_event_t *event) {
 	       dev->n, dev->result);
 	if (dev->address.type.sa.sa_family == AF_INET6) {
 		inet_ntop(AF_INET6, &dev->address.type.sin6.sin6_addr,
-			  host, sizeof (host));
+			  host, sizeof(host));
 		printf("\tFrom: %s port %d\n", host,
 		       ntohs(dev->address.type.sin6.sin6_port));
 	} else {
 		inet_ntop(AF_INET, &dev->address.type.sin.sin_addr,
-			  host, sizeof (host));
+			  host, sizeof(host));
 		printf("\tFrom: %s port %d\n", host,
 		       ntohs(dev->address.type.sin.sin_port));
 	}

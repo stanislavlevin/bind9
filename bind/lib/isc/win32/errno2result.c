@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2003  Internet Software Consortium.
+ * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: errno2result.c,v 1.4.2.6 2004/03/09 06:12:17 marka Exp $ */
+/* $Id: errno2result.c,v 1.4.2.5.2.3 2004/03/08 09:04:59 marka Exp $ */
 
 #include <config.h>
 
@@ -38,13 +38,17 @@ isc__errno2result(int posixerrno) {
 	switch (posixerrno) {
 	case ENOTDIR:
 	case WSAELOOP:
+	case WSAEINVAL:
 	case EINVAL:		/* XXX sometimes this is not for files */
 	case ENAMETOOLONG:
+	case WSAENAMETOOLONG:
 	case EBADF:
+	case WSAEBADF:
 		return (ISC_R_INVALIDFILE);
 	case ENOENT:
 		return (ISC_R_FILENOTFOUND);
 	case EACCES:
+	case WSAEACCES:
 	case EPERM:
 		return (ISC_R_NOPERM);
 	case EEXIST:
@@ -55,6 +59,7 @@ isc__errno2result(int posixerrno) {
 		return (ISC_R_NOMEMORY);
 	case ENFILE:
 	case EMFILE:
+	case WSAEMFILE:
 		return (ISC_R_TOOMANYOPENFILES);
 	default:
 		isc__strerror(posixerrno, strbuf, sizeof(strbuf));
@@ -71,3 +76,4 @@ isc__errno2result(int posixerrno) {
 		return (ISC_R_UNEXPECTED);
 	}
 }
+

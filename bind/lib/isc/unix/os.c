@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: os.c,v 1.11.2.2 2004/05/18 01:38:39 marka Exp $ */
+/* $Id: os.c,v 1.11.12.4 2004/05/18 01:39:20 marka Exp $ */
 
 #include <config.h>
 
@@ -64,7 +64,7 @@ sysctl_ncpus(void) {
 	int ncpu, result;
 	size_t len;
 
-	len = sizeof ncpu;
+	len = sizeof(ncpu);
 	result = sysctlbyname("hw.ncpu", &ncpu, &len , 0, 0);
 	if (result != -1)
 		return (ncpu);

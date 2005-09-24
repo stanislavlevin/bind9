@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cache.h,v 1.17.2.1 2004/03/09 06:11:13 marka Exp $ */
+/* $Id: cache.h,v 1.17.12.3 2004/03/08 09:04:34 marka Exp $ */
 
 #ifndef DNS_CACHE_H
 #define DNS_CACHE_H 1
@@ -233,6 +233,21 @@ dns_cache_flush(dns_cache_t *cache);
  * Returns:
  *	ISC_R_SUCCESS
  *	ISC_R_NOMEMORY
+ */
+
+isc_result_t
+dns_cache_flushname(dns_cache_t *cache, dns_name_t *name);
+/*
+ * Flushes a given name from the cache.
+ *
+ * Requires:
+ *	'cache' to be valid.
+ *	'name' to be valid.
+ *
+ * Returns:
+ *	ISC_R_SUCCESS
+ *	ISC_R_NOMEMORY
+ *	other error returns.
  */
 
 ISC_LANG_ENDDECLS

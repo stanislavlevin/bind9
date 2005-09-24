@@ -18,7 +18,7 @@
 #ifndef GENERIC_MR_9_H
 #define GENERIC_MR_9_H 1
 
-/* $Id: mr_9.h,v 1.21.2.1 2004/03/09 06:11:31 marka Exp $ */
+/* $Id: mr_9.h,v 1.21.206.1 2004/03/06 08:14:08 marka Exp $ */
 
 typedef struct dns_rdata_mr {
 	dns_rdatacommon_t	common;
