@@ -1,6 +1,6 @@
 Name: bind
 Version: 9.3.1
-Release: alt1
+Release: alt2
 
 Summary: ISC BIND - DNS server
 License: BSD-like
@@ -260,7 +260,7 @@ rln %_chrootdir%_sysconfdir/named.conf %_sysconfdir/
 # Make use of syslogd-1.4.1-alt11 /etc/syslog.d/ feature.
 /usr/bin/mksock %buildroot%_chrootdir/dev/log
 mkdir %buildroot%_sysconfdir/syslog.d
-rln %_chrootdir/dev/log %_sysconfdir/syslog.d/bind
+ln -s %_chrootdir/dev/log %buildroot%_sysconfdir/syslog.d/bind
 #... end of the chroot configuration.
 
 # Create ndc compatibility symlinks.
@@ -399,6 +399,10 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Tue Sep 27 2005 Dmitry V. Levin <ldv@altlinux.org> 9.3.1-alt2
+- Fixed /etc/syslog.d/bind bug introduced in previous release:
+  /etc/syslog.d/* must be absolute symlinks.
+
 * Wed Sep 21 2005 Dmitry V. Levin <ldv@altlinux.org> 9.3.1-alt1
 - Updated to 9.3.1 release.
 - Synced with Owl's bind-9.3.1-owl1 package.
