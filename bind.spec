@@ -1,6 +1,6 @@
 Name: bind
-Version: 9.3.1
-Release: alt2
+Version: 9.3.2
+Release: alt1
 
 Summary: ISC BIND - DNS server
 License: BSD-like
@@ -34,18 +34,15 @@ Source44: bind.empty
 
 Patch0: bind-9.3.1-owl-warnings.patch
 Patch1: bind-9.3.1-openbsd-owl-pidfile.patch
-Patch2: bind-9.3.1-openbsd-owl-chroot-defaults.patch
+Patch2: bind-9.3.2-openbsd-owl-chroot-defaults.patch
 Patch3: bind-9.3.1-alt-owl-chroot.patch
-Patch4: bind-9.3.1-owl-checkconf-chroot.patch
+Patch4: bind-9.3.2-owl-checkconf-chroot.patch
 Patch5: bind-9.3.1-rh-owl-bsdcompat.patch
-Patch6: bind-9.3.1-rh-dig-lwres_conf_parse.patch
-Patch7: bind-9.3.1-rh-h_errno.patch
-Patch8: bind-9.3.1-suse-lwres-leak.patch
-Patch9: bind-9.3.1-alt-isc-config.patch
-Patch10: bind-9.3.1-alt-man.patch
-Patch11: bind-9.3.1-alt-owl-rndc-confgen.patch
-Patch12: bind-9.3.1-suse-makefile.patch
-Patch13: bind-9.3.1-owl-rfc-index.patch
+Patch6: bind-9.3.1-rh-h_errno.patch
+Patch7: bind-9.3.1-alt-isc-config.patch
+Patch8: bind-9.3.2-alt-man.patch
+Patch9: bind-9.3.1-alt-owl-rndc-confgen.patch
+Patch10: bind-9.3.1-owl-rfc-index.patch
 
 # root directory for chrooted environment.
 %define _chrootdir %_localstatedir/bind
@@ -167,9 +164,6 @@ the DNS protocol.
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
-%patch11 -p1
-%patch12 -p1
-%patch13 -p1
 find -type f -name \*.orig -delete -print
 
 install -pm644 %_sourcedir/rfc1912.txt doc/rfc/
@@ -224,7 +218,7 @@ rln()
 	local target=$1 && shift
 	local source=$1 && shift
 	target=`relative "$target" "$source"`
-	%__ln_s -nf "$target" "%buildroot$source"
+	ln -snf "$target" "%buildroot$source"
 }
 
 %make_install install DESTDIR=%buildroot
@@ -264,8 +258,8 @@ ln -s %_chrootdir/dev/log %buildroot%_sysconfdir/syslog.d/bind
 #... end of the chroot configuration.
 
 # Create ndc compatibility symlinks.
-%__ln_s rndc %buildroot%_sbindir/ndc
-%__ln_s rndc.8 %buildroot%_man8dir/ndc.8
+ln -s rndc %buildroot%_sbindir/ndc
+ln -s rndc.8 %buildroot%_man8dir/ndc.8
 
 # Create ghost files
 mkdir %buildroot/var/run
@@ -273,13 +267,13 @@ touch %buildroot/var/run/{named,lwresd}.pid
 
 # Package documentation files
 mkdir -p %buildroot%docdir
-%__cp -a CHANGES COPYRIGHT FAQ README* \
+cp -a CHANGES COPYRIGHT FAQ README* \
 	doc/{arm,draft,misc,rfc} \
 	%buildroot%docdir/
 install -pm644 contrib/queryperf/README %buildroot%docdir/README.queryperf
 
-%__bzip2 -9q %buildroot%docdir/{*/*.txt,FAQ,CHANGES}
-%__rm -fv %buildroot%docdir/*/{Makefile*,README-SGML,*.dsl*,*.sh*,*.xml}
+bzip2 -9q %buildroot%docdir/{*/*.txt,FAQ,CHANGES}
+rm -fv %buildroot%docdir/*/{Makefile*,README-SGML,*.dsl*,*.sh*,*.xml}
 
 %post -n libbind -p %post_ldconfig
 %postun -n libbind -p %postun_ldconfig
@@ -399,6 +393,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Thu Mar 30 2006 Dmitry V. Levin <ldv@altlinux.org> 9.3.2-alt1
+- Updated to 9.3.2 release.
+
 * Tue Sep 27 2005 Dmitry V. Levin <ldv@altlinux.org> 9.3.1-alt2
 - Fixed /etc/syslog.d/bind bug introduced in previous release:
   /etc/syslog.d/* must be absolute symlinks.

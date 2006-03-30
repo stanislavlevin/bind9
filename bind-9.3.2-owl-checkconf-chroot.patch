@@ -1,0 +1,60 @@
+--- bind-9.3.2/bin/check/named-checkconf.8.orig	2005-10-13 02:33:41 +0000
++++ bind-9.3.2/bin/check/named-checkconf.8	2006-03-30 13:40:31 +0000
+@@ -41,6 +41,7 @@ checks the syntax, but not the semantics
+ chroot to
+ \fIdirectory\fR
+ so that include directives in the configuration file are processed as if run by a similarly chrooted named.
++By default, \fBnamed\-checkconf\fR \fBchroot()\fR's to \fI@ROOT@\fR.
+ .TP
+ \-v
+ Print the version of the
+--- bind-9.3.2/bin/check/named-checkconf.c.orig	2005-03-03 06:33:38 +0000
++++ bind-9.3.2/bin/check/named-checkconf.c	2006-03-30 13:38:51 +0000
+@@ -208,6 +208,7 @@ main(int argc, char **argv) {
+ 	int exit_status = 0;
+ 	isc_entropy_t *ectx = NULL;
+ 	isc_boolean_t load_zones = ISC_FALSE;
++	const char *chroot_dir = "@ROOT@";
+ 	
+ 	while ((c = isc_commandline_parse(argc, argv, "djt:vz")) != EOF) {
+ 		switch (c) {
+@@ -220,18 +221,7 @@ main(int argc, char **argv) {
+ 			break;
+ 
+ 		case 't':
+-			result = isc_dir_chroot(isc_commandline_argument);
+-			if (result != ISC_R_SUCCESS) {
+-				fprintf(stderr, "isc_dir_chroot: %s\n",
+-					isc_result_totext(result));
+-				exit(1);
+-			}
+-			result = isc_dir_chdir("/");
+-			if (result != ISC_R_SUCCESS) {
+-				fprintf(stderr, "isc_dir_chdir: %s\n",
+-					isc_result_totext(result));
+-				exit(1);
+-			}
++			chroot_dir = isc_commandline_argument;
+ 			break;
+ 
+ 		case 'v':
+@@ -247,6 +237,19 @@ main(int argc, char **argv) {
+ 		}
+ 	}
+ 
++	result = isc_dir_chroot(chroot_dir);
++	if (result != ISC_R_SUCCESS) {
++		fprintf(stderr, "isc_dir_chroot: %s\n",
++			isc_result_totext(result));
++		exit(1);
++	}
++	result = isc_dir_chdir("/");
++	if (result != ISC_R_SUCCESS) {
++		fprintf(stderr, "isc_dir_chdir: %s\n",
++			isc_result_totext(result));
++		exit(1);
++	}
++
+ 	if (argv[isc_commandline_index] != NULL)
+ 		conffile = argv[isc_commandline_index];
+ 	if (conffile == NULL || conffile[0] == '\0')
