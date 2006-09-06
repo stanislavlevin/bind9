@@ -10,4 +10,4 @@ copy: *.localdomain
 copy: *.localhost
 copy: *.patch
 copy: *.txt
-tar.bz2: bind
+tar: bind

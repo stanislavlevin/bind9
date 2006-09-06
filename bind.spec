@@ -1,14 +1,15 @@
 Name: bind
 Version: 9.3.2
-Release: alt1
+Release: alt2
 
 Summary: ISC BIND - DNS server
 License: BSD-like
 Group: System/Servers
 Url: http://www.isc.org/products/BIND/
+Packager: Dmitry V. Levin <ldv@altlinux.org>
 
 %define srcname %name-%version
-Source0: ftp://ftp.isc.org/isc/bind9/%version/%srcname.tar.bz2
+Source0: ftp://ftp.isc.org/isc/bind9/%version/%srcname.tar
 Source1: resolver.5
 Source2: rfc1912.txt
 Source3: bind.README.bind-devel
@@ -393,6 +394,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Wed Sep 06 2006 Dmitry V. Levin <ldv@altlinux.org> 9.3.2-alt2
+- Updated to 9.3.2 P1.
+
 * Thu Mar 30 2006 Dmitry V. Levin <ldv@altlinux.org> 9.3.2-alt1
 - Updated to 9.3.2 release.
 
