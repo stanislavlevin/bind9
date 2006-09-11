@@ -35,7 +35,7 @@ start()
 
 	adjust || return
 
-	start_daemon --lockfile "$LOCKFILE" --expect-user lwresd -- lwresd -u lwresd -t "$NAMED_ROOT"
+	start_daemon --lockfile "$LOCKFILE" --expect-user lwresd -- lwresd -u lwresd -t "$LWRESD_ROOT"
 	RETVAL=$?
 	return $RETVAL
 }
