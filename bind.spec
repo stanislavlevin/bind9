@@ -1,6 +1,6 @@
 Name: bind
-Version: 9.3.2
-Release: alt2
+Version: 9.3.3
+Release: alt0.1
 
 Summary: ISC BIND - DNS server
 License: BSD-like
@@ -37,11 +37,11 @@ Patch0: bind-9.3.1-owl-warnings.patch
 Patch1: bind-9.3.1-openbsd-owl-pidfile.patch
 Patch2: bind-9.3.2-openbsd-owl-chroot-defaults.patch
 Patch3: bind-9.3.1-alt-owl-chroot.patch
-Patch4: bind-9.3.2-owl-checkconf-chroot.patch
+Patch4: bind-9.3.3-owl-checkconf-chroot.patch
 Patch5: bind-9.3.1-rh-owl-bsdcompat.patch
 Patch6: bind-9.3.1-rh-h_errno.patch
 Patch7: bind-9.3.1-alt-isc-config.patch
-Patch8: bind-9.3.2-alt-man.patch
+Patch8: bind-9.3.3-alt-man.patch
 Patch9: bind-9.3.1-alt-owl-rndc-confgen.patch
 Patch10: bind-9.3.1-owl-rfc-index.patch
 
@@ -263,7 +263,6 @@ ln -s rndc %buildroot%_sbindir/ndc
 ln -s rndc.8 %buildroot%_man8dir/ndc.8
 
 # Create ghost files
-mkdir %buildroot/var/run
 touch %buildroot/var/run/{named,lwresd}.pid
 
 # Package documentation files
@@ -394,6 +393,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Sat Sep 23 2006 Dmitry V. Levin <ldv@altlinux.org> 9.3.3-alt0.1
+- Updated to 9.3.3 RC2.
+
 * Wed Sep 06 2006 Dmitry V. Levin <ldv@altlinux.org> 9.3.2-alt2
 - Updated to 9.3.2 P1.
 
