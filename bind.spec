@@ -1,6 +1,6 @@
 Name: bind
 Version: 9.3.3
-Release: alt0.1
+Release: alt0.2
 
 Summary: ISC BIND - DNS server
 License: BSD-like
@@ -8,7 +8,7 @@ Group: System/Servers
 Url: http://www.isc.org/products/BIND/
 Packager: Dmitry V. Levin <ldv@altlinux.org>
 
-%define srcname %name-%version
+%define srcname %name-%version-%release
 Source0: ftp://ftp.isc.org/isc/bind9/%version/%srcname.tar
 Source1: resolver.5
 Source2: rfc1912.txt
@@ -202,7 +202,7 @@ CPP="%__cpp"; export CPP
 	 %{subst_with openssl} \
 	 %{subst_enable ipv6} \
 	 %{subst_enable static} \
-	#
+	 --disable-openssl-version-check
 # SMP-incompatible build.
 %__make
 
@@ -393,6 +393,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Fri Nov 03 2006 Dmitry V. Levin <ldv@altlinux.org> 9.3.3-alt0.2
+- Updated to 9.3.3 RC3.
+
 * Sat Sep 23 2006 Dmitry V. Levin <ldv@altlinux.org> 9.3.3-alt0.1
 - Updated to 9.3.3 RC2.
 

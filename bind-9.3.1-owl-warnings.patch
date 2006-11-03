@@ -1,4 +1,43 @@
-diff -upk.orig bind-9.3.1.orig/lib/isc/unix/net.c bind-9.3.1/lib/isc/unix/net.c
+--- bind-9.3.3.orig/lib/isc/Makefile.in
++++ bind-9.3.3/lib/isc/Makefile.in
+@@ -57,7 +57,7 @@ OBJS =		@ISC_EXTRA_OBJS@ \
+ 		mem.@O@ mutexblock.@O@ netaddr.@O@ netscope.@O@ ondestroy.@O@ \
+ 		parseint.@O@ quota.@O@ random.@O@ \
+ 		ratelimiter.@O@ region.@O@ result.@O@ rwlock.@O@ \
+-		serial.@O@ sha1.@O@ sockaddr.@O@ string.@O@ strtoul.@O@ \
++		serial.@O@ sha1.@O@ sockaddr.@O@ string.@O@ \
+ 		symtab.@O@ task.@O@ taskpool.@O@ timer.@O@ version.@O@ \
+ 		${UNIXOBJS} ${NLSOBJS} ${THREADOBJS}
+ 
+@@ -70,7 +70,7 @@ SRCS =		@ISC_EXTRA_SRCS@ \
+ 		md5.c mem.c mutexblock.c netaddr.c netscope.c ondestroy.c \
+ 		parseint.c quota.c random.c \
+ 		ratelimiter.c result.c rwlock.c \
+-		serial.c sha1.c sockaddr.c string.c strtoul.c symtab.c \
++		serial.c sha1.c sockaddr.c string.c symtab.c \
+ 		task.c taskpool.c timer.c version.c
+ 
+ LIBS =		@LIBS@
+--- bind-9.3.3.orig/lib/lwres/Makefile.in
++++ bind-9.3.3/lib/lwres/Makefile.in
+@@ -35,7 +35,6 @@ OBJS =		context.@O@ gai_strerror.@O@ get
+ 		getipnode.@O@ getnameinfo.@O@ getrrset.@O@ herror.@O@ \
+ 		lwbuffer.@O@ lwconfig.@O@ lwpacket.@O@ lwresutil.@O@ \
+ 		lwres_gabn.@O@ lwres_gnba.@O@ lwres_grbn.@O@ lwres_noop.@O@ \
+-		lwinetaton.@O@ lwinetpton.@O@ lwinetntop.@O@ print.@O@ \
+-		strtoul.@O@
++		lwinetaton.@O@ lwinetpton.@O@ lwinetntop.@O@
+ 
+ # Alphabetically
+@@ -43,7 +43,6 @@ SRCS =		context.c gai_strerror.c getaddr
+ 		getipnode.c getnameinfo.c getrrset.c herror.c \
+ 		lwbuffer.c lwconfig.c lwpacket.c lwresutil.c \
+ 		lwres_gabn.c lwres_gnba.c lwres_grbn.c lwres_noop.c \
+-		lwinetaton.c lwinetpton.c lwinetntop.c print.c \
+-		strtoul.c
++		lwinetaton.c lwinetpton.c lwinetntop.c
+ 
+ LIBS =		@LIBS@
 --- bind-9.3.1.orig/lib/isc/unix/net.c	2004-04-29 01:31:22 +0000
 +++ bind-9.3.1/lib/isc/unix/net.c	2005-09-22 15:50:44 +0000
 @@ -39,8 +39,12 @@ const struct in6_addr isc_net_in6addrloo
