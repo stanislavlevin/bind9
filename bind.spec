@@ -1,6 +1,6 @@
 Name: bind
-Version: 9.3.3
-Release: alt2
+Version: 9.3.4
+Release: alt1
 
 Summary: ISC BIND - DNS server
 License: BSD-like
@@ -393,6 +393,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Thu Jan 25 2007 Dmitry V. Levin <ldv@altlinux.org> 9.3.4-alt1
+- Updated to 9.3.4 release.
+
 * Fri Dec 29 2006 Dmitry V. Levin <ldv@altlinux.org> 9.3.3-alt2
 - Rebuilt due to libcrypto.so.4 -> libcrypto.so.6 soname change.
 
