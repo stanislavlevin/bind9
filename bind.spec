@@ -1,6 +1,6 @@
 Name: bind
 Version: 9.3.4
-Release: alt1
+Release: alt2
 
 Summary: ISC BIND - DNS server
 License: BSD-like
@@ -393,6 +393,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Wed Apr 04 2007 Dmitry V. Levin <ldv@altlinux.org> 9.3.4-alt2
+- rndc-confgen: Restore default key size (#11321).
+
 * Thu Jan 25 2007 Dmitry V. Levin <ldv@altlinux.org> 9.3.4-alt1
 - Updated to 9.3.4 release.
 
