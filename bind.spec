@@ -1,6 +1,6 @@
 Name: bind
 Version: 9.3.4
-Release: alt2
+Release: alt3
 
 Summary: ISC BIND - DNS server
 License: BSD-like
@@ -393,6 +393,11 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Fri Apr 06 2007 Dmitry V. Levin <ldv@altlinux.org> 9.3.4-alt3
+- rndc-confgen: Revert previous change.
+- Changed startup script to use /dev/urandom as a source
+  of randomness during rndc key generation.
+
 * Wed Apr 04 2007 Dmitry V. Levin <ldv@altlinux.org> 9.3.4-alt2
 - rndc-confgen: Restore default key size (#11321).
 
