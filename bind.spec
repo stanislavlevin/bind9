@@ -1,15 +1,17 @@
 Name: bind
 Version: 9.3.4
-Release: alt3
+Release: alt4
 
 Summary: ISC BIND - DNS server
-License: BSD-like
+License: BSD-style
 Group: System/Servers
 Url: http://www.isc.org/products/BIND/
 Packager: Dmitry V. Levin <ldv@altlinux.org>
 
-%define srcname %name-%version-%release
-Source0: ftp://ftp.isc.org/isc/bind9/%version/%srcname.tar
+%define vsuffix -P1
+%define srcname %name-%version%vsuffix
+# ftp://ftp.isc.org/isc/bind9/%version%vsuffix/bind-%version%vsuffix.tar.gz
+Source0: %srcname.tar
 Source1: resolver.5
 Source2: rfc1912.txt
 Source3: bind.README.bind-devel
@@ -393,6 +395,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Tue Jul 24 2007 Dmitry V. Levin <ldv@altlinux.org> 9.3.4-alt4
+- Updated to 9.3.4-P1 release (fixes CVE-2007-2926).
+
 * Fri Apr 06 2007 Dmitry V. Levin <ldv@altlinux.org> 9.3.4-alt3
 - rndc-confgen: Revert previous change.
 - Changed startup script to use /dev/urandom as a source

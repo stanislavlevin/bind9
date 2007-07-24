@@ -10,4 +10,4 @@ copy: *.localdomain
 copy: *.localhost
 copy: *.patch
 copy: *.txt
-tar: bind name=@name@-@version@-@release@
+tar: bind name=@name@-@version@-P1
