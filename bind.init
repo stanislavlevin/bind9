@@ -24,27 +24,26 @@ rndc_keygen()
 {
 	local rndc="@ROOT@/etc/rndc.key"
 	if [ -w "$rndc" ] && grep -Eqs '^[[:space:]]*secret[[:space:]]+"@RNDC_KEY@";$' "$rndc"; then
-		echo -n "Generating RNDC key: "
+		echo -n 'Generating RNDC key: '
 		local key
 		if key=`rndc-confgen -A -r /dev/urandom` &&
+		   [ -n "$key" ] &&
 		   subst "s,^\([[:space:]]*secret[[:space:]]\+\)\"@RNDC_KEY@\";,\1\"$key\";," "$rndc"; then
-			success "RNDC key generation"
-			echo
+			success 'RNDC key generation'
+			RETVAL=0
 		else
-			failure "RNDC key generation"
-			echo
+			failure 'RNDC key generation'
 			RETVAL=1
-			return $RETVAL
 		fi
+		echo
+		return $RETVAL
 	fi
 }
 
 start()
 {
 	is_yes "$NETWORKING" || return 0
-
 	rndc_keygen || return 1
-
 	start_daemon --lockfile "$LOCKFILE" --expect-user named -- named
 	RETVAL=$?
 	return $RETVAL
