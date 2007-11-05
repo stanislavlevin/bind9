@@ -1,6 +1,6 @@
 Name: bind
 Version: 9.3.4
-Release: alt4
+Release: alt5
 
 Summary: ISC BIND - DNS server
 License: BSD-style
@@ -395,6 +395,10 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Mon Nov 05 2007 Dmitry V. Levin <ldv@altlinux.org> 9.3.4-alt5
+- options.conf: Added recursing-file directive.
+- Updated L.ROOT-SERVERS.NET: 198.32.64.12 -> 199.7.83.42.
+
 * Tue Jul 24 2007 Dmitry V. Levin <ldv@altlinux.org> 9.3.4-alt4
 - Updated to 9.3.4-P1 release (fixes CVE-2007-2926).
 
