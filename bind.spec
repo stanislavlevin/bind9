@@ -42,7 +42,7 @@ Patch3: bind-9.3.5-alt-owl-chroot.patch
 Patch4: bind-9.3.5-owl-checkconf-chroot.patch
 Patch5: bind-9.3.5-rh-h_errno.patch
 Patch6: bind-9.3.1-alt-isc-config.patch
-Patch7: bind-9.3.3-alt-man.patch
+Patch7: bind-9.3.5-alt-man.patch
 Patch8: bind-9.3.1-alt-owl-rndc-confgen.patch
 Patch9: bind-9.3.1-owl-rfc-index.patch
 
