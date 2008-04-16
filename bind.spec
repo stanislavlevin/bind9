@@ -35,7 +35,7 @@ Source42: bind.localdomain
 Source43: bind.127.in-addr.arpa
 Source44: bind.empty
 
-Patch0: bind-9.3.1-owl-warnings.patch
+Patch0: bind-9.3.5-owl-warnings.patch
 Patch1: bind-9.3.1-openbsd-owl-pidfile.patch
 Patch2: bind-9.3.2-openbsd-owl-chroot-defaults.patch
 Patch3: bind-9.3.1-alt-owl-chroot.patch
