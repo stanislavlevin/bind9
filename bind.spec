@@ -1,6 +1,6 @@
 Name: bind
-Version: 9.3.4
-Release: alt5
+Version: 9.3.5
+Release: alt1
 
 Summary: ISC BIND - DNS server
 License: BSD-style
@@ -8,7 +8,7 @@ Group: System/Servers
 Url: http://www.isc.org/products/BIND/
 Packager: Dmitry V. Levin <ldv@altlinux.org>
 
-%define vsuffix -P1
+%define vsuffix %nil
 %define srcname %name-%version%vsuffix
 # ftp://ftp.isc.org/isc/bind9/%version%vsuffix/bind-%version%vsuffix.tar.gz
 Source0: %srcname.tar
@@ -64,9 +64,7 @@ Provides: bind-chroot(%_chrootdir)
 Obsoletes: bind-chroot, bind-debug, bind-slave, caching-nameserver
 # Because of /etc/syslog.d/ feature.
 Conflicts: syslogd < 1.4.1-alt11
-PreReq: bind-control, chkconfig, chrooted
-PreReq: coreutils, grep, shadow-utils, syslogd-daemon
-PreReq: %__subst, %post_service, %preun_service
+PreReq: bind-control chrooted syslogd-daemon
 PreReq: libbind = %version-%release
 
 # due to %_chrootdir/dev/log
@@ -165,7 +163,6 @@ the DNS protocol.
 %patch7 -p1
 %patch8 -p1
 %patch9 -p1
-find -type f -name \*.orig -delete -print
 
 install -pm644 %_sourcedir/rfc1912.txt doc/rfc/
 install -pm644 %_sourcedir/bind.README.bind-devel README.bind-devel
@@ -179,7 +176,7 @@ install -pm644 %_sourcedir/bind.{localhost,localdomain,127.in-addr.arpa,empty} \
 	addon/
 install -pm644 %_sourcedir/rndc.{conf,key} addon/
 
-%__subst -p \
+sed -i \
 '
 s,@ROOT@,%_chrootdir,g;
 s,@LWRESD_ROOT@,/var/resolv,g;
@@ -208,7 +205,6 @@ CPP="%__cpp"; export CPP
 
 # Build queryperf
 pushd contrib/queryperf
-	subst -p 's/res_mkquery/__&/g' configure*
 	%configure
 	%make_build
 popd # contrib/queryperf
@@ -246,7 +242,7 @@ done
 for n in localhost localdomain 127.in-addr.arpa empty; do
 	install -pm640 "addon/bind.$n" \
 		"%buildroot%_chrootdir/zone/$n"
-	%__subst -p s/YYYYMMDDNN/%{timestamp}00/ \
+	sed -i s/YYYYMMDDNN/%{timestamp}00/ \
 		"%buildroot%_chrootdir/zone/$n"
 done
 install -pm640 addon/rndc.key %buildroot%_chrootdir%_sysconfdir/
@@ -290,9 +286,9 @@ rm -fv %buildroot%docdir/*/{Makefile*,README-SGML,*.dsl*,*.sh*,*.xml}
 %post
 SYSLOGD_SCRIPT=/etc/init.d/syslogd
 SYSLOGD_CONFIG=/etc/sysconfig/syslogd
-if %__grep -qs '^SYSLOGD_OPTIONS=.*-a %_chrootdir/dev/log' "$SYSLOGD_CONFIG"; then
+if grep -qs '^SYSLOGD_OPTIONS=.*-a %_chrootdir/dev/log' "$SYSLOGD_CONFIG"; then
 	# Remove artefacts of pre-syslog.d epoch.
-	%__subst 's|^\(SYSLOGD_OPTIONS=.*\) \?-a %_chrootdir/dev/log|\1|' "$SYSLOGD_CONFIG"
+	sed -i 's|^\(SYSLOGD_OPTIONS=.*\) \?-a %_chrootdir/dev/log|\1|' "$SYSLOGD_CONFIG"
 	if [ -x "$SYSLOGD_SCRIPT" ]; then
 		"$SYSLOGD_SCRIPT" condreload ||:
 	fi
@@ -393,6 +389,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Wed Apr 16 2008 Dmitry V. Levin <ldv@altlinux.org> 9.3.5-alt1
+- Updated to 9.3.5 release.
+
 * Mon Nov 05 2007 Dmitry V. Levin <ldv@altlinux.org> 9.3.4-alt5
 - options.conf: Added recursing-file directive.
 - Updated L.ROOT-SERVERS.NET: 198.32.64.12 -> 199.7.83.42.
