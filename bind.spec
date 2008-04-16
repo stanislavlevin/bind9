@@ -37,7 +37,7 @@ Source44: bind.empty
 
 Patch0: bind-9.3.5-owl-warnings.patch
 Patch1: bind-9.3.5-openbsd-owl-pidfile.patch
-Patch2: bind-9.3.2-openbsd-owl-chroot-defaults.patch
+Patch2: bind-9.3.5-openbsd-owl-chroot-defaults.patch
 Patch3: bind-9.3.1-alt-owl-chroot.patch
 Patch4: bind-9.3.3-owl-checkconf-chroot.patch
 Patch5: bind-9.3.1-rh-owl-bsdcompat.patch
