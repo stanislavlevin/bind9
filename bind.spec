@@ -1,6 +1,6 @@
 Name: bind
 Version: 9.3.5
-Release: alt1
+Release: alt2
 
 Summary: ISC BIND - DNS server
 License: BSD-style
@@ -389,6 +389,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Fri Jun 06 2008 Dmitry V. Levin <ldv@altlinux.org> 9.3.5-alt2
+- Updated to 9.3.5-P1 release (fixes VU#800113/CVE-2008-1447).
+
 * Wed Apr 16 2008 Dmitry V. Levin <ldv@altlinux.org> 9.3.5-alt1
 - Updated to 9.3.5 release.
 
