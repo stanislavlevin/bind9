@@ -1,6 +1,6 @@
 Name: bind
 Version: 9.3.5
-Release: alt2
+Release: alt3
 
 Summary: ISC BIND - DNS server
 License: BSD-style
@@ -176,17 +176,15 @@ install -pm644 %_sourcedir/bind.{localhost,localdomain,127.in-addr.arpa,empty} \
 	addon/
 install -pm644 %_sourcedir/rndc.{conf,key} addon/
 
-sed -i \
+find -type f -print0 |
+	xargs -r0 grep -lZ '@[A-Z_]\+@' -- |
+	xargs -r0 sed -i \
 '
 s,@ROOT@,%_chrootdir,g;
 s,@LWRESD_ROOT@,/var/resolv,g;
 s,@DOCDIR@,%docdir,g;
 s,@SBINDIR@,%_sbindir,g;
-' \
-	bin/check/named-checkconf.* \
-	bin/named/include/named/globals.h \
-	bin/named/named.8 bin/rndc/rndc.8 \
-	addon/*
+' --
 
 %build
 CPP="%__cpp"; export CPP
@@ -389,6 +387,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Thu Aug 07 2008 Dmitry V. Levin <ldv@altlinux.org> 9.3.5-alt3
+- Updated to 9.3.5-P2 release.
+
 * Fri Jun 06 2008 Dmitry V. Levin <ldv@altlinux.org> 9.3.5-alt2
 - Updated to 9.3.5-P1 release (fixes VU#800113/CVE-2008-1447).
 
