@@ -1,6 +1,6 @@
 Name: bind
 Version: 9.3.5
-Release: alt3
+Release: alt4
 
 Summary: ISC BIND - DNS server
 License: BSD-style
@@ -45,6 +45,7 @@ Patch6: bind-9.3.1-alt-isc-config.patch
 Patch7: bind-9.3.5-alt-man.patch
 Patch8: bind-9.3.1-alt-owl-rndc-confgen.patch
 Patch9: bind-9.3.1-owl-rfc-index.patch
+Patch10: bind-9.3.5-openbsd-owl-expand_fdsets.patch
 
 # root directory for chrooted environment.
 %define _chrootdir %_localstatedir/bind
@@ -163,6 +164,7 @@ the DNS protocol.
 %patch7 -p1
 %patch8 -p1
 %patch9 -p1
+%patch10 -p1
 
 install -pm644 %_sourcedir/rfc1912.txt doc/rfc/
 install -pm644 %_sourcedir/bind.README.bind-devel README.bind-devel
@@ -387,6 +389,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Sun Aug 10 2008 Dmitry V. Levin <ldv@altlinux.org> 9.3.5-alt4
+- Implemented automatic fdsets expansion to overcome FD_SETSIZE limit.
+
 * Thu Aug 07 2008 Dmitry V. Levin <ldv@altlinux.org> 9.3.5-alt3
 - Updated to 9.3.5-P2 release.
 
