@@ -105,6 +105,7 @@ Requires: %name-devel = %version-%release
 %package doc
 Summary: Documentation for ISC BIND
 Group: Development/Other
+BuildArch: noarch
 Prefix: %prefix
 
 %package -n lwresd
