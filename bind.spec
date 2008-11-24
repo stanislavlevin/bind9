@@ -379,8 +379,8 @@ fi
 %_man1dir/dig.*
 %_man1dir/host.*
 %_man1dir/nslookup.*
+%_man1dir/nsupdate.*
 %_man5dir/resolver.*
-%_man8dir/nsupdate.*
 
 %files doc
 %docdir
