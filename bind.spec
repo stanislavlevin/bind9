@@ -1,6 +1,6 @@
 Name: bind
-Version: 9.3.5
-Release: alt4
+Version: 9.3.6
+Release: alt1
 
 Summary: ISC BIND - DNS server
 License: BSD-style
@@ -385,6 +385,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Mon Nov 24 2008 Dmitry V. Levin <ldv@altlinux.org> 9.3.6-alt1
+- Updated to 9.3.6 release.
+
 * Sun Aug 10 2008 Dmitry V. Levin <ldv@altlinux.org> 9.3.5-alt4
 - Implemented automatic fdsets expansion to overcome FD_SETSIZE limit.
 
