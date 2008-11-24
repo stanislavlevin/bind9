@@ -1,6 +1,5 @@
-diff -uNr bind-9.3.1.orig/doc/rfc/index bind-9.3.1/doc/rfc/index
---- bind-9.3.1.orig/doc/rfc/index	Wed Aug 25 00:53:50 2004
-+++ bind-9.3.1/doc/rfc/index	Tue Jul 26 21:26:44 2005
+--- bind/doc/rfc/index
++++ bind/doc/rfc/index
 @@ -20,6 +20,7 @@
  1750:	Randomness Recommendations for Security
  1876:	A Means for Expressing Location Information in the Domain Name System

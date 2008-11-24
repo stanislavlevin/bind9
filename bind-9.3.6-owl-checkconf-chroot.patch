@@ -1,5 +1,5 @@
---- bind-9.3.5/bin/check/named-checkconf.8
-+++ bind-9.3.5/bin/check/named-checkconf.8
+--- bind/bin/check/named-checkconf.8
++++ bind/bin/check/named-checkconf.8
 @@ -45,6 +45,7 @@ checks the syntax, but not the semantics, of a named configuration file.
  Chroot to
  \fIdirectory\fR
@@ -8,8 +8,8 @@
  .RE
  .PP
  \-v
---- bind-9.3.5/bin/check/named-checkconf.c
-+++ bind-9.3.5/bin/check/named-checkconf.c
+--- bind/bin/check/named-checkconf.c
++++ bind/bin/check/named-checkconf.c
 @@ -208,6 +208,7 @@ main(int argc, char **argv) {
  	int exit_status = 0;
  	isc_entropy_t *ectx = NULL;

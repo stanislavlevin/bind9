@@ -1,22 +1,6 @@
---- bind-9.3.5/bin/named/server.c
-+++ bind-9.3.5/bin/named/server.c
-@@ -2212,15 +2212,6 @@ load_configuration(const char *filename, ns_server_t *server,
- 	CHECK(result);
- 
- 	/*
--	 * Check that the working directory is writable.
--	 */
--	if (access(".", W_OK) != 0) {
--		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
--			      NS_LOGMODULE_SERVER, ISC_LOG_ERROR,
--			      "the working directory is not writable");
--	}
--
--	/*
- 	 * Check the validity of the configuration.
- 	 */
- 	CHECK(bind9_check_namedconf(config, ns_g_lctx, ns_g_mctx));
-@@ -2551,8 +2542,12 @@ load_configuration(const char *filename, ns_server_t *server,
+--- bind/bin/named/server.c
++++ bind/bin/named/server.c
+@@ -2680,8 +2680,12 @@ load_configuration(const char *filename, ns_server_t *server,
  				      "no source of entropy found");
  		} else {
  			const char *randomdev = cfg_obj_asstring(obj);
@@ -30,21 +14,28 @@
  			if (result != ISC_R_SUCCESS)
  				isc_log_write(ns_g_lctx,
  					      NS_LOGCATEGORY_GENERAL,
-@@ -2585,8 +2580,10 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -2714,16 +2718,9 @@ load_configuration(const char *filename, ns_server_t *server,
  	/*
  	 * Relinquish root privileges.
  	 */
 -	if (first_time)
 +	if (first_time) {
  		ns_os_changeuser();
+-
+-	/*
+-	 * Check that the working directory is writable.
+-	 */
+-	if (access(".", W_OK) != 0) {
+-		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+-			      NS_LOGMODULE_SERVER, ISC_LOG_ERROR,
+-			      "the working directory is not writable");
 +		ns_os_dropprivs();
-+	}
+ 	}
  
  	/*
- 	 * Configure the logging system.
---- bind-9.3.5/bin/named/unix/include/named/os.h
-+++ bind-9.3.5/bin/named/unix/include/named/os.h
-@@ -50,6 +50,12 @@ void
+--- bind/bin/named/unix/include/named/os.h
++++ bind/bin/named/unix/include/named/os.h
+@@ -53,6 +53,12 @@ void
  ns_os_preopenpidfile(const char *filename);
  
  void
@@ -55,11 +46,11 @@
 +
 +void
  ns_os_writepidfile(const char *filename, isc_boolean_t first_time);
- 
  void
---- bind-9.3.5/bin/named/unix/os.c
-+++ bind-9.3.5/bin/named/unix/os.c
-@@ -306,6 +306,19 @@ ns_os_init(const char *progname) {
+ ns_os_shutdown(void);
+--- bind/bin/named/unix/os.c
++++ bind/bin/named/unix/os.c
+@@ -328,6 +328,19 @@ ns_os_init(const char *progname) {
  #endif
  }
  
@@ -79,7 +70,7 @@
  void
  ns_os_daemonize(void) {
  	pid_t pid;
-@@ -426,6 +439,7 @@ ns_os_chroot(const char *root) {
+@@ -448,6 +461,7 @@ ns_os_chroot(const char *root) {
  	ns_smf_chroot = 0;
  #endif
  	if (root != NULL) {
@@ -87,7 +78,7 @@
  		if (chroot(root) < 0) {
  			isc__strerror(errno, strbuf, sizeof(strbuf));
  			ns_main_earlyfatal("chroot(): %s", strbuf);
-@@ -527,6 +541,13 @@ ns_os_minprivs(void) {
+@@ -567,6 +581,13 @@ ns_os_minprivs(void) {
  #endif
  }
  
@@ -101,8 +92,8 @@
  static int
  safe_open(const char *filename, isc_boolean_t append) {
  	int fd;
---- bind-9.3.5/lib/isc/include/isc/entropy.h
-+++ bind-9.3.5/lib/isc/include/isc/entropy.h
+--- bind/lib/isc/include/isc/entropy.h
++++ bind/lib/isc/include/isc/entropy.h
 @@ -166,6 +166,9 @@ isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname);
   * The file will never be opened/read again once EOF is reached.
   */
@@ -113,8 +104,8 @@
  void
  isc_entropy_destroysource(isc_entropysource_t **sourcep);
  /*
---- bind-9.3.5/lib/isc/unix/entropy.c
-+++ bind-9.3.5/lib/isc/unix/entropy.c
+--- bind/lib/isc/unix/entropy.c
++++ bind/lib/isc/unix/entropy.c
 @@ -473,22 +473,82 @@ make_nonblock(int fd) {
  }
  

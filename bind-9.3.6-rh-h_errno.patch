@@ -1,5 +1,5 @@
---- bind-9.3.5/lib/bind/irs/irs_data.c
-+++ bind-9.3.5/lib/bind/irs/irs_data.c
+--- bind/lib/bind/irs/irs_data.c
++++ bind/lib/bind/irs/irs_data.c
 @@ -231,9 +231,7 @@ __h_errno(void) {
  
  void
@@ -11,9 +11,9 @@
  	res->res_h_errno = err;
  #else
  	h_errno = res->res_h_errno = err;
---- bind-9.3.5/lib/bind/resolv/res_query.c
-+++ bind-9.3.5/lib/bind/resolv/res_query.c
-@@ -192,6 +192,8 @@ again:
+--- bind/lib/bind/resolv/res_query.c
++++ bind/lib/bind/resolv/res_query.c
+@@ -200,6 +200,8 @@ again:
  		}
  		return (-1);
  	}

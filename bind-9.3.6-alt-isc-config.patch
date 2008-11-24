@@ -1,6 +1,6 @@
---- bind-9.3.1/isc-config.sh.in.orig	2004-03-08 04:04:12 +0000
-+++ bind-9.3.1/isc-config.sh.in	2005-09-20 21:30:48 +0000
-@@ -115,7 +115,7 @@ if test x"$echo_exec_prefix" = x"true" ;
+--- bind/isc-config.sh.in
++++ bind/isc-config.sh.in
+@@ -115,7 +115,7 @@ if test x"$echo_exec_prefix" = x"true" ; then
  	echo $exec_prefix
  fi
  if test x"$echo_cflags" = x"true"; then

@@ -35,17 +35,16 @@ Source42: bind.localdomain
 Source43: bind.127.in-addr.arpa
 Source44: bind.empty
 
-Patch0: bind-9.3.5-owl-warnings.patch
-Patch1: bind-9.3.5-openbsd-owl-pidfile.patch
-Patch2: bind-9.3.5-openbsd-owl-chroot-defaults.patch
-Patch3: bind-9.3.5-alt-owl-chroot.patch
-Patch4: bind-9.3.5-owl-checkconf-chroot.patch
-Patch5: bind-9.3.5-rh-h_errno.patch
-Patch6: bind-9.3.1-alt-isc-config.patch
-Patch7: bind-9.3.5-alt-man.patch
-Patch8: bind-9.3.1-alt-owl-rndc-confgen.patch
-Patch9: bind-9.3.1-owl-rfc-index.patch
-Patch10: bind-9.3.5-openbsd-owl-expand_fdsets.patch
+Patch0: bind-9.3.6-owl-warnings.patch
+Patch1: bind-9.3.6-openbsd-owl-pidfile.patch
+Patch2: bind-9.3.6-openbsd-owl-chroot-defaults.patch
+Patch3: bind-9.3.6-alt-owl-chroot.patch
+Patch4: bind-9.3.6-owl-checkconf-chroot.patch
+Patch5: bind-9.3.6-rh-h_errno.patch
+Patch6: bind-9.3.6-alt-isc-config.patch
+Patch7: bind-9.3.6-alt-man.patch
+Patch8: bind-9.3.6-alt-owl-rndc-confgen.patch
+Patch9: bind-9.3.6-owl-rfc-index.patch
 
 # root directory for chrooted environment.
 %define _chrootdir %_localstatedir/bind
@@ -165,7 +164,6 @@ the DNS protocol.
 %patch7 -p1
 %patch8 -p1
 %patch9 -p1
-%patch10 -p1
 
 install -pm644 %_sourcedir/rfc1912.txt doc/rfc/
 install -pm644 %_sourcedir/bind.README.bind-devel README.bind-devel
