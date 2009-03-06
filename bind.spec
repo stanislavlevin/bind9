@@ -1,6 +1,6 @@
 Name: bind
 Version: 9.3.6
-Release: alt2
+Release: alt3
 
 Summary: ISC BIND - DNS server
 License: BSD-style
@@ -387,6 +387,12 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Fri Mar 06 2009 Dmitry V. Levin <ldv@altlinux.org> 9.3.6-alt3
+- options.conf:
+  + Removed root-delegation-only directive.
+  + Added interface-interval directive example.
+- Made "max open files" limit by default as large as default "max sockets" limit.
+
 * Wed Jan 07 2009 Dmitry V. Levin <ldv@altlinux.org> 9.3.6-alt2
 - Updated to 9.3.6-P1 release.
 
