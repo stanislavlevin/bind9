@@ -1,6 +1,6 @@
 Name: bind
 Version: 9.3.6
-Release: alt3
+Release: alt4
 
 Summary: ISC BIND - DNS server
 License: BSD-style
@@ -12,7 +12,6 @@ Packager: Dmitry V. Levin <ldv@altlinux.org>
 %define srcname %name-%version%vsuffix
 # ftp://ftp.isc.org/isc/bind9/%version%vsuffix/bind-%version%vsuffix.tar.gz
 Source0: %srcname.tar
-Source1: resolver.5
 Source2: rfc1912.txt
 Source3: bind.README.bind-devel
 Source4: bind.README.ALT
@@ -221,9 +220,6 @@ rln()
 
 %make_install install DESTDIR=%buildroot
 
-# Install additional man pages.
-install -pm644 %_sourcedir/resolver.5 %buildroot%_man5dir/
-
 # Install queryperf.
 install -pm755 contrib/queryperf/queryperf %buildroot%_sbindir/
 
@@ -380,13 +376,15 @@ fi
 %_man1dir/host.*
 %_man1dir/nslookup.*
 %_man1dir/nsupdate.*
-%_man5dir/resolver.*
 
 %files doc
 %docdir
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Thu Apr 30 2009 Dmitry V. Levin <ldv@altlinux.org> 9.3.6-alt4
+- Removed resolver(5) manual page (closes: #19784).
+
 * Fri Mar 06 2009 Dmitry V. Levin <ldv@altlinux.org> 9.3.6-alt3
 - options.conf:
   + Removed root-delegation-only directive.
