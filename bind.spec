@@ -1,6 +1,6 @@
 Name: bind
 Version: 9.3.6
-Release: alt4
+Release: alt5
 
 Summary: ISC BIND - DNS server
 License: BSD-style
@@ -45,6 +45,7 @@ Patch7: bind-9.3.6-alt-man.patch
 Patch8: bind-9.3.6-alt-owl-rndc-confgen.patch
 Patch9: bind-9.3.6-owl-rfc-index.patch
 Patch10: bind-9.3.6-alt-nofile.patch
+Patch11: bind-9.3.6-up-CVE-2009-0696.patch
 
 # root directory for chrooted environment.
 %define _chrootdir %_localstatedir/bind
@@ -165,6 +166,7 @@ the DNS protocol.
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
+%patch11 -p1
 
 install -pm644 %_sourcedir/rfc1912.txt doc/rfc/
 install -pm644 %_sourcedir/bind.README.bind-devel README.bind-devel
@@ -382,6 +384,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Tue Jul 28 2009 Dmitry V. Levin <ldv@altlinux.org> 9.3.6-alt5
+- Backported upstream fix for a remote DoS bug (CVE-2009-0696).
+
 * Thu Apr 30 2009 Dmitry V. Levin <ldv@altlinux.org> 9.3.6-alt4
 - Removed resolver(5) manual page (closes: #19784).
 
