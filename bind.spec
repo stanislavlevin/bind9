@@ -1,6 +1,6 @@
 Name: bind
 Version: 9.3.6
-Release: alt5
+Release: alt6
 
 Summary: ISC BIND - DNS server
 License: BSD-style
@@ -220,7 +220,7 @@ rln()
 	ln -snf "$target" "%buildroot$source"
 }
 
-%make_install install DESTDIR=%buildroot
+%makeinstall_std
 
 # Install queryperf.
 install -pm755 contrib/queryperf/queryperf %buildroot%_sbindir/
@@ -384,6 +384,9 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Fri Oct 01 2010 Dmitry V. Levin <ldv@altlinux.org> 9.3.6-alt6
+- Rebuilt with libcrypto.so.10.
+
 * Tue Jul 28 2009 Dmitry V. Levin <ldv@altlinux.org> 9.3.6-alt5
 - Backported upstream fix for a remote DoS bug (CVE-2009-0696).
 
