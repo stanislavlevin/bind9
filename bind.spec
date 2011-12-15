@@ -46,6 +46,7 @@ Patch8: bind-9.3.6-alt-owl-rndc-confgen.patch
 Patch9: bind-9.3.6-owl-rfc-index.patch
 Patch10: bind-9.3.6-alt-nofile.patch
 Patch11: bind-9.3.6-up-CVE-2009-0696.patch
+Patch12: bind-9.3.6-up-rt22270-isc_print_vsnprintf.patch
 
 # root directory for chrooted environment.
 %define _chrootdir %_localstatedir/bind
@@ -167,6 +168,7 @@ the DNS protocol.
 %patch9 -p1
 %patch10 -p1
 %patch11 -p1
+%patch12 -p1
 
 install -pm644 %_sourcedir/rfc1912.txt doc/rfc/
 install -pm644 %_sourcedir/bind.README.bind-devel README.bind-devel
