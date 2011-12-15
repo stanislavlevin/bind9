@@ -1,12 +1,11 @@
 Name: bind
 Version: 9.3.6
-Release: alt6
+Release: alt7
 
 Summary: ISC BIND - DNS server
 License: BSD-style
 Group: System/Servers
 Url: http://www.isc.org/products/BIND/
-Packager: Dmitry V. Levin <ldv@altlinux.org>
 
 %define vsuffix %nil
 %define srcname %name-%version%vsuffix
@@ -159,7 +158,7 @@ queries using the BIND 9 lightweight resolver protocol rather than
 the DNS protocol.
 
 %prep
-%setup -q -n %srcname
+%setup -n %srcname
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
@@ -396,6 +395,13 @@ fi
 %exclude %docdir/README.bind-devel
 
 %changelog
+* Fri Dec 16 2011 Dmitry V. Levin <ldv@altlinux.org> 9.3.6-alt7
+- Imported fixes for several DNSSEC vulnerabilities from RH bind
+  (CVE-2009-4022, CVE-2010-0097, CVE-2010-3762, CVE-2011-4313);
+  note that DNSSEC is not enabled by default.
+- Enabled IPv6 support.
+- Fixed RPATH issue.
+
 * Fri Oct 01 2010 Dmitry V. Levin <ldv@altlinux.org> 9.3.6-alt6
 - Rebuilt with libcrypto.so.10.
 
