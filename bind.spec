@@ -202,6 +202,8 @@ CPP="%__cpp"; export CPP
 	 %{subst_enable ipv6} \
 	 %{subst_enable static} \
 	 --disable-openssl-version-check
+# Get rid of RPATH.
+sed -ri 's/^(hardcode_libdir_flag_spec|runpath_var)=.*/\1=/' libtool
 # SMP-incompatible build.
 %__make
 
