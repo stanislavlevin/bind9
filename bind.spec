@@ -58,7 +58,7 @@ Patch11: bind-9.3.6-up-CVE-2009-0696.patch
 %endif
 
 %def_disable static
-%def_disable ipv6
+%def_enable ipv6
 %def_with openssl
 
 Provides: bind-chroot(%_chrootdir)
