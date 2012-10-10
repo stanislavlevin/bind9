@@ -1,0 +1,19 @@
+diff -up bind-9.3.6-P1/bin/named/xfrout.c.rh758873 bind-9.3.6-P1/bin/named/xfrout.c
+--- bind-9.3.6-P1/bin/named/xfrout.c.rh758873	2011-12-02 16:02:19.931396757 +0100
++++ bind-9.3.6-P1/bin/named/xfrout.c	2011-12-02 16:02:55.237333397 +0100
+@@ -1400,9 +1400,13 @@ sendstream(xfrout_ctx_t *xfr) {
+ 			ISC_LIST_APPEND(qname->list, qrdataset, link);
+ 
+ 			dns_message_addname(msg, qname, DNS_SECTION_QUESTION);
+-		}
+-		else
++		} else {
++                        /*
++			 * Reserve space for the 12-byte message header
++			 */
++                        isc_buffer_add(&xfr->buf, 12);
+ 			msg->tcp_continuation = 1;
++		}
+ 	}
+ 
+ 	/*

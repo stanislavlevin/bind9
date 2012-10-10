@@ -1,0 +1,10 @@
+--- bind-9.3.6-P1/lib/dns/zone.c.rh733698	2011-12-02 15:56:32.011261765 +0100
++++ bind-9.3.6-P1/lib/dns/zone.c	2011-12-02 15:56:59.402181200 +0100
+@@ -2224,6 +2224,7 @@ dns_zone_setmasterswithkeys(dns_zone_t *
+ 	/*
+ 	 * Everything is ok so attach to the zone.
+ 	 */
++	zone->curmaster = 0;
+ 	zone->masters = new;
+ 	zone->mastersok = newok;
+ 	zone->masterkeynames = newname;
