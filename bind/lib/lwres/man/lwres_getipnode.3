@@ -1,7 +1,7 @@
 .\" Copyright (C) 2004, 2005, 2007 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001, 2003 Internet Software Consortium.
 .\" 
-.\" Permission to use, copy, modify, and distribute this software for any
+.\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\" 
@@ -13,7 +13,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $Id: lwres_getipnode.3,v 1.13.2.2.4.9 2007/01/30 00:11:48 marka Exp $
+.\" $Id$
 .\"
 .hy 0
 .ad l
@@ -36,11 +36,11 @@ lwres_getipnodebyname, lwres_getipnodebyaddr, lwres_freehostent \- lightweight r
 #include <lwres/netdb.h>
 .fi
 .HP 39
-.BI "struct hostent * lwres_getipnodebyname(const\ char\ *name, int\ af, int\ flags, int\ *error_num);"
+.BI "struct hostent * lwres_getipnodebyname(const\ char\ *" "name" ", int\ " "af" ", int\ " "flags" ", int\ *" "error_num" ");"
 .HP 39
-.BI "struct hostent * lwres_getipnodebyaddr(const\ void\ *src, size_t\ len, int\ af, int\ *error_num);"
+.BI "struct hostent * lwres_getipnodebyaddr(const\ void\ *" "src" ", size_t\ " "len" ", int\ " "af" ", int\ *" "error_num" ");"
 .HP 23
-.BI "void lwres_freehostent(struct\ hostent\ *he);"
+.BI "void lwres_freehostent(struct\ hostent\ *" "he" ");"
 .SH "DESCRIPTION"
 .PP
 These functions perform thread safe, protocol independent nodename\-to\-address and address\-to\-nodename translation as defined in RFC2553.
@@ -49,7 +49,7 @@ They use a
 \fBstruct hostent\fR
 which is defined in
 \fInamedb.h\fR:
-.sp
+.PP
 .RS 4
 .nf
 struct  hostent {
@@ -189,7 +189,7 @@ A temporary and possibly transient error occurred, such as a failure of a server
 An unexpected failure occurred, and retrying the request is pointless.
 .RE
 .PP
-\fBlwres_hstrerror\fR(3 )
+\fBlwres_hstrerror\fR(3)
 translates these error codes to suitable error messages.
 .SH "SEE ALSO"
 .PP

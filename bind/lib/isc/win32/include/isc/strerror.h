@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2001-2003  Internet Software Consortium.
+ * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: strerror.h,v 1.2.2.2.8.5 2007/08/28 07:19:17 tbox Exp $ */
+/* $Id: strerror.h,v 1.5 2007/06/19 23:47:20 tbox Exp $ */
 
 #ifndef ISC_STRERROR_H
 #define ISC_STRERROR_H

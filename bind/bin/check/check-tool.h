@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007, 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,30 +15,45 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: check-tool.h,v 1.2.12.8 2007/08/28 07:19:07 tbox Exp $ */
+/* $Id: check-tool.h,v 1.18 2011/12/09 23:47:02 tbox Exp $ */
 
 #ifndef CHECK_TOOL_H
 #define CHECK_TOOL_H
 
-#include <isc/lang.h>
+/*! \file */
 
+#include <isc/lang.h>
+#include <isc/stdio.h>
 #include <isc/types.h>
+
+#include <dns/masterdump.h>
 #include <dns/types.h>
 
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-setup_logging(isc_mem_t *mctx, isc_log_t **logp);
+setup_logging(isc_mem_t *mctx, FILE *errout, isc_log_t **logp);
 
 isc_result_t
 load_zone(isc_mem_t *mctx, const char *zonename, const char *filename,
-	  const char *classname, dns_zone_t **zonep);
+	  dns_masterformat_t fileformat, const char *classname,
+	  dns_zone_t **zonep);
 
 isc_result_t
-dump_zone(const char *zonename, dns_zone_t *zone, const char *filename);
+dump_zone(const char *zonename, dns_zone_t *zone, const char *filename,
+	  dns_masterformat_t fileformat, const dns_master_style_t *style,
+	  const isc_uint32_t rawversion);
+
+#ifdef _WIN32
+void InitSockets(void);
+void DestroySockets(void);
+#endif
 
 extern int debug;
 extern isc_boolean_t nomerge;
+extern isc_boolean_t docheckmx;
+extern isc_boolean_t docheckns;
+extern isc_boolean_t dochecksrv;
 extern unsigned int zone_options;
 
 ISC_LANG_ENDDECLS

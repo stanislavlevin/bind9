@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001-2003  Internet Software Consortium.
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: genzone.sh,v 1.3.202.4 2004/03/08 04:04:33 marka Exp $
+# $Id: genzone.sh,v 1.13 2011/03/03 23:47:31 tbox Exp $
 
 #
 # Set up a test zone
@@ -193,8 +193,8 @@ srv02			SRV 65535 65535 65535  old-slow-box
 
 ; type 35
 naptr01			NAPTR   0 0 "" "" "" . 
-naptr02			NAPTR   65535 65535 blurgh blorf blegh foo.
-naptr02			NAPTR   65535 65535 "blurgh" "blorf" "blegh" foo.
+naptr02			NAPTR   65535 65535 blurgh blorf blllbb foo.
+naptr02			NAPTR   65535 65535 "blurgh" "blorf" "blllbb" foo.
 
 ; type 36
 kx01			KX	10 kdc
@@ -262,6 +262,24 @@ dnskey01		DNSKEY	512 ( 255 1 AQMFD5raczCJHViKtLYhWGz8hMY
 ;						; other data
 ;				)
 
+hip1			HIP	( 2 200100107B1A74DF365639CC39F1D578
+				AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cIvM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbWIy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+bSRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWxZ48AWkskmdHaVDP4BcelrTI3rMXdXF5D )
+
+
+hip2			HIP	( 2 200100107B1A74DF365639CC39F1D578
+                                AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cIvM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbWIy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+bSRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWxZ48AWkskmdHaVDP4BcelrTI3rMXdXF5D
+				rvs.example.com. )
+
+tlsa			TLSA	( 1 1 2 92003ba34942dc74152e2f2c408d29ec
+				a5a520e7f2e06bb944f4dca346baf63c
+				1b177615d466f6c4b71c216a50292bd5
+				8c9ebdd2f74e38fe51ffd48c43326cbc )
+
 ; type 255
 ; TSIG is a meta-type and should never occur in master files.
+
+; type 256
+uri01			URI	10 20 "https://www.isc.org/"
+uri02			URI	30 40 "https://www.isc.org/HolyCowThisSureIsAVeryLongURIRecordIDontEvenKnowWhatSomeoneWouldEverWantWithSuchAThingButTheSpecificationRequiresThatWesupportItSoHereWeGoTestingItLaLaLaLaLaLaLaSeriouslyThoughWhyWouldYouEvenConsiderUsingAURIThisLongItSeemsLikeASillyIdeaButEnhWhatAreYouGonnaDo/"
+
 EOF

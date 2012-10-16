@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ipv6.h,v 1.9.2.2.2.10 2007/08/28 07:19:17 tbox Exp $ */
+/* $Id$ */
 
 #ifndef ISC_IPV6_H
 #define ISC_IPV6_H 1
@@ -40,7 +40,7 @@
  *	No anticipated impact.
  *
  * Standards:
- *	RFC 2553.
+ *	RFC2553.
  */
 
 #if _MSC_VER < 1300
@@ -111,14 +111,14 @@ LIBISC_EXTERNAL_DATA extern const struct in6_addr isc_in6addr_loopback;
  */
 #ifndef IN6_IS_ADDR_LINKLOCAL
 #define IN6_IS_ADDR_LINKLOCAL(a)	(\
-(*((u_long *)((a)->s6_addr)    ) == 0xfe) && \
-((*((u_long *)((a)->s6_addr) + 1) & 0xc0) == 0x80))
+       ((a)->s6_addr[0] == 0xfe) && \
+       (((a)->s6_addr[1] & 0xc0) == 0x80))
 #endif
 
 #ifndef IN6_IS_ADDR_SITELOCAL
 #define IN6_IS_ADDR_SITELOCAL(a)	(\
-(*((u_long *)((a)->s6_addr)    ) == 0xfe) && \
-((*((u_long *)((a)->s6_addr) + 1) & 0xc0) == 0xc0))
+       ((a)->s6_addr[0] == 0xfe) && \
+       (((a)->s6_addr[1] & 0xc0) == 0xc0))
 #endif
 
 #endif /* ISC_IPV6_H */

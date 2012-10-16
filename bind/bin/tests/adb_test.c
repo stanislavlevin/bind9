@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: adb_test.c,v 1.62.206.3 2005/06/26 23:17:52 marka Exp $ */
+/* $Id: adb_test.c,v 1.73 2011/08/30 23:46:51 tbox Exp $ */
+
+/*! \file */
 
 #include <config.h>
 
@@ -247,8 +249,7 @@ lookup(const char *target) {
 	isc_buffer_add(&t, strlen(target));
 	isc_buffer_init(&namebuf, namedata, sizeof(namedata));
 	dns_name_init(&name, NULL);
-	result = dns_name_fromtext(&name, &t, dns_rootname, ISC_FALSE,
-				   &namebuf);
+	result = dns_name_fromtext(&name, &t, dns_rootname, 0, &namebuf);
 	check_result(result, "dns_name_fromtext %s", target);
 
 	result = dns_name_dup(&name, mctx, &client->name);
@@ -261,11 +262,10 @@ lookup(const char *target) {
 	options |= DNS_ADBFIND_HINTOK;
 	options |= DNS_ADBFIND_GLUEOK;
 	result = dns_adb_createfind(adb, t2, lookup_callback, client,
-				    &client->name, dns_rootname, options,
+				    &client->name, dns_rootname, 0, options,
 				    now, NULL, view->dstport, &client->find);
-#if 0
-	check_result(result, "dns_adb_createfind()");
-#endif
+	if (result != ISC_R_SUCCESS)
+		printf("DNS_ADB_CREATEFIND -> %s\n", dns_result_totext(result));
 	dns_adb_dumpfind(client->find, stderr);
 
 	if ((client->find->options & DNS_ADBFIND_WANTEVENT) != 0) {
@@ -413,7 +413,9 @@ main(int argc, char **argv) {
 	dns_view_detach(&view);
 	adb = NULL;
 
+	fprintf(stderr, "Destroying socket manager\n");
 	isc_socketmgr_destroy(&socketmgr);
+	fprintf(stderr, "Destroying timer manager\n");
 	isc_timermgr_destroy(&timermgr);
 
 	fprintf(stderr, "Destroying task manager\n");

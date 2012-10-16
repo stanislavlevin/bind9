@@ -1,7 +1,7 @@
 .\" Copyright (C) 2004, 2005, 2007 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001 Internet Software Consortium.
 .\" 
-.\" Permission to use, copy, modify, and distribute this software for any
+.\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\" 
@@ -13,7 +13,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $Id: lwres_buffer.3,v 1.12.2.1.8.8 2007/01/30 00:11:48 marka Exp $
+.\" $Id$
 .\"
 .hy 0
 .ad l
@@ -36,37 +36,37 @@ lwres_buffer_init, lwres_buffer_invalidate, lwres_buffer_add, lwres_buffer_subtr
 #include <lwres/lwbuffer.h>
 .fi
 .HP 23
-.BI "void lwres_buffer_init(lwres_buffer_t\ *b, void\ *base, unsigned\ int\ length);"
+.BI "void lwres_buffer_init(lwres_buffer_t\ *" "b" ", void\ *" "base" ", unsigned\ int\ " "length" ");"
 .HP 29
-.BI "void lwres_buffer_invalidate(lwres_buffer_t\ *b);"
+.BI "void lwres_buffer_invalidate(lwres_buffer_t\ *" "b" ");"
 .HP 22
-.BI "void lwres_buffer_add(lwres_buffer_t\ *b, unsigned\ int\ n);"
+.BI "void lwres_buffer_add(lwres_buffer_t\ *" "b" ", unsigned\ int\ " "n" ");"
 .HP 27
-.BI "void lwres_buffer_subtract(lwres_buffer_t\ *b, unsigned\ int\ n);"
+.BI "void lwres_buffer_subtract(lwres_buffer_t\ *" "b" ", unsigned\ int\ " "n" ");"
 .HP 24
-.BI "void lwres_buffer_clear(lwres_buffer_t\ *b);"
+.BI "void lwres_buffer_clear(lwres_buffer_t\ *" "b" ");"
 .HP 24
-.BI "void lwres_buffer_first(lwres_buffer_t\ *b);"
+.BI "void lwres_buffer_first(lwres_buffer_t\ *" "b" ");"
 .HP 26
-.BI "void lwres_buffer_forward(lwres_buffer_t\ *b, unsigned\ int\ n);"
+.BI "void lwres_buffer_forward(lwres_buffer_t\ *" "b" ", unsigned\ int\ " "n" ");"
 .HP 23
-.BI "void lwres_buffer_back(lwres_buffer_t\ *b, unsigned\ int\ n);"
+.BI "void lwres_buffer_back(lwres_buffer_t\ *" "b" ", unsigned\ int\ " "n" ");"
 .HP 36
-.BI "lwres_uint8_t lwres_buffer_getuint8(lwres_buffer_t\ *b);"
+.BI "lwres_uint8_t lwres_buffer_getuint8(lwres_buffer_t\ *" "b" ");"
 .HP 27
-.BI "void lwres_buffer_putuint8(lwres_buffer_t\ *b, lwres_uint8_t\ val);"
+.BI "void lwres_buffer_putuint8(lwres_buffer_t\ *" "b" ", lwres_uint8_t\ " "val" ");"
 .HP 38
-.BI "lwres_uint16_t lwres_buffer_getuint16(lwres_buffer_t\ *b);"
+.BI "lwres_uint16_t lwres_buffer_getuint16(lwres_buffer_t\ *" "b" ");"
 .HP 28
-.BI "void lwres_buffer_putuint16(lwres_buffer_t\ *b, lwres_uint16_t\ val);"
+.BI "void lwres_buffer_putuint16(lwres_buffer_t\ *" "b" ", lwres_uint16_t\ " "val" ");"
 .HP 38
-.BI "lwres_uint32_t lwres_buffer_getuint32(lwres_buffer_t\ *b);"
+.BI "lwres_uint32_t lwres_buffer_getuint32(lwres_buffer_t\ *" "b" ");"
 .HP 28
-.BI "void lwres_buffer_putuint32(lwres_buffer_t\ *b, lwres_uint32_t\ val);"
+.BI "void lwres_buffer_putuint32(lwres_buffer_t\ *" "b" ", lwres_uint32_t\ " "val" ");"
 .HP 25
-.BI "void lwres_buffer_putmem(lwres_buffer_t\ *b, const\ unsigned\ char\ *base, unsigned\ int\ length);"
+.BI "void lwres_buffer_putmem(lwres_buffer_t\ *" "b" ", const\ unsigned\ char\ *" "base" ", unsigned\ int\ " "length" ");"
 .HP 25
-.BI "void lwres_buffer_getmem(lwres_buffer_t\ *b, unsigned\ char\ *base, unsigned\ int\ length);"
+.BI "void lwres_buffer_getmem(lwres_buffer_t\ *" "b" ", unsigned\ char\ *" "base" ", unsigned\ int\ " "length" ");"
 .SH "DESCRIPTION"
 .PP
 These functions provide bounds checked access to a region of memory where data is being read or written. They are based on, and similar to, the
@@ -92,7 +92,6 @@ The
 \fIactive region\fR
 is an (optional) subregion of the remaining region. It extends from the current offset to an offset in the remaining region. Initially, the active region is empty. If the current offset advances beyond the chosen offset, the active region will also be empty.
 .PP
-.sp
 .RS 4
 .nf
    /\-\-\-\-\-\-\-\-\-\-\-\-entire length\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\\\\
@@ -101,11 +100,23 @@ is an (optional) subregion of the remaining region. It extends from the current 
    | consumed  | remaining |                |
    +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
    a           b     c     d                e
+.fi
+.RE
+.sp
+.PP
+.RS 4
+.nf
   a == base of buffer.
   b == current pointer.  Can be anywhere between a and d.
   c == active pointer.  Meaningful between b and d.
   d == used pointer.
   e == length of buffer.
+.fi
+.RE
+.sp
+.PP
+.RS 4
+.nf
   a\-e == entire length of buffer.
   a\-d == used region.
   a\-b == consumed region.
@@ -146,8 +157,7 @@ used.
 .PP
 A buffer is re\-initialised by
 \fBlwres_buffer_clear()\fR. The function sets
-used
-,
+used,
 current
 and
 active

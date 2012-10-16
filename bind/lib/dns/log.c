@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.33.2.2.10.3 2004/03/06 08:13:39 marka Exp $ */
+/* $Id: log.c,v 1.49 2011/10/13 22:48:24 tbox Exp $ */
+
+/*! \file */
 
 /* Principal Authors: DCL */
 
@@ -25,9 +27,9 @@
 
 #include <dns/log.h>
 
-/*
+/*%
  * When adding a new category, be sure to add the appropriate
- * #define to <dns/log.h>.
+ * \#define to <dns/log.h>.
  */
 LIBDNS_EXTERNAL_DATA isc_logcategory_t dns_categories[] = {
 	{ "notify", 	0 },
@@ -41,12 +43,14 @@ LIBDNS_EXTERNAL_DATA isc_logcategory_t dns_categories[] = {
 	{ "dispatch",	0 },
 	{ "lame-servers", 0 },
 	{ "delegation-only", 0 },
+	{ "edns-disabled", 0 },
+	{ "rpz",	0 },
 	{ NULL, 	0 }
 };
 
-/*
+/*%
  * When adding a new module, be sure to add the appropriate
- * #define to <dns/log.h>.
+ * \#define to <dns/log.h>.
  */
 LIBDNS_EXTERNAL_DATA isc_logmodule_t dns_modules[] = {
 	{ "dns/db",	 	0 },
@@ -74,6 +78,9 @@ LIBDNS_EXTERNAL_DATA isc_logmodule_t dns_modules[] = {
 	{ "dns/sdb",		0 },
 	{ "dns/diff",		0 },
 	{ "dns/hints",		0 },
+	{ "dns/acache",		0 },
+	{ "dns/dlz",		0 },
+	{ "dns/dnssec",		0 },
 	{ NULL, 		0 }
 };
 

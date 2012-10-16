@@ -1,0 +1,72 @@
+From 0 Mon Sep 17 00:00:00 2001
+From: "Fr. Br. George" <george@altlinux.org>
+Date: Mon, 15 Oct 2012 15:44:28 +0400
+Subject: [PATCH 05] bind-9.8.3-owl-checkconf-chroot
+
+---
+ bind/bin/check/named-checkconf.8 |    1 +
+ bind/bin/check/named-checkconf.c |   22 ++++++++++++++++------
+ 2 files changed, 17 insertions(+), 6 deletions(-)
+
+diff --git a/bind/bin/check/named-checkconf.8 b/bind/bin/check/named-checkconf.8
+index 67a8f4a..2adaae0 100644
+--- a/bind/bin/check/named-checkconf.8
++++ b/bind/bin/check/named-checkconf.8
+@@ -68,6 +68,7 @@ Print the usage summary and exit.
+ Chroot to
+ \fIdirectory\fR
+ so that include directives in the configuration file are processed as if run by a similarly chrooted named.
++By default, \fBnamed\-checkconf\fR will \fBchroot()\fR to \fI@ROOT@\fR.
+ .RE
+ .PP
+ \-v
+diff --git a/bind/bin/check/named-checkconf.c b/bind/bin/check/named-checkconf.c
+index 2422f97..a450aa3 100644
+--- a/bind/bin/check/named-checkconf.c
++++ b/bind/bin/check/named-checkconf.c
+@@ -429,6 +429,7 @@ main(int argc, char **argv) {
+ 	int exit_status = 0;
+ 	isc_entropy_t *ectx = NULL;
+ 	isc_boolean_t load_zones = ISC_FALSE;
++	const char *chroot_dir = "@ROOT@";
+ 	isc_boolean_t print = ISC_FALSE;
+ 
+ 	isc_commandline_errprint = ISC_FALSE;
+@@ -444,12 +445,7 @@ main(int argc, char **argv) {
+ 			break;
+ 
+ 		case 't':
+-			result = isc_dir_chroot(isc_commandline_argument);
+-			if (result != ISC_R_SUCCESS) {
+-				fprintf(stderr, "isc_dir_chroot: %s\n",
+-					isc_result_totext(result));
+-				exit(1);
+-			}
++			chroot_dir = isc_commandline_argument;
+ 			break;
+ 
+ 		case 'p':
+@@ -483,6 +479,20 @@ main(int argc, char **argv) {
+ 
+ 	if (isc_commandline_index + 1 < argc)
+ 		usage();
++
++	result = isc_dir_chroot(chroot_dir);
++	if (result != ISC_R_SUCCESS) {
++		fprintf(stderr, "isc_dir_chroot: %s\n",
++			isc_result_totext(result));
++		exit(1);
++	}
++	result = isc_dir_chdir("/");
++	if (result != ISC_R_SUCCESS) {
++		fprintf(stderr, "isc_dir_chdir: %s\n",
++			isc_result_totext(result));
++		exit(1);
++	}
++
+ 	if (argv[isc_commandline_index] != NULL)
+ 		conffile = argv[isc_commandline_index];
+ 	if (conffile == NULL || conffile[0] == '\0')
+-- 
+1.7.9.7
+

@@ -1,8 +1,8 @@
 <!--
- - Copyright (C) 2004-2008 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2012 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
- - Permission to use, copy, modify, and distribute this software for any
+ - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  - 
@@ -14,7 +14,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- $Id: Bv9ARM.ch08.html,v 1.50.2.9.2.51 2008/09/28 01:20:39 tbox Exp $ -->
+<!-- $Id$ -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -45,64 +45,77 @@
 <div class="toc">
 <p><b>Table of Contents</b></p>
 <dl>
-<dt><span class="sect1"><a href="Bv9ARM.ch08.html#id2587248">Common Problems</a></span></dt>
-<dd><dl><dt><span class="sect2"><a href="Bv9ARM.ch08.html#id2587253">It's not working; how can I figure out what's wrong?</a></span></dt></dl></dd>
-<dt><span class="sect1"><a href="Bv9ARM.ch08.html#id2587265">Incrementing and Changing the Serial Number</a></span></dt>
-<dt><span class="sect1"><a href="Bv9ARM.ch08.html#id2587282">Where Can I Get Help?</a></span></dt>
+<dt><span class="sect1"><a href="Bv9ARM.ch08.html#id2604183">Common Problems</a></span></dt>
+<dd><dl><dt><span class="sect2"><a href="Bv9ARM.ch08.html#id2604188">It's not working; how can I figure out what's wrong?</a></span></dt></dl></dd>
+<dt><span class="sect1"><a href="Bv9ARM.ch08.html#id2604200">Incrementing and Changing the Serial Number</a></span></dt>
+<dt><span class="sect1"><a href="Bv9ARM.ch08.html#id2604217">Where Can I Get Help?</a></span></dt>
 </dl>
 </div>
 <div class="sect1" lang="en">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id2587248"></a>Common Problems</h2></div></div></div>
+<a name="id2604183"></a>Common Problems</h2></div></div></div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2587253"></a>It's not working; how can I figure out what's wrong?</h3></div></div></div>
-<p>The best solution to solving installation and
-      configuration issues is to take preventative measures by setting
-      up logging files beforehand. The log files provide a
-      source of hints and information that can be used to figure out
-      what went wrong and how to fix the problem.</p>
-</div>
-</div>
-<div class="sect1" lang="en">
-<div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id2587265"></a>Incrementing and Changing the Serial Number</h2></div></div></div>
+<a name="id2604188"></a>It's not working; how can I figure out what's wrong?</h3></div></div></div>
 <p>
-	  Zone serial numbers are just numbers &#8212; they aren't
-	  date related.  A lot of people set them to a number that
-	  represents a date, usually of the form YYYYMMDDRR.
-	  Occasionally they will make a mistake and set them to a
-	  "date in the future" then try to correct them by setting
-	  them to the "current date".  This causes problems because
-	  serial numbers are used to indicate that a zone has been
-	  updated.  If the serial number on the slave server is
-	  lower than the serial number on the master, the slave
-	  server will attempt to update its copy of the zone.
-	</p>
-<p>Setting the serial number to a lower number on the master
-    server than the slave server means that the slave will not perform
-    updates to its copy of the zone.</p>
-<p>The solution to this is to add 2147483647 (2^31-1) to the
-    number, reload the zone and make sure all slaves have updated to
-    the new zone serial number, then reset the number to what you want
-    it to be, and reload the zone again.</p>
+            The best solution to solving installation and
+            configuration issues is to take preventative measures by setting
+            up logging files beforehand. The log files provide a
+            source of hints and information that can be used to figure out
+            what went wrong and how to fix the problem.
+          </p>
+</div>
 </div>
 <div class="sect1" lang="en">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id2587282"></a>Where Can I Get Help?</h2></div></div></div>
-<p>The Internet Software Consortium (<acronym class="acronym">ISC</acronym>) offers a wide range
-    of support and service agreements for <acronym class="acronym">BIND</acronym> and <acronym class="acronym">DHCP</acronym> servers. Four
-    levels of premium support are available and each level includes
-    support for all <acronym class="acronym">ISC</acronym> programs, significant discounts on products
-    and training, and a recognized priority on bug fixes and
-    non-funded feature requests. In addition, <acronym class="acronym">ISC</acronym> offers a standard
-    support agreement package which includes services ranging from bug
-    fix announcements to remote support. It also includes training in
-    <acronym class="acronym">BIND</acronym> and <acronym class="acronym">DHCP</acronym>.</p>
-<p>To discuss arrangements for support, contact
-    <a href="mailto:info@isc.org" target="_top">info@isc.org</a> or visit the
-    <acronym class="acronym">ISC</acronym> web page at <a href="http://www.isc.org/services/support/" target="_top">http://www.isc.org/services/support/</a>
-    to read more.</p>
+<a name="id2604200"></a>Incrementing and Changing the Serial Number</h2></div></div></div>
+<p>
+          Zone serial numbers are just numbers &#8212; they aren't
+          date related.  A lot of people set them to a number that
+          represents a date, usually of the form YYYYMMDDRR.
+          Occasionally they will make a mistake and set them to a
+          "date in the future" then try to correct them by setting
+          them to the "current date".  This causes problems because
+          serial numbers are used to indicate that a zone has been
+          updated.  If the serial number on the slave server is
+          lower than the serial number on the master, the slave
+          server will attempt to update its copy of the zone.
+        </p>
+<p>
+          Setting the serial number to a lower number on the master
+          server than the slave server means that the slave will not perform
+          updates to its copy of the zone.
+        </p>
+<p>
+          The solution to this is to add 2147483647 (2^31-1) to the
+          number, reload the zone and make sure all slaves have updated to
+          the new zone serial number, then reset the number to what you want
+          it to be, and reload the zone again.
+        </p>
+</div>
+<div class="sect1" lang="en">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="id2604217"></a>Where Can I Get Help?</h2></div></div></div>
+<p>
+          The Internet Systems Consortium
+          (<acronym class="acronym">ISC</acronym>) offers a wide range
+          of support and service agreements for <acronym class="acronym">BIND</acronym> and <acronym class="acronym">DHCP</acronym> servers. Four
+          levels of premium support are available and each level includes
+          support for all <acronym class="acronym">ISC</acronym> programs,
+          significant discounts on products
+          and training, and a recognized priority on bug fixes and
+          non-funded feature requests. In addition, <acronym class="acronym">ISC</acronym> offers a standard
+          support agreement package which includes services ranging from bug
+          fix announcements to remote support. It also includes training in
+          <acronym class="acronym">BIND</acronym> and <acronym class="acronym">DHCP</acronym>.
+        </p>
+<p>
+          To discuss arrangements for support, contact
+          <a href="mailto:info@isc.org" target="_top">info@isc.org</a> or visit the
+          <acronym class="acronym">ISC</acronym> web page at
+          <a href="http://www.isc.org/services/support/" target="_top">http://www.isc.org/services/support/</a>
+          to read more.
+        </p>
 </div>
 </div>
 <div class="navfooter">

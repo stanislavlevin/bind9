@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: notify.c,v 1.24.2.2.2.7 2004/08/28 06:25:30 marka Exp $ */
+/* $Id: notify.c,v 1.37 2007/06/19 23:46:59 tbox Exp $ */
 
 #include <config.h>
 
@@ -25,6 +25,7 @@
 #include <dns/message.h>
 #include <dns/rdataset.h>
 #include <dns/result.h>
+#include <dns/tsig.h>
 #include <dns/view.h>
 #include <dns/zone.h>
 #include <dns/zt.h>
@@ -32,8 +33,9 @@
 #include <named/log.h>
 #include <named/notify.h>
 
-/*
- * This module implements notify as in RFC 1996.
+/*! \file
+ * \brief
+ * This module implements notify as in RFC1996.
  */
 
 static void
@@ -79,7 +81,7 @@ ns_notify_start(ns_client_t *client) {
 	dns_zone_t *zone = NULL;
 	char namebuf[DNS_NAME_FORMATSIZE];
 	char tsigbuf[DNS_NAME_FORMATSIZE + sizeof(": TSIG ''")];
-	dns_name_t *tsigname;
+	dns_tsigkey_t *tsigkey;
 
 	/*
 	 * Interpret the question section.
@@ -118,10 +120,20 @@ ns_notify_start(ns_client_t *client) {
 		goto formerr;
 	}
 
-	tsigname = NULL;
-	if (dns_message_gettsig(request, &tsigname) != NULL) {
-		dns_name_format(tsigname, namebuf, sizeof(namebuf));
-		snprintf(tsigbuf, sizeof(tsigbuf), ": TSIG '%s'", namebuf);
+	tsigkey = dns_message_gettsigkey(request);
+	if (tsigkey != NULL) {
+		dns_name_format(&tsigkey->name, namebuf, sizeof(namebuf));
+
+		if (tsigkey->generated) {
+			char cnamebuf[DNS_NAME_FORMATSIZE];
+			dns_name_format(tsigkey->creator, cnamebuf,
+					sizeof(cnamebuf));
+			snprintf(tsigbuf, sizeof(tsigbuf), ": TSIG '%s' (%s)",
+				 namebuf, cnamebuf);
+		} else {
+			snprintf(tsigbuf, sizeof(tsigbuf), ": TSIG '%s'",
+				 namebuf);
+		}
 	} else
 		tsigbuf[0] = '\0';
 	dns_name_format(zonename, namebuf, sizeof(namebuf));

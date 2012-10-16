@@ -1,0 +1,47 @@
+From 0 Mon Sep 17 00:00:00 2001
+From: "Fr. Br. George" <george@altlinux.org>
+Date: Mon, 15 Oct 2012 15:44:28 +0400
+Subject: [PATCH 09] bind-9.8.3-alt-nofile
+
+---
+ bind/lib/isc/unix/resource.c |   17 ++++++++++++++++-
+ 1 file changed, 16 insertions(+), 1 deletion(-)
+
+diff --git a/bind/lib/isc/unix/resource.c b/bind/lib/isc/unix/resource.c
+index 29596e2..0d8655d 100644
+--- a/bind/lib/isc/unix/resource.c
++++ b/bind/lib/isc/unix/resource.c
+@@ -30,6 +30,21 @@
+ 
+ #ifdef __linux__
+ #include <linux/fs.h>	/* To get the large NR_OPEN. */
++# ifndef NR_OPEN
++#  define NR_OPEN 1024
++# endif
++# ifndef ISC_SOCKET_MAXSOCKETS
++#  if defined(ISC_PLATFORM_HAVEKQUEUE) || defined(ISC_PLATFORM_HAVEEPOLL) || defined (ISC_PLATFORM_HAVEDEVPOLL)
++#   define ISC_SOCKET_MAXSOCKETS 4096
++#  else
++#   define ISC_SOCKET_MAXSOCKETS NR_OPEN
++#  endif
++# endif
++# if (NR_OPEN > ISC_SOCKET_MAXSOCKETS)
++#  define NR_OPEN_MAX NR_OPEN
++# else
++#  define NR_OPEN_MAX ISC_SOCKET_MAXSOCKETS
++# endif
+ #endif
+ 
+ #if defined(__hpux) && defined(HAVE_SYS_DYNTUNE_H)
+@@ -169,7 +184,7 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
+ 	 * possible value is the NR_OPEN defined in linux/fs.h.
+ 	 */
+ 	if (resource == isc_resource_openfiles && rlim_value == RLIM_INFINITY) {
+-		rl.rlim_cur = rl.rlim_max = NR_OPEN;
++		rl.rlim_cur = rl.rlim_max = NR_OPEN_MAX;
+ 		unixresult = setrlimit(unixresource, &rl);
+ 		if (unixresult == 0)
+ 			return (ISC_R_SUCCESS);
+-- 
+1.7.9.7
+

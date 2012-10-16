@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2006, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: t_api.c,v 1.48.2.1.2.13 2008/01/17 23:45:28 tbox Exp $ */
+/* $Id: t_api.c,v 1.68 2010/12/21 04:20:23 marka Exp $ */
+
+/*! \file */
 
 #include <config.h>
 
@@ -53,7 +55,7 @@ static const char *Usage =
 		"\t-t <test_number> : run specified test number\n"
 		"\t-x               : don't execute tests in a subproc\n"
 		"\t-q <timeout>     : use 'timeout' as the timeout value\n";
-/*
+/*!<
  *		-a		-->	run all tests
  *		-b dir		-->	chdir to dir before running tests
  *		-c config	-->	use config file 'config'
@@ -66,7 +68,7 @@ static const char *Usage =
  *		-q timeout	-->	use 'timeout' as the timeout value
  */
 
-#define	T_MAXTESTS		256	/* must be 0 mod 8 */
+#define	T_MAXTESTS		256	/*% must be 0 mod 8 */
 #define	T_MAXENV		256
 #define	T_DEFAULT_CONFIG	"t_config"
 #define	T_BUFSIZ		256
@@ -222,8 +224,10 @@ main(int argc, char **argv) {
 	 * Set cwd.
 	 */
 
-	if (T_dir != NULL)
-		(void) chdir(T_dir);
+	if (T_dir != NULL && chdir(T_dir) != 0) {
+		fprintf(stderr, "chdir %s failed\n", T_dir);
+		exit(1);
+	}
 
 	/*
 	 * We don't want buffered output.
@@ -238,15 +242,6 @@ main(int argc, char **argv) {
 
 	sa.sa_flags = 0;
 	sigfillset(&sa.sa_mask);
-
-#ifdef SIGCHLD
-	/*
-	 * This is mostly here for NetBSD's pthread implementation, until
-	 * people catch up to the latest unproven-pthread package.
-	 */
-	sa.sa_handler = SIG_DFL;
-	(void)sigaction(SIGCHLD, &sa, NULL);
-#endif
 
 	sa.sa_handler = t_sighandler;
 	(void)sigaction(SIGINT,  &sa, NULL);
@@ -395,6 +390,9 @@ t_result(int result) {
 			break;
 		case T_THREADONLY:
 			p = "THREADONLY";
+			break;
+		case T_PKCS11ONLY:
+			p = "PKCS11ONLY";
 			break;
 		default:
 			p = "UNKNOWN";

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,15 +15,21 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: formatcheck.h,v 1.6.206.1 2004/03/06 08:14:41 marka Exp $ */
+/* $Id: formatcheck.h,v 1.13 2007/06/19 23:47:18 tbox Exp $ */
 
 #ifndef ISC_FORMATCHECK_H
 #define ISC_FORMATCHECK_H 1
 
-/*
- * fmt is the location of the format string parameter.
- * args is the location of the first argument (or 0 for no argument checking).
- * Note: the first parameter is 1, not 0.
+/*! \file isc/formatcheck.h */
+
+/*%
+ * ISC_FORMAT_PRINTF().
+ *
+ * \li fmt is the location of the format string parameter.
+ * \li args is the location of the first argument (or 0 for no argument checking).
+ * 
+ * Note:
+ * \li The first parameter is 1, not 0.
  */
 #ifdef __GNUC__
 #define ISC_FORMAT_PRINTF(fmt, args) __attribute__((__format__(__printf__, fmt, args)))

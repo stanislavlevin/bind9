@@ -1,5 +1,5 @@
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
-# Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+# Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 1999-2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: includes.in,v 1.15.12.7 2007/08/28 07:19:18 tbox Exp $
+# $Id: includes.in,v 1.21 2007/06/19 23:47:24 tbox Exp $
 
 # Search for machine-generated header files in the build tree,
 # and for normal headers in the source tree (${top_srcdir}).
@@ -25,7 +25,8 @@ ISC_INCLUDES = @BIND9_ISC_BUILDINCLUDE@ \
 	-I${top_srcdir}/lib/isc \
 	-I${top_srcdir}/lib/isc/include \
 	-I${top_srcdir}/lib/isc/unix/include \
-	-I${top_srcdir}/lib/isc/@ISC_THREAD_DIR@/include
+	-I${top_srcdir}/lib/isc/@ISC_THREAD_DIR@/include \
+	-I${top_srcdir}/lib/isc/@ISC_ARCH_DIR@/include
 
 ISCCC_INCLUDES = @BIND9_ISCCC_BUILDINCLUDE@ \
        -I${top_srcdir}/lib/isccc/include

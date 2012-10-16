@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hex.c,v 1.8.2.2.8.3 2004/03/06 08:14:30 marka Exp $ */
+/* $Id: hex.c,v 1.20 2008/09/25 04:02:39 tbox Exp $ */
+
+/*! \file */
 
 #include <config.h>
 
@@ -73,13 +75,13 @@ isc_hex_totext(isc_region_t *source, int wordlength,
 	return (ISC_R_SUCCESS);
 }
 
-/*
+/*%
  * State of a hex decoding process in progress.
  */
 typedef struct {
-	int length;		/* Desired length of binary data or -1 */
-	isc_buffer_t *target;	/* Buffer for resulting binary data */
-	int digits;		/* Number of buffered hex digits */
+	int length;		/*%< Desired length of binary data or -1 */
+	isc_buffer_t *target;	/*%< Buffer for resulting binary data */
+	int digits;		/*%< Number of buffered hex digits */
 	int val[2];
 } hex_decode_ctx_t;
 
@@ -154,7 +156,7 @@ isc_hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
 }
 
 isc_result_t
-isc_hex_decodestring(char *cstr, isc_buffer_t *target) {
+isc_hex_decodestring(const char *cstr, isc_buffer_t *target) {
 	hex_decode_ctx_t ctx;
 
 	hex_decode_init(&ctx, -1, target);
@@ -166,7 +168,7 @@ isc_hex_decodestring(char *cstr, isc_buffer_t *target) {
 			continue;
 		RETERR(hex_decode_char(&ctx, c));
 	}
-	RETERR(hex_decode_finish(&ctx));	
+	RETERR(hex_decode_finish(&ctx));
 	return (ISC_R_SUCCESS);
 }
 

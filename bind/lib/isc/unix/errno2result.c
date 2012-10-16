@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: errno2result.c,v 1.8.2.4.8.4 2007/08/28 07:19:17 tbox Exp $ */
+/* $Id$ */
+
+/*! \file */
 
 #include <config.h>
 
@@ -25,14 +27,14 @@
 
 #include "errno2result.h"
 
-/*
+/*%
  * Convert a POSIX errno value into an isc_result_t.  The
  * list of supported errno values is not complete; new users
  * of this function should add any expected errors that are
  * not already there.
  */
 isc_result_t
-isc__errno2result(int posixerrno) {
+isc___errno2result(int posixerrno, const char *file, unsigned int line) {
 	char strbuf[ISC_STRERRORSIZE];
 
 	switch (posixerrno) {
@@ -53,7 +55,7 @@ isc__errno2result(int posixerrno) {
 		return (ISC_R_IOERROR);
 	case ENOMEM:
 		return (ISC_R_NOMEMORY);
-	case ENFILE:	
+	case ENFILE:
 	case EMFILE:
 		return (ISC_R_TOOMANYOPENFILES);
 	case EPIPE:
@@ -106,8 +108,7 @@ isc__errno2result(int posixerrno) {
 		return (ISC_R_CONNREFUSED);
 	default:
 		isc__strerror(posixerrno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "unable to convert errno "
+		UNEXPECTED_ERROR(file, line, "unable to convert errno "
 				 "to isc_result: %d: %s",
 				 posixerrno, strbuf);
 		/*

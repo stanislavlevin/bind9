@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,7 +16,9 @@
  */
 
 /*
- * $Id: assertions.h,v 1.17.206.3 2008/10/15 23:45:34 tbox Exp $
+ * $Id: assertions.h,v 1.28 2009/09/29 23:48:04 tbox Exp $
+ */
+/*! \file isc/assertions.h
  */
 
 #ifndef ISC_ASSERTIONS_H
@@ -27,6 +29,7 @@
 
 ISC_LANG_BEGINDECLS
 
+/*% isc assertion type */
 typedef enum {
 	isc_assertiontype_require,
 	isc_assertiontype_ensure,
@@ -38,7 +41,9 @@ typedef void (*isc_assertioncallback_t)(const char *, int, isc_assertiontype_t,
 					const char *);
 
 /* coverity[+kill] */
-LIBISC_EXTERNAL_DATA extern isc_assertioncallback_t isc_assertion_failed;
+ISC_PLATFORM_NORETURN_PRE
+void isc_assertion_failed(const char *, int, isc_assertiontype_t,
+			  const char *) ISC_PLATFORM_NORETURN_POST;
 
 void
 isc_assertion_setcallback(isc_assertioncallback_t);

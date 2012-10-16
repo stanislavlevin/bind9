@@ -1,7 +1,7 @@
 .\" Copyright (C) 2004, 2005, 2007 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001 Internet Software Consortium.
 .\" 
-.\" Permission to use, copy, modify, and distribute this software for any
+.\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\" 
@@ -13,7 +13,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $Id: lwres_gnba.3,v 1.13.2.1.8.8 2007/01/30 00:11:48 marka Exp $
+.\" $Id$
 .\"
 .hy 0
 .ad l
@@ -38,15 +38,15 @@ lwres_gnbarequest_render, lwres_gnbaresponse_render, lwres_gnbarequest_parse, lw
 .HP 40
 .BI "lwres_result_t lwres_gnbarequest_render(lwres_context_t\ *" "ctx" ", lwres_gnbarequest_t\ *" "req" ", lwres_lwpacket_t\ *" "pkt" ", lwres_buffer_t\ *" "b" ");"
 .HP 41
-.BI "lwres_result_t lwres_gnbaresponse_render(lwres_context_t\ *ctx, lwres_gnbaresponse_t\ *req, lwres_lwpacket_t\ *pkt, lwres_buffer_t\ *b);"
+.BI "lwres_result_t lwres_gnbaresponse_render(lwres_context_t\ *" "ctx" ", lwres_gnbaresponse_t\ *" "req" ", lwres_lwpacket_t\ *" "pkt" ", lwres_buffer_t\ *" "b" ");"
 .HP 39
-.BI "lwres_result_t lwres_gnbarequest_parse(lwres_context_t\ *ctx, lwres_buffer_t\ *b, lwres_lwpacket_t\ *pkt, lwres_gnbarequest_t\ **structp);"
+.BI "lwres_result_t lwres_gnbarequest_parse(lwres_context_t\ *" "ctx" ", lwres_buffer_t\ *" "b" ", lwres_lwpacket_t\ *" "pkt" ", lwres_gnbarequest_t\ **" "structp" ");"
 .HP 40
-.BI "lwres_result_t lwres_gnbaresponse_parse(lwres_context_t\ *ctx, lwres_buffer_t\ *b, lwres_lwpacket_t\ *pkt, lwres_gnbaresponse_t\ **structp);"
+.BI "lwres_result_t lwres_gnbaresponse_parse(lwres_context_t\ *" "ctx" ", lwres_buffer_t\ *" "b" ", lwres_lwpacket_t\ *" "pkt" ", lwres_gnbaresponse_t\ **" "structp" ");"
 .HP 29
-.BI "void lwres_gnbaresponse_free(lwres_context_t\ *ctx, lwres_gnbaresponse_t\ **structp);"
+.BI "void lwres_gnbaresponse_free(lwres_context_t\ *" "ctx" ", lwres_gnbaresponse_t\ **" "structp" ");"
 .HP 28
-.BI "void lwres_gnbarequest_free(lwres_context_t\ *ctx, lwres_gnbarequest_t\ **structp);"
+.BI "void lwres_gnbarequest_free(lwres_context_t\ *" "ctx" ", lwres_gnbarequest_t\ **" "structp" ");"
 .SH "DESCRIPTION"
 .PP
 These are low\-level routines for creating and parsing lightweight resolver address\-to\-name lookup request and response messages.
@@ -59,14 +59,26 @@ to the canonical format. This is complemented by a parse function which converts
 .PP
 These structures are defined in
 \fIlwres/lwres.h\fR. They are shown below.
-.sp
+.PP
 .RS 4
 .nf
 #define LWRES_OPCODE_GETNAMEBYADDR      0x00010002U
+.fi
+.RE
+.sp
+.PP
+.RS 4
+.nf
 typedef struct {
         lwres_uint32_t  flags;
         lwres_addr_t    addr;
 } lwres_gnbarequest_t;
+.fi
+.RE
+.sp
+.PP
+.RS 4
+.nf
 typedef struct {
         lwres_uint32_t  flags;
         lwres_uint16_t  naliases;

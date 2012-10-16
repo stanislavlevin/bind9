@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: stdtime.c,v 1.11.2.1.10.8 2007/08/28 07:19:17 tbox Exp $ */
+/* $Id: stdtime.c,v 1.19 2007/06/19 23:47:18 tbox Exp $ */
+
+/*! \file */
 
 #include <config.h>
 

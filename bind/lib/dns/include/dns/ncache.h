@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ncache.h,v 1.12.12.8 2007/08/28 07:19:14 tbox Exp $ */
+/* $Id: ncache.h,v 1.29 2010/05/14 23:50:40 tbox Exp $ */
 
 #ifndef DNS_NCACHE_H
 #define DNS_NCACHE_H 1
@@ -24,25 +24,26 @@
  ***** Module Info
  *****/
 
-/*
+/*! \file dns/ncache.h
+ *\brief
  * DNS Ncache
  *
- * XXX <TBS> XXX
+ * XXX TBS XXX
  *
  * MP:
- *	The caller must ensure any required synchronization.
+ *\li	The caller must ensure any required synchronization.
  *
  * Reliability:
- *	No anticipated impact.
+ *\li	No anticipated impact.
  *
  * Resources:
- *	<TBS>
+ *\li	TBS
  *
  * Security:
- *	No anticipated impact.
+ *\li	No anticipated impact.
  *
  * Standards:
- *	RFC 2308
+ *\li	RFC2308
  */
 
 #include <isc/lang.h>
@@ -52,7 +53,7 @@
 
 ISC_LANG_BEGINDECLS
 
-/*
+/*%
  * _OMITDNSSEC:
  *      Omit DNSSEC records when rendering.
  */
@@ -62,7 +63,12 @@ isc_result_t
 dns_ncache_add(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 	       dns_rdatatype_t covers, isc_stdtime_t now, dns_ttl_t maxttl,
 	       dns_rdataset_t *addedrdataset);
-/*
+isc_result_t
+dns_ncache_addoptout(dns_message_t *message, dns_db_t *cache,
+		     dns_dbnode_t *node, dns_rdatatype_t covers,
+		     isc_stdtime_t now, dns_ttl_t maxttl,
+		     isc_boolean_t optout, dns_rdataset_t *addedrdataset);
+/*%<
  * Convert the authority data from 'message' into a negative cache
  * rdataset, and store it in 'cache' at 'node' with a TTL limited to
  * 'maxttl'.
@@ -70,22 +76,24 @@ dns_ncache_add(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
  * The 'covers' argument is the RR type whose nonexistence we are caching,
  * or dns_rdatatype_any when caching a NXDOMAIN response.
  *
+ * 'optout' indicates a DNS_RDATASETATTR_OPTOUT should be set.
+ *
  * Note:
- *	If 'addedrdataset' is not NULL, then it will be attached to the added
+ *\li	If 'addedrdataset' is not NULL, then it will be attached to the added
  *	rdataset.  See dns_db_addrdataset() for more details.
  *
  * Requires:
- *	'message' is a valid message with a properly formatting negative cache
+ *\li	'message' is a valid message with a properly formatting negative cache
  *	authority section.
  *
- *	The requirements of dns_db_addrdataset() apply to 'cache', 'node',
+ *\li	The requirements of dns_db_addrdataset() apply to 'cache', 'node',
  *	'now', and 'addedrdataset'.
  *
  * Returns:
- *	ISC_R_SUCCESS
- *	ISC_R_NOSPACE
+ *\li	#ISC_R_SUCCESS
+ *\li	#ISC_R_NOSPACE
  *
- *	Any result code of dns_db_addrdataset() is a possible result code
+ *\li	Any result code of dns_db_addrdataset() is a possible result code
  *	of dns_ncache_add().
  */
 
@@ -93,64 +101,84 @@ isc_result_t
 dns_ncache_towire(dns_rdataset_t *rdataset, dns_compress_t *cctx,
 		  isc_buffer_t *target, unsigned int options,
 		  unsigned int *countp);
-/*
+/*%<
  * Convert the negative caching rdataset 'rdataset' to wire format,
  * compressing names as specified in 'cctx', and storing the result in
  * 'target'.  If 'omit_dnssec' is set, DNSSEC records will not
  * be added to 'target'.
  *
  * Notes:
- *	The number of RRs added to target will be added to *countp.
+ *\li	The number of RRs added to target will be added to *countp.
  *
  * Requires:
- *	'rdataset' is a valid negative caching rdataset.
+ *\li	'rdataset' is a valid negative caching rdataset.
  *
- *	'rdataset' is not empty.
+ *\li	'rdataset' is not empty.
  *
- *	'countp' is a valid pointer.
+ *\li	'countp' is a valid pointer.
  *
  * Ensures:
- *	On a return of ISC_R_SUCCESS, 'target' contains a wire format
+ *\li	On a return of ISC_R_SUCCESS, 'target' contains a wire format
  *	for the data contained in 'rdataset'.  Any error return leaves
  *	the buffer unchanged.
  *
- *	*countp has been incremented by the number of RRs added to
+ *\li	*countp has been incremented by the number of RRs added to
  *	target.
  *
  * Returns:
- *	ISC_R_SUCCESS		- all ok
- *	ISC_R_NOSPACE		- 'target' doesn't have enough room
+ *\li	#ISC_R_SUCCESS		- all ok
+ *\li	#ISC_R_NOSPACE		- 'target' doesn't have enough room
  *
- *	Any error returned by dns_rdata_towire(), dns_rdataset_next(),
+ *\li	Any error returned by dns_rdata_towire(), dns_rdataset_next(),
  *	dns_name_towire().
  */
 
 isc_result_t
 dns_ncache_getrdataset(dns_rdataset_t *ncacherdataset, dns_name_t *name,
 		       dns_rdatatype_t type, dns_rdataset_t *rdataset);
-/*
+/*%<
  * Search the negative caching rdataset for an rdataset with the
  * specified name and type.
  *
  * Requires:
- *	'ncacherdataset' is a valid negative caching rdataset.
+ *\li	'ncacherdataset' is a valid negative caching rdataset.
  *
- *	'ncacherdataset' is not empty.
+ *\li	'ncacherdataset' is not empty.
  *
- *	'name' is a valid name.
+ *\li	'name' is a valid name.
  *
- *	'type' is not SIG, or a meta-RR type.
+ *\li	'type' is not SIG, or a meta-RR type.
  *
- *	'rdataset' is a valid disassociated rdataset.
+ *\li	'rdataset' is a valid disassociated rdataset.
  *
  * Ensures:
- *	On a return of ISC_R_SUCCESS, 'rdataset' is bound to the found
+ *\li	On a return of ISC_R_SUCCESS, 'rdataset' is bound to the found
  *	rdataset.
  *
  * Returns:
- *	ISC_R_SUCCESS		- the rdataset was found.
- *	ISC_R_NOTFOUND		- the rdataset was not found.
+ *\li	#ISC_R_SUCCESS		- the rdataset was found.
+ *\li	#ISC_R_NOTFOUND		- the rdataset was not found.
  *
+ */
+
+isc_result_t
+dns_ncache_getsigrdataset(dns_rdataset_t *ncacherdataset, dns_name_t *name,
+			  dns_rdatatype_t covers, dns_rdataset_t *rdataset);
+/*%<
+ * Similar to dns_ncache_getrdataset() but get the rrsig that matches.
+ */
+
+void
+dns_ncache_current(dns_rdataset_t *ncacherdataset, dns_name_t *found,
+		   dns_rdataset_t *rdataset);
+
+/*%<
+ * Extract the current rdataset and name from a ncache entry.
+ *
+ * Requires:
+ * \li	'ncacherdataset' to be valid and to be a negative cache entry
+ * \li	'found' to be valid.
+ * \li	'rdataset' to be unassociated.
  */
 
 ISC_LANG_ENDDECLS

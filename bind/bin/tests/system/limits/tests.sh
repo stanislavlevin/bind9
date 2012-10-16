@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: tests.sh,v 1.14.206.1 2004/03/06 10:22:08 marka Exp $
+# $Id: tests.sh,v 1.19 2011/11/04 23:46:15 tbox Exp $
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -43,13 +43,13 @@ $DIG +tcp +norec 4000.example. @10.53.0.1 a -p 5300 > dig.out.4000 || status=1
 $PERL ../digcomp.pl knowngood.dig.out.4000 dig.out.4000 || status=1
 
 echo "I:exactly maximum rrset"
-$DIG +tcp +norec a-maximum-rrset.example. @10.53.0.1 a -p 5300 > dig.out.a-maximum-rrset \
+$DIG +tcp +norec +noedns a-maximum-rrset.example. @10.53.0.1 a -p 5300 > dig.out.a-maximum-rrset \
 	|| status=1
 #dig a-maximum-rrset.example. @10.53.0.1 a -p 5300 > knowngood.dig.out.a-maximum-rrset
 $PERL ../digcomp.pl knowngood.dig.out.a-maximum-rrset dig.out.a-maximum-rrset || status=1
 
 echo "I:exceed maximum rrset (5000 A records)"
-$DIG +tcp +norec 5000.example. @10.53.0.1 a -p 5300 > dig.out.exceed || status=1
+$DIG +tcp +norec +noadd 5000.example. @10.53.0.1 a -p 5300 > dig.out.exceed || status=1
 # Look for truncation bit (tc).
 grep 'flags: .*tc.*;' dig.out.exceed > /dev/null || {
     echo "I:TC bit was not set"

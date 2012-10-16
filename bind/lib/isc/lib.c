@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,16 +15,24 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lib.c,v 1.8.12.6 2007/08/28 07:19:15 tbox Exp $ */
+/* $Id: lib.c,v 1.16 2009/09/02 23:48:02 tbox Exp $ */
+
+/*! \file */
 
 #include <config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <isc/once.h>
-#include <isc/msgs.h>
+#include <isc/app.h>
 #include <isc/lib.h>
+#include <isc/mem.h>
+#include <isc/msgs.h>
+#include <isc/once.h>
+#include <isc/socket.h>
+#include <isc/task.h>
+#include <isc/timer.h>
+#include <isc/util.h>
 
 /***
  *** Globals
@@ -39,7 +47,6 @@ LIBISC_EXTERNAL_DATA isc_msgcat_t *		isc_msgcat = NULL;
 
 static isc_once_t		msgcat_once = ISC_ONCE_INIT;
 
-
 /***
  *** Functions
  ***/
@@ -53,7 +60,7 @@ void
 isc_lib_initmsgcat(void) {
 	isc_result_t result;
 
-	/*
+	/*!
 	 * Initialize the ISC library's message catalog, isc_msgcat, if it
 	 * has not already been initialized.
 	 */
@@ -75,3 +82,22 @@ isc_lib_initmsgcat(void) {
 		abort();
 	}
 }
+
+#ifndef BIND9
+static isc_once_t		register_once = ISC_ONCE_INIT;
+
+static void
+do_register(void) {
+	RUNTIME_CHECK(isc__mem_register() == ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc__app_register() == ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc__task_register() == ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc__socket_register() == ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc__timer_register() == ISC_R_SUCCESS);
+}
+
+void
+isc_lib_register() {
+	RUNTIME_CHECK(isc_once_do(&register_once, do_register)
+		      == ISC_R_SUCCESS);
+}
+#endif

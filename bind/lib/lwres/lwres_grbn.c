@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lwres_grbn.c,v 1.4.12.6 2007/08/28 07:19:18 tbox Exp $ */
+/* $Id: lwres_grbn.c,v 1.10 2007/06/19 23:47:22 tbox Exp $ */
+
+/*! \file lwres_grbn.c
+
+ */
 
 #include <config.h>
 
@@ -31,6 +35,7 @@
 #include "context_p.h"
 #include "assert_p.h"
 
+/*% Thread-save equivalent to \link lwres_gabn.c lwres_gabn* \endlink routines. */
 lwres_result_t
 lwres_grbnrequest_render(lwres_context_t *ctx, lwres_grbnrequest_t *req,
 			 lwres_lwpacket_t *pkt, lwres_buffer_t *b)
@@ -103,6 +108,7 @@ lwres_grbnrequest_render(lwres_context_t *ctx, lwres_grbnrequest_t *req,
 	return (LWRES_R_SUCCESS);
 }
 
+/*% Thread-save equivalent to \link lwres_gabn.c lwres_gabn* \endlink routines. */
 lwres_result_t
 lwres_grbnresponse_render(lwres_context_t *ctx, lwres_grbnresponse_t *req,
 			  lwres_lwpacket_t *pkt, lwres_buffer_t *b)
@@ -190,6 +196,7 @@ lwres_grbnresponse_render(lwres_context_t *ctx, lwres_grbnresponse_t *req,
 	return (LWRES_R_SUCCESS);
 }
 
+/*% Thread-save equivalent to \link lwres_gabn.c lwres_gabn* \endlink routines. */
 lwres_result_t
 lwres_grbnrequest_parse(lwres_context_t *ctx, lwres_buffer_t *b,
 			lwres_lwpacket_t *pkt, lwres_grbnrequest_t **structp)
@@ -243,6 +250,7 @@ lwres_grbnrequest_parse(lwres_context_t *ctx, lwres_buffer_t *b,
 	return (LWRES_R_SUCCESS);
 }
 
+/*% Thread-save equivalent to \link lwres_gabn.c lwres_gabn* \endlink routines. */
 lwres_result_t
 lwres_grbnresponse_parse(lwres_context_t *ctx, lwres_buffer_t *b,
 			lwres_lwpacket_t *pkt, lwres_grbnresponse_t **structp)
@@ -376,6 +384,7 @@ lwres_grbnresponse_parse(lwres_context_t *ctx, lwres_buffer_t *b,
 	return (ret);
 }
 
+/*% Thread-save equivalent to \link lwres_gabn.c lwres_gabn* \endlink routines. */
 void
 lwres_grbnrequest_free(lwres_context_t *ctx, lwres_grbnrequest_t **structp)
 {
@@ -390,6 +399,7 @@ lwres_grbnrequest_free(lwres_context_t *ctx, lwres_grbnrequest_t **structp)
 	CTXFREE(grbn, sizeof(lwres_grbnrequest_t));
 }
 
+/*% Thread-save equivalent to \link lwres_gabn.c lwres_gabn* \endlink routines. */
 void
 lwres_grbnresponse_free(lwres_context_t *ctx, lwres_grbnresponse_t **structp)
 {

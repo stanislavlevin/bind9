@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,10 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.h,v 1.2.206.1 2004/03/06 08:14:00 marka Exp $ */
+/* $Id: timer.h,v 1.9 2007/06/19 23:47:17 tbox Exp $ */
 
 #ifndef DNS_TIMER_H
 #define DNS_TIMER_H 1
+
+/*! \file dns/timer.h */
 
 /***
  ***	Imports
@@ -36,10 +38,10 @@ ISC_LANG_BEGINDECLS
 isc_result_t
 dns_timer_setidle(isc_timer_t *timer, unsigned int maxtime,
 		  unsigned int idletime, isc_boolean_t purge);
-/*
+/*%<
  * Convenience function for setting up simple, one-second-granularity
  * idle timers as used by zone transfers.
- *
+ * \brief
  * Set the timer 'timer' to go off after 'idletime' seconds of inactivity,
  * or after 'maxtime' at the very latest.  Events are purged iff
  * 'purge' is ISC_TRUE.

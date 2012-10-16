@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2006-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.h,v 1.19.2.1.10.8 2007/08/28 07:19:17 tbox Exp $ */
+/* $Id: time.h,v 1.35 2009/01/05 23:47:54 tbox Exp $ */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1
@@ -83,6 +83,17 @@ struct isc_time {
 };
 
 LIBISC_EXTERNAL_DATA extern isc_time_t *isc_time_epoch;
+
+void
+isc_time_set(isc_time_t *t, unsigned int seconds, unsigned int nanoseconds);
+/*%<
+ * Set 't' to a value which represents the given number of seconds and
+ * nanoseconds since 00:00:00 January 1, 1970, UTC.
+ *
+ * Requires:
+ *\li   't' is a valid pointer.
+ *\li   nanoseconds < 1000000000.
+ */
 
 void
 isc_time_settoepoch(isc_time_t *t);
@@ -219,7 +230,7 @@ isc_time_nanoseconds(const isc_time_t *t);
  * Return the number of nanoseconds stored in a time structure.
  *
  * Notes:
- *	This is the number of nanoseconds in excess of the the number
+ *	This is the number of nanoseconds in excess of the number
  *	of seconds since the epoch; it will always be less than one
  *	full second.
  *
@@ -243,6 +254,35 @@ isc_time_formattimestamp(const isc_time_t *t, char *buf, unsigned int len);
  *      'buf' points to an array of at least len chars
  *
  */
+
+void
+isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len);
+/*
+ * Format the time 't' into the buffer 'buf' of length 'len',
+ * using a format like "Mon, 30 Aug 2000 04:06:47 GMT"
+ * If the text does not fit in the buffer, the result is indeterminate,
+ * but is always guaranteed to be null terminated.
+ *
+ *  Requires:
+ *      'len' > 0
+ *      'buf' points to an array of at least len chars
+ *
+ */
+
+void
+isc_time_formatISO8601(const isc_time_t *t, char *buf, unsigned int len);
+/*%<
+ * Format the time 't' into the buffer 'buf' of length 'len',
+ * using the ISO8601 format: "yyyy-mm-ddThh:mm:ssZ"
+ * If the text does not fit in the buffer, the result is indeterminate,
+ * but is always guaranteed to be null terminated.
+ *
+ *  Requires:
+ *\li      'len' > 0
+ *\li      'buf' points to an array of at least len chars
+ *
+ */
+
 isc_uint32_t
 isc_time_seconds(const isc_time_t *t);
 

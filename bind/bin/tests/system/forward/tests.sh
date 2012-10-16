@@ -1,7 +1,7 @@
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: tests.sh,v 1.4.206.1 2004/03/06 10:22:03 marka Exp $
+# $Id: tests.sh,v 1.9 2011/10/13 22:48:23 tbox Exp $
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -85,6 +85,19 @@ echo "I:checking that a forward only doesn't recurse"
 ret=0
 $DIG txt.example5. txt @$f2 -p 5300 > dig.out.f2 || ret=1
 grep "SERVFAIL" dig.out.f2 > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking for negative caching of forwarder response"
+# prime the cache, shutdown the forwarder then check that we can
+# get the answer from the cache.  restart forwarder.
+ret=0
+$DIG nonexist. txt @10.53.0.5 -p 5300 > dig.out.f2 || ret=1
+grep "status: NXDOMAIN" dig.out.f2 > /dev/null || ret=1
+$PERL ../stop.pl . ns4 || ret=1
+$DIG nonexist. txt @10.53.0.5 -p 5300 > dig.out.f2 || ret=1
+grep "status: NXDOMAIN" dig.out.f2 > /dev/null || ret=1
+$PERL ../start.pl --restart --noclean . ns4 || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

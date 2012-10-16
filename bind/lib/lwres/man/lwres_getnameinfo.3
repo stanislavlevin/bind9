@@ -1,7 +1,7 @@
 .\" Copyright (C) 2004, 2005, 2007 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001 Internet Software Consortium.
 .\" 
-.\" Permission to use, copy, modify, and distribute this software for any
+.\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\" 
@@ -13,7 +13,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $Id: lwres_getnameinfo.3,v 1.15.2.1.8.8 2007/01/30 00:11:48 marka Exp $
+.\" $Id$
 .\"
 .hy 0
 .ad l
@@ -36,7 +36,7 @@ lwres_getnameinfo \- lightweight resolver socket address structure to hostname a
 #include <lwres/netdb.h>
 .fi
 .HP 22
-.BI "int lwres_getnameinfo(const\ struct\ sockaddr\ *sa, size_t\ salen, char\ *host, size_t\ hostlen, char\ *serv, size_t\ servlen, int\ flags);"
+.BI "int lwres_getnameinfo(const\ struct\ sockaddr\ *" "sa" ", size_t\ " "salen" ", char\ *" "host" ", size_t\ " "hostlen" ", char\ *" "serv" ", size_t\ " "servlen" ", int\ " "flags" ");"
 .SH "DESCRIPTION"
 .PP
 This function is equivalent to the

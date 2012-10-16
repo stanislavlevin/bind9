@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lfsr.c,v 1.11.2.2.2.9 2007/08/28 07:19:15 tbox Exp $ */
+/* $Id: lfsr.c,v 1.20 2007/06/19 23:47:17 tbox Exp $ */
+
+/*! \file */
 
 #include <config.h>
 
@@ -50,7 +52,7 @@ isc_lfsr_init(isc_lfsr_t *lfsr, isc_uint32_t state, unsigned int bits,
 		lfsr->state = 0xffffffffU >> (32 - lfsr->bits);
 }
 
-/*
+/*!
  * Return the next state of the lfsr.
  */
 static inline isc_uint32_t

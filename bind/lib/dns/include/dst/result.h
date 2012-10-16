@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,10 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: result.h,v 1.1.4.1 2004/12/09 04:07:20 marka Exp $ */
+/* $Id: result.h,v 1.9 2008/04/01 23:47:10 tbox Exp $ */
 
 #ifndef DST_RESULT_H
 #define DST_RESULT_H 1
+
+/*! \file dst/result.h */
 
 #include <isc/lang.h>
 #include <isc/resultclass.h>
@@ -52,8 +54,9 @@
 #define DST_R_COMPUTESECRETFAILURE	(ISC_RESULTCLASS_DST + 18)
 #define DST_R_NORANDOMNESS		(ISC_RESULTCLASS_DST + 19)
 #define DST_R_BADKEYTYPE		(ISC_RESULTCLASS_DST + 20)
+#define DST_R_NOENGINE			(ISC_RESULTCLASS_DST + 21)
 
-#define DST_R_NRESULTS			21	/* Number of results */
+#define DST_R_NRESULTS			22	/* Number of results */
 
 ISC_LANG_BEGINDECLS
 

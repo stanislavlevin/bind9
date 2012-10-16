@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: interfaceiter.c,v 1.4.12.11 2008/09/11 06:17:28 marka Exp $ */
+/* $Id: interfaceiter.c,v 1.15 2009/01/18 23:48:14 tbox Exp $ */
 
 /*
  * Note that this code will need to be revisited to support IPv6 Interfaces.
@@ -46,7 +46,7 @@ void InitSockets(void);
 /*
  * Extract the network address part from a "struct sockaddr".
  *
- * The address family is given explicity
+ * The address family is given explicitly
  * instead of using src->sa_family, because the latter does not work
  * for copying a network mask obtained by SIOCGIFNETMASK (it does
  * not have a valid address family).

@@ -1,0 +1,13 @@
+copy: *.ALT
+copy: *.arpa
+copy: *.bind-devel
+copy: *.conf
+copy: *.empty
+copy: *.init
+copy: *.key
+copy: *.localdomain
+copy: *.localhost
+copy: *.patch
+copy: *.txt
+copy: *.sysconfig
+tar: bind name=@name@-@version@

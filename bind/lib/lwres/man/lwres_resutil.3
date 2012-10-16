@@ -1,7 +1,7 @@
 .\" Copyright (C) 2004, 2005, 2007 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001 Internet Software Consortium.
 .\" 
-.\" Permission to use, copy, modify, and distribute this software for any
+.\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\" 
@@ -13,7 +13,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $Id: lwres_resutil.3,v 1.14.2.1.8.8 2007/01/30 00:11:48 marka Exp $
+.\" $Id$
 .\"
 .hy 0
 .ad l
@@ -36,13 +36,13 @@ lwres_string_parse, lwres_addr_parse, lwres_getaddrsbyname, lwres_getnamebyaddr 
 #include <lwres/lwres.h>
 .fi
 .HP 34
-.BI "lwres_result_t lwres_string_parse(lwres_buffer_t\ *b, char\ **c, lwres_uint16_t\ *len);"
+.BI "lwres_result_t lwres_string_parse(lwres_buffer_t\ *" "b" ", char\ **" "c" ", lwres_uint16_t\ *" "len" ");"
 .HP 32
-.BI "lwres_result_t lwres_addr_parse(lwres_buffer_t\ *b, lwres_addr_t\ *addr);"
+.BI "lwres_result_t lwres_addr_parse(lwres_buffer_t\ *" "b" ", lwres_addr_t\ *" "addr" ");"
 .HP 36
-.BI "lwres_result_t lwres_getaddrsbyname(lwres_context_t\ *ctx, const\ char\ *name, lwres_uint32_t\ addrtypes, lwres_gabnresponse_t\ **structp);"
+.BI "lwres_result_t lwres_getaddrsbyname(lwres_context_t\ *" "ctx" ", const\ char\ *" "name" ", lwres_uint32_t\ " "addrtypes" ", lwres_gabnresponse_t\ **" "structp" ");"
 .HP 35
-.BI "lwres_result_t lwres_getnamebyaddr(lwres_context_t\ *ctx, lwres_uint32_t\ addrtype, lwres_uint16_t\ addrlen, const\ unsigned\ char\ *addr, lwres_gnbaresponse_t\ **structp);"
+.BI "lwres_result_t lwres_getnamebyaddr(lwres_context_t\ *" "ctx" ", lwres_uint32_t\ " "addrtype" ", lwres_uint16_t\ " "addrlen" ", const\ unsigned\ char\ *" "addr" ", lwres_gnbaresponse_t\ **" "structp" ");"
 .SH "DESCRIPTION"
 .PP
 \fBlwres_string_parse()\fR
@@ -73,7 +73,7 @@ and
 use the
 \fBlwres_gnbaresponse_t\fR
 structure defined below:
-.sp
+.PP
 .RS 4
 .nf
 typedef struct {
@@ -90,9 +90,9 @@ typedef struct {
 } lwres_gabnresponse_t;
 .fi
 .RE
-.sp
+.PP
 The contents of this structure are not manipulated directly but they are controlled through the
-\fBlwres_gabn\fR(3 )
+\fBlwres_gabn\fR(3)
 functions.
 .PP
 The lightweight resolver uses

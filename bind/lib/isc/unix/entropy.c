@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,10 +15,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: entropy.c,v 1.60.2.3.8.15 2006/12/07 04:52:50 marka Exp $ */
+/* $Id: entropy.c,v 1.82 2008/12/01 23:47:45 tbox Exp $ */
 
-/*
- * This is the system depenedent part of the ISC entropy API.
+/* \file unix/entropy.c
+ * \brief
+ * This is the system dependent part of the ISC entropy API.
  */
 
 #include <config.h>
@@ -30,6 +31,9 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#ifdef HAVE_NANOSLEEP
+#include <time.h>
+#endif
 #include <unistd.h>
 
 #include <isc/platform.h>
@@ -41,7 +45,7 @@
 
 #include "errno2result.h"
 
-/*
+/*%
  * There is only one variable in the entropy data structures that is not
  * system independent, but pulling the structure that uses it into this file
  * ultimately means pulling several other independent structures here also to
@@ -152,12 +156,12 @@ get_from_usocketsource(isc_entropysource_t *source, isc_uint32_t desired) {
 				source->sources.usocket.status =
 					isc_usocketsource_ndesired;
 				goto eagain_loop;
-			}	
+			}
 			INSIST(n == 2);
 			source->sources.usocket.status =
 						isc_usocketsource_wrote;
 			/*FALLTHROUGH*/
-		
+
 		case isc_usocketsource_wrote:
 			if (recvfrom(fd, buf, 1, 0, NULL, NULL) != 1) {
 				if (errno == EAGAIN) {
@@ -165,15 +169,23 @@ get_from_usocketsource(isc_entropysource_t *source, isc_uint32_t desired) {
 					 * The problem of EAGAIN (try again
 					 * later) is a major issue on HP-UX.
 					 * Solaris actually tries the recvfrom
-					 * call again, while HP-UX just dies. 
+					 * call again, while HP-UX just dies.
 					 * This code is an attempt to let the
 					 * entropy pool fill back up (at least
 					 * that's what I think the problem is.)
-					 * We go to eagain_loop because if we 
+					 * We go to eagain_loop because if we
 					 * just "break", then the "desired"
 					 * amount gets borked.
 					 */
+#ifdef HAVE_NANOSLEEP
+					struct timespec ts;
+
+					ts.tv_sec = 0;
+					ts.tv_nsec = 1000000;
+					nanosleep(&ts, NULL);
+#else
 					usleep(1000);
+#endif
 					goto eagain_loop;
 				}
 				if (errno == EWOULDBLOCK || errno == EINTR)
@@ -200,7 +212,7 @@ get_from_usocketsource(isc_entropysource_t *source, isc_uint32_t desired) {
 			} else
 				n = 0;
 			break;
-		
+
 		default:
 			goto err;
 		}
@@ -490,7 +502,7 @@ isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname) {
 		ret = isc__errno2result(errno);
 		goto errout;
 	}
-	/* 
+	/*
 	 * Solaris 2.5.1 does not have support for sockets (S_IFSOCK),
 	 * but it does return type S_IFIFO (the OS believes that
 	 * the socket is a fifo).  This may be an issue if we tell

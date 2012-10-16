@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: tests.sh,v 1.20.206.2 2004/03/10 01:05:57 marka Exp $
+# $Id: tests.sh,v 1.25 2007/06/19 23:47:07 tbox Exp $
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -55,7 +55,7 @@ grep ";" dig.out.ns2
 
 $PERL ../digcomp.pl dig.out.ns1 dig.out.ns2 || status=1
 
-sleep 5
+sleep 15
 
 $DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd \
 	a.changing. @10.53.0.1 a -p 5300 > dig.out.ns1 || status=1

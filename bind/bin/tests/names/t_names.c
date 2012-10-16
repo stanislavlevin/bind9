@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2006, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: t_names.c,v 1.32.2.2.8.9 2008/01/17 23:45:27 tbox Exp $ */
+/* $Id: t_names.c,v 1.52 2011/03/12 04:59:46 tbox Exp $ */
 
 #include <config.h>
 
@@ -38,15 +38,16 @@
 
 static char	*Tokens[MAXTOKS + 1];
 
-/*
+
+#ifdef	NEED_PBUF
+
+/*%
  * get a hex formatted dns message from a data
  * file into an isc_buffer_t
  * caller supplies data storage and the isc_buffer
  * we read the file, convert, setup the buffer
  * and return the data length
  */
-
-#ifdef	NEED_PBUF
 
 static char *
 ctoh(unsigned char c) {
@@ -85,7 +86,7 @@ pbuf(isc_buffer_t *pbuf) {
 
 #endif	/* NEED_PBUF */
 
-/*
+/*%
  * Compare data at buf with data in hex representation at exp_data,
  * of length exp_data_len, for equality.
  * Return 0 if equal, else non-zero.
@@ -167,7 +168,7 @@ chkdata(unsigned char *buf, size_t buflen, char *exp_data,
 	return (result);
 }
 
-/*
+/*%
  * Get a hex formatted dns message from a data file into an isc_buffer_t.
  * Caller supplies data storage and the isc_buffer.  We read the file, convert,
  * setup the buffer and return the data length.
@@ -178,7 +179,6 @@ getmsg(char *datafile_name, unsigned char *buf, int buflen, isc_buffer_t *pbuf)
 	int			c;
 	int			len;
 	int			cnt;
-	unsigned int		val;
 	unsigned char		*p;
 	FILE			*fp;
 
@@ -191,8 +191,8 @@ getmsg(char *datafile_name, unsigned char *buf, int buflen, isc_buffer_t *pbuf)
 	p = buf;
 	cnt = 0;
 	len = 0;
-	val = 0;
 	while ((c = getc(fp)) != EOF) {
+		unsigned int		val;
 		if (	(c == ' ') || (c == '\t') ||
 			(c == '\r') || (c == '\n'))
 				continue;
@@ -258,13 +258,14 @@ bustline(char *line, char **toks) {
 	return (cnt);
 }
 
-/*
+
+#ifdef	NEED_HNAME_TO_TNAME
+
+/*%
  * convert a name from hex representation to text form
  * format of hex notation is:
  * %xXXXXXXXX
  */
-
-#ifdef	NEED_HNAME_TO_TNAME
 
 static int
 hname_to_tname(char *src, char *target, size_t len) {
@@ -319,7 +320,7 @@ hname_to_tname(char *src, char *target, size_t len) {
 
 #endif	/* NEED_HNAME_TO_TNAME */
 
-/*
+/*%
  * initialize a dns_name_t from a text name, hiding all
  * buffer and other object initialization from the caller
  *
@@ -342,8 +343,7 @@ dname_from_tname(char *name, dns_name_t *dns_name) {
 		isc_buffer_init(binbuf, junk, BUFLEN);
 		dns_name_init(dns_name, NULL);
 		dns_name_setbuffer(dns_name, binbuf);
-		result = dns_name_fromtext(dns_name,  &txtbuf,
-						NULL, ISC_FALSE, NULL);
+		result = dns_name_fromtext(dns_name,  &txtbuf, NULL, 0, NULL);
 	} else {
 		result = ISC_R_NOSPACE;
 		if (junk != NULL)
@@ -364,7 +364,7 @@ t_dns_name_init(void) {
 	unsigned char	offsets[1];
 
 	rval = 0;
-	t_assert("dns_name_init", 1, T_REQUIRED, a3);
+	t_assert("dns_name_init", 1, T_REQUIRED, "%s", a3);
 
 	dns_name_init(&name, offsets);
 	/* magic is hidden in name.c ...
@@ -414,7 +414,7 @@ t_dns_name_invalidate(void) {
 	dns_name_t	name;
 	unsigned char	offsets[1];
 
-	t_assert("dns_name_invalidate", 1, T_REQUIRED, a4);
+	t_assert("dns_name_invalidate", 1, T_REQUIRED, "%s", a4);
 
 	rval = 0;
 	dns_name_init(&name, offsets);
@@ -468,7 +468,7 @@ t_dns_name_setbuffer(void) {
 	dns_name_t	name;
 	isc_buffer_t	buffer;
 
-	t_assert("dns_name_setbuffer", 1, T_REQUIRED, a5);
+	t_assert("dns_name_setbuffer", 1, T_REQUIRED, "%s", a5);
 
 	isc_buffer_init(&buffer, junk, BUFLEN);
 	dns_name_init(&name, NULL);
@@ -492,7 +492,7 @@ t_dns_name_hasbuffer(void) {
 	dns_name_t	name;
 	isc_buffer_t	buffer;
 
-	t_assert("dns_name_hasbuffer", 1, T_REQUIRED, a6);
+	t_assert("dns_name_hasbuffer", 1, T_REQUIRED, "%s", a6);
 
 	rval = 0;
 	isc_buffer_init(&buffer, junk, BUFLEN);
@@ -533,7 +533,7 @@ test_dns_name_isabsolute(char *test_name, isc_boolean_t expected) {
 	isc_buffer_init(&binbuf, &junk[0], BUFLEN);
 	dns_name_init(&name, NULL);
 	dns_name_setbuffer(&name, &binbuf);
-	result = dns_name_fromtext(&name,  &buf, NULL, ISC_FALSE, NULL);
+	result = dns_name_fromtext(&name,  &buf, NULL, 0, NULL);
 	if (result == ISC_R_SUCCESS) {
 		isabs_p = dns_name_isabsolute(&name);
 		if (isabs_p == expected)
@@ -555,7 +555,7 @@ t_dns_name_isabsolute(void) {
 	char	*p;
 	FILE	*fp;
 
-	t_assert("dns_name_isabsolute", 1, T_REQUIRED, a7);
+	t_assert("dns_name_isabsolute", 1, T_REQUIRED, "%s", a7);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_isabsolute_data", "r");
@@ -602,7 +602,7 @@ static const char *a8 =	"dns_name_hash(name, case_sensitive) returns "
 		"a hash of 'name' which is case_sensitive if case_sensitive "
 		"is true";
 
-/*
+/*%
  * a9 merged with a8.
  */
 
@@ -668,7 +668,7 @@ t_dns_name_hash(void) {
 	char	*p;
 	FILE	*fp;
 
-	t_assert("dns_name_hash", 1, T_REQUIRED, a8);
+	t_assert("dns_name_hash", 1, T_REQUIRED, "%s", a8);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_hash_data", "r");
@@ -724,7 +724,7 @@ static const char *a10 =
 		"and sets nbitsp to the number of bits name1 and name2 "
 		"have in common";
 
-/*
+/*%
  * a11 thru a22 merged into a10.
  */
 static const char *
@@ -824,7 +824,7 @@ t_dns_name_fullcompare(void) {
 	FILE		*fp;
 	dns_namereln_t	reln;
 
-	t_assert("dns_name_fullcompare", 1, T_REQUIRED, a10);
+	t_assert("dns_name_fullcompare", 1, T_REQUIRED, "%s", a10);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_fullcompare_data", "r");
@@ -888,7 +888,7 @@ static const char *a23 =
 		"the relative ordering under the DNSSEC ordering relationship "
 		"of name1 and name2";
 
-/*
+/*%
  * a24 thru a29 merged into a23.
  */
 
@@ -944,7 +944,7 @@ t_dns_name_compare(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_compare", 1, T_REQUIRED, a23);
+	t_assert("dns_name_compare", 1, T_REQUIRED, "%s", a23);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_compare_data", "r");
@@ -991,7 +991,7 @@ static const char *a30 =
 		"about the relative ordering of name1 and name2 as if they "
 		"are part of rdata in DNSSEC canonical form";
 
-/*
+/*%
  * a31, a32 merged into a30.
  */
 
@@ -1046,7 +1046,7 @@ t_dns_name_rdatacompare(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_rdatacompare", 1, T_REQUIRED, a30);
+	t_assert("dns_name_rdatacompare", 1, T_REQUIRED, "%s", a30);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_rdatacompare_data", "r");
@@ -1094,7 +1094,7 @@ static const char *a33 =
 		"dns_name_issubdomain(name1, name2) returns true, "
 		"otherwise it returns false.";
 
-/*
+/*%
  * a34 merged into a33.
  */
 
@@ -1144,7 +1144,7 @@ t_dns_name_issubdomain(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_issubdomain", 1, T_REQUIRED, a33);
+	t_assert("dns_name_issubdomain", 1, T_REQUIRED, "%s", a33);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_issubdomain_data", "r");
@@ -1227,7 +1227,7 @@ t_dns_name_countlabels(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_countlabels", 1, T_REQUIRED, a35);
+	t_assert("dns_name_countlabels", 1, T_REQUIRED, "%s", a35);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_countlabels_data", "r");
@@ -1271,7 +1271,7 @@ static const char *a36 =
 		"dns_name_getlabel(name, n, labelp) initializes labelp "
 		"to point to the nth label in name";
 
-/*
+/*%
  * The strategy here is two take two dns names with a shared label in
  * different positions, get the two labels and compare them for equality.
  * If they don't match, dns_name_getlabel failed.
@@ -1339,7 +1339,7 @@ t_dns_name_getlabel(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_getlabel", 1, T_REQUIRED, a36);
+	t_assert("dns_name_getlabel", 1, T_REQUIRED, "%s", a36);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_getlabel_data", "r");
@@ -1386,7 +1386,7 @@ static const char *a37 =
 		"initializes target to point to the n label sequence of "
 		"labels in source starting with first";
 
-/*
+/*%
  * We adopt a similiar strategy to that used by the dns_name_getlabel test.
  */
 
@@ -1469,7 +1469,7 @@ t_dns_name_getlabelsequence(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_getlabelsequence", 1, T_REQUIRED, a37);
+	t_assert("dns_name_getlabelsequence", 1, T_REQUIRED, "%s", a37);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_getlabelsequence_data", "r");
@@ -1559,7 +1559,7 @@ t_dns_name_fromregion(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_fromregion", 1, T_REQUIRED, a38);
+	t_assert("dns_name_fromregion", 1, T_REQUIRED, "%s", a38);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_fromregion_data", "r");
@@ -1609,7 +1609,7 @@ t_dns_name_toregion(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_toregion", 1, T_REQUIRED, a39);
+	t_assert("dns_name_toregion", 1, T_REQUIRED, "%s", a39);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_toregion_data", "r");
@@ -1657,7 +1657,7 @@ static const char *a40 =
 
 static int
 test_dns_name_fromtext(char *test_name1, char *test_name2, char *test_origin,
-		       isc_boolean_t downcase)
+		       unsigned int downcase)
 {
 	int		result;
 	int		order;
@@ -1676,8 +1676,6 @@ test_dns_name_fromtext(char *test_name1, char *test_name2, char *test_origin,
 	dns_name_t	dns_name3;
 	isc_result_t	dns_result;
 	dns_namereln_t	dns_namereln;
-
-	result = T_UNRESOLVED;
 
 	t_info("testing %s %s %s\n", test_name1, test_name2, test_origin);
 
@@ -1700,8 +1698,8 @@ test_dns_name_fromtext(char *test_name1, char *test_name2, char *test_origin,
 	dns_name_setbuffer(&dns_name2, &binbuf2);
 	dns_name_setbuffer(&dns_name3, &binbuf3);
 
-	dns_result = dns_name_fromtext(&dns_name3,  &txtbuf3, NULL,
-						ISC_FALSE, &binbuf3);
+	dns_result = dns_name_fromtext(&dns_name3,  &txtbuf3, NULL, 0,
+				       &binbuf3);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext(dns_name3) failed, result == %s\n",
 			dns_result_totext(dns_result));
@@ -1716,8 +1714,8 @@ test_dns_name_fromtext(char *test_name1, char *test_name2, char *test_origin,
 		return (T_FAIL);
 	}
 
-	dns_result = dns_name_fromtext(&dns_name2,  &txtbuf2, NULL,
-						ISC_FALSE, &binbuf2);
+	dns_result = dns_name_fromtext(&dns_name2,  &txtbuf2, NULL, 0,
+				       &binbuf2);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext(dns_name2) failed, result == %s\n",
 		       dns_result_totext(dns_result));
@@ -1746,7 +1744,7 @@ t_dns_name_fromtext(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_fromtext", 1, T_REQUIRED, a40);
+	t_assert("dns_name_fromtext", 1, T_REQUIRED, "%s", a40);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_fromtext_data", "r");
@@ -1775,8 +1773,8 @@ t_dns_name_fromtext(void) {
 								Tokens[2],
 							   atoi(Tokens[3])
 								== 0 ?
-								ISC_FALSE :
-								ISC_TRUE);
+								0 :
+							     DNS_NAME_DOWNCASE);
 			} else {
 				t_info("bad format at line %d\n", line);
 			}
@@ -1814,8 +1812,6 @@ test_dns_name_totext(char *test_name, isc_boolean_t omit_final) {
 	isc_result_t	dns_result;
 	dns_namereln_t	dns_namereln;
 
-	result = T_UNRESOLVED;
-
 	t_info("testing %s\n", test_name);
 
 	len = strlen(test_name);
@@ -1828,8 +1824,7 @@ test_dns_name_totext(char *test_name, isc_boolean_t omit_final) {
 	/*
 	 * Out of the data file to dns_name1.
 	 */
-	dns_result = dns_name_fromtext(&dns_name1, &buf1, NULL, ISC_FALSE,
-				       &buf2);
+	dns_result = dns_name_fromtext(&dns_name1, &buf1, NULL, 0, &buf2);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed, result == %s\n",
 		       dns_result_totext(dns_result));
@@ -1853,8 +1848,7 @@ test_dns_name_totext(char *test_name, isc_boolean_t omit_final) {
 	 */
 	dns_name_init(&dns_name2, NULL);
 	isc_buffer_init(&buf3, junk3, BUFLEN);
-	dns_result = dns_name_fromtext(&dns_name2, &buf1, NULL, ISC_FALSE,
-				       &buf3);
+	dns_result = dns_name_fromtext(&dns_name2, &buf1, NULL, 0, &buf3);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed, result == %s\n",
 		       dns_result_totext(dns_result));
@@ -1882,7 +1876,7 @@ t_dns_name_totext(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_totext", 1, T_REQUIRED, a41);
+	t_assert("dns_name_totext", 1, T_REQUIRED, "%s", a41);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_totext_data", "r");
@@ -1983,8 +1977,6 @@ test_dns_name_fromwire(char *datafile_name, int testname_offset, int downcase,
 	isc_result_t		dns_result;
 	dns_namereln_t		dns_namereln;
 	dns_decompress_t	dctx;
-
-	result = T_UNRESOLVED;
 
 	t_info("testing using %s\n", datafile_name);
 	len = getmsg(datafile_name, buf1, BIGBUFLEN, &iscbuf1);
@@ -2116,7 +2108,7 @@ t_dns_name_fromwire_x(const char *testfile, size_t buflen) {
 
 static void
 t_dns_name_fromwire(void) {
-	t_assert("dns_name_fromwire", 1, T_REQUIRED, a42);
+	t_assert("dns_name_fromwire", 1, T_REQUIRED, "%s", a42);
 	t_dns_name_fromwire_x("dns_name_fromwire_1_data", BUFLEN);
 
 #if 0
@@ -2124,26 +2116,26 @@ t_dns_name_fromwire(void) {
 	 * XXXRTH these tests appear to be broken, so I have
 	 * disabled them.
 	 */
-	t_assert("dns_name_fromwire", 2, T_REQUIRED, a43);
+	t_assert("dns_name_fromwire", 2, T_REQUIRED, "%s", a43);
 	t_dns_name_fromwire_x("dns_name_fromwire_2_data", BUFLEN);
 
-	t_assert("dns_name_fromwire", 3, T_REQUIRED, a44);
+	t_assert("dns_name_fromwire", 3, T_REQUIRED, "%s", a44);
 	t_dns_name_fromwire_x("dns_name_fromwire_3_data", BUFLEN);
 #endif
 
-	t_assert("dns_name_fromwire", 4, T_REQUIRED, a45);
+	t_assert("dns_name_fromwire", 4, T_REQUIRED, "%s", a45);
 	t_dns_name_fromwire_x("dns_name_fromwire_4_data", BUFLEN);
 
-	t_assert("dns_name_fromwire", 5, T_REQUIRED, a46);
+	t_assert("dns_name_fromwire", 5, T_REQUIRED, "%s", a46);
 	t_dns_name_fromwire_x("dns_name_fromwire_5_data", BUFLEN);
 
-	t_assert("dns_name_fromwire", 6, T_REQUIRED, a47);
+	t_assert("dns_name_fromwire", 6, T_REQUIRED, "%s", a47);
 	t_dns_name_fromwire_x("dns_name_fromwire_6_data", BUFLEN);
 
-	t_assert("dns_name_fromwire", 7, T_REQUIRED, a48);
+	t_assert("dns_name_fromwire", 7, T_REQUIRED, "%s", a48);
 	t_dns_name_fromwire_x("dns_name_fromwire_7_data", BUFLEN);
 
-	t_assert("dns_name_fromwire", 9, T_REQUIRED, a49);
+	t_assert("dns_name_fromwire", 9, T_REQUIRED, "%s", a49);
 	t_dns_name_fromwire_x("dns_name_fromwire_8_data", 2);
 }
 
@@ -2193,8 +2185,7 @@ test_dns_name_towire(char *testname, unsigned int dc_method, char *exp_data,
 	isc_buffer_init(&iscbuf1, testname, len);
 	isc_buffer_add(&iscbuf1, len);
 	isc_buffer_init(&iscbuf2, buf2, BUFLEN);
-	dns_result = dns_name_fromtext(&dns_name, &iscbuf1, NULL, ISC_FALSE,
-				       &iscbuf2);
+	dns_result = dns_name_fromtext(&dns_name, &iscbuf1, NULL, 0, &iscbuf2);
 	if (dns_result == ISC_R_SUCCESS) {
 		isc_buffer_init(&iscbuf3, buf3, buflen);
 		dns_result = dns_name_towire(&dns_name, &cctx, &iscbuf3);
@@ -2282,13 +2273,13 @@ t_dns_name_towire_x(const char *testfile, size_t buflen) {
 
 static void
 t_dns_name_towire_1(void) {
-	t_assert("dns_name_towire", 1, T_REQUIRED, a51);
+	t_assert("dns_name_towire", 1, T_REQUIRED, "%s", a51);
 	t_dns_name_towire_x("dns_name_towire_1_data", BUFLEN);
 }
 
 static void
 t_dns_name_towire_2(void) {
-	t_assert("dns_name_towire", 2, T_REQUIRED, a52);
+	t_assert("dns_name_towire", 2, T_REQUIRED, "%s", a52);
 	t_dns_name_towire_x("dns_name_towire_2_data", 2);
 }
 
@@ -2309,7 +2300,7 @@ static const char *a53 =
 
 static void
 t_dns_name_concatenate(void) {
-	t_assert("dns_name_concatenate", 1, T_REQUIRED, a53);
+	t_assert("dns_name_concatenate", 1, T_REQUIRED, "%s", a53);
 	t_result(T_UNTESTED);
 }
 #endif

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: shutdown_test.c,v 1.18.12.8 2007/08/28 07:19:09 tbox Exp $ */
+/* $Id: shutdown_test.c,v 1.25 2011/08/28 23:46:41 tbox Exp $ */
 
 #include <config.h>
 
@@ -168,7 +168,7 @@ new_task(isc_mem_t *mctx, const char *name) {
 int
 main(int argc, char *argv[]) {
 	unsigned int workers;
-	t_info *t1, *t2, *t3;
+	t_info *t1, *t2;
 	isc_task_t *task;
 	isc_mem_t *mctx, *mctx2;
 
@@ -197,7 +197,7 @@ main(int argc, char *argv[]) {
 	/*
 	 * Test run-triggered shutdown.
 	 */
-	t3 = new_task(mctx2, "foo");
+	(void)new_task(mctx2, "foo");
 
 	/*
 	 * Test implicit shutdown.

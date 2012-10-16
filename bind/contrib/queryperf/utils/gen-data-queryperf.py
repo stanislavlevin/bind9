@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 #
-# $Id: gen-data-queryperf.py,v 1.1.10.1.4.1 2008/06/13 18:19:36 jinmei Exp $
+# $Id: gen-data-queryperf.py,v 1.2 2008/06/13 18:17:08 jinmei Exp $
 #
 # Contributed by Stephane Bortzmeyer <bortzmeyer@nic.fr>
 #

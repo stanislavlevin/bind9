@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2006, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,9 +15,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lwresd.c,v 1.37.2.2.2.11 2008/07/23 23:36:22 marka Exp $ */
+/* $Id: lwresd.c,v 1.60 2009/09/02 23:48:01 tbox Exp $ */
 
-/*
+/*! \file
+ * \brief
  * Main program for the Lightweight Resolver Daemon.
  *
  * To paraphrase the old saying about X11, "It's not a lightweight deamon
@@ -59,11 +60,11 @@
 #define LWRESLISTENER_MAGIC	ISC_MAGIC('L', 'W', 'R', 'L')
 #define VALID_LWRESLISTENER(l)	ISC_MAGIC_VALID(l, LWRESLISTENER_MAGIC)
 
-/*
+/*!
  * The total number of clients we can handle will be NTASKS * NRECVS.
  */
-#define NTASKS		2	/* tasks to create to handle lwres queries */
-#define NRECVS		2	/* max clients per task */
+#define NTASKS		2	/*%< tasks to create to handle lwres queries */
+#define NRECVS		2	/*%< max clients per task */
 
 typedef ISC_LIST(ns_lwreslistener_t) ns_lwreslistenerlist_t;
 
@@ -78,7 +79,7 @@ initialize_mutex(void) {
 }
 
 
-/*
+/*%
  * Wrappers around our memory management stuff, for the lwres functions.
  */
 void *
@@ -371,8 +372,7 @@ ns_lwdmanager_create(isc_mem_t *mctx, const cfg_obj_t *lwres,
 					strlen(searchstr));
 			isc_buffer_add(&namebuf, strlen(searchstr));
 			result = dns_name_fromtext(name, &namebuf,
-						   dns_rootname, ISC_FALSE,
-						   NULL);
+						   dns_rootname, 0, NULL);
 			if (result != ISC_R_SUCCESS) {
 				isc_log_write(ns_g_lctx,
 					      NS_LOGCATEGORY_GENERAL,
@@ -511,13 +511,19 @@ listener_create(isc_mem_t *mctx, ns_lwresd_t *lwresd,
 		ns_lwreslistener_t **listenerp)
 {
 	ns_lwreslistener_t *listener;
+	isc_result_t result;
 
 	REQUIRE(listenerp != NULL && *listenerp == NULL);
 
 	listener = isc_mem_get(mctx, sizeof(ns_lwreslistener_t));
 	if (listener == NULL)
 		return (ISC_R_NOMEMORY);
-	RUNTIME_CHECK(isc_mutex_init(&listener->lock) == ISC_R_SUCCESS);
+
+	result = isc_mutex_init(&listener->lock);
+	if (result != ISC_R_SUCCESS) {
+		isc_mem_put(mctx, listener, sizeof(ns_lwreslistener_t));
+		return (result);
+	}
 
 	listener->magic = LWRESLISTENER_MAGIC;
 	listener->refs = 1;

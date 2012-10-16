@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: stdtime.h,v 1.7.206.1 2004/03/06 08:15:17 marka Exp $ */
+/* $Id$ */
 
 #ifndef ISC_STDTIME_H
 #define ISC_STDTIME_H 1
@@ -30,6 +30,16 @@
  */
 typedef isc_uint32_t isc_stdtime_t;
 
+/* but this flag helps... */
+#define STDTIME_ON_32BITS	1
+
+/*
+ * isc_stdtime32_t is a 32-bit version of isc_stdtime_t.  A variable of this
+ * type should only be used as an opaque integer (e.g.,) to compare two
+ * time values.
+ */
+typedef isc_uint32_t isc_stdtime32_t;
+
 ISC_LANG_BEGINDECLS
 
 void
@@ -40,6 +50,11 @@ isc_stdtime_get(isc_stdtime_t *t);
  * Requires:
  *
  *	't' is a valid pointer.
+ */
+
+#define isc_stdtime_convert32(t, t32p) (*(t32p) = t)
+/*
+ * Convert the standard time to its 32-bit version.
  */
 
 ISC_LANG_ENDDECLS

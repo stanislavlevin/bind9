@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,14 +15,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: events.h,v 1.37.2.1.4.7 2007/08/28 07:19:14 tbox Exp $ */
+/* $Id: events.h,v 1.61 2011/10/28 06:20:06 each Exp $ */
 
 #ifndef DNS_EVENTS_H
 #define DNS_EVENTS_H 1
 
 #include <isc/eventclass.h>
 
-/*
+/*! \file dns/events.h
+ * \brief
  * Registry of DNS event numbers.
  */
 
@@ -57,12 +58,27 @@
 #define DNS_EVENT_MASTERNEXTZONE		(ISC_EVENTCLASS_DNS + 28)
 #define DNS_EVENT_IOREADY			(ISC_EVENTCLASS_DNS + 29)
 #define DNS_EVENT_LOOKUPDONE			(ISC_EVENTCLASS_DNS + 30)
-/* #define DNS_EVENT_unused			(ISC_EVENTCLASS_DNS + 31) */
+#define DNS_EVENT_RBTDEADNODES			(ISC_EVENTCLASS_DNS + 31)
 #define DNS_EVENT_DISPATCHCONTROL		(ISC_EVENTCLASS_DNS + 32)
 #define DNS_EVENT_REQUESTCONTROL		(ISC_EVENTCLASS_DNS + 33)
 #define DNS_EVENT_DUMPQUANTUM			(ISC_EVENTCLASS_DNS + 34)
 #define DNS_EVENT_IMPORTRECVDONE		(ISC_EVENTCLASS_DNS + 35)
 #define DNS_EVENT_FREESTORAGE			(ISC_EVENTCLASS_DNS + 36)
+#define DNS_EVENT_VIEWACACHESHUTDOWN		(ISC_EVENTCLASS_DNS + 37)
+#define DNS_EVENT_ACACHECONTROL			(ISC_EVENTCLASS_DNS + 38)
+#define DNS_EVENT_ACACHECLEAN			(ISC_EVENTCLASS_DNS + 39)
+#define DNS_EVENT_ACACHEOVERMEM			(ISC_EVENTCLASS_DNS + 40)
+#define DNS_EVENT_RBTPRUNE			(ISC_EVENTCLASS_DNS + 41)
+#define DNS_EVENT_MANAGEKEYS			(ISC_EVENTCLASS_DNS + 42)
+#define DNS_EVENT_CLIENTRESDONE			(ISC_EVENTCLASS_DNS + 43)
+#define DNS_EVENT_CLIENTREQDONE			(ISC_EVENTCLASS_DNS + 44)
+#define DNS_EVENT_ADBGROWENTRIES		(ISC_EVENTCLASS_DNS + 45)
+#define DNS_EVENT_ADBGROWNAMES			(ISC_EVENTCLASS_DNS + 46)
+#define DNS_EVENT_ZONESECURESERIAL		(ISC_EVENTCLASS_DNS + 47)
+#define DNS_EVENT_ZONESECUREDB			(ISC_EVENTCLASS_DNS + 48)
+#define DNS_EVENT_ZONELOAD			(ISC_EVENTCLASS_DNS + 49)
+#define DNS_EVENT_KEYDONE			(ISC_EVENTCLASS_DNS + 50)
+#define DNS_EVENT_SETNSEC3PARAM			(ISC_EVENTCLASS_DNS + 51)
 
 #define DNS_EVENT_FIRSTEVENT			(ISC_EVENTCLASS_DNS + 0)
 #define DNS_EVENT_LASTEVENT			(ISC_EVENTCLASS_DNS + 65535)

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,18 +15,20 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: control.h,v 1.6.2.2.2.9 2006/03/02 00:37:20 marka Exp $ */
+/* $Id$ */
 
 #ifndef NAMED_CONTROL_H
 #define NAMED_CONTROL_H 1
 
-/*
+/*! \file
+ * \brief
  * The name server command channel.
  */
 
 #include <isccc/types.h>
 
-#include <named/aclconf.h>
+#include <isccfg/aclconf.h>
+
 #include <named/types.h>
 
 #define NS_CONTROL_PORT			953
@@ -40,26 +42,39 @@
 #define NS_COMMAND_DUMPSTATS	"stats"
 #define NS_COMMAND_QUERYLOG	"querylog"
 #define NS_COMMAND_DUMPDB	"dumpdb"
+#define NS_COMMAND_SECROOTS	"secroots"
 #define NS_COMMAND_TRACE	"trace"
 #define NS_COMMAND_NOTRACE	"notrace"
 #define NS_COMMAND_FLUSH	"flush"
 #define NS_COMMAND_FLUSHNAME	"flushname"
+#define NS_COMMAND_FLUSHTREE	"flushtree"
 #define NS_COMMAND_STATUS	"status"
+#define NS_COMMAND_TSIGLIST	"tsig-list"
+#define NS_COMMAND_TSIGDELETE	"tsig-delete"
 #define NS_COMMAND_FREEZE	"freeze"
 #define NS_COMMAND_UNFREEZE	"unfreeze"
 #define NS_COMMAND_THAW		"thaw"
+#define NS_COMMAND_TIMERPOKE	"timerpoke"
 #define NS_COMMAND_RECURSING	"recursing"
 #define NS_COMMAND_NULL		"null"
+#define NS_COMMAND_NOTIFY	"notify"
+#define NS_COMMAND_VALIDATION	"validation"
+#define NS_COMMAND_SIGN 	"sign"
+#define NS_COMMAND_LOADKEYS 	"loadkeys"
+#define NS_COMMAND_ADDZONE	"addzone"
+#define NS_COMMAND_DELZONE	"delzone"
+#define NS_COMMAND_SYNC		"sync"
+#define NS_COMMAND_SIGNING	"signing"
 
 isc_result_t
 ns_controls_create(ns_server_t *server, ns_controls_t **ctrlsp);
-/*
+/*%<
  * Create an initial, empty set of command channels for 'server'.
  */
 
 void
 ns_controls_destroy(ns_controls_t **ctrlsp);
-/*
+/*%<
  * Destroy a set of command channels.
  *
  * Requires:
@@ -68,8 +83,8 @@ ns_controls_destroy(ns_controls_t **ctrlsp);
 
 isc_result_t
 ns_controls_configure(ns_controls_t *controls, const cfg_obj_t *config,
-		      ns_aclconfctx_t *aclconfctx);
-/*
+		      cfg_aclconfctx_t *aclconfctx);
+/*%<
  * Configure zero or more command channels into 'controls'
  * as defined in the configuration parse tree 'config'.
  * The channels will evaluate ACLs in the context of
@@ -78,7 +93,7 @@ ns_controls_configure(ns_controls_t *controls, const cfg_obj_t *config,
 
 void
 ns_controls_shutdown(ns_controls_t *controls);
-/*
+/*%<
  * Initiate shutdown of all the command channels in 'controls'.
  */
 

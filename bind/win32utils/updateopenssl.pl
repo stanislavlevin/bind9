@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2006, 2007, 2009, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: updateopenssl.pl,v 1.3.10.6 2007/08/28 07:19:18 tbox Exp $
+# $Id$
 
 # updateopenssl.pl
 # This script locates the latest version of OpenSSL in the grandparent
@@ -25,9 +25,11 @@ $path = "..\\..\\";
 
 # List of files that need to be updated with the actual version of the
 # openssl directory
-@filelist = ("BuildOpenSSL.bat",
-             "../lib/dns/win32/libdns.mak",
-             "../lib/dns/win32/libdns.dsp");
+@filelist = ("SetupLibs.bat",
+	     "../lib/dns/win32/libdns.mak",
+             "../lib/dns/win32/libdns.dsp",
+	     "../bin/named/win32/named.mak",
+	     "../bin/named/win32/named.dsp");
 
 # Locate the openssl directory
 $substr = getdirectory();
@@ -53,7 +55,7 @@ sub getdirectory {
     my($file, $name);
     my($cnt);
     opendir(DIR,$path) || die "No Directory: $!";
-    @namelist = grep (/^openssl-[0-9]+\.[0-9]+\.[0-9]+[a-z]$/i, readdir(DIR));
+    @namelist = grep (/^openssl-[0-9]+\.[0-9]+\.[0-9]+[a-z]{0,1}$/i, readdir(DIR));
     closedir(DIR);
 
     # Make sure we have something
@@ -94,7 +96,7 @@ sub updatefile {
 
         # Replace the string
         foreach $line (@Lines) {
-                $line =~ s/openssl-[0-9]+\.[0-9]+\.[0-9]+[a-z]/$substr/gi;
+                $line =~ s/openssl-[0-9]+\.[0-9]+\.[0-9]+[a-z]{0,1}/$substr/gi;
         }
         #update the file
         open (RFILE, ">$filename") || die "Can't open file $filename: $!";

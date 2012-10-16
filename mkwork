@@ -1,0 +1,24 @@
+#!/bin/sh -e
+WORK=work
+MASTER=master
+BTMP=work-tmp
+VERSION=`grep "^Version:" *spec | sed 's/.*[ 	]//'`
+START=$WORK-$VERSION
+NAME="`awk '/^tar/{print $2}' .gear/rules`"
+
+git checkout $MASTER
+git branch | grep $WORK && git branch -d $WORK
+git branch -D $BTMP || :
+git tag -d $START || :
+git tag -d $TTMP || :
+
+git branch $WORK
+git checkout -b $BTMP
+for N in *.patch; do cat /dev/null > "$N"; done
+git commit -a -m "Cleanup patches"
+git tag $START
+
+git checkout $WORK
+git am -p2 --directory=$NAME *.patch
+git rebase $BTMP
+git branch -D $BTMP

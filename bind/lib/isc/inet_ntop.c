@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1996-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1996-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,9 +15,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*! \file */
+
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-	"$Id: inet_ntop.c,v 1.12.12.7 2007/08/28 07:19:15 tbox Exp $";
+	"$Id: inet_ntop.c,v 1.21 2009/07/17 23:47:41 tbox Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -45,12 +47,12 @@ static const char *inet_ntop6(const unsigned char *src, char *dst,
 			      size_t size);
 #endif
 
-/* char *
+/*! char *
  * isc_net_ntop(af, src, dst, size)
  *	convert a network format address to presentation format.
- * return:
+ * \return
  *	pointer to presentation format address (`dst'), or NULL (see errno).
- * author:
+ * \author
  *	Paul Vixie, 1996.
  */
 const char *
@@ -70,15 +72,16 @@ isc_net_ntop(int af, const void *src, char *dst, size_t size)
 	/* NOTREACHED */
 }
 
-/* const char *
+/*! const char *
  * inet_ntop4(src, dst, size)
  *	format an IPv4 address
- * return:
+ * \return
  *	`dst' (as a const)
- * notes:
+ * \note
  *	(1) uses no statics
+ * \note
  *	(2) takes a unsigned char* not an in_addr as input
- * author:
+ * \author
  *	Paul Vixie, 1996.
  */
 static const char *
@@ -97,10 +100,10 @@ inet_ntop4(const unsigned char *src, char *dst, size_t size)
 	return (dst);
 }
 
-/* const char *
+/*! const char *
  * isc_inet_ntop6(src, dst, size)
  *	convert IPv6 binary address into presentation (printable) format
- * author:
+ * \author
  *	Paul Vixie, 1996.
  */
 #ifdef AF_INET6
@@ -166,8 +169,9 @@ inet_ntop6(const unsigned char *src, char *dst, size_t size)
 		if (i != 0)
 			*tp++ = ':';
 		/* Is this address an encapsulated IPv4? */
-		if (i == 6 && best.base == 0 &&
-		    (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) {
+		if (i == 6 && best.base == 0 && (best.len == 6 ||
+		    (best.len == 7 && words[7] != 0x0001) ||
+		    (best.len == 5 && words[5] == 0xffff))) {
 			if (!inet_ntop4(src+12, tp,
 					sizeof(tmp) - (tp - tmp)))
 				return (NULL);

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,8 +15,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*! \file lwinetpton.c
+ */
+
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$Id: lwinetpton.c,v 1.6.206.3 2005/03/31 23:56:15 marka Exp $";
+static char rcsid[] = "$Id$";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -38,7 +41,8 @@ static char rcsid[] = "$Id: lwinetpton.c,v 1.6.206.3 2005/03/31 23:56:15 marka E
 static int inet_pton4(const char *src, unsigned char *dst);
 static int inet_pton6(const char *src, unsigned char *dst);
 
-/* int
+/*!
+ * int
  * lwres_net_pton(af, src, dst)
  *	convert from presentation format (which usually means ASCII printable)
  *	to network format (which is usually some kind of binary format).
@@ -63,7 +67,7 @@ lwres_net_pton(int af, const char *src, void *dst) {
 	/* NOTREACHED */
 }
 
-/* int
+/*! int
  * inet_pton4(src, dst)
  *	like inet_aton() but without all the hexadecimal and shorthand.
  * return:
@@ -99,7 +103,12 @@ inet_pton4(const char *src, unsigned char *dst) {
 		} else if (ch == '.' && saw_digit) {
 			if (octets == 4)
 				return (0);
-			*++tp = 0;
+			/*
+			 * "clang --analyse" generates warnings using:
+			 * 		*++tp = 0;
+			 */
+			tp++;
+			*tp = 0;
 			saw_digit = 0;
 		} else
 			return (0);
@@ -110,7 +119,7 @@ inet_pton4(const char *src, unsigned char *dst) {
 	return (1);
 }
 
-/* int
+/*! int
  * inet_pton6(src, dst)
  *	convert presentation level address to network order binary form.
  * return:

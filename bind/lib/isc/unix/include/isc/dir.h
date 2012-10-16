@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,12 +15,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dir.h,v 1.15.12.6 2007/08/28 07:19:17 tbox Exp $ */
+/* $Id: dir.h,v 1.21 2007/06/19 23:47:19 tbox Exp $ */
 
 /* Principal Authors: DCL */
 
 #ifndef ISC_DIR_H
 #define ISC_DIR_H 1
+
+/*! \file */
 
 #include <sys/types.h>		/* Required on some systems. */
 #include <dirent.h>
@@ -31,8 +33,9 @@
 #define ISC_DIR_NAMEMAX 256
 #define ISC_DIR_PATHMAX 1024
 
+/*% Directory Entry */
 typedef struct isc_direntry {
-	/*
+	/*!
 	 * Ideally, this should be NAME_MAX, but AIX does not define it by
 	 * default and dynamically allocating the space based on pathconf()
 	 * complicates things undesirably, as does adding special conditionals
@@ -42,9 +45,10 @@ typedef struct isc_direntry {
 	unsigned int	length;
 } isc_direntry_t;
 
+/*% Directory */
 typedef struct isc_dir {
 	unsigned int	magic;
-	/*
+	/*!
 	 * As with isc_direntry_t->name, making this "right" for all systems
 	 * is slightly problematic because AIX does not define PATH_MAX.
 	 */
@@ -78,7 +82,7 @@ isc_dir_chroot(const char *dirname);
 
 isc_result_t
 isc_dir_createunique(char *templet);
-/*
+/*!<
  * Use a templet (such as from isc_file_mktemplate()) to create a uniquely
  * named, empty directory.  The templet string is modified in place.
  * If result == ISC_R_SUCCESS, it is the name of the directory that was

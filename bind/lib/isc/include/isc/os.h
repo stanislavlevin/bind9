@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,10 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: os.h,v 1.5.206.1 2004/03/06 08:14:45 marka Exp $ */
+/* $Id: os.h,v 1.12 2007/06/19 23:47:18 tbox Exp $ */
 
 #ifndef ISC_OS_H
 #define ISC_OS_H 1
+
+/*! \file isc/os.h */
 
 #include <isc/lang.h>
 
@@ -26,7 +28,7 @@ ISC_LANG_BEGINDECLS
 
 unsigned int
 isc_os_ncpus(void);
-/*
+/*%<
  * Return the number of CPUs available on the system, or 1 if this cannot
  * be determined.
  */

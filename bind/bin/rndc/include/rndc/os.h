@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: os.h,v 1.4.206.1 2004/03/06 10:21:33 marka Exp $ */
+/* $Id: os.h,v 1.12 2009/06/10 00:27:21 each Exp $ */
+
+/*! \file */
 
 #ifndef RNDC_OS_H
 #define RNDC_OS_H 1
@@ -25,15 +27,9 @@
 
 ISC_LANG_BEGINDECLS
 
-FILE *safe_create(const char *filename);
-/*
- * Open 'filename' for writing, truncate if necessary.  If the file was
- * created ensure that only the owner can read/write it.
- */
-
 int set_user(FILE *fd, const char *user);
-/*
- * Set the owner of the file refernced by 'fd' to 'user'.
+/*%<
+ * Set the owner of the file referenced by 'fd' to 'user'.
  * Returns:
  *   0 		success
  *   -1 	insufficient permissions, or 'user' does not exist.

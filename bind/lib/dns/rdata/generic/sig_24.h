@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -18,9 +18,10 @@
 #ifndef GENERIC_SIG_24_H
 #define GENERIC_SIG_24_H 1
 
-/* $Id: sig_24.h,v 1.21.206.1 2004/03/06 08:14:12 marka Exp $ */
+/* $Id: sig_24.h,v 1.26 2007/06/19 23:47:17 tbox Exp $ */
 
-/* RFC 2535 */
+/*!
+ *  \brief Per RFC2535 */
 
 typedef struct dns_rdata_sig_t {
 	dns_rdatacommon_t	common;

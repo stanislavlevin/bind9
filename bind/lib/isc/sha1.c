@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,16 +15,16 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sha1.c,v 1.10.2.2.2.3 2004/03/06 08:14:35 marka Exp $ */
+/* $Id$ */
 
 /*	$NetBSD: sha1.c,v 1.5 2000/01/22 22:19:14 mycroft Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
-/*
+/*! \file
  * SHA-1 in C
- * By Steve Reid <steve@edmweb.com>
+ * \author By Steve Reid <steve@edmweb.com>
  * 100% Public Domain
- *
+ * \verbatim
  * Test Vectors (from FIPS PUB 180-1)
  * "abc"
  *   A9993E36 4706816A BA3E2571 7850C26C 9CD0D89D
@@ -32,19 +32,57 @@
  *   84983E44 1C3BD26E BAAE4AA1 F95129E5 E54670F1
  * A million repetitions of "a"
  *   34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
+ * \endverbatim
  */
 
 #include "config.h"
 
 #include <isc/assertions.h>
+#include <isc/platform.h>
 #include <isc/sha1.h>
 #include <isc/string.h>
 #include <isc/types.h>
 #include <isc/util.h>
 
+#ifdef ISC_PLATFORM_OPENSSLHASH
+
+void
+isc_sha1_init(isc_sha1_t *context)
+{
+	INSIST(context != NULL);
+
+	EVP_DigestInit(context, EVP_sha1());
+}
+
+void
+isc_sha1_invalidate(isc_sha1_t *context) {
+	EVP_MD_CTX_cleanup(context);
+}
+
+void
+isc_sha1_update(isc_sha1_t *context, const unsigned char *data,
+		unsigned int len)
+{
+	INSIST(context != 0);
+	INSIST(data != 0);
+
+	EVP_DigestUpdate(context, (const void *) data, (size_t) len);
+}
+
+void
+isc_sha1_final(isc_sha1_t *context, unsigned char *digest) {
+	INSIST(digest != 0);
+	INSIST(context != 0);
+
+	EVP_DigestFinal(context, digest, NULL);
+}
+
+#else
+
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
 
-/*
+/*@{*/
+/*!
  * blk0() and blk() perform the initial expand.
  * I got the idea of expanding during the round function from SSLeay
  */
@@ -61,7 +99,9 @@
 				^ block->l[(i + 2) & 15] \
 				^ block->l[i & 15], 1))
 
-/*
+/*@}*/
+/*@{*/
+/*!
  * (R0+R1), R2, R3, R4 are the different operations (rounds) used in SHA1
  */
 #define R0(v,w,x,y,z,i) \
@@ -79,6 +119,8 @@
 #define R4(v,w,x,y,z,i) \
 	z += (w ^ x ^ y) + blk(i) + 0xCA62C1D6 + rol(v, 5); \
 	w = rol(w, 30);
+
+/*@}*/
 
 typedef union {
 	unsigned char c[64];
@@ -154,7 +196,7 @@ do_R4(isc_uint32_t *a, isc_uint32_t *b, isc_uint32_t *c, isc_uint32_t *d,
 }
 #endif
 
-/*
+/*!
  * Hash a single 512-bit block. This is the core of the algorithm.
  */
 static void
@@ -214,10 +256,12 @@ transform(isc_uint32_t state[5], const unsigned char buffer[64]) {
 
 	/* Wipe variables */
 	a = b = c = d = e = 0;
+	/* Avoid compiler warnings */
+	POST(a); POST(b); POST(c); POST(d); POST(e);
 }
 
 
-/*
+/*!
  * isc_sha1_init - Initialize new context
  */
 void
@@ -240,7 +284,7 @@ isc_sha1_invalidate(isc_sha1_t *context) {
 	memset(context, 0, sizeof(isc_sha1_t));
 }
 
-/*
+/*!
  * Run your data through this.
  */
 void
@@ -270,7 +314,7 @@ isc_sha1_update(isc_sha1_t *context, const unsigned char *data,
 }
 
 
-/*
+/*!
  * Add padding and return the message digest.
  */
 
@@ -307,3 +351,4 @@ isc_sha1_final(isc_sha1_t *context, unsigned char *digest) {
 
 	memset(context, 0, sizeof(isc_sha1_t));
 }
+#endif

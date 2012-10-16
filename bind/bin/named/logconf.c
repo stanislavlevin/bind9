@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004-2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,10 +15,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: logconf.c,v 1.30.2.3.10.7 2007/08/28 07:19:08 tbox Exp $ */
+/* $Id: logconf.c,v 1.45 2011/03/05 23:52:29 tbox Exp $ */
+
+/*! \file */
 
 #include <config.h>
 
+#include <isc/file.h>
 #include <isc/offset.h>
 #include <isc/result.h>
 #include <isc/stdio.h>
@@ -36,7 +39,7 @@
 	       if (result != ISC_R_SUCCESS) goto cleanup; 	 \
 	} while (0)
 
-/*
+/*%
  * Set up a logging category according to the named.conf data
  * in 'ccat' and add it to 'lctx'.
  */
@@ -84,7 +87,7 @@ category_fromconf(const cfg_obj_t *ccat, isc_logconfig_t *lctx) {
 	return (ISC_R_SUCCESS);
 }
 
-/*
+/*%
  * Set up a logging channel according to the named.conf data
  * in 'cchan' and add it to 'lctx'.
  */
@@ -128,7 +131,7 @@ channel_fromconf(const cfg_obj_t *channel, isc_logconfig_t *lctx) {
 	}
 
 	type = ISC_LOG_TONULL;
-	
+
 	if (fileobj != NULL) {
 		const cfg_obj_t *pathobj = cfg_tuple_get(fileobj, "file");
 		const cfg_obj_t *sizeobj = cfg_tuple_get(fileobj, "size");
@@ -138,7 +141,7 @@ channel_fromconf(const cfg_obj_t *channel, isc_logconfig_t *lctx) {
 		isc_offset_t size = 0;
 
 		type = ISC_LOG_TOFILE;
-		
+
 		if (versionsobj != NULL && cfg_obj_isuint32(versionsobj))
 			versions = cfg_obj_asuint32(versionsobj);
 		if (versionsobj != NULL && cfg_obj_isstring(versionsobj) &&
@@ -217,26 +220,38 @@ channel_fromconf(const cfg_obj_t *channel, isc_logconfig_t *lctx) {
 
 	if (result == ISC_R_SUCCESS && type == ISC_LOG_TOFILE) {
 		FILE *fp;
-		
-		/*
-		 * Test that the file can be opened, since isc_log_open()
-		 * can't effectively report failures when called in
-		 * isc_log_doit().
-		 */
-		result = isc_stdio_open(dest.file.name, "a", &fp);
-		if (result != ISC_R_SUCCESS)
-			isc_log_write(ns_g_lctx, CFG_LOGCATEGORY_CONFIG,
-				      NS_LOGMODULE_SERVER, ISC_LOG_ERROR,
-				      "logging channel '%s' file '%s': %s",
-				      channelname, dest.file.name,
-				      isc_result_totext(result));
-		else
-			(void)isc_stdio_close(fp);
 
 		/*
-		 * Allow named to continue by returning success.
-		 */
-		result = ISC_R_SUCCESS;
+		 * Test to make sure that file is a plain file.
+		 * Fix defect #22771
+		*/
+		result = isc_file_isplainfile(dest.file.name);
+		if (result == ISC_R_SUCCESS ||
+		    result == ISC_R_FILENOTFOUND) {
+			/*
+			 * Test that the file can be opened, since
+			 * isc_log_open() can't effectively report
+			 * failures when called in
+			 * isc_log_doit().
+			 */
+			result = isc_stdio_open(dest.file.name, "a", &fp);
+			if (result != ISC_R_SUCCESS) {
+				syslog(LOG_ERR,
+					"isc_stdio_open '%s' failed: %s",
+					dest.file.name,
+					isc_result_totext(result));
+				fprintf(stderr,
+					"isc_stdio_open '%s' failed: %s",
+					dest.file.name,
+					isc_result_totext(result));
+			} else
+				(void)isc_stdio_close(fp);
+		} else {
+			syslog(LOG_ERR, "isc_file_isplainfile '%s' failed: %s",
+				dest.file.name, isc_result_totext(result));
+			fprintf(stderr, "isc_file_isplainfile '%s' failed: %s",
+				dest.file.name, isc_result_totext(result));
+		}
 	}
 
 	return (result);

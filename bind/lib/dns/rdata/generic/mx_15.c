@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,14 +15,36 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mx_15.c,v 1.48.2.1.2.3 2004/03/06 08:14:08 marka Exp $ */
+/* $Id: mx_15.c,v 1.58 2009/12/04 22:06:37 tbox Exp $ */
 
 /* reviewed: Wed Mar 15 18:05:46 PST 2000 by brister */
 
 #ifndef RDATA_GENERIC_MX_15_C
 #define RDATA_GENERIC_MX_15_C
 
+#include <string.h>
+
+#include <isc/net.h>
+
 #define RRTYPE_MX_ATTRIBUTES (0)
+
+static isc_boolean_t
+check_mx(isc_token_t *token) {
+	char tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:123.123.123.123.")];
+	struct in_addr addr;
+	struct in6_addr addr6;
+
+	if (strlcpy(tmp, DNS_AS_STR(*token), sizeof(tmp)) >= sizeof(tmp))
+		return (ISC_TRUE);
+
+	if (tmp[strlen(tmp) - 1] == '.')
+		tmp[strlen(tmp) - 1] = '\0';
+	if (inet_aton(tmp, &addr) == 1 ||
+	    inet_pton(AF_INET6, tmp, &addr6) == 1)
+		return (ISC_FALSE);
+
+	return (ISC_TRUE);
+}
 
 static inline isc_result_t
 fromtext_mx(ARGS_FROMTEXT) {
@@ -45,6 +67,15 @@ fromtext_mx(ARGS_FROMTEXT) {
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
+
+	ok = ISC_TRUE;
+	if ((options & DNS_RDATA_CHECKMX) != 0)
+		ok = check_mx(&token);
+	if (!ok && (options & DNS_RDATA_CHECKMXFAIL) != 0)
+		RETTOK(DNS_R_MXISADDRESS);
+	if (!ok && callbacks != NULL)
+		warn_badmx(&token, lexer, callbacks);
+
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
 	origin = (origin != NULL) ? origin : dns_rootname;
@@ -89,7 +120,7 @@ totext_mx(ARGS_TOTEXT) {
 
 static inline isc_result_t
 fromwire_mx(ARGS_FROMWIRE) {
-        dns_name_t name;
+	dns_name_t name;
 	isc_region_t sregion;
 
 	REQUIRE(type == 15);
@@ -99,7 +130,7 @@ fromwire_mx(ARGS_FROMWIRE) {
 
 	dns_decompress_setmethods(dctx, DNS_COMPRESS_GLOBAL14);
 
-        dns_name_init(&name, NULL);
+	dns_name_init(&name, NULL);
 
 	isc_buffer_activeregion(source, &sregion);
 	if (sregion.length < 2)
@@ -283,6 +314,11 @@ checknames_mx(ARGS_CHECKNAMES) {
 		return (ISC_FALSE);
 	}
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_mx(ARGS_COMPARE) {
+	return (compare_mx(rdata1, rdata2));
 }
 
 #endif	/* RDATA_GENERIC_MX_15_C */

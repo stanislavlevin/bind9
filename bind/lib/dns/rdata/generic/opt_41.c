@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,11 +15,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: opt_41.c,v 1.25.12.7 2007/08/28 07:19:15 tbox Exp $ */
+/* $Id$ */
 
 /* Reviewed: Thu Mar 16 14:06:44 PST 2000 by gson */
 
-/* RFC 2671 */
+/* RFC2671 */
 
 #ifndef RDATA_GENERIC_OPT_41_C
 #define RDATA_GENERIC_OPT_41_C
@@ -76,8 +76,12 @@ totext_opt(ARGS_TOTEXT) {
 			RETERR(str_totext(tctx->linebreak, target));
 			or = r;
 			or.length = length;
-			RETERR(isc_base64_totext(&or, tctx->width - 2,
-						 tctx->linebreak, target));
+			if (tctx->width == 0)   /* No splitting */
+				RETERR(isc_base64_totext(&or, 60, "", target));
+			else
+				RETERR(isc_base64_totext(&or, tctx->width - 2,
+							 tctx->linebreak,
+							 target));
 			isc_region_consume(&r, length);
 			if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 				RETERR(str_totext(" )", target));
@@ -275,6 +279,11 @@ checknames_opt(ARGS_CHECKNAMES) {
 	UNUSED(bad);
 
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_opt(ARGS_COMPARE) {
+	return (compare_opt(rdata1, rdata2));
 }
 
 #endif	/* RDATA_GENERIC_OPT_41_C */

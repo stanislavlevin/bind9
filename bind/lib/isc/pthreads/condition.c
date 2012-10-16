@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: condition.c,v 1.30.2.1.10.4 2007/08/28 07:19:16 tbox Exp $ */
+/* $Id: condition.c,v 1.36 2007/06/19 23:47:18 tbox Exp $ */
+
+/*! \file */
 
 #include <config.h>
 
@@ -44,7 +46,7 @@ isc_condition_waituntil(isc_condition_t *c, isc_mutex_t *m, isc_time_t *t) {
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	/*
+	/*!
 	 * POSIX defines a timespec's tv_nsec as long.  isc_time_nanoseconds
 	 * ensures its return value is < 1 billion, which will fit in a long.
 	 */

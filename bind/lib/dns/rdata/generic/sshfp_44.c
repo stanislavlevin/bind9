@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,9 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sshfp_44.c,v 1.1.8.3 2004/03/06 08:14:13 marka Exp $ */
+/* $Id$ */
 
-/* draft-ietf-secsh-dns-05.txt */
+/* RFC 4255 */
 
 #ifndef RDATA_GENERIC_SSHFP_44_C
 #define RDATA_GENERIC_SSHFP_44_C
@@ -96,7 +96,11 @@ totext_sshfp(ARGS_TOTEXT) {
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(" (", target));
 	RETERR(str_totext(tctx->linebreak, target));
-	RETERR(isc_hex_totext(&sr, tctx->width - 2, tctx->linebreak, target));
+	if (tctx->width == 0) /* No splitting */
+		RETERR(isc_hex_totext(&sr, 0, "", target));
+	else
+		RETERR(isc_hex_totext(&sr, tctx->width - 2,
+				      tctx->linebreak, target));
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(" )", target));
 	return (ISC_R_SUCCESS);
@@ -257,6 +261,11 @@ checknames_sshfp(ARGS_CHECKNAMES) {
 	UNUSED(bad);
 
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_sshfp(ARGS_COMPARE) {
+	return (compare_sshfp(rdata1, rdata2));
 }
 
 #endif	/* RDATA_GENERIC_SSHFP_44_C */

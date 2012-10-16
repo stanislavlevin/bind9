@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: net.h,v 1.15.12.12 2008/07/01 23:45:42 tbox Exp $ */
+/* $Id$ */
 
 #ifndef ISC_NET_H
 #define ISC_NET_H 1
@@ -72,7 +72,7 @@
  *
  * Standards:
  *	BSD Socket API
- *	RFC 2553
+ *	RFC2553
  */
 
 /***
@@ -259,6 +259,17 @@ isc_net_probeipv6(void);
  */
 
 isc_result_t
+isc_net_probeunix(void);
+/*
+ * Check if UNIX domain sockets are supported.
+ *
+ * Returns:
+ *
+ *	ISC_R_SUCCESS
+ *	ISC_R_NOTFOUND
+ */
+
+isc_result_t
 isc_net_probe_ipv6only(void);
 /*
  * Check if the system's kernel supports the IPV6_V6ONLY socket option.
@@ -324,11 +335,9 @@ isc_net_pton(int af, const char *src, void *dst);
 #define inet_pton isc_net_pton
 #endif
 
-#ifdef ISC_PLATFORM_NEEDATON
 int
 isc_net_aton(const char *cp, struct in_addr *addr);
 #define inet_aton isc_net_aton
-#endif
 
 ISC_LANG_ENDDECLS
 

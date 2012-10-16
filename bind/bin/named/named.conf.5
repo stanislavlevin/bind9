@@ -1,6 +1,6 @@
-.\" Copyright (C) 2004-2008 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2011 Internet Systems Consortium, Inc. ("ISC")
 .\" 
-.\" Permission to use, copy, modify, and distribute this software for any
+.\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\" 
@@ -12,7 +12,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $Id: named.conf.5,v 1.1.4.15 2008/09/05 01:21:40 tbox Exp $
+.\" $Id$
 .\"
 .hy 0
 .ad l
@@ -75,9 +75,11 @@ masters \fIstring\fR [ port \fIinteger\fR ] {
 .sp
 .RS 4
 .nf
-server ( \fIipv4_address\fR | \fIipv6_address\fR ) {
+server ( \fIipv4_address\fR\fI[/prefixlen]\fR | \fIipv6_address\fR\fI[/prefixlen]\fR ) {
 	bogus \fIboolean\fR;
 	edns \fIboolean\fR;
+	edns\-udp\-size \fIinteger\fR;
+	max\-udp\-size \fIinteger\fR;
 	provide\-ixfr \fIboolean\fR;
 	request\-ixfr \fIboolean\fR;
 	keys \fIserver_key\fR;
@@ -97,6 +99,15 @@ server ( \fIipv4_address\fR | \fIipv6_address\fR ) {
 .nf
 trusted\-keys {
 	\fIdomain_name\fR \fIflags\fR \fIprotocol\fR \fIalgorithm\fR \fIkey\fR; ... 
+};
+.fi
+.RE
+.SH "MANAGED\-KEYS"
+.sp
+.RS 4
+.nf
+managed\-keys {
+	\fIdomain_name\fR \fBinitial\-key\fR \fIflags\fR \fIprotocol\fR \fIalgorithm\fR \fIkey\fR; ... 
 };
 .fi
 .RE
@@ -157,7 +168,6 @@ options {
 	coresize \fIsize\fR;
 	datasize \fIsize\fR;
 	directory \fIquoted_string\fR;
-	cache\-file \fIquoted_string\fR; // test option
 	dump\-file \fIquoted_string\fR;
 	files \fIsize\fR;
 	heartbeat\-interval \fIinteger\fR;
@@ -185,6 +195,7 @@ options {
 	tcp\-listen\-queue \fIinteger\fR;
 	tkey\-dhkey \fIquoted_string\fR \fIinteger\fR;
 	tkey\-gssapi\-credential \fIquoted_string\fR;
+	tkey\-gssapi\-keytab \fIquoted_string\fR;
 	tkey\-domain \fIquoted_string\fR;
 	transfers\-per\-ns \fIinteger\fR;
 	transfers\-in \fIinteger\fR;
@@ -192,6 +203,7 @@ options {
 	use\-ixfr \fIboolean\fR;
 	version ( \fIquoted_string\fR | none );
 	allow\-recursion { \fIaddress_match_element\fR; ... };
+	allow\-recursion\-on { \fIaddress_match_element\fR; ... };
 	sortlist { \fIaddress_match_element\fR; ... };
 	topology { \fIaddress_match_element\fR; ... }; // not implemented
 	auth\-nxdomain \fIboolean\fR; // default changed
@@ -206,41 +218,79 @@ options {
 	rfc2308\-type1 \fIboolean\fR; // not yet implemented
 	additional\-from\-auth \fIboolean\fR;
 	additional\-from\-cache \fIboolean\fR;
-	query\-source [ address ( \fIipv4_address\fR | * ) ] [ port ( \fIinteger\fR | * ) ];
-	query\-source\-v6 [ address ( \fIipv6_address\fR | * ) ] [ port ( \fIinteger\fR | * ) ];
+	query\-source ( ( \fIipv4_address\fR | * ) | [ address ( \fIipv4_address\fR | * ) ] ) [ port ( \fIinteger\fR | * ) ];
+	query\-source\-v6 ( ( \fIipv6_address\fR | * ) | [ address ( \fIipv6_address\fR | * ) ] ) [ port ( \fIinteger\fR | * ) ];
+	use\-queryport\-pool \fIboolean\fR;
+	queryport\-pool\-ports \fIinteger\fR;
+	queryport\-pool\-updateinterval \fIinteger\fR;
 	cleaning\-interval \fIinteger\fR;
+	resolver\-query\-timeout \fIinteger\fR;
 	min\-roots \fIinteger\fR; // not implemented
 	lame\-ttl \fIinteger\fR;
 	max\-ncache\-ttl \fIinteger\fR;
 	max\-cache\-ttl \fIinteger\fR;
 	transfer\-format ( many\-answers | one\-answer );
-	max\-cache\-size \fIsize_no_default\fR;
+	max\-cache\-size \fIsize\fR;
+	max\-acache\-size \fIsize\fR;
+	clients\-per\-query \fInumber\fR;
+	max\-clients\-per\-query \fInumber\fR;
 	check\-names ( master | slave | response )
 		( fail | warn | ignore );
-	cache\-file \fIquoted_string\fR;
+	check\-mx ( fail | warn | ignore );
+	check\-integrity \fIboolean\fR;
+	check\-mx\-cname ( fail | warn | ignore );
+	check\-srv\-cname ( fail | warn | ignore );
+	cache\-file \fIquoted_string\fR; // test option
 	suppress\-initial\-notify \fIboolean\fR; // not yet implemented
 	preferred\-glue \fIstring\fR;
 	dual\-stack\-servers [ port \fIinteger\fR ] {
 		( \fIquoted_string\fR [port \fIinteger\fR] |
 		\fIipv4_address\fR [port \fIinteger\fR] |
 		\fIipv6_address\fR [port \fIinteger\fR] ); ...
-	}
+	};
 	edns\-udp\-size \fIinteger\fR;
+	max\-udp\-size \fIinteger\fR;
 	root\-delegation\-only [ exclude { \fIquoted_string\fR; ... } ];
 	disable\-algorithms \fIstring\fR { \fIstring\fR; ... };
 	dnssec\-enable \fIboolean\fR;
-	dnssec\-lookaside \fIstring\fR trust\-anchor \fIstring\fR;
+	dnssec\-validation \fIboolean\fR;
+	dnssec\-lookaside ( \fIauto\fR | \fIno\fR | \fIdomain\fR trust\-anchor \fIdomain\fR );
 	dnssec\-must\-be\-secure \fIstring\fR \fIboolean\fR;
+	dnssec\-accept\-expired \fIboolean\fR;
+	dns64\-server \fIstring\fR;
+	dns64\-contact \fIstring\fR;
+	dns64 \fIprefix\fR {
+		clients { <replacable>acl</replacable>; };
+		exclude { <replacable>acl</replacable>; };
+		mapped { <replacable>acl</replacable>; };
+		break\-dnssec \fIboolean\fR;
+		recursive\-only \fIboolean\fR;
+		suffix \fIipv6_address\fR;
+	};
+	empty\-server \fIstring\fR;
+	empty\-contact \fIstring\fR;
+	empty\-zones\-enable \fIboolean\fR;
+	disable\-empty\-zone \fIstring\fR;
 	dialup \fIdialuptype\fR;
 	ixfr\-from\-differences \fIixfrdiff\fR;
 	allow\-query { \fIaddress_match_element\fR; ... };
+	allow\-query\-on { \fIaddress_match_element\fR; ... };
+	allow\-query\-cache { \fIaddress_match_element\fR; ... };
+	allow\-query\-cache\-on { \fIaddress_match_element\fR; ... };
 	allow\-transfer { \fIaddress_match_element\fR; ... };
+	allow\-update { \fIaddress_match_element\fR; ... };
 	allow\-update\-forwarding { \fIaddress_match_element\fR; ... };
+	update\-check\-ksk \fIboolean\fR;
+	dnssec\-dnskey\-kskonly \fIboolean\fR;
+	masterfile\-format ( text | raw );
 	notify \fInotifytype\fR;
 	notify\-source ( \fIipv4_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
 	notify\-source\-v6 ( \fIipv6_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
+	notify\-delay \fIseconds\fR;
+	notify\-to\-soa \fIboolean\fR;
 	also\-notify [ port \fIinteger\fR ] { ( \fIipv4_address\fR | \fIipv6_address\fR )
-		[ port \fIinteger\fR ]; ... };
+		[ port \fIinteger\fR ]; ...
+		[ key \fIkeyname\fR ] ... };
 	allow\-notify { \fIaddress_match_element\fR; ... };
 	forward ( first | only );
 	forwarders [ port \fIinteger\fR ] {
@@ -257,6 +307,10 @@ options {
 	min\-refresh\-time \fIinteger\fR;
 	multi\-master \fIboolean\fR;
 	sig\-validity\-interval \fIinteger\fR;
+	sig\-re\-signing\-interval \fIinteger\fR;
+	sig\-signing\-nodes \fIinteger\fR;
+	sig\-signing\-signatures \fIinteger\fR;
+	sig\-signing\-type \fIinteger\fR;
 	transfer\-source ( \fIipv4_address\fR | * )
 		[ port ( \fIinteger\fR | * ) ];
 	transfer\-source\-v6 ( \fIipv6_address\fR | * )
@@ -268,6 +322,19 @@ options {
 	use\-alt\-transfer\-source \fIboolean\fR;
 	zone\-statistics \fIboolean\fR;
 	key\-directory \fIquoted_string\fR;
+	managed\-keys\-directory \fIquoted_string\fR;
+	auto\-dnssec \fBallow\fR|\fBmaintain\fR|\fBcreate\fR|\fBoff\fR;
+	try\-tcp\-refresh \fIboolean\fR;
+	zero\-no\-soa\-ttl \fIboolean\fR;
+	zero\-no\-soa\-ttl\-cache \fIboolean\fR;
+	dnssec\-secure\-to\-insecure \fIboolean\fR;
+	deny\-answer\-addresses {
+		\fIaddress_match_list\fR
+	} [ except\-from { \fInamelist\fR } ];
+	deny\-answer\-aliases {
+		\fInamelist\fR
+	} [ except\-from { \fInamelist\fR } ];
+	nsec3\-test\-zone \fIboolean\fR;  // testing only
 	allow\-v6\-synthesis { \fIaddress_match_element\fR; ... }; // obsolete
 	deallocate\-on\-exit \fIboolean\fR; // obsolete
 	fake\-iquery \fIboolean\fR; // obsolete
@@ -298,13 +365,15 @@ view \fIstring\fR \fIoptional_class\fR {
 	zone \fIstring\fR \fIoptional_class\fR {
 		...
 	};
-	server ( \fIipv4_address\fR | \fIipv6_address\fR ) {
+	server ( \fIipv4_address\fR\fI[/prefixlen]\fR | \fIipv6_address\fR\fI[/prefixlen]\fR ) {
 		...
 	};
 	trusted\-keys {
-		\fIstring\fR \fIinteger\fR \fIinteger\fR \fIinteger\fR \fIquoted_string\fR; ...
+		\fIstring\fR \fIinteger\fR \fIinteger\fR \fIinteger\fR \fIquoted_string\fR;
+		[...]
 	};
 	allow\-recursion { \fIaddress_match_element\fR; ... };
+	allow\-recursion\-on { \fIaddress_match_element\fR; ... };
 	sortlist { \fIaddress_match_element\fR; ... };
 	topology { \fIaddress_match_element\fR; ... }; // not implemented
 	auth\-nxdomain \fIboolean\fR; // default changed
@@ -319,18 +388,29 @@ view \fIstring\fR \fIoptional_class\fR {
 	rfc2308\-type1 \fIboolean\fR; // not yet implemented
 	additional\-from\-auth \fIboolean\fR;
 	additional\-from\-cache \fIboolean\fR;
-	query\-source [ address ( \fIipv4_address\fR | * ) ] [ port ( \fIinteger\fR | * ) ];
-	query\-source\-v6 [ address ( \fIipv6_address\fR | * ) ] [ port ( \fIinteger\fR | * ) ];
+	query\-source ( ( \fIipv4_address\fR | * ) | [ address ( \fIipv4_address\fR | * ) ] ) [ port ( \fIinteger\fR | * ) ];
+	query\-source\-v6 ( ( \fIipv6_address\fR | * ) | [ address ( \fIipv6_address\fR | * ) ] ) [ port ( \fIinteger\fR | * ) ];
+	use\-queryport\-pool \fIboolean\fR;
+	queryport\-pool\-ports \fIinteger\fR;
+	queryport\-pool\-updateinterval \fIinteger\fR;
 	cleaning\-interval \fIinteger\fR;
+	resolver\-query\-timeout \fIinteger\fR;
 	min\-roots \fIinteger\fR; // not implemented
 	lame\-ttl \fIinteger\fR;
 	max\-ncache\-ttl \fIinteger\fR;
 	max\-cache\-ttl \fIinteger\fR;
 	transfer\-format ( many\-answers | one\-answer );
-	max\-cache\-size \fIsize_no_default\fR;
+	max\-cache\-size \fIsize\fR;
+	max\-acache\-size \fIsize\fR;
+	clients\-per\-query \fInumber\fR;
+	max\-clients\-per\-query \fInumber\fR;
 	check\-names ( master | slave | response )
 		( fail | warn | ignore );
-	cache\-file \fIquoted_string\fR;
+	check\-mx ( fail | warn | ignore );
+	check\-integrity \fIboolean\fR;
+	check\-mx\-cname ( fail | warn | ignore );
+	check\-srv\-cname ( fail | warn | ignore );
+	cache\-file \fIquoted_string\fR; // test option
 	suppress\-initial\-notify \fIboolean\fR; // not yet implemented
 	preferred\-glue \fIstring\fR;
 	dual\-stack\-servers [ port \fIinteger\fR ] {
@@ -339,21 +419,48 @@ view \fIstring\fR \fIoptional_class\fR {
 		\fIipv6_address\fR [port \fIinteger\fR] ); ...
 	};
 	edns\-udp\-size \fIinteger\fR;
+	max\-udp\-size \fIinteger\fR;
 	root\-delegation\-only [ exclude { \fIquoted_string\fR; ... } ];
 	disable\-algorithms \fIstring\fR { \fIstring\fR; ... };
 	dnssec\-enable \fIboolean\fR;
-	dnssec\-lookaside \fIstring\fR trust\-anchor \fIstring\fR;
+	dnssec\-validation \fIboolean\fR;
+	dnssec\-lookaside ( \fIauto\fR | \fIno\fR | \fIdomain\fR trust\-anchor \fIdomain\fR );
 	dnssec\-must\-be\-secure \fIstring\fR \fIboolean\fR;
+	dnssec\-accept\-expired \fIboolean\fR;
+	dns64\-server \fIstring\fR;
+	dns64\-contact \fIstring\fR;
+	dns64 \fIprefix\fR {
+		clients { <replacable>acl</replacable>; };
+		exclude { <replacable>acl</replacable>; };
+		mapped { <replacable>acl</replacable>; };
+		break\-dnssec \fIboolean\fR;
+		recursive\-only \fIboolean\fR;
+		suffix \fIipv6_address\fR;
+	};
+	empty\-server \fIstring\fR;
+	empty\-contact \fIstring\fR;
+	empty\-zones\-enable \fIboolean\fR;
+	disable\-empty\-zone \fIstring\fR;
 	dialup \fIdialuptype\fR;
 	ixfr\-from\-differences \fIixfrdiff\fR;
 	allow\-query { \fIaddress_match_element\fR; ... };
+	allow\-query\-on { \fIaddress_match_element\fR; ... };
+	allow\-query\-cache { \fIaddress_match_element\fR; ... };
+	allow\-query\-cache\-on { \fIaddress_match_element\fR; ... };
 	allow\-transfer { \fIaddress_match_element\fR; ... };
+	allow\-update { \fIaddress_match_element\fR; ... };
 	allow\-update\-forwarding { \fIaddress_match_element\fR; ... };
+	update\-check\-ksk \fIboolean\fR;
+	dnssec\-dnskey\-kskonly \fIboolean\fR;
+	masterfile\-format ( text | raw );
 	notify \fInotifytype\fR;
 	notify\-source ( \fIipv4_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
 	notify\-source\-v6 ( \fIipv6_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
+	notify\-delay \fIseconds\fR;
+	notify\-to\-soa \fIboolean\fR;
 	also\-notify [ port \fIinteger\fR ] { ( \fIipv4_address\fR | \fIipv6_address\fR )
-		[ port \fIinteger\fR ]; ... };
+		[ port \fIinteger\fR ]; ...
+		[ key \fIkeyname\fR ] ... };
 	allow\-notify { \fIaddress_match_element\fR; ... };
 	forward ( first | only );
 	forwarders [ port \fIinteger\fR ] {
@@ -380,7 +487,11 @@ view \fIstring\fR \fIoptional_class\fR {
 		[ port ( \fIinteger\fR | * ) ];
 	use\-alt\-transfer\-source \fIboolean\fR;
 	zone\-statistics \fIboolean\fR;
+	try\-tcp\-refresh \fIboolean\fR;
 	key\-directory \fIquoted_string\fR;
+	zero\-no\-soa\-ttl \fIboolean\fR;
+	zero\-no\-soa\-ttl\-cache \fIboolean\fR;
+	dnssec\-secure\-to\-insecure \fIboolean\fR;
 	allow\-v6\-synthesis { \fIaddress_match_element\fR; ... }; // obsolete
 	fetch\-glue \fIboolean\fR; // obsolete
 	maintain\-ixfr\-base \fIboolean\fR; // obsolete
@@ -393,7 +504,7 @@ view \fIstring\fR \fIoptional_class\fR {
 .RS 4
 .nf
 zone \fIstring\fR \fIoptional_class\fR {
-	type ( master | slave | stub | hint |
+	type ( master | slave | stub | hint | redirect |
 		forward | delegation\-only );
 	file \fIquoted_string\fR;
 	masters [ port \fIinteger\fR ] {
@@ -404,22 +515,39 @@ zone \fIstring\fR \fIoptional_class\fR {
 	database \fIstring\fR;
 	delegation\-only \fIboolean\fR;
 	check\-names ( fail | warn | ignore );
+	check\-mx ( fail | warn | ignore );
+	check\-integrity \fIboolean\fR;
+	check\-mx\-cname ( fail | warn | ignore );
+	check\-srv\-cname ( fail | warn | ignore );
 	dialup \fIdialuptype\fR;
 	ixfr\-from\-differences \fIboolean\fR;
+	journal \fIquoted_string\fR;
+	zero\-no\-soa\-ttl \fIboolean\fR;
+	dnssec\-secure\-to\-insecure \fIboolean\fR;
 	allow\-query { \fIaddress_match_element\fR; ... };
+	allow\-query\-on { \fIaddress_match_element\fR; ... };
 	allow\-transfer { \fIaddress_match_element\fR; ... };
 	allow\-update { \fIaddress_match_element\fR; ... };
 	allow\-update\-forwarding { \fIaddress_match_element\fR; ... };
-	update\-policy {
-		( grant | deny ) \fIstring\fR
-		( name | subdomain | wildcard | self ) \fIstring\fR
-		\fIrrtypelist\fR; ...
-	};
+	update\-policy \fIlocal\fR | \fI {
+		( grant | deny ) \fR\fI\fIstring\fR\fR\fI
+		( name | subdomain | wildcard | self | selfsub | selfwild |
+                  krb5\-self | ms\-self | krb5\-subdomain | ms\-subdomain |
+		  tcp\-self | zonesub | 6to4\-self ) \fR\fI\fIstring\fR\fR\fI
+		\fR\fI\fIrrtypelist\fR\fR\fI;
+		\fR\fI[...]\fR\fI
+	}\fR;
+	update\-check\-ksk \fIboolean\fR;
+	dnssec\-dnskey\-kskonly \fIboolean\fR;
+	masterfile\-format ( text | raw );
 	notify \fInotifytype\fR;
 	notify\-source ( \fIipv4_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
 	notify\-source\-v6 ( \fIipv6_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
+	notify\-delay \fIseconds\fR;
+	notify\-to\-soa \fIboolean\fR;
 	also\-notify [ port \fIinteger\fR ] { ( \fIipv4_address\fR | \fIipv6_address\fR )
-		[ port \fIinteger\fR ]; ... };
+		[ port \fIinteger\fR ]; ...
+		[ key \fIkeyname\fR ] ... };
 	allow\-notify { \fIaddress_match_element\fR; ... };
 	forward ( first | only );
 	forwarders [ port \fIinteger\fR ] {
@@ -435,6 +563,7 @@ zone \fIstring\fR \fIoptional_class\fR {
 	max\-refresh\-time \fIinteger\fR;
 	min\-refresh\-time \fIinteger\fR;
 	multi\-master \fIboolean\fR;
+	request\-ixfr \fIboolean\fR;
 	sig\-validity\-interval \fIinteger\fR;
 	transfer\-source ( \fIipv4_address\fR | * )
 		[ port ( \fIinteger\fR | * ) ];
@@ -446,7 +575,9 @@ zone \fIstring\fR \fIoptional_class\fR {
 		[ port ( \fIinteger\fR | * ) ];
 	use\-alt\-transfer\-source \fIboolean\fR;
 	zone\-statistics \fIboolean\fR;
+	try\-tcp\-refresh \fIboolean\fR;
 	key\-directory \fIquoted_string\fR;
+	nsec3\-test\-zone \fIboolean\fR;  // testing only
 	ixfr\-base \fIquoted_string\fR; // obsolete
 	ixfr\-tmp\-file \fIquoted_string\fR; // obsolete
 	maintain\-ixfr\-base \fIboolean\fR; // obsolete
@@ -463,7 +594,7 @@ zone \fIstring\fR \fIoptional_class\fR {
 \fBnamed\fR(8),
 \fBnamed\-checkconf\fR(8),
 \fBrndc\fR(8),
-BIND 9 Administrator Reference Manual
+BIND 9 Administrator Reference Manual.
 .SH "COPYRIGHT"
-Copyright \(co 2004\-2008 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004\-2011 Internet Systems Consortium, Inc. ("ISC")
 .br

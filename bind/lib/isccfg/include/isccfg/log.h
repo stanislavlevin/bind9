@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,10 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.h,v 1.3.2.1.10.6 2007/08/28 07:19:18 tbox Exp $ */
+/* $Id: log.h,v 1.14 2009/01/18 23:48:14 tbox Exp $ */
 
 #ifndef ISCCFG_LOG_H
 #define ISCCFG_LOG_H 1
+
+/*! \file isccfg/log.h */
 
 #include <isc/lang.h>
 #include <isc/log.h>
@@ -34,17 +36,17 @@ ISC_LANG_BEGINDECLS
 
 void
 cfg_log_init(isc_log_t *lctx);
-/*
+/*%<
  * Make the libisccfg categories and modules available for use with the
  * ISC logging library.
  *
  * Requires:
- *	lctx is a valid logging context.
+ *\li	lctx is a valid logging context.
  *
- *	cfg_log_init() is called only once.
+ *\li	cfg_log_init() is called only once.
  *
  * Ensures:
- * 	The catgories and modules defined above are available for
+ * \li	The categories and modules defined above are available for
  * 	use by isc_log_usechannnel() and isc_log_write().
  */
 

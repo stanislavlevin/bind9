@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,10 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: print.h,v 1.17.188.4 2005/06/09 23:54:30 marka Exp $ */
+/* $Id: print.h,v 1.26 2007/06/19 23:47:18 tbox Exp $ */
 
 #ifndef ISC_PRINT_H
 #define ISC_PRINT_H 1
+
+/*! \file isc/print.h */
 
 /***
  *** Imports
@@ -28,7 +30,7 @@
 #include <isc/lang.h>
 #include <isc/platform.h>
 
-/*
+/*!
  * This block allows lib/isc/print.c to be cleanly compiled even if
  * the platform does not need it.  The standard Makefile will still
  * not compile print.c or archive print.o, so this is just to make test

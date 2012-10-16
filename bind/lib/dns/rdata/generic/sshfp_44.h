@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,9 +15,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sshfp_44.h,v 1.1.8.2 2004/03/06 08:14:13 marka Exp $ */
+/* $Id: sshfp_44.h,v 1.8 2007/06/19 23:47:17 tbox Exp $ */
 
-/* draft-ietf-secsh-dns-05.txt */
+/*!
+ *  \brief Per RFC 4255 */
 
 #ifndef GENERIC_SSHFP_44_H
 #define GENERIC_SSHFP_44_H 1

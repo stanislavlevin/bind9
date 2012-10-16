@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: net.c,v 1.3.2.2.4.14 2008/08/08 06:00:42 marka Exp $ */
+/* $Id$ */
 
 #include <config.h>
 
@@ -124,6 +124,11 @@ isc_net_probeipv6(void) {
 	return (ipv6_result);
 }
 
+isc_result_t
+isc_net_probeunix(void) {
+	return (ISC_R_NOTFOUND);
+}
+
 #ifdef ISC_PLATFORM_HAVEIPV6
 #ifdef WANT_IPV6
 static void
@@ -161,7 +166,8 @@ try_ipv6only(void) {
 	}
 
 	on = 1;
-	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) < 0) {
+	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, (const char *)&on,
+		       sizeof(on)) < 0) {
 		ipv6only_result = ISC_R_NOTFOUND;
 		goto close;
 	}
@@ -184,7 +190,8 @@ try_ipv6only(void) {
 	}
 
 	on = 1;
-	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) < 0) {
+	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, (const char *)&on,
+		       sizeof(on)) < 0) {
 		ipv6only_result = ISC_R_NOTFOUND;
 		goto close;
 	}
@@ -192,7 +199,7 @@ try_ipv6only(void) {
 	ipv6only_result = ISC_R_SUCCESS;
 
 close:
-	closeocket(s);
+	closesocket(s);
 	return;
 #endif /* IPV6_V6ONLY */
 }

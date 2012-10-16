@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,11 +15,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: aaaa_28.c,v 1.36.12.8 2007/08/28 07:19:15 tbox Exp $ */
+/* $Id: aaaa_28.c,v 1.47 2009/12/04 22:06:37 tbox Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
-/* RFC 1886 */
+/* RFC1886 */
 
 #ifndef RDATA_IN_1_AAAA_28_C
 #define RDATA_IN_1_AAAA_28_C
@@ -230,4 +230,8 @@ checknames_in_aaaa(ARGS_CHECKNAMES) {
 	return (ISC_TRUE);
 }
 
+static inline int
+casecompare_in_aaaa(ARGS_COMPARE) {
+	return (compare_in_aaaa(rdata1, rdata2));
+}
 #endif	/* RDATA_IN_1_AAAA_28_C */

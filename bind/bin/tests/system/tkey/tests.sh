@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
-# Copyright (C) 2001, 2003  Internet Software Consortium.
+# Copyright (C) 2004, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: tests.sh,v 1.2.12.7 2007/08/28 07:19:11 tbox Exp $
+# $Id: tests.sh,v 1.11 2011/11/03 23:46:26 tbox Exp $
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -28,7 +28,7 @@ RANDFILE=random.data
 
 echo "I:generating new DH key"
 ret=0
-dhkeyname=`$KEYGEN -k -a DH -b 768 -n host -r $RANDFILE client` || ret=1
+dhkeyname=`$KEYGEN -T KEY -a DH -b 768 -n host -r $RANDFILE client` || ret=1
 if [ $ret != 0 ]; then
 	echo "I:failed"
 	echo "I:exit status: $status"
@@ -78,6 +78,35 @@ do
 	fi
 	status=`expr $status + $ret`
 done
+
+echo "I:creating new key using owner name bar.example."
+ret=0
+keyname=`./keycreate $dhkeyname bar.example.` || ret=1
+if [ $ret != 0 ]; then
+        echo "I:failed"
+        echo "I:exit status: $status"
+        exit $status
+fi
+status=`expr $status + $ret`
+
+echo "I:checking the key with 'rndc tsig-list'"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.1 -p 9953 tsig-list > rndc.out
+grep "key \"bar.example.server" rndc.out > /dev/null || ret=1
+if [ $ret != 0 ]; then
+        echo "I:failed"
+fi
+status=`expr $status + $ret`
+
+echo "I:deleting the key with 'rndc tsig-delete'"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.1 -p 9953 tsig-delete bar.example.server > /dev/null || ret=1
+$RNDC -c ../common/rndc.conf -s 10.53.0.1 -p 9953 tsig-list > rndc.out
+grep "key \"bar.example.server" rndc.out > /dev/null && ret=1
+if [ $ret != 0 ]; then
+        echo "I:failed"
+fi
+status=`expr $status + $ret`
 
 echo "I:exit status: $status"
 exit $status

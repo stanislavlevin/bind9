@@ -1,0 +1,25 @@
+From 0 Mon Sep 17 00:00:00 2001
+From: "Fr. Br. George" <george@altlinux.org>
+Date: Mon, 15 Oct 2012 15:44:28 +0400
+Subject: [PATCH 06] bind-9.8.3-alt-isc-config
+
+---
+ bind/isc-config.sh.in |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/bind/isc-config.sh.in b/bind/isc-config.sh.in
+index 0eafca7..356be0e 100644
+--- a/bind/isc-config.sh.in
++++ b/bind/isc-config.sh.in
+@@ -115,7 +115,7 @@ if test x"$echo_exec_prefix" = x"true" ; then
+ 	echo $exec_prefix
+ fi
+ if test x"$echo_cflags" = x"true"; then
+-	includes="-I${exec_prefix}/include"
++	[ "$exec_prefix" = /usr ] || includes="-I${exec_prefix}/include"
+ 	if test x"$libisc" = x"true"; then
+ 		includes="$includes @ALWAYS_DEFINES@ @STD_CINCLUDES@ @STD_CDEFINES@ @CCOPT@"
+ 	fi
+-- 
+1.7.9.7
+

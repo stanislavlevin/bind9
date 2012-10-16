@@ -42,8 +42,8 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libdns_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "../../../../../openssl-0.9.8h/inc32/openssl/include" /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../../../openssl-0.9.8h/inc32" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /YX /FD /c
+# ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "BIND9" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libdns_EXPORTS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../isc/noatomic/include" /I "../../../../libxml2-2.7.3/include" /I "../../../../openssl-0.9.8l/inc32" /D "NDEBUG" /D "BIND9" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /YX /FD /c
 # SUBTRACT CPP /X
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
@@ -54,7 +54,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 user32.lib advapi32.lib ws2_32.lib ../../isc/win32/Release/libisc.lib ../../../../openssl-0.9.8h/out32dll/libeay32.lib /nologo /dll /machine:I386 /out:"../../../Build/Release/libdns.dll"
+# ADD LINK32 user32.lib advapi32.lib ws2_32.lib ../../isc/win32/Release/libisc.lib ../../../../openssl-0.9.8l/out32dll/libeay32.lib /nologo /dll /machine:I386 /out:"../../../Build/Release/libdns.dll"
 
 !ELSEIF  "$(CFG)" == "libdns - Win32 Debug"
 
@@ -69,8 +69,8 @@ LINK32=link.exe
 # PROP Intermediate_Dir "Debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libdns_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../../../openssl-0.9.8h/inc32" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /FR /YX /FD /GZ /c
+# ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "BIND9" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libdns_EXPORTS" /YX /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../isc/noatomic/include" /I "../../../../openssl-0.9.8l/inc32" /I "../../../../libxml2-2.7.3/include" /D "_DEBUG" /D "BIND9" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /FR /YX /FD /GZ /c
 # SUBTRACT CPP /X
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
@@ -81,7 +81,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 user32.lib advapi32.lib ws2_32.lib ../../isc/win32/debug/libisc.lib ../../../../openssl-0.9.8h/out32dll/libeay32.lib /nologo /dll /map /debug /machine:I386 /out:"../../../Build/Debug/libdns.dll" /pdbtype:sept
+# ADD LINK32 user32.lib advapi32.lib ws2_32.lib ../../isc/win32/debug/libisc.lib ../../../../openssl-0.9.8l/out32dll/libeay32.lib /nologo /dll /map /debug /machine:I386 /out:"../../../Build/Debug/libdns.dll" /pdbtype:sept
 
 !ENDIF 
 
@@ -96,6 +96,10 @@ LINK32=link.exe
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=..\include\dns\acache.h
+# End Source File
 # Begin Source File
 
 SOURCE=..\include\dns\acl.h
@@ -123,6 +127,10 @@ SOURCE=..\include\dns\callbacks.h
 # Begin Source File
 
 SOURCE=..\include\dns\cert.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\dns\clientinfo.h
 # End Source File
 # Begin Source File
 
@@ -154,6 +162,14 @@ SOURCE=..\include\dns\dispatch.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\dns\dlz.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\dns\dns64.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\dns\dnssec.h
 # End Source File
 # Begin Source File
@@ -182,7 +198,15 @@ SOURCE=..\include\dns\forward.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\dns\iptable.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\dns\journal.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\dns\keydata.h
 # End Source File
 # Begin Source File
 
@@ -234,6 +258,10 @@ SOURCE=..\include\dns\nsec.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\dns\nsec3.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\dns\order.h
 # End Source File
 # Begin Source File
@@ -243,6 +271,10 @@ SOURCE=..\include\dns\peer.h
 # Begin Source File
 
 SOURCE=..\include\dns\portlist.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\dns\private.h
 # End Source File
 # Begin Source File
 
@@ -310,7 +342,19 @@ SOURCE=..\include\dns\rootns.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\dns\rpz.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\dns\rriterator.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\dns\sdb.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\dns\sdlz.h
 # End Source File
 # Begin Source File
 
@@ -362,6 +406,10 @@ SOURCE=..\include\dns\types.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\dns\update.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\dns\validator.h
 # End Source File
 # Begin Source File
@@ -398,6 +446,10 @@ SOURCE=..\include\dns\zt.h
 # PROP Default_Filter "c"
 # Begin Source File
 
+SOURCE=..\acache.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\acl.c
 # End Source File
 # Begin Source File
@@ -415,6 +467,10 @@ SOURCE=..\cache.c
 # Begin Source File
 
 SOURCE=..\callbacks.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\clientinfo.c
 # End Source File
 # Begin Source File
 
@@ -442,7 +498,15 @@ SOURCE=..\dispatch.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\dlz.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\DLLMain.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\dns64.c
 # End Source File
 # Begin Source File
 
@@ -458,7 +522,15 @@ SOURCE=..\forward.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\iptable.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\journal.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\keydata.c
 # End Source File
 # Begin Source File
 
@@ -502,6 +574,10 @@ SOURCE=..\nsec.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\nsec3.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\order.c
 # End Source File
 # Begin Source File
@@ -511,6 +587,10 @@ SOURCE=..\peer.c
 # Begin Source File
 
 SOURCE=..\portlist.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\private.c
 # End Source File
 # Begin Source File
 
@@ -566,6 +646,14 @@ SOURCE=..\rootns.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\rpz.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\rriterator.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\sdb.c
 # End Source File
 # Begin Source File
@@ -574,7 +662,15 @@ SOURCE=..\soa.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\sdlz.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\ssu.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\ssu_external.c
 # End Source File
 # Begin Source File
 
@@ -603,6 +699,10 @@ SOURCE=..\tsig.c
 # Begin Source File
 
 SOURCE=..\ttl.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\update.c
 # End Source File
 # Begin Source File
 
@@ -662,6 +762,10 @@ SOURCE=..\gssapictx.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\spnego.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\hmac_link.c
 # End Source File
 # Begin Source File
@@ -679,6 +783,10 @@ SOURCE=..\openssldh_link.c
 # Begin Source File
 
 SOURCE=..\openssldsa_link.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\opensslgost_link.c
 # End Source File
 # Begin Source File
 

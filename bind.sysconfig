@@ -1,0 +1,3 @@
+# ISC named startup options
+# Use -4 for ipv4 only behaviour. See named(8) for details.
+EXTRAOPTIONS=""

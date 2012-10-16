@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2006-2008  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2003  Internet Software Consortium.
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: request.c,v 1.64.2.1.10.15 2008/07/22 04:00:37 marka Exp $ */
+/* $Id$ */
+
+/*! \file */
 
 #include <config.h>
 
@@ -91,10 +93,10 @@ struct dns_request {
 
 #define DNS_REQUEST_F_CONNECTING 0x0001
 #define DNS_REQUEST_F_SENDING 0x0002
-#define DNS_REQUEST_F_CANCELED 0x0004	/* ctlevent received, or otherwise
+#define DNS_REQUEST_F_CANCELED 0x0004	/*%< ctlevent received, or otherwise
 					   synchronously canceled */
-#define DNS_REQUEST_F_TIMEDOUT 0x0008	/* cancelled due to a timeout */
-#define DNS_REQUEST_F_TCP 0x0010	/* This request used TCP */
+#define DNS_REQUEST_F_TIMEDOUT 0x0008	/*%< canceled due to a timeout */
+#define DNS_REQUEST_F_TCP 0x0010	/*%< This request used TCP */
 #define DNS_REQUEST_CANCELED(r) \
 	(((r)->flags & DNS_REQUEST_F_CANCELED) != 0)
 #define DNS_REQUEST_CONNECTING(r) \
@@ -195,7 +197,7 @@ dns_requestmgr_create(isc_mem_t *mctx,
 		dns_dispatch_attach(dispatchv6, &requestmgr->dispatchv6);
 	requestmgr->mctx = NULL;
 	isc_mem_attach(mctx, &requestmgr->mctx);
-	requestmgr->eref = 1;	/* implict attach */
+	requestmgr->eref = 1;	/* implicit attach */
 	requestmgr->iref = 0;
 	ISC_LIST_INIT(requestmgr->whenshutdown);
 	ISC_LIST_INIT(requestmgr->requests);
@@ -426,12 +428,10 @@ req_send(dns_request_t *request, isc_task_t *task, isc_sockaddr_t *address) {
 	isc_region_t r;
 	isc_socket_t *socket;
 	isc_result_t result;
-	unsigned int dispattr;
 
 	req_log(ISC_LOG_DEBUG(3), "req_send: request %p", request);
 
 	REQUIRE(VALID_REQUEST(request));
-	dispattr = dns_dispatch_getattributes(request->dispatch);
 	socket = req_getsocket(request);
 	isc_buffer_usedregion(request->query, &r);
 	/*
@@ -447,7 +447,8 @@ req_send(dns_request_t *request, isc_task_t *task, isc_sockaddr_t *address) {
 }
 
 static isc_result_t
-new_request(isc_mem_t *mctx, dns_request_t **requestp) {
+new_request(isc_mem_t *mctx, dns_request_t **requestp)
+{
 	dns_request_t *request;
 
 	request = isc_mem_get(mctx, sizeof(*request));
@@ -1056,6 +1057,9 @@ req_render(dns_message_t *message, isc_buffer_t **bufferp,
 		return (result);
 	cleanup_cctx = ISC_TRUE;
 
+	if ((options & DNS_REQUESTOPT_CASE) != 0)
+		dns_compress_setsensitive(&cctx, ISC_TRUE);
+
 	/*
 	 * Render message.
 	 */
@@ -1129,9 +1133,7 @@ req_render(dns_message_t *message, isc_buffer_t **bufferp,
  */
 static void
 send_if_done(dns_request_t *request, isc_result_t result) {
-	if (!DNS_REQUEST_CONNECTING(request) &&
-	    !DNS_REQUEST_SENDING(request) &&
-	    !request->canceling)
+	if (request->event != NULL && !request->canceling)
 		req_sendevent(request, result);
 }
 
@@ -1315,8 +1317,8 @@ req_senddone(isc_task_t *task, isc_event_t *event) {
 		else
 			send_if_done(request, ISC_R_CANCELED);
 	} else if (sevent->result != ISC_R_SUCCESS) {
-			req_cancel(request);
-			send_if_done(request, ISC_R_CANCELED);
+		req_cancel(request);
+		send_if_done(request, ISC_R_CANCELED);
 	}
 	UNLOCK(&request->requestmgr->locks[request->hash]);
 

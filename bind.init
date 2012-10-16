@@ -17,6 +17,9 @@ WITHOUT_RC_COMPAT=1
 # Source networking configuration.
 SourceIfNotEmpty /etc/sysconfig/network
 
+# Source config
+SourceIfNotEmpty /etc/sysconfig/bind
+
 LOCKFILE=/var/lock/subsys/bind
 RETVAL=0
 
@@ -44,7 +47,7 @@ start()
 {
 	is_yes "$NETWORKING" || return 0
 	rndc_keygen || return 1
-	start_daemon --lockfile "$LOCKFILE" --expect-user named -- named
+	start_daemon --lockfile "$LOCKFILE" --expect-user named -- named $EXTRAOPTIONS
 	RETVAL=$?
 	return $RETVAL
 }

@@ -1,0 +1,83 @@
+From 0 Mon Sep 17 00:00:00 2001
+From: "Fr. Br. George" <george@altlinux.org>
+Date: Mon, 15 Oct 2012 15:44:28 +0400
+Subject: [PATCH 08] bind-9.8.3-alt-owl-rndc-confgen
+
+---
+ bind/bin/confgen/rndc-confgen.c |   20 ++++++++++++++++----
+ 1 file changed, 16 insertions(+), 4 deletions(-)
+
+diff --git a/bind/bin/confgen/rndc-confgen.c b/bind/bin/confgen/rndc-confgen.c
+index a9831b1..b9c90a0 100644
+--- a/bind/bin/confgen/rndc-confgen.c
++++ b/bind/bin/confgen/rndc-confgen.c
+@@ -57,7 +57,7 @@
+ #include "util.h"
+ #include "keygen.h"
+ 
+-#define DEFAULT_KEYLENGTH	128		/*% Bits. */
++#define DEFAULT_KEYLENGTH	256		/* Bits. */
+ #define DEFAULT_KEYNAME		"rndc-key"
+ #define DEFAULT_SERVER		"127.0.0.1"
+ #define DEFAULT_PORT		953
+@@ -77,8 +77,9 @@ usage(int status) {
+ 
+ 	fprintf(stderr, "\
+ Usage:\n\
+- %s [-a] [-b bits] [-c keyfile] [-k keyname] [-p port] [-r randomfile] \
++ %s [-A|-a] [-b bits] [-c keyfile] [-k keyname] [-p port] [-r randomfile] \
+ [-s addr] [-t chrootdir] [-u user]\n\
++  -A:		 generate just the key clause and output it to stdout\n\
+   -a:		 generate just the key clause and write it to keyfile (%s)\n\
+   -b bits:	 from 1 through 512, default %d; total length of the secret\n\
+   -c keyfile:	 specify an alternate key file (requires -a)\n\
+@@ -114,6 +115,7 @@ main(int argc, char **argv) {
+ 	char *chrootdir = NULL;
+ 	char *user = NULL;
+ 	isc_boolean_t keyonly = ISC_FALSE;
++	isc_boolean_t gen_key_only = ISC_FALSE;
+ 	int len;
+ 
+ 	keydef = keyfile = RNDC_KEYFILE;
+@@ -131,11 +133,14 @@ main(int argc, char **argv) {
+ 	isc_commandline_errprint = ISC_FALSE;
+ 
+ 	while ((ch = isc_commandline_parse(argc, argv,
+-					   "ab:c:hk:Mmp:r:s:t:u:Vy")) != -1) {
++					   "Aab:c:hk:Mmp:r:s:t:u:Vy")) != -1) {
+ 		switch (ch) {
+ 		case 'a':
+ 			keyonly = ISC_TRUE;
+ 			break;
++		case 'A':
++			gen_key_only = ISC_TRUE;
++			break;
+ 		case 'b':
+ 			keysize = strtol(isc_commandline_argument, &p, 10);
+ 			if (*p != '\0' || keysize < 0)
+@@ -198,6 +203,9 @@ main(int argc, char **argv) {
+ 		}
+ 	}
+ 
++	if (keyonly && gen_key_only)
++		fatal("-a and -A are mutually exclusive options");
++
+ 	argc -= isc_commandline_index;
+ 	argv += isc_commandline_index;
+ 	POST(argv);
+@@ -210,7 +218,11 @@ main(int argc, char **argv) {
+ 
+ 	generate_key(mctx, randomfile, alg, keysize, &key_txtbuffer);
+ 
+-	if (keyonly) {
++	if (gen_key_only) {
++		printf("%.*s\n",
++		       (int)isc_buffer_usedlength(&key_txtbuffer),
++		       (char *)isc_buffer_base(&key_txtbuffer));
++	} else if (keyonly) {
+ 		write_key_file(keyfile, chrootdir == NULL ? user : NULL,
+ 			       keyname, &key_txtbuffer, alg);
+ 
+-- 
+1.7.9.7
+

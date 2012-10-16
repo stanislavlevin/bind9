@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,10 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: t_api.h,v 1.14.206.2 2004/06/21 06:58:02 marka Exp $ */
+/* $Id: t_api.h,v 1.24 2010/06/08 23:50:24 tbox Exp $ */
 
 #ifndef TESTS_T_API_H
 #define TESTS_T_API_H 1
+
+/*! \file tests/t_api.h */
 
 #include <stdio.h>
 
@@ -38,6 +40,7 @@
 #define	T_UNSUPPORTED	0x4
 #define	T_UNTESTED	0x5
 #define	T_THREADONLY	0x6
+#define	T_PKCS11ONLY	0x7
 
 /*
  *

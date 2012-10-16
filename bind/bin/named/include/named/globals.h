@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2006, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,18 +15,23 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: globals.h,v 1.59.68.9 2008/10/24 01:42:46 tbox Exp $ */
+/* $Id: globals.h,v 1.92 2011/11/09 18:44:04 each Exp $ */
 
 #ifndef NAMED_GLOBALS_H
 #define NAMED_GLOBALS_H 1
+
+/*! \file */
 
 #include <isc/rwlock.h>
 #include <isc/log.h>
 #include <isc/net.h>
 
+#include <isccfg/aclconf.h>
 #include <isccfg/cfg.h>
 
 #include <dns/zone.h>
+
+#include <dst/dst.h>
 
 #include <named/types.h>
 
@@ -40,8 +45,13 @@
 #define INIT(v)
 #endif
 
+#ifndef NS_RUN_PID_DIR
+#define NS_RUN_PID_DIR 1
+#endif
+
 EXTERN isc_mem_t *		ns_g_mctx		INIT(NULL);
 EXTERN unsigned int		ns_g_cpus		INIT(0);
+EXTERN unsigned int		ns_g_udpdisp		INIT(0);
 EXTERN isc_taskmgr_t *		ns_g_taskmgr		INIT(NULL);
 EXTERN dns_dispatchmgr_t *	ns_g_dispatchmgr	INIT(NULL);
 EXTERN isc_entropy_t *		ns_g_entropy		INIT(NULL);
@@ -57,6 +67,7 @@ EXTERN isc_timermgr_t *		ns_g_timermgr		INIT(NULL);
 EXTERN isc_socketmgr_t *	ns_g_socketmgr		INIT(NULL);
 EXTERN cfg_parser_t *		ns_g_parser		INIT(NULL);
 EXTERN const char *		ns_g_version		INIT(VERSION);
+EXTERN const char *		ns_g_configargs		INIT(CONFIGARGS);
 EXTERN in_port_t		ns_g_port		INIT(0);
 EXTERN in_port_t		lwresd_g_listenport	INIT(0);
 
@@ -79,8 +90,13 @@ EXTERN cfg_obj_t *		ns_g_config		INIT(NULL);
 EXTERN const cfg_obj_t *	ns_g_defaults		INIT(NULL);
 EXTERN const char *		ns_g_conffile		INIT(NS_SYSCONFDIR
 							     "/named.conf");
+EXTERN cfg_obj_t *		ns_g_bindkeys		INIT(NULL);
 EXTERN const char *		ns_g_keyfile		INIT(NS_SYSCONFDIR
 							     "/rndc.key");
+
+EXTERN dns_tsigkey_t *		ns_g_sessionkey		INIT(NULL);
+EXTERN dns_name_t		ns_g_sessionkeyname;
+
 EXTERN const char *		lwresd_g_conffile	INIT(NS_SYSCONFDIR
 							     "/lwresd.conf");
 EXTERN const char *		lwresd_g_resolvconffile	INIT("/etc"
@@ -88,6 +104,7 @@ EXTERN const char *		lwresd_g_resolvconffile	INIT("/etc"
 EXTERN isc_boolean_t		ns_g_conffileset	INIT(ISC_FALSE);
 EXTERN isc_boolean_t		lwresd_g_useresolvconf	INIT(ISC_FALSE);
 EXTERN isc_uint16_t		ns_g_udpsize		INIT(4096);
+EXTERN cfg_aclconfctx_t *	ns_g_aclconfctx		INIT(NULL);
 
 /*
  * Initial resource limits.
@@ -105,13 +122,38 @@ EXTERN const char *		ns_g_chrootdir		INIT(NULL);
 EXTERN isc_boolean_t		ns_g_foreground		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_logstderr		INIT(ISC_FALSE);
 
+EXTERN const char *		ns_g_defaultsessionkeyfile
+					INIT(NS_LOCALSTATEDIR "/run/named/"
+							      "session.key");
+
+#if NS_RUN_PID_DIR
+EXTERN const char *		ns_g_defaultpidfile 	INIT(NS_LOCALSTATEDIR
+							     "/run/named/"
+							     "named.pid");
+EXTERN const char *		lwresd_g_defaultpidfile INIT(NS_LOCALSTATEDIR
+							     "/run/lwresd/"
+							     "lwresd.pid");
+#else
 EXTERN const char *		ns_g_defaultpidfile 	INIT(NS_LOCALSTATEDIR
 							     "/run/named.pid");
 EXTERN const char *		lwresd_g_defaultpidfile INIT(NS_LOCALSTATEDIR
-							    "/run/lwresd.pid");
+							     "/run/lwresd.pid");
+#endif
+
 EXTERN const char *		ns_g_username		INIT(NULL);
 
+#ifdef USE_PKCS11
+EXTERN const char *		ns_g_engine		INIT("pkcs11");
+#else
+EXTERN const char *		ns_g_engine		INIT(NULL);
+#endif
+
 EXTERN int			ns_g_listen		INIT(3);
+EXTERN isc_time_t		ns_g_boottime;
+EXTERN isc_boolean_t		ns_g_memstatistics	INIT(ISC_FALSE);
+EXTERN isc_boolean_t		ns_g_clienttest		INIT(ISC_FALSE);
+EXTERN isc_boolean_t		ns_g_nosoa		INIT(ISC_FALSE);
+EXTERN isc_boolean_t		ns_g_noaa		INIT(ISC_FALSE);
 
 #undef EXTERN
 #undef INIT

@@ -1,0 +1,179 @@
+From 0 Mon Sep 17 00:00:00 2001
+From: "Fr. Br. George" <george@altlinux.org>
+Date: Mon, 15 Oct 2012 15:44:28 +0400
+Subject: [PATCH 07] bind-9.8.3-alt-man
+
+---
+ bind/bin/check/named-checkconf.8  |    3 ++-
+ bind/bin/check/named-checkzone.8  |    5 +++--
+ bind/bin/confgen/rndc-confgen.8   |    3 ++-
+ bind/bin/dnssec/dnssec-keygen.8   |    3 ++-
+ bind/bin/dnssec/dnssec-signzone.8 |    3 ++-
+ bind/bin/named/named.8            |   15 ++++++++++++++-
+ bind/bin/named/named.conf.5       |    3 ++-
+ bind/bin/rndc/rndc.8              |    8 ++++++--
+ bind/bin/rndc/rndc.conf.5         |    3 ++-
+ 9 files changed, 35 insertions(+), 11 deletions(-)
+
+diff --git a/bind/bin/check/named-checkconf.8 b/bind/bin/check/named-checkconf.8
+index 2adaae0..ef78cab 100644
+--- a/bind/bin/check/named-checkconf.8
++++ b/bind/bin/check/named-checkconf.8
+@@ -109,7 +109,8 @@ returns an exit status of 1 if errors were detected and 0 otherwise.
+ .PP
+ \fBnamed\fR(8),
+ \fBnamed\-checkzone\fR(8),
+-BIND 9 Administrator Reference Manual.
++BIND 9 Administrator Reference Manual
++(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
+ .SH "AUTHOR"
+ .PP
+ Internet Systems Consortium
+diff --git a/bind/bin/check/named-checkzone.8 b/bind/bin/check/named-checkzone.8
+index 664f6d2..ce36f52 100644
+--- a/bind/bin/check/named-checkzone.8
++++ b/bind/bin/check/named-checkzone.8
+@@ -288,8 +288,9 @@ returns an exit status of 1 if errors were detected and 0 otherwise.
+ .PP
+ \fBnamed\fR(8),
+ \fBnamed\-checkconf\fR(8),
+-RFC 1035,
+-BIND 9 Administrator Reference Manual.
++BIND 9 Administrator Reference Manual
++(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR),
++RFC 1035.
+ .SH "AUTHOR"
+ .PP
+ Internet Systems Consortium
+diff --git a/bind/bin/confgen/rndc-confgen.8 b/bind/bin/confgen/rndc-confgen.8
+index faffdac..e0e6ac7 100644
+--- a/bind/bin/confgen/rndc-confgen.8
++++ b/bind/bin/confgen/rndc-confgen.8
+@@ -200,7 +200,8 @@ statements to be manually inserted into
+ \fBrndc\fR(8),
+ \fBrndc.conf\fR(5),
+ \fBnamed\fR(8),
+-BIND 9 Administrator Reference Manual.
++BIND 9 Administrator Reference Manual
++(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
+ .SH "AUTHOR"
+ .PP
+ Internet Systems Consortium
+diff --git a/bind/bin/dnssec/dnssec-keygen.8 b/bind/bin/dnssec/dnssec-keygen.8
+index 9cfc05f..41e86a7 100644
+--- a/bind/bin/dnssec/dnssec-keygen.8
++++ b/bind/bin/dnssec/dnssec-keygen.8
+@@ -299,7 +299,8 @@ and
+ .SH "SEE ALSO"
+ .PP
+ \fBdnssec\-signzone\fR(8),
+-BIND 9 Administrator Reference Manual,
++BIND 9 Administrator Reference Manual
++(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR),
+ RFC 2539,
+ RFC 2845,
+ RFC 4034.
+diff --git a/bind/bin/dnssec/dnssec-signzone.8 b/bind/bin/dnssec/dnssec-signzone.8
+index c917495..13e1fa7 100644
+--- a/bind/bin/dnssec/dnssec-signzone.8
++++ b/bind/bin/dnssec/dnssec-signzone.8
+@@ -422,7 +422,8 @@ db.example.com.signed
+ .SH "SEE ALSO"
+ .PP
+ \fBdnssec\-keygen\fR(8),
+-BIND 9 Administrator Reference Manual,
++BIND 9 Administrator Reference Manual
++(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR),
+ RFC 4033.
+ .SH "AUTHOR"
+ .PP
+diff --git a/bind/bin/named/named.8 b/bind/bin/named/named.8
+index 956b0cd..c71cbb1 100644
+--- a/bind/bin/named/named.8
++++ b/bind/bin/named/named.8
+@@ -254,6 +254,18 @@ inherits the
+ should be set explicitly in the script used to start the
+ \fBnamed\fR
+ process.
++.PP
++By default, \fBnamed\fR is configured to run in readonly chroot jail
++\fI@ROOT@\fR with no extra privileges.
++.PP
++To configure \fBnamed\fR as master or caching-only DNS, you don't need
++to create files and/or directories writable by \fBnamed\fR.
++.PP
++To configure \fBnamed\fR as slave DNS in chroot jail,
++use \fBcontrol\fR(8) for the \fBbind\-slave\fR facility.
++.PP
++To debug \fBnamed\fR with \fBrndc\fR(8),
++use \fBcontrol\fR(8) for the \fBbind\-debug\fR facility.
+ .SH "FILES"
+ .PP
+ \fI/etc/named.conf\fR
+@@ -275,7 +287,8 @@ RFC 1035,
+ \fBrndc\fR(8),
+ \fBlwresd\fR(8),
+ \fBnamed.conf\fR(5),
+-BIND 9 Administrator Reference Manual.
++BIND 9 Administrator Reference Manual
++(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
+ .SH "AUTHOR"
+ .PP
+ Internet Systems Consortium
+diff --git a/bind/bin/named/named.conf.5 b/bind/bin/named/named.conf.5
+index 747050b..373a16f 100644
+--- a/bind/bin/named/named.conf.5
++++ b/bind/bin/named/named.conf.5
+@@ -594,7 +594,8 @@ zone \fIstring\fR \fIoptional_class\fR {
+ \fBnamed\fR(8),
+ \fBnamed\-checkconf\fR(8),
+ \fBrndc\fR(8),
+-BIND 9 Administrator Reference Manual.
++BIND 9 Administrator Reference Manual
++(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
+ .SH "COPYRIGHT"
+ Copyright \(co 2004\-2011 Internet Systems Consortium, Inc. ("ISC")
+ .br
+diff --git a/bind/bin/rndc/rndc.8 b/bind/bin/rndc/rndc.8
+index 7197ed0..937c568 100644
+--- a/bind/bin/rndc/rndc.8
++++ b/bind/bin/rndc/rndc.8
+@@ -118,6 +118,10 @@ For the complete set of commands supported by
+ \fBrndc\fR, see the BIND 9 Administrator Reference Manual or run
+ \fBrndc\fR
+ without arguments to see its help message.
++.PP
++To debug \fBnamed\fR with \fBrndc\fR(8),
++use \fBcontrol\fR(8) for the \fBbind\-debug\fR facility.
++.PP
+ .SH "LIMITATIONS"
+ .PP
+ \fBrndc\fR
+@@ -136,8 +140,8 @@ Several error messages could be clearer.
+ \fBrndc\-confgen\fR(8),
+ \fBnamed\fR(8),
+ \fBnamed.conf\fR(5),
+-\fBndc\fR(8),
+-BIND 9 Administrator Reference Manual.
++BIND 9 Administrator Reference Manual
++(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
+ .SH "AUTHOR"
+ .PP
+ Internet Systems Consortium
+diff --git a/bind/bin/rndc/rndc.conf.5 b/bind/bin/rndc/rndc.conf.5
+index 694a481..e65d28a 100644
+--- a/bind/bin/rndc/rndc.conf.5
++++ b/bind/bin/rndc/rndc.conf.5
+@@ -203,7 +203,8 @@ statement in the BIND 9 Administrator Reference Manual for details.
+ \fBrndc\fR(8),
+ \fBrndc\-confgen\fR(8),
+ \fBmmencode\fR(1),
+-BIND 9 Administrator Reference Manual.
++BIND 9 Administrator Reference Manual
++(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
+ .SH "AUTHOR"
+ .PP
+ Internet Systems Consortium
+-- 
+1.7.9.7
+

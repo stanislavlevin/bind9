@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,10 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatalist_p.h,v 1.3.206.2 2004/03/08 02:07:56 marka Exp $ */
+/* $Id: rdatalist_p.h,v 1.11 2008/09/25 04:02:38 tbox Exp $ */
 
 #ifndef DNS_RDATALIST_P_H
 #define DNS_RDATALIST_P_H
+
+/*! \file */
 
 #include <isc/result.h>
 #include <dns/types.h>
@@ -48,7 +50,14 @@ isc__rdatalist_addnoqname(dns_rdataset_t *rdataset, dns_name_t *name);
 
 isc_result_t
 isc__rdatalist_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
-			  dns_rdataset_t *nsec, dns_rdataset_t *nsecsig);
+			  dns_rdataset_t *neg, dns_rdataset_t *negsig);
+
+isc_result_t
+isc__rdatalist_addclosest(dns_rdataset_t *rdataset, dns_name_t *name);
+
+isc_result_t
+isc__rdatalist_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
+			  dns_rdataset_t *neg, dns_rdataset_t *negsig);
 
 ISC_LANG_ENDDECLS
 

@@ -1,0 +1,32 @@
+How to make changes to the package.
+
+You may change all contributed files as you want just in build branch.
+The only two exceptions are precious upstream sources and what patches them,
+i. e. "bind" directory and "*.patch" files.
+
+Do not touch them manually until you're knowing what you're doing.
+You may update upstream sources to more recent upstream sources,
+e. g. with gear-update command. For patches modification, create a
+work branch first.
+
+All the patches are unified by generating with git format-patch,
+so the working branch can be easily reconstructed back to upstream branch with
+patches on the top (with git am).
+
+To make 'work' branch use
+ $ ./mkwork
+(you need to delete it first if it exists).
+
+This zeroes patchfiles' content and applies all the patches one by one
+as git commits.
+
+Then hack this branch as you want, not forgetting to name patches
+at the first line of commt message (see existing ones for example).
+You also can build (test version of) a package as well.
+
+To replace an old patchset in 'master' branch with a new one, use
+ $ ./mkpatch
+
+This reconstructs all the patchfiles (including edited and new ones)
+back to master branch. You may commit the result (or commit --amend in case of
+cosmetic hacks).

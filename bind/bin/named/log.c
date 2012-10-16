@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.33.2.1.10.9 2007/08/28 07:19:08 tbox Exp $ */
+/* $Id: log.c,v 1.49 2009/01/07 01:46:40 jinmei Exp $ */
+
+/*! \file */
 
 #include <config.h>
 
@@ -29,9 +31,10 @@
 #define ISC_FACILITY LOG_DAEMON
 #endif
 
-/*
+/*%
  * When adding a new category, be sure to add the appropriate
- * #define to <named/log.h>.
+ * \#define to <named/log.h> and to update the list in
+ * bin/check/check-tool.c.
  */
 static isc_logcategory_t categories[] = {
 	{ "",		 		0 },
@@ -41,12 +44,13 @@ static isc_logcategory_t categories[] = {
 	{ "queries",	 		0 },
 	{ "unmatched",	 		0 },
 	{ "update-security",		0 },
+	{ "query-errors",		0 },
 	{ NULL, 			0 }
 };
 
-/*
+/*%
  * When adding a new module, be sure to add the appropriate
- * #define to <dns/log.h>.
+ * \#define to <dns/log.h>.
  */
 static isc_logmodule_t modules[] = {
 	{ "main",	 		0 },
@@ -78,6 +82,9 @@ ns_log_init(isc_boolean_t safe) {
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
+	/*
+	 * named-checktool.c:setup_logging() needs to be kept in sync.
+	 */
 	isc_log_registercategories(ns_g_lctx, ns_g_categories);
 	isc_log_registermodules(ns_g_lctx, ns_g_modules);
 	isc_log_setcontext(ns_g_lctx);
@@ -114,7 +121,7 @@ ns_log_setdefaultchannels(isc_logconfig_t *lcfg) {
 	/*
 	 * By default, the logging library makes "default_debug" log to
 	 * stderr.  In BIND, we want to override this and log to named.run
-	 * instead, unless the the -g option was given.
+	 * instead, unless the -g option was given.
 	 */
 	if (! ns_g_logstderr) {
 		destination.file.stream = NULL;

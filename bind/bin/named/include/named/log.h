@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,10 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.h,v 1.19.12.6 2007/08/28 07:19:08 tbox Exp $ */
+/* $Id: log.h,v 1.27 2009/01/07 23:47:46 tbox Exp $ */
 
 #ifndef NAMED_LOG_H
 #define NAMED_LOG_H 1
+
+/*! \file */
 
 #include <isc/log.h>
 #include <isc/types.h>
@@ -34,6 +36,7 @@
 #define NS_LOGCATEGORY_QUERIES		(&ns_g_categories[4])
 #define NS_LOGCATEGORY_UNMATCHED	(&ns_g_categories[5])
 #define NS_LOGCATEGORY_UPDATE_SECURITY	(&ns_g_categories[6])
+#define NS_LOGCATEGORY_QUERY_EERRORS	(&ns_g_categories[7])
 
 /*
  * Backwards compatibility.
@@ -54,7 +57,7 @@
 
 isc_result_t
 ns_log_init(isc_boolean_t safe);
-/*
+/*%
  * Initialize the logging system and set up an initial default
  * logging default configuration that will be used until the
  * config file has been read.
@@ -66,7 +69,7 @@ ns_log_init(isc_boolean_t safe);
 
 isc_result_t
 ns_log_setdefaultchannels(isc_logconfig_t *lcfg);
-/*
+/*%
  * Set up logging channels according to the named defaults, which
  * may differ from the logging library defaults.  Currently,
  * this just means setting up default_debug.
@@ -74,19 +77,19 @@ ns_log_setdefaultchannels(isc_logconfig_t *lcfg);
 
 isc_result_t
 ns_log_setsafechannels(isc_logconfig_t *lcfg);
-/*
+/*%
  * Like ns_log_setdefaultchannels(), but omits any logging to files.
  */
 
 isc_result_t
 ns_log_setdefaultcategory(isc_logconfig_t *lcfg);
-/*
+/*%
  * Set up "category default" to go to the right places.
  */
 
 isc_result_t
 ns_log_setunmatchedcategory(isc_logconfig_t *lcfg);
-/*
+/*%
  * Set up "category unmatched" to go to the right places.
  */
 

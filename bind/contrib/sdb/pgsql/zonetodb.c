@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: zonetodb.c,v 1.12.4.2.8.9 2007/08/28 07:19:11 tbox Exp $ */
+/* $Id: zonetodb.c,v 1.23 2009/09/02 23:48:01 tbox Exp $ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -102,7 +102,7 @@ addrdata(dns_name_t *name, dns_ttl_t ttl, dns_rdata_t *rdata) {
 	check_result(result, "dns_name_totext");
 	namearray[isc_buffer_usedlength(&b)] = 0;
 	quotestring(namearray, canonnamearray);
-	
+
 	isc_buffer_init(&b, typearray, sizeof(typearray) - 1);
 	result = dns_rdatatype_totext(rdata->type, &b);
 	check_result(result, "dns_rdatatype_totext");
@@ -114,7 +114,7 @@ addrdata(dns_name_t *name, dns_ttl_t ttl, dns_rdata_t *rdata) {
 	check_result(result, "dns_rdata_totext");
 	dataarray[isc_buffer_usedlength(&b)] = 0;
 	quotestring(dataarray, canondataarray);
-	
+
 	snprintf(str, sizeof(str),
 		 "INSERT INTO %s (NAME, TTL, RDTYPE, RDATA)"
 		 " VALUES ('%s', %d, '%s', '%s')",
@@ -165,16 +165,16 @@ main(int argc, char **argv) {
 	check_result(result, "isc_mem_create");
 
 	result = isc_entropy_create(mctx, &ectx);
-	result_check (result, "isc_entropy_create");
+	check_result(result, "isc_entropy_create");
 
 	result = isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE);
-	check_result (result, "isc_hash_create");
+	check_result(result, "isc_hash_create");
 
 	isc_buffer_init(&b, porigin, strlen(porigin));
 	isc_buffer_add(&b, strlen(porigin));
 	dns_fixedname_init(&forigin);
 	origin = dns_fixedname_name(&forigin);
-	result = dns_name_fromtext(origin, &b, dns_rootname, ISC_FALSE, NULL);
+	result = dns_name_fromtext(origin, &b, dns_rootname, 0, NULL);
 	check_result(result, "dns_name_fromtext");
 
 	db = NULL;
@@ -230,7 +230,7 @@ main(int argc, char **argv) {
 	PQclear(res);
 
 	dbiter = NULL;
-	result = dns_db_createiterator(db, ISC_FALSE, &dbiter);
+	result = dns_db_createiterator(db, 0, &dbiter);
 	check_result(result, "dns_db_createiterator()");
 
 	result = dns_dbiterator_first(dbiter);

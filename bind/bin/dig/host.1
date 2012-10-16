@@ -1,7 +1,7 @@
-.\" Copyright (C) 2004, 2005, 2007, 2008 Internet Systems Consortium, Inc. ("ISC")
-.\" Copyright (C) 2000-2003 Internet Software Consortium.
+.\" Copyright (C) 2004, 2005, 2007-2009 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2000-2002 Internet Software Consortium.
 .\" 
-.\" Permission to use, copy, modify, and distribute this software for any
+.\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\" 
@@ -13,7 +13,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $Id: host.1,v 1.11.2.1.4.13 2008/04/29 01:21:29 tbox Exp $
+.\" $Id$
 .\"
 .hy 0
 .ad l
@@ -33,7 +33,7 @@
 host \- DNS lookup utility
 .SH "SYNOPSIS"
 .HP 5
-\fBhost\fR [\fB\-aCdlnrTwv\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-N\ \fR\fB\fIndots\fR\fR] [\fB\-R\ \fR\fB\fInumber\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-W\ \fR\fB\fIwait\fR\fR] [\fB\-4\fR] [\fB\-6\fR] {name} [server]
+\fBhost\fR [\fB\-aCdlnrsTwv\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-N\ \fR\fB\fIndots\fR\fR] [\fB\-R\ \fR\fB\fInumber\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-W\ \fR\fB\fIwait\fR\fR] [\fB\-m\ \fR\fB\fIflag\fR\fR] [\fB\-4\fR] [\fB\-6\fR] {name} [server]
 .SH "DESCRIPTION"
 .PP
 \fBhost\fR
@@ -132,7 +132,7 @@ option enables
 \fBhost\fR
 to mimic the behavior of a name server by making non\-recursive queries and expecting to receive answers to those queries that are usually referrals to other name servers.
 .PP
-By default
+By default,
 \fBhost\fR
 uses UDP when making queries. The
 \fB\-T\fR
@@ -154,7 +154,7 @@ option is used to select the query type.
 \fItype\fR
 can be any recognized query type: CNAME, NS, SOA, SIG, KEY, AXFR, etc. When no query type is specified,
 \fBhost\fR
-automatically selects an appropriate query type. By default it looks for A, AAAA, and MX records, but if the
+automatically selects an appropriate query type. By default, it looks for A, AAAA, and MX records, but if the
 \fB\-C\fR
 option was given, queries will be made for SOA records, and if
 \fIname\fR
@@ -179,6 +179,32 @@ is less than one, the wait interval is set to one second. When the
 option is used,
 \fBhost\fR
 will effectively wait forever for a reply. The time to wait for a response will be set to the number of seconds given by the hardware's maximum value for an integer quantity.
+.PP
+The
+\fB\-s\fR
+option tells
+\fBhost\fR
+\fInot\fR
+to send the query to the next nameserver if any server responds with a SERVFAIL response, which is the reverse of normal stub resolver behavior.
+.PP
+The
+\fB\-m\fR
+can be used to set the memory usage debugging flags
+\fIrecord\fR,
+\fIusage\fR
+and
+\fItrace\fR.
+.SH "IDN SUPPORT"
+.PP
+If
+\fBhost\fR
+has been built with IDN (internationalized domain name) support, it can accept and display non\-ASCII domain names.
+\fBhost\fR
+appropriately converts character encoding of domain name before sending a request to DNS server or displaying a reply from the server. If you'd like to turn off the IDN support for some reason, defines the
+\fBIDN_DISABLE\fR
+environment variable. The IDN support is disabled if the variable is set when
+\fBhost\fR
+runs.
 .SH "FILES"
 .PP
 \fI/etc/resolv.conf\fR
@@ -187,7 +213,7 @@ will effectively wait forever for a reply. The time to wait for a response will 
 \fBdig\fR(1),
 \fBnamed\fR(8).
 .SH "COPYRIGHT"
-Copyright \(co 2004, 2005, 2007, 2008 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004, 2005, 2007\-2009 Internet Systems Consortium, Inc. ("ISC")
 .br
-Copyright \(co 2000\-2003 Internet Software Consortium.
+Copyright \(co 2000\-2002 Internet Software Consortium.
 .br

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,8 +15,76 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: context.c,v 1.41.2.1.2.8 2007/08/28 07:19:18 tbox Exp $ */
+/* $Id: context.c,v 1.55 2009/09/02 23:48:03 tbox Exp $ */
 
+/*! \file context.c
+   lwres_context_create() creates a #lwres_context_t structure for use in
+   lightweight resolver operations. It holds a socket and other data
+   needed for communicating with a resolver daemon. The new
+   lwres_context_t is returned through contextp, a pointer to a
+   lwres_context_t pointer. This lwres_context_t pointer must initially
+   be NULL, and is modified to point to the newly created
+   lwres_context_t.
+
+   When the lightweight resolver needs to perform dynamic memory
+   allocation, it will call malloc_function to allocate memory and
+   free_function to free it. If malloc_function and free_function are
+   NULL, memory is allocated using malloc and free. It is not
+   permitted to have a NULL malloc_function and a non-NULL free_function
+   or vice versa. arg is passed as the first parameter to the memory
+   allocation functions. If malloc_function and free_function are NULL,
+   arg is unused and should be passed as NULL.
+
+   Once memory for the structure has been allocated, it is initialized
+   using lwres_conf_init() and returned via *contextp.
+
+   lwres_context_destroy() destroys a #lwres_context_t, closing its
+   socket. contextp is a pointer to a pointer to the context that is to
+   be destroyed. The pointer will be set to NULL when the context has
+   been destroyed.
+
+   The context holds a serial number that is used to identify resolver
+   request packets and associate responses with the corresponding
+   requests. This serial number is controlled using
+   lwres_context_initserial() and lwres_context_nextserial().
+   lwres_context_initserial() sets the serial number for context *ctx to
+   serial. lwres_context_nextserial() increments the serial number and
+   returns the previous value.
+
+   Memory for a lightweight resolver context is allocated and freed using
+   lwres_context_allocmem() and lwres_context_freemem(). These use
+   whatever allocations were defined when the context was created with
+   lwres_context_create(). lwres_context_allocmem() allocates len bytes
+   of memory and if successful returns a pointer to the allocated
+   storage. lwres_context_freemem() frees len bytes of space starting at
+   location mem.
+
+   lwres_context_sendrecv() performs I/O for the context ctx. Data are
+   read and written from the context's socket. It writes data from
+   sendbase -- typically a lightweight resolver query packet -- and waits
+   for a reply which is copied to the receive buffer at recvbase. The
+   number of bytes that were written to this receive buffer is returned
+   in *recvd_len.
+
+\section context_return Return Values
+
+   lwres_context_create() returns #LWRES_R_NOMEMORY if memory for the
+   struct lwres_context could not be allocated, #LWRES_R_SUCCESS
+   otherwise.
+
+   Successful calls to the memory allocator lwres_context_allocmem()
+   return a pointer to the start of the allocated space. It returns NULL
+   if memory could not be allocated.
+
+   #LWRES_R_SUCCESS is returned when lwres_context_sendrecv() completes
+   successfully. #LWRES_R_IOERROR is returned if an I/O error occurs and
+   #LWRES_R_TIMEOUT is returned if lwres_context_sendrecv() times out
+   waiting for a response.
+
+\section context_see See Also
+
+   lwres_conf_init(), malloc, free.
+ */
 #include <config.h>
 
 #include <fcntl.h>
@@ -37,7 +105,7 @@
 #include "context_p.h"
 #include "assert_p.h"
 
-/*
+/*!
  * Some systems define the socket length argument as an int, some as size_t,
  * some as socklen_t.  The last is what the current POSIX standard mandates.
  * This definition is here so it can be portable but easily changed if needed.
@@ -46,7 +114,7 @@
 #define LWRES_SOCKADDR_LEN_T unsigned int
 #endif
 
-/*
+/*!
  * Make a socket nonblocking.
  */
 #ifndef MAKE_NONBLOCKING
@@ -69,9 +137,16 @@ lwres_malloc(void *, size_t);
 static void
 lwres_free(void *, void *, size_t);
 
+/*!
+ * lwres_result_t
+ */
 static lwres_result_t
 context_connect(lwres_context_t *);
 
+/*%
+ * Creates a #lwres_context_t structure for use in
+ *  lightweight resolver operations.
+ */
 lwres_result_t
 lwres_context_create(lwres_context_t **contextp, void *arg,
 		     lwres_malloc_t malloc_function,
@@ -81,7 +156,6 @@ lwres_context_create(lwres_context_t **contextp, void *arg,
 	lwres_context_t *ctx;
 
 	REQUIRE(contextp != NULL && *contextp == NULL);
-	UNUSED(flags);
 
 	/*
 	 * If we were not given anything special to use, use our own
@@ -109,6 +183,17 @@ lwres_context_create(lwres_context_t **contextp, void *arg,
 	ctx->timeout = LWRES_DEFAULT_TIMEOUT;
 	ctx->serial = time(NULL); /* XXXMLG or BEW */
 
+	ctx->use_ipv4 = 1;
+	ctx->use_ipv6 = 1;
+	if ((flags & (LWRES_CONTEXT_USEIPV4 | LWRES_CONTEXT_USEIPV6)) ==
+	    LWRES_CONTEXT_USEIPV6) {
+		ctx->use_ipv4 = 0;
+	}
+	if ((flags & (LWRES_CONTEXT_USEIPV4 | LWRES_CONTEXT_USEIPV6)) ==
+	    LWRES_CONTEXT_USEIPV4) {
+		ctx->use_ipv6 = 0;
+	}
+
 	/*
 	 * Init resolv.conf bits.
 	 */
@@ -118,6 +203,12 @@ lwres_context_create(lwres_context_t **contextp, void *arg,
 	return (LWRES_R_SUCCESS);
 }
 
+/*%
+Destroys a #lwres_context_t, closing its socket.
+contextp is a pointer to a pointer to the context that is
+to be destroyed. The pointer will be set to NULL
+when the context has been destroyed.
+ */
 void
 lwres_context_destroy(lwres_context_t **contextp) {
 	lwres_context_t *ctx;
@@ -137,7 +228,7 @@ lwres_context_destroy(lwres_context_t **contextp) {
 
 	CTXFREE(ctx, sizeof(lwres_context_t));
 }
-
+/*% Increments the serial number and returns the previous value. */
 lwres_uint32_t
 lwres_context_nextserial(lwres_context_t *ctx) {
 	REQUIRE(ctx != NULL);
@@ -145,6 +236,7 @@ lwres_context_nextserial(lwres_context_t *ctx) {
 	return (ctx->serial++);
 }
 
+/*% Sets the serial number for context *ctx to serial. */
 void
 lwres_context_initserial(lwres_context_t *ctx, lwres_uint32_t serial) {
 	REQUIRE(ctx != NULL);
@@ -152,6 +244,7 @@ lwres_context_initserial(lwres_context_t *ctx, lwres_uint32_t serial) {
 	ctx->serial = serial;
 }
 
+/*% Frees len bytes of space starting at location mem. */
 void
 lwres_context_freemem(lwres_context_t *ctx, void *mem, size_t len) {
 	REQUIRE(mem != NULL);
@@ -160,6 +253,7 @@ lwres_context_freemem(lwres_context_t *ctx, void *mem, size_t len) {
 	CTXFREE(mem, len);
 }
 
+/*% Allocates len bytes of memory and if successful returns a pointer to the allocated storage. */
 void *
 lwres_context_allocmem(lwres_context_t *ctx, size_t len) {
 	REQUIRE(len != 0U);
@@ -352,6 +446,7 @@ lwres_context_recv(lwres_context_t *ctx,
 	return (LWRES_R_SUCCESS);
 }
 
+/*% performs I/O for the context ctx. */
 lwres_result_t
 lwres_context_sendrecv(lwres_context_t *ctx,
 		       void *sendbase, int sendlen,
@@ -364,7 +459,7 @@ lwres_context_sendrecv(lwres_context_t *ctx,
 	struct timeval timeout;
 
 	/*
-	 * Type of tv_sec is 32 bits long. 
+	 * Type of tv_sec is 32 bits long.
 	 */
 	if (ctx->timeout <= 0x7FFFFFFFU)
 		timeout.tv_sec = (int)ctx->timeout;
@@ -376,11 +471,22 @@ lwres_context_sendrecv(lwres_context_t *ctx,
 	result = lwres_context_send(ctx, sendbase, sendlen);
 	if (result != LWRES_R_SUCCESS)
 		return (result);
+
+	/*
+	 * If this is not checked, select() can overflow,
+	 * causing corruption elsewhere.
+	 */
+	if (ctx->sock >= (int)FD_SETSIZE) {
+		close(ctx->sock);
+		ctx->sock = -1;
+		return (LWRES_R_IOERROR);
+	}
+
  again:
 	FD_ZERO(&readfds);
 	FD_SET(ctx->sock, &readfds);
 	ret2 = select(ctx->sock + 1, &readfds, NULL, NULL, &timeout);
-	
+
 	/*
 	 * What happened with select?
 	 */
@@ -392,6 +498,6 @@ lwres_context_sendrecv(lwres_context_t *ctx,
 	result = lwres_context_recv(ctx, recvbase, recvlen, recvd_len);
 	if (result == LWRES_R_RETRY)
 		goto again;
-	
+
 	return (result);
 }

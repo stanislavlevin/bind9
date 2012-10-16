@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2006-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dispatch.c,v 1.101.2.6.2.36 2008/09/04 00:25:40 jinmei Exp $ */
+/* $Id: dispatch.c,v 1.175 2011/11/29 01:03:47 marka Exp $ */
+
+/*! \file */
 
 #include <config.h>
 
@@ -30,6 +32,7 @@
 #include <isc/portset.h>
 #include <isc/print.h>
 #include <isc/random.h>
+#include <isc/stats.h>
 #include <isc/string.h>
 #include <isc/task.h>
 #include <isc/time.h>
@@ -41,13 +44,17 @@
 #include <dns/log.h>
 #include <dns/message.h>
 #include <dns/portlist.h>
+#include <dns/stats.h>
 #include <dns/tcpmsg.h>
 #include <dns/types.h>
 
 typedef ISC_LIST(dns_dispentry_t)	dns_displist_t;
 
-typedef struct dispsocket dispsocket_t;
+typedef struct dispsocket		dispsocket_t;
 typedef ISC_LIST(dispsocket_t)		dispsocketlist_t;
+
+typedef struct dispportentry		dispportentry_t;
+typedef ISC_LIST(dispportentry_t)	dispportlist_t;
 
 /* ARC4 Random generator state */
 typedef struct arc4ctx {
@@ -55,17 +62,17 @@ typedef struct arc4ctx {
 	isc_uint8_t	j;
 	isc_uint8_t	s[256];
 	int		count;
-	isc_entropy_t	*entropy;	/* entropy source for ARC4 */
+	isc_entropy_t	*entropy;	/*%< entropy source for ARC4 */
 	isc_mutex_t	*lock;
 } arc4ctx_t;
 
 typedef struct dns_qid {
 	unsigned int	magic;
-	unsigned int	qid_nbuckets;	/* hash table size */
-	unsigned int	qid_increment;	/* id increment on collision */
+	unsigned int	qid_nbuckets;	/*%< hash table size */
+	unsigned int	qid_increment;	/*%< id increment on collision */
 	isc_mutex_t	lock;
-	dns_displist_t	*qid_table;	/* the table itself */
-	dispsocketlist_t *sock_table;	/* socket table */
+	dns_displist_t	*qid_table;	/*%< the table itself */
+	dispsocketlist_t *sock_table;	/*%< socket table */
 } dns_qid_t;
 
 struct dns_dispatchmgr {
@@ -74,7 +81,8 @@ struct dns_dispatchmgr {
 	isc_mem_t		       *mctx;
 	dns_acl_t		       *blackhole;
 	dns_portlist_t		       *portlist;
-	isc_entropy_t		       *entropy; /* entropy source */
+	isc_stats_t		       *stats;
+	isc_entropy_t		       *entropy; /*%< entropy source */
 
 	/* Locked by "lock". */
 	isc_mutex_t			lock;
@@ -83,24 +91,24 @@ struct dns_dispatchmgr {
 
 	/* Locked by arc4_lock. */
 	isc_mutex_t			arc4_lock;
-	arc4ctx_t			arc4ctx;    /* ARC4 context for QID */
+	arc4ctx_t			arc4ctx;    /*%< ARC4 context for QID */
 
 	/* locked by buffer lock */
 	dns_qid_t			*qid;
 	isc_mutex_t			buffer_lock;
-	unsigned int			buffers;    /* allocated buffers */
-	unsigned int			buffersize; /* size of each buffer */
-	unsigned int			maxbuffers; /* max buffers */
+	unsigned int			buffers;    /*%< allocated buffers */
+	unsigned int			buffersize; /*%< size of each buffer */
+	unsigned int			maxbuffers; /*%< max buffers */
 
 	/* Locked internally. */
 	isc_mutex_t			pool_lock;
-	isc_mempool_t		       *epool;	/* memory pool for events */
-	isc_mempool_t		       *rpool;	/* memory pool for replies */
-	isc_mempool_t		       *dpool;  /* dispatch allocations */
-	isc_mempool_t		       *bpool;	/* memory pool for buffers */
-	isc_mempool_t		       *spool;	/* memory pool for dispsocs */
+	isc_mempool_t		       *epool;	/*%< memory pool for events */
+	isc_mempool_t		       *rpool;	/*%< memory pool for replies */
+	isc_mempool_t		       *dpool;  /*%< dispatch allocations */
+	isc_mempool_t		       *bpool;	/*%< memory pool for buffers */
+	isc_mempool_t		       *spool;	/*%< memory pool for dispsocs */
 
-	/*
+	/*%
 	 * Locked by qid->lock if qid exists; otherwise, can be used without
 	 * being locked.
 	 * Memory footprint considerations: this is a simple implementation of
@@ -115,10 +123,10 @@ struct dns_dispatchmgr {
 	 * revisit the decision when we want to use it as a separate module for
 	 * an environment where memory requirement is severer.
 	 */
-	in_port_t	*v4ports;	/* available ports for IPv4 */
-	unsigned int	nv4ports;	/* # of available ports for IPv4 */
-	in_port_t	*v6ports;	/* available ports for IPv4 */
-	unsigned int	nv6ports;	/* # of available ports for IPv4 */
+	in_port_t	*v4ports;	/*%< available ports for IPv4 */
+	unsigned int	nv4ports;	/*%< # of available ports for IPv4 */
+	in_port_t	*v6ports;	/*%< available ports for IPv4 */
+	unsigned int	nv6ports;	/*%< # of available ports for IPv4 */
 };
 
 #define MGR_SHUTTINGDOWN		0x00000001U
@@ -142,7 +150,7 @@ struct dns_dispentry {
 	ISC_LINK(dns_dispentry_t)	link;
 };
 
-/*
+/*%
  * Maximum number of dispatch sockets that can be pooled for reuse.  The
  * appropriate value may vary, but experiments have shown a busy caching server
  * may need more than 1000 sockets concurrently opened.  The maximum allowable
@@ -153,7 +161,7 @@ struct dns_dispentry {
 #define DNS_DISPATCH_POOLSOCKS			2048
 #endif
 
-/*
+/*%
  * Quota to control the number of dispatch sockets.  If a dispatch has more
  * than the quota of sockets, new queries will purge oldest ones, so that
  * a massive number of outstanding queries won't prevent subsequent queries
@@ -168,7 +176,8 @@ struct dispsocket {
 	isc_socket_t			*socket;
 	dns_dispatch_t			*disp;
 	isc_sockaddr_t			host;
-	in_port_t			localport;
+	in_port_t			localport; /* XXX: should be removed later */
+	dispportentry_t			*portentry;
 	dns_dispentry_t			*resp;
 	isc_task_t			*task;
 	ISC_LINK(dispsocket_t)		link;
@@ -176,9 +185,24 @@ struct dispsocket {
 	ISC_LINK(dispsocket_t)		blink;
 };
 
+/*%
+ * A port table entry.  We remember every port we first open in a table with a
+ * reference counter so that we can 'reuse' the same port (with different
+ * destination addresses) using the SO_REUSEADDR socket option.
+ */
+struct dispportentry {
+	in_port_t			port;
+	unsigned int			refs;
+	ISC_LINK(struct dispportentry)	link;
+};
+
+#ifndef DNS_DISPATCH_PORTTABLESIZE
+#define DNS_DISPATCH_PORTTABLESIZE	1024
+#endif
+
 #define INVALID_BUCKET		(0xffffdead)
 
-/*
+/*%
  * Number of tasks for each dispatch that use separate sockets for different
  * transactions.  This must be a power of 2 as it will divide 32 bit numbers
  * to get an uniformly random tasks selection.  See get_dispsocket().
@@ -187,44 +211,46 @@ struct dispsocket {
 
 struct dns_dispatch {
 	/* Unlocked. */
-	unsigned int		magic;		/* magic */
-	dns_dispatchmgr_t      *mgr;		/* dispatch manager */
+	unsigned int		magic;		/*%< magic */
+	dns_dispatchmgr_t      *mgr;		/*%< dispatch manager */
 	int			ntasks;
-	/*
+	/*%
 	 * internal task buckets.  We use multiple tasks to distribute various
 	 * socket events well when using separate dispatch sockets.  We use the
 	 * 1st task (task[0]) for internal control events.
 	 */
 	isc_task_t	       *task[MAX_INTERNAL_TASKS];
-	isc_socket_t	       *socket;		/* isc socket attached to */
-	isc_sockaddr_t		local;		/* local address */
-	in_port_t		localport;	/* local UDP port */
-	unsigned int		maxrequests;	/* max requests */
+	isc_socket_t	       *socket;		/*%< isc socket attached to */
+	isc_sockaddr_t		local;		/*%< local address */
+	in_port_t		localport;	/*%< local UDP port */
+	unsigned int		maxrequests;	/*%< max requests */
 	isc_event_t	       *ctlevent;
 
-	/* Locked by mgr->lock. */
+	/*% Locked by mgr->lock. */
 	ISC_LINK(dns_dispatch_t) link;
 
 	/* Locked by "lock". */
-	isc_mutex_t		lock;		/* locks all below */
+	isc_mutex_t		lock;		/*%< locks all below */
 	isc_sockettype_t	socktype;
 	unsigned int		attributes;
-	unsigned int		refcount;	/* number of users */
-	dns_dispatchevent_t    *failsafe_ev;	/* failsafe cancel event */
+	unsigned int		refcount;	/*%< number of users */
+	dns_dispatchevent_t    *failsafe_ev;	/*%< failsafe cancel event */
 	unsigned int		shutting_down : 1,
 				shutdown_out : 1,
 				connected : 1,
 				tcpmsg_valid : 1,
-				recv_pending : 1; /* is a recv() pending? */
+				recv_pending : 1; /*%< is a recv() pending? */
 	isc_result_t		shutdown_why;
 	ISC_LIST(dispsocket_t)	activesockets;
 	ISC_LIST(dispsocket_t)	inactivesockets;
 	unsigned int		nsockets;
-	unsigned int		requests;	/* how many requests we have */
-	unsigned int		tcpbuffers;	/* allocated buffers */
-	dns_tcpmsg_t		tcpmsg;		/* for tcp streams */
+	unsigned int		requests;	/*%< how many requests we have */
+	unsigned int		tcpbuffers;	/*%< allocated buffers */
+	dns_tcpmsg_t		tcpmsg;		/*%< for tcp streams */
 	dns_qid_t		*qid;
-	arc4ctx_t		arc4ctx;	/* for QID/UDP port num */
+	arc4ctx_t		arc4ctx;	/*%< for QID/UDP port num */
+	dispportlist_t		*port_table;	/*%< hold ports 'owned' by us */
+	isc_mempool_t		*portpool;	/*%< port table entries  */
 };
 
 #define QID_MAGIC		ISC_MAGIC('Q', 'i', 'd', ' ')
@@ -247,7 +273,7 @@ struct dns_dispatch {
 #define DISP_ARC4CTX(disp) ((disp)->socktype == isc_sockettype_udp) ? \
 			(&(disp)->arc4ctx) : (&(disp)->mgr->arc4ctx)
 
-/*
+/*%
  * Locking a query port buffer is a bit tricky.  We access the buffer without
  * locking until qid is created.  Technically, there is a possibility of race
  * between the creation of qid and access to the port buffer; in practice,
@@ -286,14 +312,16 @@ static isc_result_t get_udpsocket(dns_dispatchmgr_t *mgr,
 				  dns_dispatch_t *disp,
 				  isc_socketmgr_t *sockmgr,
 				  isc_sockaddr_t *localaddr,
-				  isc_socket_t **sockp);
+				  isc_socket_t **sockp,
+				  isc_socket_t *dup_socket);
 static isc_result_t dispatch_createudp(dns_dispatchmgr_t *mgr,
 				       isc_socketmgr_t *sockmgr,
 				       isc_taskmgr_t *taskmgr,
 				       isc_sockaddr_t *localaddr,
 				       unsigned int maxrequests,
 				       unsigned int attributes,
-				       dns_dispatch_t **dispp);
+				       dns_dispatch_t **dispp,
+				       isc_socket_t *dup_socket);
 static isc_boolean_t destroy_mgr_ok(dns_dispatchmgr_t *mgr);
 static void destroy_mgr(dns_dispatchmgr_t **mgrp);
 static isc_result_t qid_allocate(dns_dispatchmgr_t *mgr, unsigned int buckets,
@@ -301,7 +329,8 @@ static isc_result_t qid_allocate(dns_dispatchmgr_t *mgr, unsigned int buckets,
 				 isc_boolean_t needaddrtable);
 static void qid_destroy(isc_mem_t *mctx, dns_qid_t **qidp);
 static isc_result_t open_socket(isc_socketmgr_t *mgr, isc_sockaddr_t *local,
-				unsigned int options, isc_socket_t **sockp);
+				unsigned int options, isc_socket_t **sockp,
+				isc_socket_t *dup_socket);
 static isc_boolean_t portavailable(dns_dispatchmgr_t *mgr, isc_socket_t *sock,
 				   isc_sockaddr_t *sockaddrp);
 
@@ -326,6 +355,12 @@ mgr_log(dns_dispatchmgr_t *mgr, int level, const char *fmt, ...) {
 	isc_log_write(dns_lctx,
 		      DNS_LOGCATEGORY_DISPATCH, DNS_LOGMODULE_DISPATCH,
 		      level, "dispatchmgr %p: %s", mgr, msgbuf);
+}
+
+static inline void
+inc_stats(dns_dispatchmgr_t *mgr, isc_statscounter_t counter) {
+	if (mgr->stats != NULL)
+		isc_stats_increment(mgr->stats, counter);
 }
 
 static void
@@ -383,9 +418,9 @@ request_log(dns_dispatch_t *disp, dns_dispentry_t *resp,
 	}
 }
 
-/*
+/*%
  * ARC4 random number generator derived from OpenBSD.
- * Only dispatch_arc4random() and dispatch_arc4uniformrandom() are expected
+ * Only dispatch_random() and dispatch_uniformrandom() are expected
  * to be called from general dispatch routines; the rest of them are subroutines
  * for these two.
  *
@@ -405,8 +440,11 @@ request_log(dns_dispatch_t *disp, dns_dispentry_t *resp,
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifdef BIND9
 static void
-dispatch_arc4init(arc4ctx_t *actx, isc_entropy_t *entropy, isc_mutex_t *lock) {
+dispatch_initrandom(arc4ctx_t *actx, isc_entropy_t *entropy,
+		    isc_mutex_t *lock)
+{
 	int n;
 	for (n = 0; n < 256; n++)
 		actx->s[n] = n;
@@ -495,7 +533,7 @@ dispatch_arc4stir(arc4ctx_t *actx) {
 }
 
 static isc_uint16_t
-dispatch_arc4random(arc4ctx_t *actx) {
+dispatch_random(arc4ctx_t *actx) {
 	isc_uint16_t result;
 
 	if (actx->lock != NULL)
@@ -511,9 +549,38 @@ dispatch_arc4random(arc4ctx_t *actx) {
 
 	return (result);
 }
+#else
+/*
+ * For general purpose library, we don't have to be too strict about the
+ * quality of random values.  Performance doesn't matter much, either.
+ * So we simply use the isc_random module to keep the library as small as
+ * possible.
+ */
+
+static void
+dispatch_initrandom(arc4ctx_t *actx, isc_entropy_t *entropy,
+		    isc_mutex_t *lock)
+{
+	UNUSED(actx);
+	UNUSED(entropy);
+	UNUSED(lock);
+
+	return;
+}
 
 static isc_uint16_t
-dispatch_arc4uniformrandom(arc4ctx_t *actx, isc_uint16_t upper_bound) {
+dispatch_random(arc4ctx_t *actx) {
+	isc_uint32_t r;
+
+	UNUSED(actx);
+
+	isc_random_get(&r);
+	return (r & 0xffff);
+}
+#endif	/* BIND9 */
+
+static isc_uint16_t
+dispatch_uniformrandom(arc4ctx_t *actx, isc_uint16_t upper_bound) {
 	isc_uint16_t min, r;
 
 	if (upper_bound < 2)
@@ -536,7 +603,7 @@ dispatch_arc4uniformrandom(arc4ctx_t *actx, isc_uint16_t upper_bound) {
 	 * to re-roll.
 	 */
 	for (;;) {
-		r = dispatch_arc4random(actx);
+		r = dispatch_random(actx);
 		if (r >= min)
 			break;
 	}
@@ -674,7 +741,72 @@ destroy_disp(isc_task_t *task, isc_event_t *event) {
 		destroy_mgr(&mgr);
 }
 
-/*
+/*%
+ * Manipulate port table per dispatch: find an entry for a given port number,
+ * create a new entry, and decrement a given entry with possible clean-up.
+ */
+static dispportentry_t *
+port_search(dns_dispatch_t *disp, in_port_t port) {
+	dispportentry_t *portentry;
+
+	REQUIRE(disp->port_table != NULL);
+
+	portentry = ISC_LIST_HEAD(disp->port_table[port %
+						   DNS_DISPATCH_PORTTABLESIZE]);
+	while (portentry != NULL) {
+		if (portentry->port == port)
+			return (portentry);
+		portentry = ISC_LIST_NEXT(portentry, link);
+	}
+
+	return (NULL);
+}
+
+static dispportentry_t *
+new_portentry(dns_dispatch_t *disp, in_port_t port) {
+	dispportentry_t *portentry;
+
+	REQUIRE(disp->port_table != NULL);
+
+	portentry = isc_mempool_get(disp->portpool);
+	if (portentry == NULL)
+		return (portentry);
+
+	portentry->port = port;
+	portentry->refs = 0;
+	ISC_LINK_INIT(portentry, link);
+	ISC_LIST_APPEND(disp->port_table[port % DNS_DISPATCH_PORTTABLESIZE],
+			portentry, link);
+
+	return (portentry);
+}
+
+/*%
+ * The caller must not hold the qid->lock.
+ */
+static void
+deref_portentry(dns_dispatch_t *disp, dispportentry_t **portentryp) {
+	dispportentry_t *portentry = *portentryp;
+	dns_qid_t *qid;
+
+	REQUIRE(disp->port_table != NULL);
+	REQUIRE(portentry != NULL && portentry->refs > 0);
+
+	qid = DNS_QID(disp);
+	LOCK(&qid->lock);
+	portentry->refs--;
+	if (portentry->refs == 0) {
+		ISC_LIST_UNLINK(disp->port_table[portentry->port %
+						 DNS_DISPATCH_PORTTABLESIZE],
+				portentry, link);
+		isc_mempool_put(disp->portpool, portentry);
+	}
+
+	*portentryp = NULL;
+	UNLOCK(&qid->lock);
+}
+
+/*%
  * Find a dispsocket for socket address 'dest', and port number 'port'.
  * Return NULL if no such entry exists.
  */
@@ -689,8 +821,9 @@ socket_search(dns_qid_t *qid, isc_sockaddr_t *dest, in_port_t port,
 	dispsock = ISC_LIST_HEAD(qid->sock_table[bucket]);
 
 	while (dispsock != NULL) {
-		if (isc_sockaddr_equal(dest, &dispsock->host) &&
-		    dispsock->localport == port)
+		if (dispsock->portentry != NULL &&
+		    dispsock->portentry->port == port &&
+		    isc_sockaddr_equal(dest, &dispsock->host))
 			return (dispsock);
 		dispsock = ISC_LIST_NEXT(dispsock, blink);
 	}
@@ -698,7 +831,7 @@ socket_search(dns_qid_t *qid, isc_sockaddr_t *dest, in_port_t port,
 	return (NULL);
 }
 
-/*
+/*%
  * Make a new socket for a single dispatch with a random port number.
  * The caller must hold the disp->lock and qid->lock.
  */
@@ -718,6 +851,8 @@ get_dispsocket(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 	dispsocket_t *dispsock;
 	unsigned int nports;
 	in_port_t *ports;
+	unsigned int bindoptions;
+	dispportentry_t *portentry = NULL;
 
 	if (isc_sockaddr_pf(&disp->local) == AF_INET) {
 		nports = disp->mgr->nv4ports;
@@ -743,6 +878,7 @@ get_dispsocket(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 		dispsock->socket = NULL;
 		dispsock->disp = disp;
 		dispsock->resp = NULL;
+		dispsock->portentry = NULL;
 		isc_random_get(&r);
 		dispsock->task = NULL;
 		isc_task_attach(disp->task[r % disp->ntasks], &dispsock->task);
@@ -758,23 +894,43 @@ get_dispsocket(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 	 */
 	localaddr = disp->local;
 	for (i = 0; i < 64; i++) {
-		port = ports[dispatch_arc4uniformrandom(DISP_ARC4CTX(disp),
+		port = ports[dispatch_uniformrandom(DISP_ARC4CTX(disp),
 							nports)];
 		isc_sockaddr_setport(&localaddr, port);
 
 		bucket = dns_hash(qid, dest, 0, port);
 		if (socket_search(qid, dest, port, bucket) != NULL)
 			continue;
-
-		result = open_socket(sockmgr, &localaddr, 0, &sock);
-		if (result == ISC_R_SUCCESS || result != ISC_R_ADDRINUSE)
+		bindoptions = 0;
+		portentry = port_search(disp, port);
+		if (portentry != NULL)
+			bindoptions |= ISC_SOCKET_REUSEADDRESS;
+		result = open_socket(sockmgr, &localaddr, bindoptions, &sock,
+				     NULL);
+		if (result == ISC_R_SUCCESS) {
+			if (portentry == NULL) {
+				portentry = new_portentry(disp, port);
+				if (portentry == NULL) {
+					result = ISC_R_NOMEMORY;
+					break;
+				}
+			}
+			portentry->refs++;
+			break;
+		} else if (result == ISC_R_NOPERM) {
+			char buf[ISC_SOCKADDR_FORMATSIZE];
+			isc_sockaddr_format(&localaddr, buf, sizeof(buf));
+			dispatch_log(disp, ISC_LOG_WARNING,
+				     "open_socket(%s) -> %s: continuing",
+				     buf, isc_result_totext(result));
+		} else if (result != ISC_R_ADDRINUSE)
 			break;
 	}
 
 	if (result == ISC_R_SUCCESS) {
 		dispsock->socket = sock;
 		dispsock->host = *dest;
-		dispsock->localport = port;
+		dispsock->portentry = portentry;
 		dispsock->bucket = bucket;
 		ISC_LIST_APPEND(qid->sock_table[bucket], dispsock, blink);
 		*dispsockp = dispsock;
@@ -793,7 +949,7 @@ get_dispsocket(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 	return (result);
 }
 
-/*
+/*%
  * Destroy a dedicated dispatch socket.
  */
 static void
@@ -811,6 +967,8 @@ destroy_dispsocket(dns_dispatch_t *disp, dispsocket_t **dispsockp) {
 
 	disp->nsockets--;
 	dispsock->magic = 0;
+	if (dispsock->portentry != NULL)
+		deref_portentry(disp, &dispsock->portentry);
 	if (dispsock->socket != NULL)
 		isc_socket_detach(&dispsock->socket);
 	if (ISC_LINK_LINKED(dispsock, blink)) {
@@ -827,7 +985,7 @@ destroy_dispsocket(dns_dispatch_t *disp, dispsocket_t **dispsockp) {
 	*dispsockp = NULL;
 }
 
-/*
+/*%
  * Deactivate a dedicated dispatch socket.  Move it to the inactive list for
  * future reuse unless the total number of sockets are exceeding the maximum.
  */
@@ -845,6 +1003,10 @@ deactivate_dispsocket(dns_dispatch_t *disp, dispsocket_t *dispsock) {
 		dispsock->resp->dispsocket = NULL;
 	}
 
+	INSIST(dispsock->portentry != NULL);
+	deref_portentry(disp, &dispsock->portentry);
+
+#ifdef BIND9
 	if (disp->nsockets > DNS_DISPATCH_POOLSOCKS)
 		destroy_dispsocket(disp, &dispsock);
 	else {
@@ -868,6 +1030,13 @@ deactivate_dispsocket(dns_dispatch_t *disp, dispsocket_t *dispsock) {
 			destroy_dispsocket(disp, &dispsock);
 		}
 	}
+#else
+	/* This kind of optimization isn't necessary for normal use */
+	UNUSED(qid);
+	UNUSED(result);
+
+	destroy_dispsocket(disp, &dispsock);
+#endif
 }
 
 /*
@@ -1136,7 +1305,6 @@ udp_recv(isc_event_t *ev_in, dns_dispatch_t *disp, dispsocket_t *dispsock) {
 	 * Look at flags.  If query, drop it. If response,
 	 * look to see where it goes.
 	 */
-	queue_response = ISC_FALSE;
 	if ((flags & DNS_MESSAGEFLAG_QR) == 0) {
 		/* query */
 		free_buffer(disp, ev->region.base, ev->region.length);
@@ -1159,6 +1327,7 @@ udp_recv(isc_event_t *ev_in, dns_dispatch_t *disp, dispsocket_t *dispsock) {
 			     bucket, (resp == NULL ? "not found" : "found"));
 
 		if (resp == NULL) {
+			inc_stats(mgr, dns_resstatscounter_mismatch);
 			free_buffer(disp, ev->region.base, ev->region.length);
 			goto unlock;
 		}
@@ -1166,6 +1335,7 @@ udp_recv(isc_event_t *ev_in, dns_dispatch_t *disp, dispsocket_t *dispsock) {
 							 &resp->host)) {
 		dispatch_log(disp, LVL(90),
 			     "response to an exclusive socket doesn't match");
+		inc_stats(mgr, dns_resstatscounter_mismatch);
 		free_buffer(disp, ev->region.base, ev->region.length);
 		goto unlock;
 	}
@@ -1393,7 +1563,6 @@ tcp_recv(isc_task_t *task, isc_event_t *ev_in) {
 	 * Look at flags.  If query, drop it. If response,
 	 * look to see where it goes.
 	 */
-	queue_response = ISC_FALSE;
 	if ((flags & DNS_MESSAGEFLAG_QR) == 0) {
 		/*
 		 * Query.
@@ -1529,6 +1698,9 @@ startrecv(dns_dispatch_t *disp, dispsocket_t *dispsock) {
 		INSIST(disp->recv_pending == 0);
 		disp->recv_pending = 1;
 		break;
+	default:
+		INSIST(0);
+		break;
 	}
 
 	return (ISC_R_SUCCESS);
@@ -1583,13 +1755,17 @@ destroy_mgr(dns_dispatchmgr_t **mgrp) {
 	isc_mempool_destroy(&mgr->epool);
 	isc_mempool_destroy(&mgr->rpool);
 	isc_mempool_destroy(&mgr->dpool);
-	isc_mempool_destroy(&mgr->bpool);
-	isc_mempool_destroy(&mgr->spool);
+	if (mgr->bpool != NULL)
+		isc_mempool_destroy(&mgr->bpool);
+	if (mgr->spool != NULL)
+		isc_mempool_destroy(&mgr->spool);
 
 	DESTROYLOCK(&mgr->pool_lock);
 
+#ifdef BIND9
 	if (mgr->entropy != NULL)
 		isc_entropy_detach(&mgr->entropy);
+#endif /* BIND9 */
 	if (mgr->qid != NULL)
 		qid_destroy(mctx, &mgr->qid);
 
@@ -1597,6 +1773,9 @@ destroy_mgr(dns_dispatchmgr_t **mgrp) {
 
 	if (mgr->blackhole != NULL)
 		dns_acl_detach(&mgr->blackhole);
+
+	if (mgr->stats != NULL)
+		isc_stats_detach(&mgr->stats);
 
 	if (mgr->v4ports != NULL) {
 		isc_mem_put(mctx, mgr->v4ports,
@@ -1612,22 +1791,37 @@ destroy_mgr(dns_dispatchmgr_t **mgrp) {
 
 static isc_result_t
 open_socket(isc_socketmgr_t *mgr, isc_sockaddr_t *local,
-	    unsigned int options, isc_socket_t **sockp)
+	    unsigned int options, isc_socket_t **sockp,
+	    isc_socket_t *dup_socket)
 {
 	isc_socket_t *sock;
 	isc_result_t result;
 
 	sock = *sockp;
-	if (sock == NULL) {
-		result = isc_socket_create(mgr, isc_sockaddr_pf(local),
-					   isc_sockettype_udp, &sock);
-		if (result != ISC_R_SUCCESS)
-			return (result);
-	} else {
+	if (sock != NULL) {
+#ifdef BIND9
 		result = isc_socket_open(sock);
 		if (result != ISC_R_SUCCESS)
 			return (result);
+#else
+		INSIST(0);
+#endif
+	} else if (dup_socket != NULL) {
+		result = isc_socket_dup(dup_socket, &sock);
+		if (result != ISC_R_SUCCESS)
+			return (result);
+
+		isc_socket_setname(sock, "dispatcher", NULL);
+		*sockp = sock;
+		return (ISC_R_SUCCESS);
+	} else {
+		result = isc_socket_create(mgr, isc_sockaddr_pf(local),
+					isc_sockettype_udp, &sock);
+		if (result != ISC_R_SUCCESS)
+			return (result);
 	}
+
+	isc_socket_setname(sock, "dispatcher", NULL);
 
 #ifndef ISC_ALLOW_MAPPED
 	isc_socket_ipv6only(sock, ISC_TRUE);
@@ -1636,8 +1830,13 @@ open_socket(isc_socketmgr_t *mgr, isc_sockaddr_t *local,
 	if (result != ISC_R_SUCCESS) {
 		if (*sockp == NULL)
 			isc_socket_detach(&sock);
-		else
+		else {
+#ifdef BIND9
 			isc_socket_close(sock);
+#else
+			INSIST(0);
+#endif
+		}
 		return (result);
 	}
 
@@ -1645,7 +1844,7 @@ open_socket(isc_socketmgr_t *mgr, isc_sockaddr_t *local,
 	return (ISC_R_SUCCESS);
 }
 
-/*
+/*%
  * Create a temporary port list to set the initial default set of dispatch
  * ports: [1024, 65535].  This is almost meaningless as the application will
  * normally set the ports explicitly, but is provided to fill some minor corner
@@ -1687,6 +1886,7 @@ dns_dispatchmgr_create(isc_mem_t *mctx, isc_entropy_t *entropy,
 	isc_mem_attach(mctx, &mgr->mctx);
 
 	mgr->blackhole = NULL;
+	mgr->stats = NULL;
 
 	result = isc_mutex_init(&mgr->lock);
 	if (result != ISC_R_SUCCESS)
@@ -1768,10 +1968,14 @@ dns_dispatchmgr_create(isc_mem_t *mctx, isc_entropy_t *entropy,
 	if (result != ISC_R_SUCCESS)
 		goto kill_dpool;
 
+#ifdef BIND9
 	if (entropy != NULL)
 		isc_entropy_attach(entropy, &mgr->entropy);
+#else
+	UNUSED(entropy);
+#endif
 
-	dispatch_arc4init(&mgr->arc4ctx, mgr->entropy, &mgr->arc4_lock);
+	dispatch_initrandom(&mgr->arc4ctx, mgr->entropy, &mgr->arc4_lock);
 
 	*mgrp = mgr;
 	return (ISC_R_SUCCESS);
@@ -1927,8 +2131,18 @@ dns_dispatchmgr_setudp(dns_dispatchmgr_t *mgr,
 
 	/* Create or adjust buffer pool */
 	if (mgr->bpool != NULL) {
-		isc_mempool_setmaxalloc(mgr->bpool, maxbuffers);
-		mgr->maxbuffers = maxbuffers;
+		/*
+		 * We only increase the maxbuffers to avoid accidental buffer
+		 * shortage.  Ideally we'd separate the manager-wide maximum
+		 * from per-dispatch limits and respect the latter within the
+		 * global limit.  But at this moment that's deemed to be
+		 * overkilling and isn't worth additional implementation
+		 * complexity.
+		 */
+		if (maxbuffers > mgr->maxbuffers) {
+			isc_mempool_setmaxalloc(mgr->bpool, maxbuffers);
+			mgr->maxbuffers = maxbuffers;
+		}
 	} else {
 		result = isc_mempool_create(mgr->mctx, buffersize, &mgr->bpool);
 		if (result != ISC_R_SUCCESS) {
@@ -1994,6 +2208,15 @@ dns_dispatchmgr_destroy(dns_dispatchmgr_t **mgrp) {
 
 	if (killit)
 		destroy_mgr(&mgr);
+}
+
+void
+dns_dispatchmgr_setstats(dns_dispatchmgr_t *mgr, isc_stats_t *stats) {
+	REQUIRE(VALID_DISPATCHMGR(mgr));
+	REQUIRE(ISC_LIST_EMPTY(mgr->list));
+	REQUIRE(mgr->stats == NULL);
+
+	isc_stats_attach(stats, &mgr->stats);
 }
 
 static int
@@ -2145,6 +2368,7 @@ qid_allocate(dns_dispatchmgr_t *mgr, unsigned int buckets,
 {
 	dns_qid_t *qid;
 	unsigned int i;
+	isc_result_t result;
 
 	REQUIRE(VALID_DISPATCHMGR(mgr));
 	REQUIRE(buckets < 2097169);  /* next prime > 65536 * 32 */
@@ -2167,15 +2391,15 @@ qid_allocate(dns_dispatchmgr_t *mgr, unsigned int buckets,
 		qid->sock_table = isc_mem_get(mgr->mctx, buckets *
 					      sizeof(dispsocketlist_t));
 		if (qid->sock_table == NULL) {
-			isc_mem_put(mgr->mctx, qid, sizeof(*qid));
 			isc_mem_put(mgr->mctx, qid->qid_table,
 				    buckets * sizeof(dns_displist_t));
+			isc_mem_put(mgr->mctx, qid, sizeof(*qid));
 			return (ISC_R_NOMEMORY);
 		}
 	}
 
-	if (isc_mutex_init(&qid->lock) != ISC_R_SUCCESS) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__, "isc_mutex_init failed");
+	result = isc_mutex_init(&qid->lock);
+	if (result != ISC_R_SUCCESS) {
 		if (qid->sock_table != NULL) {
 			isc_mem_put(mgr->mctx, qid->sock_table,
 				    buckets * sizeof(dispsocketlist_t));
@@ -2183,7 +2407,7 @@ qid_allocate(dns_dispatchmgr_t *mgr, unsigned int buckets,
 		isc_mem_put(mgr->mctx, qid->qid_table,
 			    buckets * sizeof(dns_displist_t));
 		isc_mem_put(mgr->mctx, qid, sizeof(*qid));
-		return (ISC_R_UNEXPECTED);
+		return (result);
 	}
 
 	for (i = 0; i < buckets; i++) {
@@ -2228,7 +2452,7 @@ dispatch_allocate(dns_dispatchmgr_t *mgr, unsigned int maxrequests,
 		  dns_dispatch_t **dispp)
 {
 	dns_dispatch_t *disp;
-	isc_result_t res;
+	isc_result_t result;
 
 	REQUIRE(VALID_DISPATCHMGR(mgr));
 	REQUIRE(dispp != NULL && *dispp == NULL);
@@ -2262,17 +2486,17 @@ dispatch_allocate(dns_dispatchmgr_t *mgr, unsigned int maxrequests,
 	ISC_LIST_INIT(disp->activesockets);
 	ISC_LIST_INIT(disp->inactivesockets);
 	disp->nsockets = 0;
-	dispatch_arc4init(&disp->arc4ctx, mgr->entropy, NULL);
+	dispatch_initrandom(&disp->arc4ctx, mgr->entropy, NULL);
+	disp->port_table = NULL;
+	disp->portpool = NULL;
 
-	if (isc_mutex_init(&disp->lock) != ISC_R_SUCCESS) {
-		res = ISC_R_UNEXPECTED;
-		UNEXPECTED_ERROR(__FILE__, __LINE__, "isc_mutex_init failed");
+	result = isc_mutex_init(&disp->lock);
+	if (result != ISC_R_SUCCESS)
 		goto deallocate;
-	}
 
 	disp->failsafe_ev = allocate_event(disp);
 	if (disp->failsafe_ev == NULL) {
-		res = ISC_R_NOMEMORY;
+		result = ISC_R_NOMEMORY;
 		goto kill_lock;
 	}
 
@@ -2289,18 +2513,19 @@ dispatch_allocate(dns_dispatchmgr_t *mgr, unsigned int maxrequests,
  deallocate:
 	isc_mempool_put(mgr->dpool, disp);
 
-	return (res);
+	return (result);
 }
 
 
 /*
- * MUST be unlocked, and not used by anthing.
+ * MUST be unlocked, and not used by anything.
  */
 static void
 dispatch_free(dns_dispatch_t **dispp)
 {
 	dns_dispatch_t *disp;
 	dns_dispatchmgr_t *mgr;
+	int i;
 
 	REQUIRE(VALID_DISPATCH(*dispp));
 	disp = *dispp;
@@ -2325,6 +2550,18 @@ dispatch_free(dns_dispatch_t **dispp)
 
 	if (disp->qid != NULL)
 		qid_destroy(mgr->mctx, &disp->qid);
+
+	if (disp->port_table != NULL) {
+		for (i = 0; i < DNS_DISPATCH_PORTTABLESIZE; i++)
+			INSIST(ISC_LIST_EMPTY(disp->port_table[i]));
+		isc_mem_put(mgr->mctx, disp->port_table,
+			    sizeof(disp->port_table[0]) *
+			    DNS_DISPATCH_PORTTABLESIZE);
+	}
+
+	if (disp->portpool != NULL)
+		isc_mempool_destroy(&disp->portpool);
+
 	disp->mgr = NULL;
 	DESTROYLOCK(&disp->lock);
 	disp->magic = 0;
@@ -2423,13 +2660,13 @@ dns_dispatch_createtcp(dns_dispatchmgr_t *mgr, isc_socket_t *sock,
 }
 
 isc_result_t
-dns_dispatch_getudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
+dns_dispatch_getudp_dup(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 		    isc_taskmgr_t *taskmgr, isc_sockaddr_t *localaddr,
 		    unsigned int buffersize,
 		    unsigned int maxbuffers, unsigned int maxrequests,
 		    unsigned int buckets, unsigned int increment,
 		    unsigned int attributes, unsigned int mask,
-		    dns_dispatch_t **dispp)
+		    dns_dispatch_t **dispp, dns_dispatch_t *dup_dispatch)
 {
 	isc_result_t result;
 	dns_dispatch_t *disp = NULL;
@@ -2458,31 +2695,33 @@ dns_dispatch_getudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 	}
 
 	/*
-	 * First, see if we have a dispatcher that matches.
+	 * See if we have a dispatcher that matches.
 	 */
-	disp = NULL;
-	result = dispatch_find(mgr, localaddr, attributes, mask, &disp);
-	if (result == ISC_R_SUCCESS) {
-		disp->refcount++;
+	if (dup_dispatch == NULL) {
+		result = dispatch_find(mgr, localaddr, attributes, mask, &disp);
+		if (result == ISC_R_SUCCESS) {
+			disp->refcount++;
 
-		if (disp->maxrequests < maxrequests)
-			disp->maxrequests = maxrequests;
+			if (disp->maxrequests < maxrequests)
+				disp->maxrequests = maxrequests;
 
-		if ((disp->attributes & DNS_DISPATCHATTR_NOLISTEN) == 0 &&
-		    (attributes & DNS_DISPATCHATTR_NOLISTEN) != 0)
-		{
-			disp->attributes |= DNS_DISPATCHATTR_NOLISTEN;
-			if (disp->recv_pending != 0)
-				isc_socket_cancel(disp->socket, disp->task[0],
-						  ISC_SOCKCANCEL_RECV);
+			if ((disp->attributes & DNS_DISPATCHATTR_NOLISTEN) == 0
+			    && (attributes & DNS_DISPATCHATTR_NOLISTEN) != 0)
+			{
+				disp->attributes |= DNS_DISPATCHATTR_NOLISTEN;
+				if (disp->recv_pending != 0)
+					isc_socket_cancel(disp->socket,
+							  disp->task[0],
+							  ISC_SOCKCANCEL_RECV);
+			}
+
+			UNLOCK(&disp->lock);
+			UNLOCK(&mgr->lock);
+
+			*dispp = disp;
+
+			return (ISC_R_SUCCESS);
 		}
-
-		UNLOCK(&disp->lock);
-		UNLOCK(&mgr->lock);
-
-		*dispp = disp;
-
-		return (ISC_R_SUCCESS);
 	}
 
  createudp:
@@ -2490,7 +2729,11 @@ dns_dispatch_getudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 	 * Nope, create one.
 	 */
 	result = dispatch_createudp(mgr, sockmgr, taskmgr, localaddr,
-				    maxrequests, attributes, &disp);
+				    maxrequests, attributes, &disp,
+				    dup_dispatch == NULL
+					    ? NULL
+					    : dup_dispatch->socket);
+
 	if (result != ISC_R_SUCCESS) {
 		UNLOCK(&mgr->lock);
 		return (result);
@@ -2498,7 +2741,22 @@ dns_dispatch_getudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 
 	UNLOCK(&mgr->lock);
 	*dispp = disp;
+
 	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_dispatch_getudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
+		    isc_taskmgr_t *taskmgr, isc_sockaddr_t *localaddr,
+		    unsigned int buffersize,
+		    unsigned int maxbuffers, unsigned int maxrequests,
+		    unsigned int buckets, unsigned int increment,
+		    unsigned int attributes, unsigned int mask,
+		    dns_dispatch_t **dispp)
+{
+	return dns_dispatch_getudp_dup(mgr, sockmgr, taskmgr, localaddr,
+		    buffersize, maxbuffers, maxrequests, buckets, increment,
+		    attributes, mask, dispp, NULL);
 }
 
 /*
@@ -2512,7 +2770,7 @@ dns_dispatch_getudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 static isc_result_t
 get_udpsocket(dns_dispatchmgr_t *mgr, dns_dispatch_t *disp,
 	      isc_socketmgr_t *sockmgr, isc_sockaddr_t *localaddr,
-	      isc_socket_t **sockp)
+	      isc_socket_t **sockp, isc_socket_t *dup_socket)
 {
 	unsigned int i, j;
 	isc_socket_t *held[DNS_DISPATCH_HELD];
@@ -2547,12 +2805,12 @@ get_udpsocket(dns_dispatchmgr_t *mgr, dns_dispatch_t *disp,
 		for (i = 0; i < 1024; i++) {
 			in_port_t prt;
 
-			prt = ports[dispatch_arc4uniformrandom(
+			prt = ports[dispatch_uniformrandom(
 					DISP_ARC4CTX(disp),
 					nports)];
 			isc_sockaddr_setport(&localaddr_bound, prt);
 			result = open_socket(sockmgr, &localaddr_bound,
-					     0, &sock);
+					     0, &sock, NULL);
 			if (result == ISC_R_SUCCESS ||
 			    result != ISC_R_ADDRINUSE) {
 				disp->localport = prt;
@@ -2565,13 +2823,23 @@ get_udpsocket(dns_dispatchmgr_t *mgr, dns_dispatch_t *disp,
 		 * If this fails 1024 times, we then ask the kernel for
 		 * choosing one.
 		 */
+	} else {
+		/* Allow to reuse address for non-random ports. */
+		result = open_socket(sockmgr, localaddr,
+				     ISC_SOCKET_REUSEADDRESS, &sock,
+				     dup_socket);
+
+		if (result == ISC_R_SUCCESS)
+			*sockp = sock;
+
+		return (result);
 	}
 
 	memset(held, 0, sizeof(held));
 	i = 0;
 
 	for (j = 0; j < 0xffffU; j++) {
-		result = open_socket(sockmgr, localaddr, 0, &sock);
+		result = open_socket(sockmgr, localaddr, 0, &sock, NULL);
 		if (result != ISC_R_SUCCESS)
 			goto end;
 		else if (!anyport)
@@ -2610,7 +2878,8 @@ dispatch_createudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 		   isc_sockaddr_t *localaddr,
 		   unsigned int maxrequests,
 		   unsigned int attributes,
-		   dns_dispatch_t **dispp)
+		   dns_dispatch_t **dispp,
+		   isc_socket_t *dup_socket)
 {
 	isc_result_t result;
 	dns_dispatch_t *disp;
@@ -2626,9 +2895,21 @@ dispatch_createudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 		return (result);
 
 	if ((attributes & DNS_DISPATCHATTR_EXCLUSIVE) == 0) {
-		result = get_udpsocket(mgr, disp, sockmgr, localaddr, &sock);
+		result = get_udpsocket(mgr, disp, sockmgr, localaddr, &sock,
+				       dup_socket);
 		if (result != ISC_R_SUCCESS)
 			goto deallocate_dispatch;
+
+		if (isc_log_wouldlog(dns_lctx, 90)) {
+			char addrbuf[ISC_SOCKADDR_FORMATSIZE];
+
+			isc_sockaddr_format(localaddr, addrbuf,
+					    ISC_SOCKADDR_FORMATSIZE);
+			mgr_log(mgr, LVL(90), "dns_dispatch_createudp: Created"
+				" UDP dispatch for %s with socket fd %d\n",
+				addrbuf, isc_socket_getfd(sock));
+		}
+
 	} else {
 		isc_sockaddr_t sa_any;
 
@@ -2640,12 +2921,27 @@ dispatch_createudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 		 */
 		isc_sockaddr_anyofpf(&sa_any, isc_sockaddr_pf(localaddr));
 		if (!isc_sockaddr_eqaddr(&sa_any, localaddr)) {
-			result = open_socket(sockmgr, localaddr, 0, &sock);
+			result = open_socket(sockmgr, localaddr, 0, &sock, NULL);
 			if (sock != NULL)
 				isc_socket_detach(&sock);
 			if (result != ISC_R_SUCCESS)
 				goto deallocate_dispatch;
 		}
+
+		disp->port_table = isc_mem_get(mgr->mctx,
+					       sizeof(disp->port_table[0]) *
+					       DNS_DISPATCH_PORTTABLESIZE);
+		if (disp->port_table == NULL)
+			goto deallocate_dispatch;
+		for (i = 0; i < DNS_DISPATCH_PORTTABLESIZE; i++)
+			ISC_LIST_INIT(disp->port_table[i]);
+
+		result = isc_mempool_create(mgr->mctx, sizeof(dispportentry_t),
+					    &disp->portpool);
+		if (result != ISC_R_SUCCESS)
+			goto deallocate_dispatch;
+		isc_mempool_setname(disp->portpool, "disp_portpool");
+		isc_mempool_setfreemax(disp->portpool, 128);
 	}
 	disp->socktype = isc_sockettype_udp;
 	disp->socket = sock;
@@ -2659,8 +2955,10 @@ dispatch_createudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 		disp->task[i] = NULL;
 		result = isc_task_create(taskmgr, 0, &disp->task[i]);
 		if (result != ISC_R_SUCCESS) {
-			while (--i >= 0)
-				isc_task_destroy(&disp->task[i]);
+			while (--i >= 0) {
+				isc_task_shutdown(disp->task[i]);
+				isc_task_detach(&disp->task[i]);
+			}
 			goto kill_socket;
 		}
 		isc_task_setname(disp->task[i], "udpdispatch", disp);
@@ -2690,6 +2988,7 @@ dispatch_createudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 		dispatch_log(disp, LVL(90), "created socket %p", disp->socket);
 
 	*dispp = disp;
+
 	return (result);
 
 	/*
@@ -2741,7 +3040,6 @@ dns_dispatch_detach(dns_dispatch_t **dispp) {
 
 	INSIST(disp->refcount > 0);
 	disp->refcount--;
-	killit = ISC_FALSE;
 	if (disp->refcount == 0) {
 		if (disp->recv_pending > 0)
 			isc_socket_cancel(disp->socket, disp->task[0],
@@ -2825,6 +3123,8 @@ dns_dispatch_addresponse2(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 				oldestresp->item_out = ISC_TRUE;
 				isc_task_send(oldestresp->task,
 					      ISC_EVENT_PTR(&rev));
+				inc_stats(disp->mgr,
+					  dns_resstatscounter_dispabort);
 			}
 		}
 
@@ -2848,6 +3148,7 @@ dns_dispatch_addresponse2(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 		if (result != ISC_R_SUCCESS) {
 			UNLOCK(&qid->lock);
 			UNLOCK(&disp->lock);
+			inc_stats(disp->mgr, dns_resstatscounter_dispsockfail);
 			return (result);
 		}
 	} else {
@@ -2857,7 +3158,7 @@ dns_dispatch_addresponse2(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 	/*
 	 * Try somewhat hard to find an unique ID.
 	 */
-	id = (dns_messageid_t)dispatch_arc4random(DISP_ARC4CTX(disp));
+	id = (dns_messageid_t)dispatch_random(DISP_ARC4CTX(disp));
 	bucket = dns_hash(qid, dest, id, localport);
 	ok = ISC_FALSE;
 	for (i = 0; i < 64; i++) {
@@ -3011,7 +3312,6 @@ dns_dispatch_removeresponse(dns_dispentry_t **resp,
 	disp->requests--;
 	INSIST(disp->refcount > 0);
 	disp->refcount--;
-	killit = ISC_FALSE;
 	if (disp->refcount == 0) {
 		if (disp->recv_pending > 0)
 			isc_socket_cancel(disp->socket, disp->task[0],

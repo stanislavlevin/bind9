@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: thread.c,v 1.17.206.1 2004/03/06 08:15:11 marka Exp $ */
+/* $Id: thread.c,v 1.24 2007/06/19 23:47:19 tbox Exp $ */
 
 #include <config.h>
 
@@ -65,4 +65,26 @@ isc_thread_setconcurrency(unsigned int level) {
 	 * This is unnecessary on Win32 systems, but is here so that the
 	 * call exists
 	 */
+}
+
+void *
+isc_thread_key_getspecific(isc_thread_key_t key) {
+	return(TlsGetValue(key));
+}
+
+int
+isc_thread_key_setspecific(isc_thread_key_t key, void *value) {
+	return (TlsSetValue(key, value) ? 0 : GetLastError());
+}
+
+int
+isc_thread_key_create(isc_thread_key_t *key, void (*func)(void *)) {
+	*key = TlsAlloc();
+
+	return ((*key != -1) ? 0 : GetLastError());
+}
+
+int
+isc_thread_key_delete(isc_thread_key_t key) {
+	return (TlsFree(key) ? 0 : GetLastError());
 }

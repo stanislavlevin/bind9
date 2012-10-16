@@ -42,8 +42,8 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "./" /I "../../../" /I "include" /I "../include" /I "win32" /I "../../isccfg/include" /D "WIN32" /D "NDEBUG" /D "__STDC__" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /YX /FD /c
+# ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "BIND9" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "./" /I "../../../" /I "../../../../libxml2-2.7.3/include" /I "include" /I "../include" /I "../noatomic/include" /I "win32" /I "../../isccfg/include" /D "BIND9" /D "WIN32" /D "NDEBUG" /D "__STDC__" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -53,6 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
+# ADD LINK32 ../../../../libxml2-2.7.3/win32/bin.msvc/libxml2.lib 
 # ADD LINK32 user32.lib advapi32.lib ws2_32.lib /nologo /dll /machine:I386 /out:"../../../Build/Release/libisc.dll"
 # SUBTRACT LINK32 /pdb:none
 
@@ -69,8 +70,8 @@ LINK32=link.exe
 # PROP Intermediate_Dir "Debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "win32" /I "../../isccfg/include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /FR /YX /FD /GZ /c
+# ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "BIND9" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /YX /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../" /I "../../../../libxml2-2.7.3/include" /I "include" /I "../include" /I "../noatomic/include" /I "win32" /I "../../isccfg/include" /D "BIND9" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /FR /YX /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -80,6 +81,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
+# ADD LINK32 ../../../../libxml2-2.7.3/win32/bin.msvc/libxml2.lib 
 # ADD LINK32 user32.lib advapi32.lib ws2_32.lib /nologo /dll /map /debug /machine:I386 /out:"../../../Build/Debug/libisc.dll" /pdbtype:sept
 
 !ENDIF 
@@ -130,6 +132,10 @@ SOURCE=.\interfaceiter.c
 # Begin Source File
 
 SOURCE=.\ipv6.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\iterated_hash.c
 # End Source File
 # Begin Source File
 
@@ -198,6 +204,18 @@ SOURCE=.\include\isc\app.h
 # Begin Source File
 
 SOURCE=..\include\isc\assertions.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\isc\backtrace.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\isc\backtrace-emptytbl.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\isc\base32.h
 # End Source File
 # Begin Source File
 
@@ -293,6 +311,14 @@ SOURCE=..\include\isc\hmacmd5.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\isc\hmacsha.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\isc\httpd.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\include\isc\int.h
 # End Source File
 # Begin Source File
@@ -302,6 +328,10 @@ SOURCE=..\include\isc\interfaceiter.h
 # Begin Source File
 
 SOURCE=..\include\isc\ipv6.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\isc\iterated_hash.h
 # End Source File
 # Begin Source File
 
@@ -417,11 +447,19 @@ SOURCE=..\include\isc\quota.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\isc\radix.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\isc\random.h
 # End Source File
 # Begin Source File
 
 SOURCE=..\include\isc\ratelimiter.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\isc\refcount.h
 # End Source File
 # Begin Source File
 
@@ -453,6 +491,10 @@ SOURCE=..\include\isc\sha1.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\isc\sha2.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\isc\sockaddr.h
 # End Source File
 # Begin Source File
@@ -461,7 +503,7 @@ SOURCE=..\include\isc\socket.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\include\isc\stat.h
+SOURCE=.\include\isc\stats.h
 # End Source File
 # Begin Source File
 
@@ -545,6 +587,18 @@ SOURCE=..\assertions.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\backtrace.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\backtrace-emptytbl.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\base32.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\base64.c
 # End Source File
 # Begin Source File
@@ -586,6 +640,14 @@ SOURCE=..\hex.c
 # Begin Source File
 
 SOURCE=..\hmacmd5.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\hmacsha.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\httpd.c
 # End Source File
 # Begin Source File
 
@@ -657,11 +719,19 @@ SOURCE=..\quota.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\radix.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\random.c
 # End Source File
 # Begin Source File
 
 SOURCE=..\ratelimiter.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\refcount.c
 # End Source File
 # Begin Source File
 
@@ -685,7 +755,15 @@ SOURCE=..\sha1.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\sha2.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\sockaddr.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\stats.c
 # End Source File
 # Begin Source File
 
@@ -712,6 +790,10 @@ SOURCE=..\timer.c
 SOURCE=.\win32os.c
 # End Source File
 # End Group
+# Begin Source File
+
+SOURCE=..\noatomic\include\atomic.h
+# End Source File
 # Begin Source File
 
 SOURCE=.\libisc.def

@@ -1,6 +1,6 @@
-.\" Copyright (C) 2004-2007 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2007, 2010 Internet Systems Consortium, Inc. ("ISC")
 .\" 
-.\" Permission to use, copy, modify, and distribute this software for any
+.\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\" 
@@ -12,7 +12,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $Id: nslookup.1,v 1.1.6.12 2007/05/16 06:10:54 marka Exp $
+.\" $Id$
 .\"
 .hy 0
 .ad l
@@ -54,7 +54,13 @@ when the first argument is a hyphen (\-) and the second argument is the host nam
 Non\-interactive mode is used when the name or Internet address of the host to be looked up is given as the first argument. The optional second argument specifies the host name or address of a name server.
 .PP
 Options can also be specified on the command line if they precede the arguments and are prefixed with a hyphen. For example, to change the default query type to host information, and the initial timeout to 10 seconds, type:
-.sp .RS 4 .nf nslookup \-query=hinfo \-timeout=10 .fi .RE
+.sp
+.RS 4
+.nf
+nslookup \-query=hinfo  \-timeout=10
+.fi
+.RE
+.sp
 .SH "INTERACTIVE COMMANDS"
 .PP
 \fBhost\fR [server]
@@ -156,7 +162,7 @@ The class specifies the protocol group of the information.
 (Default = IN; abbreviation = cl)
 .RE
 .PP
-\fB\fI[no]\fR\fR\fBdebug\fR
+\fB \fR\fB\fI[no]\fR\fR\fBdebug\fR
 .RS 4
 Turn on or off the display of the full response packet and any intermediate response packets when searching.
 .sp
@@ -164,7 +170,7 @@ Turn on or off the display of the full response packet and any intermediate resp
 [no]deb)
 .RE
 .PP
-\fB\fI[no]\fR\fR\fBd2\fR
+\fB \fR\fB\fI[no]\fR\fR\fBd2\fR
 .RS 4
 Turn debugging mode on or off. This displays more about what nslookup is doing.
 .sp
@@ -177,7 +183,7 @@ Sets the search list to
 \fIname\fR.
 .RE
 .PP
-\fB\fI[no]\fR\fR\fBsearch\fR
+\fB \fR\fB\fI[no]\fR\fR\fBsearch\fR
 .RS 4
 If the lookup request contains at least one period but doesn't end with a trailing period, append the domain names in the domain search list to the request until an answer is received.
 .sp
@@ -203,7 +209,7 @@ Change the type of the information query.
 (Default = A; abbreviations = q, ty)
 .RE
 .PP
-\fB\fI[no]\fR\fR\fBrecurse\fR
+\fB \fR\fB\fI[no]\fR\fR\fBrecurse\fR
 .RS 4
 Tell the name server to query other servers if it does not have the information.
 .sp
@@ -220,11 +226,18 @@ Set the number of retries to number.
 Change the initial timeout interval for waiting for a reply to number seconds.
 .RE
 .PP
-\fB\fI[no]\fR\fR\fBvc\fR
+\fB \fR\fB\fI[no]\fR\fR\fBvc\fR
 .RS 4
 Always use a virtual circuit when sending requests to the server.
 .sp
 (Default = novc)
+.RE
+.PP
+\fB \fR\fB\fI[no]\fR\fR\fBfail\fR
+.RS 4
+Try the next nameserver if a nameserver responds with SERVFAIL or a referral (nofail) or terminate query (fail) on such a response.
+.sp
+(Default = nofail)
 .RE
 .RE
 .IP "" 4
@@ -241,5 +254,5 @@ Always use a virtual circuit when sending requests to the server.
 .PP
 Andrew Cherenson
 .SH "COPYRIGHT"
-Copyright \(co 2004\-2007 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004\-2007, 2010 Internet Systems Consortium, Inc. ("ISC")
 .br

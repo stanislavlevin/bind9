@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: client.h,v 1.60.2.2.10.12 2006/06/06 00:11:40 marka Exp $ */
+/* $Id$ */
 
 #ifndef NAMED_CLIENT_H
 #define NAMED_CLIENT_H 1
@@ -24,9 +24,8 @@
  ***** Module Info
  *****/
 
-/*
- * Client
- *
+/*! \file
+ * \brief
  * This module defines two objects, ns_client_t and ns_clientmgr_t.
  *
  * An ns_client_t object handles incoming DNS requests from clients
@@ -44,12 +43,12 @@
  * fully handled (which can be much later), the ns_client_t must be
  * notified of this by calling one of the following functions
  * exactly once in the context of its task:
- *
+ * \code
  *   ns_client_send()	(sending a non-error response)
  *   ns_client_sendraw() (sending a raw response)
  *   ns_client_error()	(sending an error response)
  *   ns_client_next()	(sending no response)
- *
+ *\endcode
  * This will release any resources used by the request and
  * and allow the ns_client_t to listen for the next request.
  *
@@ -67,7 +66,9 @@
 #include <isc/magic.h>
 #include <isc/stdtime.h>
 #include <isc/quota.h>
+#include <isc/queue.h>
 
+#include <dns/db.h>
 #include <dns/fixedname.h>
 #include <dns/name.h>
 #include <dns/rdataclass.h>
@@ -82,8 +83,7 @@
  *** Types
  ***/
 
-typedef ISC_LIST(ns_client_t) client_list_t;
-
+/*% nameserver client structure */
 struct ns_client {
 	unsigned int		magic;
 	isc_mem_t *		mctx;
@@ -97,6 +97,13 @@ struct ns_client {
 	int			nupdates;
 	int			nctls;
 	int			references;
+	isc_boolean_t		needshutdown; 	/*
+						 * Used by clienttest to get
+						 * the client to go from
+						 * inactive to free state
+						 * by shutting down the
+						 * client's task.
+						 */
 	unsigned int		attributes;
 	isc_task_t *		task;
 	dns_view_t *		view;
@@ -116,23 +123,28 @@ struct ns_client {
 	dns_rdataset_t *	opt;
 	isc_uint16_t		udpsize;
 	isc_uint16_t		extflags;
+	isc_int16_t		ednsversion;	/* -1 noedns */
 	void			(*next)(ns_client_t *);
 	void			(*shutdown)(void *arg, isc_result_t result);
 	void 			*shutdown_arg;
 	ns_query_t		query;
 	isc_stdtime_t		requesttime;
 	isc_stdtime_t		now;
-	dns_name_t		signername;   /* [T]SIG key name */
-	dns_name_t *		signer;	      /* NULL if not valid sig */
-	isc_boolean_t		mortal;	      /* Die after handling request */
+	dns_name_t		signername;   /*%< [T]SIG key name */
+	dns_name_t *		signer;	      /*%< NULL if not valid sig */
+	isc_boolean_t		mortal;	      /*%< Die after handling request */
 	isc_quota_t		*tcpquota;
 	isc_quota_t		*recursionquota;
 	ns_interface_t		*interface;
 	isc_sockaddr_t		peeraddr;
 	isc_boolean_t		peeraddr_valid;
+	isc_netaddr_t		destaddr;
 	struct in6_pktinfo	pktinfo;
 	isc_event_t		ctlevent;
-	/*
+#ifdef ALLOW_FILTER_AAAA_ON_V4
+	dns_v4_aaaa_t		filter_aaaa;
+#endif
+	/*%
 	 * Information about recent FORMERR response(s), for
 	 * FORMERR loop avoidance.  This is separate for each
 	 * client object rather than global only to avoid
@@ -143,49 +155,60 @@ struct ns_client {
 		isc_stdtime_t		time;
 		dns_messageid_t		id;
 	} formerrcache;
+
 	ISC_LINK(ns_client_t)	link;
-	/*
-	 * The list 'link' is part of, or NULL if not on any list.
-	 */
-	client_list_t		*list;
+	ISC_LINK(ns_client_t)	rlink;
+	ISC_QLINK(ns_client_t)	ilink;
 };
+
+typedef ISC_QUEUE(ns_client_t) client_queue_t;
+typedef ISC_LIST(ns_client_t) client_list_t;
 
 #define NS_CLIENT_MAGIC			ISC_MAGIC('N','S','C','c')
 #define NS_CLIENT_VALID(c)		ISC_MAGIC_VALID(c, NS_CLIENT_MAGIC)
 
 #define NS_CLIENTATTR_TCP		0x01
-#define NS_CLIENTATTR_RA		0x02 /* Client gets recusive service */
-#define NS_CLIENTATTR_PKTINFO		0x04 /* pktinfo is valid */
-#define NS_CLIENTATTR_MULTICAST		0x08 /* recv'd from multicast */
-#define NS_CLIENTATTR_WANTDNSSEC	0x10 /* include dnssec records */
+#define NS_CLIENTATTR_RA		0x02 /*%< Client gets recursive service */
+#define NS_CLIENTATTR_PKTINFO		0x04 /*%< pktinfo is valid */
+#define NS_CLIENTATTR_MULTICAST		0x08 /*%< recv'd from multicast */
+#define NS_CLIENTATTR_WANTDNSSEC	0x10 /*%< include dnssec records */
+#define NS_CLIENTATTR_WANTNSID          0x20 /*%< include nameserver ID */
+#ifdef ALLOW_FILTER_AAAA_ON_V4
+#define NS_CLIENTATTR_FILTER_AAAA	0x40 /*%< suppress AAAAs */
+#define NS_CLIENTATTR_FILTER_AAAA_RC	0x80 /*%< recursing for A against AAAA */
+#endif
 
+extern unsigned int ns_client_requests;
 
 /***
  *** Functions
  ***/
 
-/*
+/*%
  * Note!  These ns_client_ routines MUST be called ONLY from the client's
  * task in order to ensure synchronization.
  */
 
 void
 ns_client_send(ns_client_t *client);
-/*
+/*%
  * Finish processing the current client request and
  * send client->message as a response.
+ * \brief
+ * Note!  These ns_client_ routines MUST be called ONLY from the client's
+ * task in order to ensure synchronization.
  */
 
 void
 ns_client_sendraw(ns_client_t *client, dns_message_t *msg);
-/*
+/*%
  * Finish processing the current client request and
  * send msg as a response using client->message->id for the id.
  */
 
 void
 ns_client_error(ns_client_t *client, isc_result_t result);
-/*
+/*%
  * Finish processing the current client request and return
  * an error response to the client.  The error response
  * will have an RCODE determined by 'result'.
@@ -193,38 +216,32 @@ ns_client_error(ns_client_t *client, isc_result_t result);
 
 void
 ns_client_next(ns_client_t *client, isc_result_t result);
-/*
+/*%
  * Finish processing the current client request,
  * return no response to the client.
  */
 
-void
-ns_client_qnamereplace(ns_client_t *client, dns_name_t *name);
-/*%
- * Replace the qname.
- */
-
 isc_boolean_t
 ns_client_shuttingdown(ns_client_t *client);
-/*
+/*%
  * Return ISC_TRUE iff the client is currently shutting down.
  */
 
 void
 ns_client_attach(ns_client_t *source, ns_client_t **target);
-/*
+/*%
  * Attach '*targetp' to 'source'.
  */
 
 void
 ns_client_detach(ns_client_t **clientp);
-/*
+/*%
  * Detach '*clientp' from its client.
  */
 
 isc_result_t
 ns_client_replace(ns_client_t *client);
-/*
+/*%
  * Try to replace the current client with a new one, so that the
  * current one can go off and do some lengthy work without
  * leaving the dispatch/socket without service.
@@ -232,20 +249,20 @@ ns_client_replace(ns_client_t *client);
 
 void
 ns_client_settimeout(ns_client_t *client, unsigned int seconds);
-/*
+/*%
  * Set a timer in the client to go off in the specified amount of time.
  */
 
 isc_result_t
 ns_clientmgr_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 		    isc_timermgr_t *timermgr, ns_clientmgr_t **managerp);
-/*
+/*%
  * Create a client manager.
  */
 
 void
 ns_clientmgr_destroy(ns_clientmgr_t **managerp);
-/*
+/*%
  * Destroy a client manager and all ns_client_t objects
  * managed by it.
  */
@@ -253,7 +270,7 @@ ns_clientmgr_destroy(ns_clientmgr_t **managerp);
 isc_result_t
 ns_clientmgr_createclients(ns_clientmgr_t *manager, unsigned int n,
 			   ns_interface_t *ifp, isc_boolean_t tcp);
-/*
+/*%
  * Create up to 'n' clients listening on interface 'ifp'.
  * If 'tcp' is ISC_TRUE, the clients will listen for TCP connections,
  * otherwise for UDP requests.
@@ -261,53 +278,57 @@ ns_clientmgr_createclients(ns_clientmgr_t *manager, unsigned int n,
 
 isc_sockaddr_t *
 ns_client_getsockaddr(ns_client_t *client);
-/*
+/*%
  * Get the socket address of the client whose request is
  * currently being processed.
  */
 
 isc_result_t
-ns_client_checkaclsilent(ns_client_t  *client,dns_acl_t *acl,
-			 isc_boolean_t default_allow);
+ns_client_checkaclsilent(ns_client_t *client, isc_netaddr_t *netaddr,
+			 dns_acl_t *acl, isc_boolean_t default_allow);
 
-/*
+/*%
  * Convenience function for client request ACL checking.
  *
  * Check the current client request against 'acl'.  If 'acl'
  * is NULL, allow the request iff 'default_allow' is ISC_TRUE.
+ * If netaddr is NULL, check the ACL against client->peeraddr;
+ * otherwise check it against netaddr.
  *
  * Notes:
- *	This is appropriate for checking allow-update,
+ *\li	This is appropriate for checking allow-update,
  * 	allow-query, allow-transfer, etc.  It is not appropriate
  * 	for checking the blackhole list because we treat positive
  * 	matches as "allow" and negative matches as "deny"; in
  *	the case of the blackhole list this would be backwards.
  *
  * Requires:
- *	'client' points to a valid client.
- *	'acl' points to a valid ACL, or is NULL.
+ *\li	'client' points to a valid client.
+ *\li	'netaddr' points to a valid address, or is NULL.
+ *\li	'acl' points to a valid ACL, or is NULL.
  *
  * Returns:
- *	ISC_R_SUCCESS	if the request should be allowed
- * 	ISC_R_REFUSED	if the request should be denied
- *	No other return values are possible.
+ *\li	ISC_R_SUCCESS	if the request should be allowed
+ * \li	DNS_R_REFUSED	if the request should be denied
+ *\li	No other return values are possible.
  */
 
 isc_result_t
 ns_client_checkacl(ns_client_t  *client,
+		   isc_sockaddr_t *sockaddr,
 		   const char *opname, dns_acl_t *acl,
 		   isc_boolean_t default_allow,
 		   int log_level);
-/*
- * Like ns_client_checkacl, but also logs the outcome of the
- * check at log level 'log_level' if denied, and at debug 3
- * if approved.  Log messages will refer to the request as
- * an 'opname' request.
+/*%
+ * Like ns_client_checkaclsilent, except the outcome of the check is
+ * logged at log level 'log_level' if denied, and at debug 3 if approved.
+ * Log messages will refer to the request as an 'opname' request.
  *
  * Requires:
- *	Those of ns_client_checkaclsilent(), and:
- *
- *	'opname' points to a null-terminated string.
+ *\li	'client' points to a valid client.
+ *\li	'sockaddr' points to a valid address, or is NULL.
+ *\li	'acl' points to a valid ACL, or is NULL.
+ *\li	'opname' points to a null-terminated string.
  */
 
 void
@@ -330,8 +351,7 @@ ns_client_aclmsg(const char *msg, dns_name_t *name, dns_rdatatype_t type,
 void
 ns_client_recursing(ns_client_t *client);
 /*%
- * Add client to end of recursing list.  If 'killoldest' is true
- * kill the oldest recursive client (list head). 
+ * Add client to end of th recursing list.
  */
 
 void
@@ -342,8 +362,25 @@ ns_client_killoldestquery(ns_client_t *client);
 
 void
 ns_client_dumprecursing(FILE *f, ns_clientmgr_t *manager);
-/*
+/*%
  * Dump the outstanding recursive queries to 'f'.
  */
+
+void
+ns_client_qnamereplace(ns_client_t *client, dns_name_t *name);
+/*%
+ * Replace the qname.
+ */
+
+isc_boolean_t
+ns_client_isself(dns_view_t *myview, dns_tsigkey_t *mykey,
+		 isc_sockaddr_t *srcaddr, isc_sockaddr_t *destaddr,
+		 dns_rdataclass_t rdclass, void *arg);
+/*%
+ * Isself callback.
+ */
+
+isc_result_t
+ns_client_sourceip(dns_clientinfo_t *ci, isc_sockaddr_t **addrp);
 
 #endif /* NAMED_CLIENT_H */

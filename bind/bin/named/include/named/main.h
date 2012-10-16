@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,13 +15,16 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: main.h,v 1.8.2.2.8.7 2007/08/28 07:19:08 tbox Exp $ */
+/* $Id: main.h,v 1.17 2009/09/29 23:48:03 tbox Exp $ */
 
 #ifndef NAMED_MAIN_H
 #define NAMED_MAIN_H 1
 
-void
-ns_main_earlyfatal(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);
+/*! \file */
+
+ISC_PLATFORM_NORETURN_PRE void
+ns_main_earlyfatal(const char *format, ...)
+ISC_FORMAT_PRINTF(1, 2) ISC_PLATFORM_NORETURN_POST;
 
 void
 ns_main_earlywarning(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);

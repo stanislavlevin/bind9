@@ -1,7 +1,7 @@
-.\" Copyright (C) 2004, 2005, 2007, 2008 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004, 2005, 2007-2009 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001 Internet Software Consortium.
 .\" 
-.\" Permission to use, copy, modify, and distribute this software for any
+.\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\" 
@@ -13,7 +13,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $Id: lwresd.8,v 1.13.208.11 2008/10/17 01:19:58 tbox Exp $
+.\" $Id$
 .\"
 .hy 0
 .ad l
@@ -42,7 +42,7 @@ is the daemon providing name lookup services to clients that use the BIND 9 ligh
 \fBlwresd\fR
 listens for resolver queries on a UDP port on the IPv4 loopback interface, 127.0.0.1. This means that
 \fBlwresd\fR
-can only be used by processes running on the local machine. By default UDP port number 921 is used for lightweight resolver requests and responses.
+can only be used by processes running on the local machine. By default, UDP port number 921 is used for lightweight resolver requests and responses.
 .PP
 Incoming lightweight resolver requests are decoded by the server which then resolves them using the DNS protocol. When the DNS lookup completes,
 \fBlwresd\fR
@@ -125,15 +125,17 @@ Run the server in the foreground and force all logging to
 Use
 \fIpid\-file\fR
 as the PID file instead of the default,
-\fI/var/run/lwresd.pid\fR.
+\fI/var/run/lwresd/lwresd.pid\fR.
 .RE
 .PP
 \-m \fIflag\fR
 .RS 4
 Turn on memory usage debugging flags. Possible flags are
 \fIusage\fR,
-\fItrace\fR, and
-\fIrecord\fR. These correspond to the ISC_MEM_DEBUGXXXX flags described in
+\fItrace\fR,
+\fIrecord\fR,
+\fIsize\fR, and
+\fImctx\fR. These correspond to the ISC_MEM_DEBUGXXXX flags described in
 \fI<isc/mem.h>\fR.
 .RE
 .PP
@@ -171,8 +173,7 @@ This option is mainly of interest to BIND 9 developers and may be removed or cha
 .PP
 \-t \fIdirectory\fR
 .RS 4
-\fBChroot\fR
-to
+Chroot to
 \fIdirectory\fR
 after processing the command line arguments, but before reading the configuration file.
 .RS
@@ -187,8 +188,7 @@ is defined allows a process with root privileges to escape a chroot jail.
 .PP
 \-u \fIuser\fR
 .RS 4
-\fBSetuid\fR
-to
+Setuid to
 \fIuser\fR
 after completing privileged operations, such as creating sockets that listen on privileged ports.
 .RE
@@ -217,7 +217,7 @@ The default process\-id file.
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2004, 2005, 2007, 2008 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004, 2005, 2007\-2009 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000, 2001 Internet Software Consortium.
 .br

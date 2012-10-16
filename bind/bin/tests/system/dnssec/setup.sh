@@ -1,9 +1,9 @@
-#!/bin/sh
+#!/bin/sh -e
 #
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -15,12 +15,16 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: setup.sh,v 1.10.206.2 2004/03/10 01:05:51 marka Exp $
+# $Id: setup.sh,v 1.20 2011/02/15 22:02:36 marka Exp $
 
-../../genrandom 400 random.data
+sh clean.sh 
+
+../../../tools/genrandom 400 random.data
 
 cd ns1 && sh sign.sh
 
 echo "a.bogus.example.	A	10.0.0.22" >>../ns3/bogus.example.db.signed
 
+cd ../ns4 && cp -f named1.conf named.conf
 cd ../ns5 && cp -f trusted.conf.bad trusted.conf
+

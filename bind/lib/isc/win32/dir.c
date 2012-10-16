@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,14 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dir.c,v 1.10.12.6 2007/08/28 07:19:17 tbox Exp $ */
+/* $Id$ */
 
 /* Principal Authors: DCL */
-
-/*
- * isc_dir_chroot is currently stubbed out for Win32
- * This will need to be revisited
- */
 
 #include <config.h>
 
@@ -90,7 +85,7 @@ isc_dir_open(isc_dir_t *dir, const char *dirname) {
 	if (dir->dirname < p && *(p - 1) != '\\' && *(p - 1) != ':')
 		*p++ = '\\';
 	*p++ = '*';
-	*p++ = '\0';
+	*p = '\0';
 
 	/*
 	 * Open stream.
@@ -123,7 +118,7 @@ isc_dir_read(isc_dir_t *dir) {
 				 &dir->entry.find_data) == FALSE)
 			/*
 			 * Either the last file has been processed or
-			 * an error has occured.  The former is not
+			 * an error has occurred.  The former is not
 			 * really an error, but the latter is.
 			 */
 			if (GetLastError() == ERROR_NO_MORE_FILES)
@@ -242,7 +237,7 @@ isc_dir_chdir(const char *dirname) {
 
 isc_result_t
 isc_dir_chroot(const char *dirname) {
-	return (ISC_R_SUCCESS);
+	return (ISC_R_NOTIMPLEMENTED);
 }
 
 isc_result_t

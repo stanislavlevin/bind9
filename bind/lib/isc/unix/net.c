@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: net.c,v 1.22.2.2.10.15 2008/07/04 23:45:39 tbox Exp $ */
+/* $Id$ */
 
 #include <config.h>
 
@@ -39,14 +39,14 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
-/*
+/*%
  * Definitions about UDP port range specification.  This is a total mess of
  * portability variants: some use sysctl (but the sysctl names vary), some use
  * system-specific interfaces, some have the same interface for IPv4 and IPv6,
  * some separate them, etc...
  */
 
-/*
+/*%
  * The last resort defaults: use all non well known port space
  */
 #ifndef ISC_NET_PORTRANGELOW
@@ -58,7 +58,7 @@
 
 #ifdef HAVE_SYSCTLBYNAME
 
-/*
+/*%
  * sysctl variants
  */
 #if defined(__FreeBSD__) || defined(__APPLE__) || defined(__DragonFly__)
@@ -114,6 +114,7 @@ static isc_once_t 	once = ISC_ONCE_INIT;
 
 static isc_result_t	ipv4_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6_result = ISC_R_NOTFOUND;
+static isc_result_t	unix_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6only_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6pktinfo_result = ISC_R_NOTFOUND;
 
@@ -208,6 +209,9 @@ initialize_action(void) {
 #endif
 #endif
 #endif
+#ifdef ISC_PLATFORM_HAVESYSUNH
+	unix_result = try_proto(PF_UNIX);
+#endif
 }
 
 static void
@@ -225,6 +229,12 @@ isc_result_t
 isc_net_probeipv6(void) {
 	initialize();
 	return (ipv6_result);
+}
+
+isc_result_t
+isc_net_probeunix(void) {
+	initialize();
+	return (unix_result);
 }
 
 #ifdef ISC_PLATFORM_HAVEIPV6

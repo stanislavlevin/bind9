@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,9 +15,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: byname_test.c,v 1.25.206.3 2005/06/26 23:17:52 marka Exp $ */
+/* $Id: byname_test.c,v 1.33 2009/09/02 23:48:01 tbox Exp $ */
 
-/*
+/*! \file
+ * \author
  * Principal Author: Bob Halley
  */
 
@@ -124,7 +125,7 @@ do_find(isc_boolean_t want_event) {
 	dns_fixedname_init(&target);
 	result = dns_adb_createfind(view->adb, task, adb_callback, NULL,
 				    dns_fixedname_name(&name),
-				    dns_rootname, options, 0,
+				    dns_rootname, 0, options, 0,
 				    dns_fixedname_name(&target), 0,
 				    &find);
 	if (result == ISC_R_SUCCESS) {
@@ -342,7 +343,7 @@ main(int argc, char *argv[]) {
 	dns_fixedname_init(&name);
 	dns_fixedname_init(&target);
 	RUNTIME_CHECK(dns_name_fromtext(dns_fixedname_name(&name), &b,
-					dns_rootname, ISC_FALSE, NULL) ==
+					dns_rootname, 0, NULL) ==
 		      ISC_R_SUCCESS);
 
 	RUNTIME_CHECK(isc_app_onrun(mctx, task, run, NULL) == ISC_R_SUCCESS);

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name_test.c,v 1.33.12.6 2005/03/17 03:58:28 marka Exp $ */
+/* $Id: name_test.c,v 1.43 2009/09/02 23:48:01 tbox Exp $ */
 
 #include <config.h>
 
@@ -73,7 +73,7 @@ main(int argc, char *argv[]) {
 	isc_buffer_t source;
 	isc_region_t r;
 	dns_name_t *name, *origin, *comp, *down;
-	isc_boolean_t downcase = ISC_FALSE;
+	unsigned int downcase = 0;
 	size_t len;
 	isc_boolean_t quiet = ISC_FALSE;
 	isc_boolean_t concatenate = ISC_FALSE;
@@ -128,8 +128,7 @@ main(int argc, char *argv[]) {
 			dns_fixedname_init(&oname);
 			origin = &oname.name;
 			result = dns_name_fromtext(origin, &source,
-						   dns_rootname, ISC_FALSE,
-						   NULL);
+						   dns_rootname, 0, NULL);
 			if (result != 0) {
 				fprintf(stderr,
 					"dns_name_fromtext() failed: %d\n",
@@ -151,8 +150,8 @@ main(int argc, char *argv[]) {
 			isc_buffer_add(&source, len);
 			dns_fixedname_init(&compname);
 			comp = &compname.name;
-			result = dns_name_fromtext(comp, &source,
-						   origin, ISC_FALSE, NULL);
+			result = dns_name_fromtext(comp, &source, origin,
+						   0, NULL);
 			if (result != 0) {
 				fprintf(stderr,
 					"dns_name_fromtext() failed: %d\n",
