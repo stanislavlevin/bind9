@@ -62,10 +62,10 @@ index 8ada9bf..d361f29 100644
  	 * Get the user and group information before changing the root
  	 * directory, so the administrator does not need to keep a copy
 diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
-index ddfb730..5b0fe99 100644
+index 4083ce8..7504ebc 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -4738,16 +4738,20 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -4786,16 +4786,20 @@ load_configuration(const char *filename, ns_server_t *server,
  	/*
  	 * Write the PID file.
  	 */
@@ -95,7 +95,7 @@ index ddfb730..5b0fe99 100644
  
  	/*
  	 * Configure the server-wide session key.  This must be done before
-@@ -5065,7 +5069,6 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -5113,7 +5117,6 @@ load_configuration(const char *filename, ns_server_t *server,
  		}
  	}
  

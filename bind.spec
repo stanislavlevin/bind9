@@ -7,7 +7,7 @@ License: BSD-style
 Group: System/Servers
 Url: http://www.isc.org/products/BIND/
 
-#define vsuffix %-P3
+%define vsuffix %nil
 %define srcname %name-%version%vsuffix
 # ftp://ftp.isc.org/isc/bind9/%version%vsuffix/bind-%version%vsuffix.tar.gz
 Source0: %srcname.tar
@@ -432,6 +432,9 @@ fi
 %exclude %docdir/COPYRIGHT
 
 %changelog
+* Wed Oct 17 2012 Fr. Br. George <george@altlinux.ru> 9.9.2-alt1
+- Version up to 9.9.2 (CVE 5166 included)
+
 * Wed Oct 15 2012 Fr. Br. George <george@altlinux.ru> 9.9.1-alt1
 - Version up to 9.9.1-P3 (6 middle versions jump!)
 - Drop outdated patches (including CVE 5166, this is insecure build)

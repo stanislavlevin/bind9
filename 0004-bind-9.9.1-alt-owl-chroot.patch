@@ -12,10 +12,10 @@ Subject: [PATCH 04] bind-9.9.1-alt-owl-chroot
  5 files changed, 110 insertions(+), 71 deletions(-)
 
 diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
-index 5b0fe99..427c0f8 100644
+index 7504ebc..3627352 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -4940,8 +4940,12 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -4988,8 +4988,12 @@ load_configuration(const char *filename, ns_server_t *server,
  				      "no source of entropy found");
  		} else {
  			const char *randomdev = cfg_obj_asstring(obj);
@@ -29,7 +29,7 @@ index 5b0fe99..427c0f8 100644
  			if (result != ISC_R_SUCCESS)
  				isc_log_write(ns_g_lctx,
  					      NS_LOGCATEGORY_GENERAL,
-@@ -4974,16 +4978,9 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -5022,16 +5026,9 @@ load_configuration(const char *filename, ns_server_t *server,
  	/*
  	 * Relinquish root privileges.
  	 */

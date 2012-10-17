@@ -65,7 +65,7 @@ index ea4a504..f1f5bf9 100644
  #endif /* ISC_PLATFORM_HAVEIPV6 */
  
 diff --git a/bind/lib/lwres/Makefile.in b/bind/lib/lwres/Makefile.in
-index 858b325..d805420 100644
+index 0cf873b..6837310 100644
 --- a/bind/lib/lwres/Makefile.in
 +++ b/bind/lib/lwres/Makefile.in
 @@ -35,16 +35,14 @@ OBJS =		context.@O@ gai_strerror.@O@ getaddrinfo.@O@ gethost.@O@ \

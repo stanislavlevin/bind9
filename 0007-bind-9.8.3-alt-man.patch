@@ -60,10 +60,10 @@ index faffdac..e0e6ac7 100644
  .PP
  Internet Systems Consortium
 diff --git a/bind/bin/dnssec/dnssec-keygen.8 b/bind/bin/dnssec/dnssec-keygen.8
-index 9cfc05f..41e86a7 100644
+index 90daddd..9b675b9 100644
 --- a/bind/bin/dnssec/dnssec-keygen.8
 +++ b/bind/bin/dnssec/dnssec-keygen.8
-@@ -299,7 +299,8 @@ and
+@@ -294,7 +294,8 @@ and
  .SH "SEE ALSO"
  .PP
  \fBdnssec\-signzone\fR(8),

@@ -8,7 +8,7 @@ Subject: [PATCH 06] bind-9.8.3-alt-isc-config
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/bind/isc-config.sh.in b/bind/isc-config.sh.in
-index 0eafca7..356be0e 100644
+index 26b7d64..09f35d5 100644
 --- a/bind/isc-config.sh.in
 +++ b/bind/isc-config.sh.in
 @@ -115,7 +115,7 @@ if test x"$echo_exec_prefix" = x"true" ; then
