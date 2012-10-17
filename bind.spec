@@ -1,5 +1,5 @@
 Name: bind
-Version: 9.9.1
+Version: 9.9.2
 Release: alt1
 
 Summary: ISC BIND - DNS server
@@ -7,7 +7,7 @@ License: BSD-style
 Group: System/Servers
 Url: http://www.isc.org/products/BIND/
 
-%define vsuffix %-P3
+#define vsuffix %-P3
 %define srcname %name-%version%vsuffix
 # ftp://ftp.isc.org/isc/bind9/%version%vsuffix/bind-%version%vsuffix.tar.gz
 Source0: %srcname.tar
