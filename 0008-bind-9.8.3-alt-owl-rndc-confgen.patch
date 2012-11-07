@@ -8,7 +8,7 @@ Subject: [PATCH 08] bind-9.8.3-alt-owl-rndc-confgen
  1 file changed, 16 insertions(+), 4 deletions(-)
 
 diff --git a/bind/bin/confgen/rndc-confgen.c b/bind/bin/confgen/rndc-confgen.c
-index a9831b1..b9c90a0 100644
+index deadbee..deadbee 100644
 --- a/bind/bin/confgen/rndc-confgen.c
 +++ b/bind/bin/confgen/rndc-confgen.c
 @@ -57,7 +57,7 @@

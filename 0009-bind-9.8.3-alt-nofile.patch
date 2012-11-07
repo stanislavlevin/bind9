@@ -8,7 +8,7 @@ Subject: [PATCH 09] bind-9.8.3-alt-nofile
  1 file changed, 16 insertions(+), 1 deletion(-)
 
 diff --git a/bind/lib/isc/unix/resource.c b/bind/lib/isc/unix/resource.c
-index 29596e2..0d8655d 100644
+index deadbee..deadbee 100644
 --- a/bind/lib/isc/unix/resource.c
 +++ b/bind/lib/isc/unix/resource.c
 @@ -30,6 +30,21 @@

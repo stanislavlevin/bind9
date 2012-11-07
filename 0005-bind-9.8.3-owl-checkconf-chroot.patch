@@ -9,7 +9,7 @@ Subject: [PATCH 05] bind-9.8.3-owl-checkconf-chroot
  2 files changed, 17 insertions(+), 6 deletions(-)
 
 diff --git a/bind/bin/check/named-checkconf.8 b/bind/bin/check/named-checkconf.8
-index 67a8f4a..2adaae0 100644
+index deadbee..deadbee 100644
 --- a/bind/bin/check/named-checkconf.8
 +++ b/bind/bin/check/named-checkconf.8
 @@ -68,6 +68,7 @@ Print the usage summary and exit.
@@ -21,7 +21,7 @@ index 67a8f4a..2adaae0 100644
  .PP
  \-v
 diff --git a/bind/bin/check/named-checkconf.c b/bind/bin/check/named-checkconf.c
-index 2422f97..a450aa3 100644
+index deadbee..deadbee 100644
 --- a/bind/bin/check/named-checkconf.c
 +++ b/bind/bin/check/named-checkconf.c
 @@ -429,6 +429,7 @@ main(int argc, char **argv) {

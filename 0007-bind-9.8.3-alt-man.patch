@@ -16,7 +16,7 @@ Subject: [PATCH 07] bind-9.8.3-alt-man
  9 files changed, 35 insertions(+), 11 deletions(-)
 
 diff --git a/bind/bin/check/named-checkconf.8 b/bind/bin/check/named-checkconf.8
-index 2adaae0..ef78cab 100644
+index deadbee..deadbee 100644
 --- a/bind/bin/check/named-checkconf.8
 +++ b/bind/bin/check/named-checkconf.8
 @@ -109,7 +109,8 @@ returns an exit status of 1 if errors were detected and 0 otherwise.
@@ -30,7 +30,7 @@ index 2adaae0..ef78cab 100644
  .PP
  Internet Systems Consortium
 diff --git a/bind/bin/check/named-checkzone.8 b/bind/bin/check/named-checkzone.8
-index 664f6d2..ce36f52 100644
+index deadbee..deadbee 100644
 --- a/bind/bin/check/named-checkzone.8
 +++ b/bind/bin/check/named-checkzone.8
 @@ -288,8 +288,9 @@ returns an exit status of 1 if errors were detected and 0 otherwise.
@@ -46,7 +46,7 @@ index 664f6d2..ce36f52 100644
  .PP
  Internet Systems Consortium
 diff --git a/bind/bin/confgen/rndc-confgen.8 b/bind/bin/confgen/rndc-confgen.8
-index faffdac..e0e6ac7 100644
+index deadbee..deadbee 100644
 --- a/bind/bin/confgen/rndc-confgen.8
 +++ b/bind/bin/confgen/rndc-confgen.8
 @@ -200,7 +200,8 @@ statements to be manually inserted into
@@ -60,7 +60,7 @@ index faffdac..e0e6ac7 100644
  .PP
  Internet Systems Consortium
 diff --git a/bind/bin/dnssec/dnssec-keygen.8 b/bind/bin/dnssec/dnssec-keygen.8
-index 90daddd..9b675b9 100644
+index deadbee..deadbee 100644
 --- a/bind/bin/dnssec/dnssec-keygen.8
 +++ b/bind/bin/dnssec/dnssec-keygen.8
 @@ -294,7 +294,8 @@ and
@@ -74,7 +74,7 @@ index 90daddd..9b675b9 100644
  RFC 2845,
  RFC 4034.
 diff --git a/bind/bin/dnssec/dnssec-signzone.8 b/bind/bin/dnssec/dnssec-signzone.8
-index c917495..13e1fa7 100644
+index deadbee..deadbee 100644
 --- a/bind/bin/dnssec/dnssec-signzone.8
 +++ b/bind/bin/dnssec/dnssec-signzone.8
 @@ -422,7 +422,8 @@ db.example.com.signed
@@ -88,7 +88,7 @@ index c917495..13e1fa7 100644
  .SH "AUTHOR"
  .PP
 diff --git a/bind/bin/named/named.8 b/bind/bin/named/named.8
-index 956b0cd..c71cbb1 100644
+index deadbee..deadbee 100644
 --- a/bind/bin/named/named.8
 +++ b/bind/bin/named/named.8
 @@ -254,6 +254,18 @@ inherits the
@@ -121,7 +121,7 @@ index 956b0cd..c71cbb1 100644
  .PP
  Internet Systems Consortium
 diff --git a/bind/bin/named/named.conf.5 b/bind/bin/named/named.conf.5
-index 747050b..373a16f 100644
+index deadbee..deadbee 100644
 --- a/bind/bin/named/named.conf.5
 +++ b/bind/bin/named/named.conf.5
 @@ -594,7 +594,8 @@ zone \fIstring\fR \fIoptional_class\fR {
@@ -135,7 +135,7 @@ index 747050b..373a16f 100644
  Copyright \(co 2004\-2011 Internet Systems Consortium, Inc. ("ISC")
  .br
 diff --git a/bind/bin/rndc/rndc.8 b/bind/bin/rndc/rndc.8
-index 7197ed0..937c568 100644
+index deadbee..deadbee 100644
 --- a/bind/bin/rndc/rndc.8
 +++ b/bind/bin/rndc/rndc.8
 @@ -118,6 +118,10 @@ For the complete set of commands supported by
@@ -161,7 +161,7 @@ index 7197ed0..937c568 100644
  .PP
  Internet Systems Consortium
 diff --git a/bind/bin/rndc/rndc.conf.5 b/bind/bin/rndc/rndc.conf.5
-index 694a481..e65d28a 100644
+index deadbee..deadbee 100644
 --- a/bind/bin/rndc/rndc.conf.5
 +++ b/bind/bin/rndc/rndc.conf.5
 @@ -203,7 +203,8 @@ statement in the BIND 9 Administrator Reference Manual for details.

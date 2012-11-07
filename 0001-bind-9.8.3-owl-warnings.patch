@@ -10,7 +10,7 @@ Subject: [PATCH 01] bind-9.8.3-owl-warnings
  3 files changed, 7 insertions(+), 9 deletions(-)
 
 diff --git a/bind/lib/isc/Makefile.in b/bind/lib/isc/Makefile.in
-index ff500ff..fec18f6 100644
+index deadbee..deadbee 100644
 --- a/bind/lib/isc/Makefile.in
 +++ b/bind/lib/isc/Makefile.in
 @@ -62,7 +62,7 @@ OBJS =		@ISC_EXTRA_OBJS@ \
@@ -32,7 +32,7 @@ index ff500ff..fec18f6 100644
  
  LIBS =		@LIBS@
 diff --git a/bind/lib/isc/unix/net.c b/bind/lib/isc/unix/net.c
-index ea4a504..f1f5bf9 100644
+index deadbee..deadbee 100644
 --- a/bind/lib/isc/unix/net.c
 +++ b/bind/lib/isc/unix/net.c
 @@ -103,10 +103,10 @@ const struct in6_addr isc_net_in6addrloop = IN6ADDR_LOOPBACK_INIT;
@@ -65,7 +65,7 @@ index ea4a504..f1f5bf9 100644
  #endif /* ISC_PLATFORM_HAVEIPV6 */
  
 diff --git a/bind/lib/lwres/Makefile.in b/bind/lib/lwres/Makefile.in
-index 0cf873b..6837310 100644
+index deadbee..deadbee 100644
 --- a/bind/lib/lwres/Makefile.in
 +++ b/bind/lib/lwres/Makefile.in
 @@ -35,16 +35,14 @@ OBJS =		context.@O@ gai_strerror.@O@ getaddrinfo.@O@ gethost.@O@ \

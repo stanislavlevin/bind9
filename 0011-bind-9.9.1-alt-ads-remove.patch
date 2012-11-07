@@ -8,7 +8,7 @@ Subject: [PATCH 11] bind-9.9.1-alt-ads-remove
  1 file changed, 2 insertions(+)
 
 diff --git a/bind/bin/named/main.c b/bind/bin/named/main.c
-index d361f29..669e3a5 100644
+index deadbee..deadbee 100644
 --- a/bind/bin/named/main.c
 +++ b/bind/bin/named/main.c
 @@ -810,6 +810,7 @@ setup(void) {

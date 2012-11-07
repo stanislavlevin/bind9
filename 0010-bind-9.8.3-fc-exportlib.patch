@@ -13,7 +13,7 @@ Subject: [PATCH 10] bind-9.8.3-fc-exportlib
  6 files changed, 49 insertions(+), 43 deletions(-)
 
 diff --git a/bind/isc-config.sh.in b/bind/isc-config.sh.in
-index 09f35d5..e533845 100644
+index deadbee..deadbee 100644
 --- a/bind/isc-config.sh.in
 +++ b/bind/isc-config.sh.in
 @@ -20,6 +20,8 @@
@@ -43,7 +43,7 @@ index 09f35d5..e533845 100644
  		libs="$libs -llwres"
  	fi
 diff --git a/bind/lib/export/dns/Makefile.in b/bind/lib/export/dns/Makefile.in
-index 6df36fe..2f12e94 100644
+index deadbee..deadbee 100644
 --- a/bind/lib/export/dns/Makefile.in
 +++ b/bind/lib/export/dns/Makefile.in
 @@ -35,9 +35,9 @@ CDEFINES =	-DUSE_MD5 @USE_OPENSSL@ @USE_GSSAPI@
@@ -95,7 +95,7 @@ index 6df36fe..2f12e94 100644
  	rm -f include/dns/rdatastruct.h
  
 diff --git a/bind/lib/export/irs/Makefile.in b/bind/lib/export/irs/Makefile.in
-index 2cbc0bb..9605c88 100644
+index deadbee..deadbee 100644
 --- a/bind/lib/export/irs/Makefile.in
 +++ b/bind/lib/export/irs/Makefile.in
 @@ -42,9 +42,9 @@ SRCS =		context.c \
@@ -145,7 +145,7 @@ index 2cbc0bb..9605c88 100644
 -	rm -f libirs.@A@ libirs.la timestamp
 +	rm -f libirs-export.@A@ libirs-export.la timestamp
 diff --git a/bind/lib/export/isc/Makefile.in b/bind/lib/export/isc/Makefile.in
-index 86726ab..bf44270 100644
+index deadbee..deadbee 100644
 --- a/bind/lib/export/isc/Makefile.in
 +++ b/bind/lib/export/isc/Makefile.in
 @@ -101,6 +101,10 @@ SRCS =		@ISC_EXTRA_SRCS@ \
@@ -193,7 +193,7 @@ index 86726ab..bf44270 100644
 -	rm -f libisc.@A@ libisc.la timestamp
 +	rm -f libisc-export.@A@ libisc-export.la timestamp
 diff --git a/bind/lib/export/isccfg/Makefile.in b/bind/lib/export/isccfg/Makefile.in
-index 907af50..942ec4b 100644
+index deadbee..deadbee 100644
 --- a/bind/lib/export/isccfg/Makefile.in
 +++ b/bind/lib/export/isccfg/Makefile.in
 @@ -30,11 +30,11 @@ CINCLUDES =	-I. ${DNS_INCLUDES} -I${export_srcdir}/isc/include \
@@ -245,7 +245,7 @@ index 907af50..942ec4b 100644
 -	rm -f libisccfg.@A@ timestamp
 +	rm -f libisccfg-export.@A@ timestamp
 diff --git a/bind/lib/export/samples/Makefile.in b/bind/lib/export/samples/Makefile.in
-index cdc66b1..124d4dc 100644
+index deadbee..deadbee 100644
 --- a/bind/lib/export/samples/Makefile.in
 +++ b/bind/lib/export/samples/Makefile.in
 @@ -30,15 +30,15 @@ CINCLUDES =	-I${srcdir}/include -I../dns/include \
