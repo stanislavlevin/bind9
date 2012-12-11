@@ -3,16 +3,9 @@ From: "Fr. Br. George" <george@altlinux.org>
 Date: Mon, 15 Oct 2012 15:44:28 +0400
 Subject: [PATCH 04] bind-9.9.1-alt-owl-chroot
 
----
- bind/bin/named/server.c                |   17 ++--
- bind/bin/named/unix/include/named/os.h |    6 ++
- bind/bin/named/unix/os.c               |   23 ++++++
- bind/lib/isc/include/isc/entropy.h     |    3 +
- bind/lib/isc/unix/entropy.c            |  132 +++++++++++++++++---------------
- 5 files changed, 110 insertions(+), 71 deletions(-)
 
 diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
 @@ -4988,8 +4988,12 @@ load_configuration(const char *filename, ns_server_t *server,
@@ -49,7 +42,7 @@ index deadbee..deadbee 100644
  
  	/*
 diff --git a/bind/bin/named/unix/include/named/os.h b/bind/bin/named/unix/include/named/os.h
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/named/unix/include/named/os.h
 +++ b/bind/bin/named/unix/include/named/os.h
 @@ -58,6 +58,12 @@ void
@@ -66,7 +59,7 @@ index deadbee..deadbee 100644
  
  void
 diff --git a/bind/bin/named/unix/os.c b/bind/bin/named/unix/os.c
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/named/unix/os.c
 +++ b/bind/bin/named/unix/os.c
 @@ -393,6 +393,19 @@ ns_os_init(const char *progname) {
@@ -122,7 +115,7 @@ index deadbee..deadbee 100644
  				ns_main_earlywarning("Required root "
  						     "permissions to open "
 diff --git a/bind/lib/isc/include/isc/entropy.h b/bind/lib/isc/include/isc/entropy.h
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/lib/isc/include/isc/entropy.h
 +++ b/bind/lib/isc/include/isc/entropy.h
 @@ -172,6 +172,9 @@ isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname);
@@ -136,7 +129,7 @@ index deadbee..deadbee 100644
  isc_entropy_destroysource(isc_entropysource_t **sourcep);
  /*!<
 diff --git a/bind/lib/isc/unix/entropy.c b/bind/lib/isc/unix/entropy.c
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/lib/isc/unix/entropy.c
 +++ b/bind/lib/isc/unix/entropy.c
 @@ -485,22 +485,82 @@ make_nonblock(int fd) {
@@ -306,6 +299,3 @@ index deadbee..deadbee 100644
 -	return (ret);
 +	return isc_entropy_createfilefd(ent, fd, is_usocket, is_connected);
  }
--- 
-1.7.9.7
-

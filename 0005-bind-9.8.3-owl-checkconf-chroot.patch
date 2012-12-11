@@ -3,13 +3,9 @@ From: "Fr. Br. George" <george@altlinux.org>
 Date: Mon, 15 Oct 2012 15:44:28 +0400
 Subject: [PATCH 05] bind-9.8.3-owl-checkconf-chroot
 
----
- bind/bin/check/named-checkconf.8 |    1 +
- bind/bin/check/named-checkconf.c |   22 ++++++++++++++++------
- 2 files changed, 17 insertions(+), 6 deletions(-)
 
 diff --git a/bind/bin/check/named-checkconf.8 b/bind/bin/check/named-checkconf.8
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/check/named-checkconf.8
 +++ b/bind/bin/check/named-checkconf.8
 @@ -68,6 +68,7 @@ Print the usage summary and exit.
@@ -21,7 +17,7 @@ index deadbee..deadbee 100644
  .PP
  \-v
 diff --git a/bind/bin/check/named-checkconf.c b/bind/bin/check/named-checkconf.c
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/check/named-checkconf.c
 +++ b/bind/bin/check/named-checkconf.c
 @@ -429,6 +429,7 @@ main(int argc, char **argv) {
@@ -67,6 +63,3 @@ index deadbee..deadbee 100644
  	if (argv[isc_commandline_index] != NULL)
  		conffile = argv[isc_commandline_index];
  	if (conffile == NULL || conffile[0] == '\0')
--- 
-1.7.9.7
-

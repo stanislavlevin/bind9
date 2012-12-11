@@ -3,16 +3,9 @@ From: "Fr. Br. George" <george@altlinux.org>
 Date: Mon, 15 Oct 2012 15:44:28 +0400
 Subject: [PATCH 03] bind-9.9.1-openbsd-owl-chroot-defaults
 
----
- bind/bin/named/include/named/globals.h |    8 +++-----
- bind/bin/named/named.8                 |    6 ++++--
- bind/bin/nsupdate/Makefile.in          |    2 +-
- bind/bin/nsupdate/nsupdate.docbook     |    2 +-
- bind/doc/arm/Bv9ARM-book.xml           |    4 ++--
- 5 files changed, 11 insertions(+), 11 deletions(-)
 
 diff --git a/bind/bin/named/include/named/globals.h b/bind/bin/named/include/named/globals.h
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/named/include/named/globals.h
 +++ b/bind/bin/named/include/named/globals.h
 @@ -118,13 +118,11 @@ EXTERN isc_resourcevalue_t	ns_g_initopenfiles	INIT(0);
@@ -41,7 +34,7 @@ index deadbee..deadbee 100644
  #ifdef USE_PKCS11
  EXTERN const char *		ns_g_engine		INIT("pkcs11");
 diff --git a/bind/bin/named/named.8 b/bind/bin/named/named.8
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/named/named.8
 +++ b/bind/bin/named/named.8
 @@ -41,7 +41,7 @@ is a Domain Name System (DNS) server, part of the BIND 9 distribution from ISC.
@@ -79,7 +72,7 @@ index deadbee..deadbee 100644
  .B "Note:"
  On Linux,
 diff --git a/bind/bin/nsupdate/Makefile.in b/bind/bin/nsupdate/Makefile.in
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/nsupdate/Makefile.in
 +++ b/bind/bin/nsupdate/Makefile.in
 @@ -68,7 +68,7 @@ MANOBJS =	${MANPAGES} ${HTMLPAGES}
@@ -92,7 +85,7 @@ index deadbee..deadbee 100644
  
  nsupdate@EXEEXT@: nsupdate.@O@ ${UOBJS} ${DEPLIBS}
 diff --git a/bind/bin/nsupdate/nsupdate.docbook b/bind/bin/nsupdate/nsupdate.docbook
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/nsupdate/nsupdate.docbook
 +++ b/bind/bin/nsupdate/nsupdate.docbook
 @@ -186,7 +186,7 @@
@@ -105,7 +98,7 @@ index deadbee..deadbee 100644
        local master zone has set <command>update-policy</command> to
        <command>local</command>.  The location of this key file can be
 diff --git a/bind/doc/arm/Bv9ARM-book.xml b/bind/doc/arm/Bv9ARM-book.xml
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/doc/arm/Bv9ARM-book.xml
 +++ b/bind/doc/arm/Bv9ARM-book.xml
 @@ -5701,7 +5701,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
@@ -126,6 +119,3 @@ index deadbee..deadbee 100644
                name is "local-ddns" and the key algorithm is HMAC-SHA256,
                but these values are configurable with the
                <command>session-keyfile</command>,
--- 
-1.7.9.7
-

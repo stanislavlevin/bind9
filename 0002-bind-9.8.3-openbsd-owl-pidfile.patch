@@ -4,16 +4,9 @@ Date: Mon, 15 Oct 2012 15:44:28 +0400
 Subject: [PATCH 02] bind-9.8.3-openbsd-owl-pidfile
 
 Prevent from subsequent pidfile open tries
----
- bind/bin/named/include/named/globals.h |    2 ++
- bind/bin/named/main.c                  |   11 +++++--
- bind/bin/named/server.c                |   23 +++++++------
- bind/bin/named/unix/include/named/os.h |    3 ++
- bind/bin/named/unix/os.c               |   55 +++++++++++++++++++++++---------
- 5 files changed, 66 insertions(+), 28 deletions(-)
 
 diff --git a/bind/bin/named/include/named/globals.h b/bind/bin/named/include/named/globals.h
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/named/include/named/globals.h
 +++ b/bind/bin/named/include/named/globals.h
 @@ -139,6 +139,8 @@ EXTERN const char *		ns_g_defaultpidfile 	INIT(NS_LOCALSTATEDIR
@@ -26,7 +19,7 @@ index deadbee..deadbee 100644
  EXTERN const char *		ns_g_username		INIT(NULL);
  
 diff --git a/bind/bin/named/main.c b/bind/bin/named/main.c
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/named/main.c
 +++ b/bind/bin/named/main.c
 @@ -309,7 +309,7 @@ usage(void) {
@@ -63,7 +56,7 @@ index deadbee..deadbee 100644
  	 * Get the user and group information before changing the root
  	 * directory, so the administrator does not need to keep a copy
 diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
 @@ -4786,16 +4786,20 @@ load_configuration(const char *filename, ns_server_t *server,
@@ -105,7 +98,7 @@ index deadbee..deadbee 100644
  	if (options != NULL &&
  	    cfg_map_get(options, "memstatistics", &obj) == ISC_R_SUCCESS)
 diff --git a/bind/bin/named/unix/include/named/os.h b/bind/bin/named/unix/include/named/os.h
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/named/unix/include/named/os.h
 +++ b/bind/bin/named/unix/include/named/os.h
 @@ -55,6 +55,9 @@ FILE *
@@ -119,7 +112,7 @@ index deadbee..deadbee 100644
  
  void
 diff --git a/bind/bin/named/unix/os.c b/bind/bin/named/unix/os.c
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/named/unix/os.c
 +++ b/bind/bin/named/unix/os.c
 @@ -54,6 +54,8 @@
@@ -228,6 +221,3 @@ index deadbee..deadbee 100644
  }
  
  isc_result_t
--- 
-1.7.9.7
-

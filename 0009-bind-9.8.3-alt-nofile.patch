@@ -3,12 +3,9 @@ From: "Fr. Br. George" <george@altlinux.org>
 Date: Mon, 15 Oct 2012 15:44:28 +0400
 Subject: [PATCH 09] bind-9.8.3-alt-nofile
 
----
- bind/lib/isc/unix/resource.c |   17 ++++++++++++++++-
- 1 file changed, 16 insertions(+), 1 deletion(-)
 
 diff --git a/bind/lib/isc/unix/resource.c b/bind/lib/isc/unix/resource.c
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/lib/isc/unix/resource.c
 +++ b/bind/lib/isc/unix/resource.c
 @@ -30,6 +30,21 @@
@@ -42,6 +39,3 @@ index deadbee..deadbee 100644
  		unixresult = setrlimit(unixresource, &rl);
  		if (unixresult == 0)
  			return (ISC_R_SUCCESS);
--- 
-1.7.9.7
-

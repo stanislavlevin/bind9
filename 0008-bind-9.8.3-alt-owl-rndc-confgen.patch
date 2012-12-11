@@ -3,12 +3,9 @@ From: "Fr. Br. George" <george@altlinux.org>
 Date: Mon, 15 Oct 2012 15:44:28 +0400
 Subject: [PATCH 08] bind-9.8.3-alt-owl-rndc-confgen
 
----
- bind/bin/confgen/rndc-confgen.c |   20 ++++++++++++++++----
- 1 file changed, 16 insertions(+), 4 deletions(-)
 
 diff --git a/bind/bin/confgen/rndc-confgen.c b/bind/bin/confgen/rndc-confgen.c
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/confgen/rndc-confgen.c
 +++ b/bind/bin/confgen/rndc-confgen.c
 @@ -57,7 +57,7 @@
@@ -78,6 +75,3 @@ index deadbee..deadbee 100644
  		write_key_file(keyfile, chrootdir == NULL ? user : NULL,
  			       keyname, &key_txtbuffer, alg);
  
--- 
-1.7.9.7
-

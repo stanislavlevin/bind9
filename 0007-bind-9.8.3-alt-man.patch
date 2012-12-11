@@ -3,20 +3,9 @@ From: "Fr. Br. George" <george@altlinux.org>
 Date: Mon, 15 Oct 2012 15:44:28 +0400
 Subject: [PATCH 07] bind-9.8.3-alt-man
 
----
- bind/bin/check/named-checkconf.8  |    3 ++-
- bind/bin/check/named-checkzone.8  |    5 +++--
- bind/bin/confgen/rndc-confgen.8   |    3 ++-
- bind/bin/dnssec/dnssec-keygen.8   |    3 ++-
- bind/bin/dnssec/dnssec-signzone.8 |    3 ++-
- bind/bin/named/named.8            |   15 ++++++++++++++-
- bind/bin/named/named.conf.5       |    3 ++-
- bind/bin/rndc/rndc.8              |    8 ++++++--
- bind/bin/rndc/rndc.conf.5         |    3 ++-
- 9 files changed, 35 insertions(+), 11 deletions(-)
 
 diff --git a/bind/bin/check/named-checkconf.8 b/bind/bin/check/named-checkconf.8
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/check/named-checkconf.8
 +++ b/bind/bin/check/named-checkconf.8
 @@ -109,7 +109,8 @@ returns an exit status of 1 if errors were detected and 0 otherwise.
@@ -30,7 +19,7 @@ index deadbee..deadbee 100644
  .PP
  Internet Systems Consortium
 diff --git a/bind/bin/check/named-checkzone.8 b/bind/bin/check/named-checkzone.8
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/check/named-checkzone.8
 +++ b/bind/bin/check/named-checkzone.8
 @@ -288,8 +288,9 @@ returns an exit status of 1 if errors were detected and 0 otherwise.
@@ -46,7 +35,7 @@ index deadbee..deadbee 100644
  .PP
  Internet Systems Consortium
 diff --git a/bind/bin/confgen/rndc-confgen.8 b/bind/bin/confgen/rndc-confgen.8
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/confgen/rndc-confgen.8
 +++ b/bind/bin/confgen/rndc-confgen.8
 @@ -200,7 +200,8 @@ statements to be manually inserted into
@@ -60,7 +49,7 @@ index deadbee..deadbee 100644
  .PP
  Internet Systems Consortium
 diff --git a/bind/bin/dnssec/dnssec-keygen.8 b/bind/bin/dnssec/dnssec-keygen.8
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/dnssec/dnssec-keygen.8
 +++ b/bind/bin/dnssec/dnssec-keygen.8
 @@ -294,7 +294,8 @@ and
@@ -74,7 +63,7 @@ index deadbee..deadbee 100644
  RFC 2845,
  RFC 4034.
 diff --git a/bind/bin/dnssec/dnssec-signzone.8 b/bind/bin/dnssec/dnssec-signzone.8
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/dnssec/dnssec-signzone.8
 +++ b/bind/bin/dnssec/dnssec-signzone.8
 @@ -422,7 +422,8 @@ db.example.com.signed
@@ -88,7 +77,7 @@ index deadbee..deadbee 100644
  .SH "AUTHOR"
  .PP
 diff --git a/bind/bin/named/named.8 b/bind/bin/named/named.8
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/named/named.8
 +++ b/bind/bin/named/named.8
 @@ -254,6 +254,18 @@ inherits the
@@ -121,7 +110,7 @@ index deadbee..deadbee 100644
  .PP
  Internet Systems Consortium
 diff --git a/bind/bin/named/named.conf.5 b/bind/bin/named/named.conf.5
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/named/named.conf.5
 +++ b/bind/bin/named/named.conf.5
 @@ -594,7 +594,8 @@ zone \fIstring\fR \fIoptional_class\fR {
@@ -135,7 +124,7 @@ index deadbee..deadbee 100644
  Copyright \(co 2004\-2011 Internet Systems Consortium, Inc. ("ISC")
  .br
 diff --git a/bind/bin/rndc/rndc.8 b/bind/bin/rndc/rndc.8
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/rndc/rndc.8
 +++ b/bind/bin/rndc/rndc.8
 @@ -118,6 +118,10 @@ For the complete set of commands supported by
@@ -161,7 +150,7 @@ index deadbee..deadbee 100644
  .PP
  Internet Systems Consortium
 diff --git a/bind/bin/rndc/rndc.conf.5 b/bind/bin/rndc/rndc.conf.5
-index deadbee..deadbee 100644
+index defaced..defaced 100644
 --- a/bind/bin/rndc/rndc.conf.5
 +++ b/bind/bin/rndc/rndc.conf.5
 @@ -203,7 +203,8 @@ statement in the BIND 9 Administrator Reference Manual for details.
@@ -174,6 +163,3 @@ index deadbee..deadbee 100644
  .SH "AUTHOR"
  .PP
  Internet Systems Consortium
--- 
-1.7.9.7
-
