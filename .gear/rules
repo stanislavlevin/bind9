@@ -10,4 +10,5 @@ copy: *.localhost
 copy: *.patch
 copy: *.txt
 copy: *.sysconfig
-tar: bind name=@name@-@version@
+copy: *.service
+tar: bind

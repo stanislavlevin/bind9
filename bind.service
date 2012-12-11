@@ -7,8 +7,8 @@ After=network.target
 [Service]
 Type=forking
 EnvironmentFile=-/etc/sysconfig/named
-Environment=KRB5_KTNAME=/etc/named.keytab
-PIDFile=/run/named/named.pid
+#Environment=KRB5_KTNAME=/etc/named.keytab
+PIDFile=/var/run/named/named.pid
 
 ExecStartPre=/usr/sbin/named-checkconf -z /etc/named.conf
 ExecStart=/usr/sbin/named -u named $OPTIONS
@@ -17,8 +17,8 @@ ExecReload=/bin/sh -c '/usr/sbin/rndc reload > /dev/null 2>&1 || /bin/kill -HUP 
 
 ExecStop=/bin/sh -c '/usr/sbin/rndc stop > /dev/null 2>&1 || /bin/kill -TERM $MAINPID'
 
-PrivateTmp=true
-TimeoutSec=25
+#PrivateTmp=true
+#TimeoutSec=25
 
 [Install]
 WantedBy=multi-user.target
