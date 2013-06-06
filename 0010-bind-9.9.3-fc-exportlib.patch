@@ -1,39 +1,9 @@
 From 0 Mon Sep 17 00:00:00 2001
-From: "Fr. Br. George" <george@altlinux.org>
-Date: Mon, 15 Oct 2012 15:44:28 +0400
-Subject: [PATCH 10] bind-9.8.3-fc-exportlib
+From: "George V. Kouryachy (Fr. Br. George)" <george@altlinux.ru>
+Date: Mon, 10 Jun 2013 15:31:19 +0400
+Subject: [PATCH 10] bind-9.9.3-fc-exportlib
 
 
-diff --git a/bind/isc-config.sh.in b/bind/isc-config.sh.in
-index defaced..defaced 100644
---- a/bind/isc-config.sh.in
-+++ b/bind/isc-config.sh.in
-@@ -20,6 +20,8 @@
- prefix=@prefix@
- exec_prefix=@exec_prefix@
- exec_prefix_set=
-+libdir=@libdir@
-+includedir=@includedir@
- 
- usage()
- {
-@@ -115,14 +117,14 @@ if test x"$echo_exec_prefix" = x"true" ; then
- 	echo $exec_prefix
- fi
- if test x"$echo_cflags" = x"true"; then
--	[ "$exec_prefix" = /usr ] || includes="-I${exec_prefix}/include"
-+	includes="-I${includedir}"
- 	if test x"$libisc" = x"true"; then
- 		includes="$includes @ALWAYS_DEFINES@ @STD_CINCLUDES@ @STD_CDEFINES@ @CCOPT@"
- 	fi
- 	echo $includes
- fi
- if test x"$echo_libs" = x"true"; then
--	libs=-L${exec_prefix}/lib
-+	libs="-L${libdir}"
- 	if test x"$liblwres" = x"true" ; then
- 		libs="$libs -llwres"
- 	fi
 diff --git a/bind/lib/export/dns/Makefile.in b/bind/lib/export/dns/Makefile.in
 index defaced..defaced 100644
 --- a/bind/lib/export/dns/Makefile.in
@@ -50,7 +20,7 @@ index defaced..defaced 100644
  
  LIBS =		@LIBS@
  
-@@ -114,29 +114,29 @@ version.@O@: ${srcdir}/version.c
+@@ -116,29 +116,29 @@ version.@O@: ${srcdir}/version.c
  		-DLIBAGE=${LIBAGE} \
  		-c ${srcdir}/version.c
  
@@ -90,7 +60,7 @@ diff --git a/bind/lib/export/irs/Makefile.in b/bind/lib/export/irs/Makefile.in
 index defaced..defaced 100644
 --- a/bind/lib/export/irs/Makefile.in
 +++ b/bind/lib/export/irs/Makefile.in
-@@ -42,9 +42,9 @@ SRCS =		context.c \
+@@ -43,9 +43,9 @@ SRCS =		context.c \
  		gai_sterror.c getaddrinfo.c getnameinfo.c \
  		resconf.c
  
@@ -103,7 +73,7 @@ index defaced..defaced 100644
  
  LIBS =		@LIBS@
  
-@@ -61,26 +61,26 @@ version.@O@: ${srcdir}/version.c
+@@ -62,26 +62,26 @@ version.@O@: ${srcdir}/version.c
  		-DLIBAGE=${LIBAGE} \
  		-c ${srcdir}/version.c
  
@@ -140,7 +110,7 @@ diff --git a/bind/lib/export/isc/Makefile.in b/bind/lib/export/isc/Makefile.in
 index defaced..defaced 100644
 --- a/bind/lib/export/isc/Makefile.in
 +++ b/bind/lib/export/isc/Makefile.in
-@@ -101,6 +101,10 @@ SRCS =		@ISC_EXTRA_SRCS@ \
+@@ -100,6 +100,10 @@ SRCS =		@ISC_EXTRA_SRCS@ \
  
  LIBS =		@LIBS@
  
@@ -151,7 +121,7 @@ index defaced..defaced 100644
  SUBDIRS =	include unix nls @ISC_THREAD_DIR@
  TARGETS =	timestamp
  
-@@ -114,26 +118,26 @@ version.@O@: ${srcdir}/version.c
+@@ -113,26 +117,26 @@ version.@O@: ${srcdir}/version.c
  		-DLIBAGE=${LIBAGE} \
  		-c ${srcdir}/version.c
  
@@ -193,9 +163,9 @@ index defaced..defaced 100644
  CWARNINGS =
  
 -ISCLIBS =	../isc/libisc.@A@
--DNSLIBS =	../dns/libdns.@A@
+-DNSLIBS =	../dns/libdns.@A@ @DNS_CRYPTO_LIBS@
 +ISCLIBS =	../isc/libisc-export.@A@
-+DNSLIBS =	../dns/libdns-export.@A@
++DNSLIBS =	../dns/libdns-export.@A@ @DNS_CRYPTO_LIBS@
  
  ISCDEPLIBS =	../../lib/isc/libisc.@A@
 -ISCCFGDEPLIBS =	libisccfg.@A@
@@ -240,7 +210,7 @@ diff --git a/bind/lib/export/samples/Makefile.in b/bind/lib/export/samples/Makef
 index defaced..defaced 100644
 --- a/bind/lib/export/samples/Makefile.in
 +++ b/bind/lib/export/samples/Makefile.in
-@@ -30,15 +30,15 @@ CINCLUDES =	-I${srcdir}/include -I../dns/include \
+@@ -31,15 +31,15 @@ CINCLUDES =	-I${srcdir}/include -I../dns/include \
  CDEFINES =
  CWARNINGS =
  

@@ -9,7 +9,7 @@ diff --git a/bind/bin/named/include/named/globals.h b/bind/bin/named/include/nam
 index defaced..defaced 100644
 --- a/bind/bin/named/include/named/globals.h
 +++ b/bind/bin/named/include/named/globals.h
-@@ -139,6 +139,8 @@ EXTERN const char *		ns_g_defaultpidfile 	INIT(NS_LOCALSTATEDIR
+@@ -143,6 +143,8 @@ EXTERN const char *		ns_g_defaultpidfile 	INIT(NS_LOCALSTATEDIR
  EXTERN const char *		lwresd_g_defaultpidfile INIT(NS_LOCALSTATEDIR
  							     "/run/lwresd.pid");
  #endif
@@ -42,7 +42,7 @@ index defaced..defaced 100644
  			break;
  		case 'l':
  			ns_g_lwresdonly = ISC_TRUE;
-@@ -709,6 +708,12 @@ setup(void) {
+@@ -721,6 +720,12 @@ setup(void) {
  	char *instance = NULL;
  #endif
  
@@ -59,7 +59,7 @@ diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
 index defaced..defaced 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -4786,16 +4786,20 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -4939,16 +4939,20 @@ load_configuration(const char *filename, ns_server_t *server,
  	/*
  	 * Write the PID file.
  	 */
@@ -89,7 +89,7 @@ index defaced..defaced 100644
  
  	/*
  	 * Configure the server-wide session key.  This must be done before
-@@ -5113,7 +5117,6 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -5266,7 +5270,6 @@ load_configuration(const char *filename, ns_server_t *server,
  		}
  	}
  

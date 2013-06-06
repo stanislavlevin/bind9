@@ -1,7 +1,7 @@
 From 0 Mon Sep 17 00:00:00 2001
 From: "Fr. Br. George" <george@altlinux.org>
 Date: Mon, 15 Oct 2012 15:44:28 +0400
-Subject: [PATCH 07] bind-9.8.3-alt-man
+Subject: [PATCH 06] bind-9.8.3-alt-man
 
 
 diff --git a/bind/bin/check/named-checkconf.8 b/bind/bin/check/named-checkconf.8
@@ -22,7 +22,7 @@ diff --git a/bind/bin/check/named-checkzone.8 b/bind/bin/check/named-checkzone.8
 index defaced..defaced 100644
 --- a/bind/bin/check/named-checkzone.8
 +++ b/bind/bin/check/named-checkzone.8
-@@ -288,8 +288,9 @@ returns an exit status of 1 if errors were detected and 0 otherwise.
+@@ -296,8 +296,9 @@ returns an exit status of 1 if errors were detected and 0 otherwise.
  .PP
  \fBnamed\fR(8),
  \fBnamed\-checkconf\fR(8),
@@ -80,7 +80,7 @@ diff --git a/bind/bin/named/named.8 b/bind/bin/named/named.8
 index defaced..defaced 100644
 --- a/bind/bin/named/named.8
 +++ b/bind/bin/named/named.8
-@@ -254,6 +254,18 @@ inherits the
+@@ -256,6 +256,18 @@ inherits the
  should be set explicitly in the script used to start the
  \fBnamed\fR
  process.
@@ -99,7 +99,7 @@ index defaced..defaced 100644
  .SH "FILES"
  .PP
  \fI/etc/named.conf\fR
-@@ -275,7 +287,8 @@ RFC 1035,
+@@ -277,7 +289,8 @@ RFC 1035,
  \fBrndc\fR(8),
  \fBlwresd\fR(8),
  \fBnamed.conf\fR(5),
@@ -121,7 +121,7 @@ index defaced..defaced 100644
 +BIND 9 Administrator Reference Manual
 +(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
  .SH "COPYRIGHT"
- Copyright \(co 2004\-2011 Internet Systems Consortium, Inc. ("ISC")
+ Copyright \(co 2004\-2011, 2013 Internet Systems Consortium, Inc. ("ISC")
  .br
 diff --git a/bind/bin/rndc/rndc.8 b/bind/bin/rndc/rndc.8
 index defaced..defaced 100644

@@ -1,22 +1,22 @@
 From 0 Mon Sep 17 00:00:00 2001
 From: "Fr. Br. George" <george@altlinux.org>
 Date: Mon, 15 Oct 2012 15:44:28 +0400
-Subject: [PATCH 11] bind-9.9.1-alt-ads-remove
+Subject: [PATCH 09] bind-9.9.1-alt-ads-remove
 
 
 diff --git a/bind/bin/named/main.c b/bind/bin/named/main.c
 index defaced..defaced 100644
 --- a/bind/bin/named/main.c
 +++ b/bind/bin/named/main.c
-@@ -810,6 +810,7 @@ setup(void) {
- 		      ISC_LOG_NOTICE, "starting BIND %s%s", ns_g_version,
- 		      saved_command_line);
+@@ -822,6 +822,7 @@ setup(void) {
+ 		      ISC_LOG_NOTICE, "starting %s %s%s", ns_g_product,
+ 		      ns_g_version, saved_command_line);
  
 +	/*
  	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
  		      ISC_LOG_NOTICE, "built with %s", ns_g_configargs);
  
-@@ -832,6 +833,7 @@ setup(void) {
+@@ -844,6 +845,7 @@ setup(void) {
  		      ISC_LOG_NOTICE,
  		      "----------------------------------------------------");
  

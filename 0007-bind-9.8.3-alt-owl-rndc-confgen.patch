@@ -1,7 +1,7 @@
 From 0 Mon Sep 17 00:00:00 2001
 From: "Fr. Br. George" <george@altlinux.org>
 Date: Mon, 15 Oct 2012 15:44:28 +0400
-Subject: [PATCH 08] bind-9.8.3-alt-owl-rndc-confgen
+Subject: [PATCH 07] bind-9.8.3-alt-owl-rndc-confgen
 
 
 diff --git a/bind/bin/confgen/rndc-confgen.c b/bind/bin/confgen/rndc-confgen.c
@@ -52,7 +52,7 @@ index defaced..defaced 100644
  		case 'b':
  			keysize = strtol(isc_commandline_argument, &p, 10);
  			if (*p != '\0' || keysize < 0)
-@@ -198,6 +203,9 @@ main(int argc, char **argv) {
+@@ -196,6 +201,9 @@ main(int argc, char **argv) {
  		}
  	}
  
@@ -62,7 +62,7 @@ index defaced..defaced 100644
  	argc -= isc_commandline_index;
  	argv += isc_commandline_index;
  	POST(argv);
-@@ -210,7 +218,11 @@ main(int argc, char **argv) {
+@@ -208,7 +216,11 @@ main(int argc, char **argv) {
  
  	generate_key(mctx, randomfile, alg, keysize, &key_txtbuffer);
  
