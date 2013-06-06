@@ -7,7 +7,7 @@ License: BSD-style
 Group: System/Servers
 Url: http://www.isc.org/products/BIND/
 
-%define vsuffix
+%define vsuffix ""
 # NOTE: vsuffix removed from Source0
 # ftp://ftp.isc.org/isc/bind9/%version%vsuffix/bind-%version%vsuffix.tar.gz
 Source0: %name-%version.tar
@@ -218,9 +218,9 @@ s,@SBINDIR@,%_sbindir,g;
 ' --
 
 %build
+%autoreconf
 %configure \
 	--localstatedir=/var \
-	--with-libtool \
 	--with-randomdev=/dev/random \
 	--disable-threads \
 	--disable-linux-caps \
@@ -231,11 +231,10 @@ s,@SBINDIR@,%_sbindir,g;
 	--with-export-libdir=%{_libdir} \
 	--with-export-includedir=%{_includedir} \
 	--includedir=%{_includedir}/bind9 \
-	--disable-openssl-version-check
-# Get rid of RPATH.
-sed -ri 's/^(hardcode_libdir_flag_spec|runpath_var)=.*/\1=/' libtool
+	--disable-openssl-version-check \
+	--with-libtool \
+	
 %make_build
-
 # Build queryperf
 pushd contrib/queryperf
 	%configure
@@ -441,6 +440,10 @@ fi
 %exclude %docdir/COPYRIGHT
 
 %changelog
+* Thu Jun 06 2013 Fr. Br. George <george@altlinux.ru> 9.9.3-alt1
+- Update to ftp://ftp.isc.org/isc/bind9/9.9.3/bind-9.9.3.tar.gz
+- Drop alt-isc-config.patch
+
 * Thu Mar 28 2013 Fr. Br. George <george@altlinux.ru> 9.9.2-alt5
 - Update to ftp://ftp.isc.org/isc/bind9/9.9.2-P2/bind-9.9.2-P2.tar.gz
 - Turn regex support off
