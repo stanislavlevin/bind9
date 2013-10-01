@@ -59,7 +59,7 @@ diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
 index defaced..defaced 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -4939,16 +4939,20 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -5302,16 +5302,20 @@ load_configuration(const char *filename, ns_server_t *server,
  	/*
  	 * Write the PID file.
  	 */
@@ -89,7 +89,7 @@ index defaced..defaced 100644
  
  	/*
  	 * Configure the server-wide session key.  This must be done before
-@@ -5266,7 +5270,6 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -5644,7 +5648,6 @@ load_configuration(const char *filename, ns_server_t *server,
  		}
  	}
  
@@ -124,7 +124,7 @@ index defaced..defaced 100644
  static int devnullfd = -1;
  
  #ifndef ISC_FACILITY
-@@ -846,35 +848,57 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
+@@ -849,35 +851,57 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
  	return (fp);
  }
  
@@ -194,7 +194,7 @@ index defaced..defaced 100644
  		return;
  	}
  #ifdef HAVE_LINUXTHREADS
-@@ -885,22 +909,23 @@ ns_os_writepidfile(const char *filename, isc_boolean_t first_time) {
+@@ -888,22 +912,23 @@ ns_os_writepidfile(const char *filename, isc_boolean_t first_time) {
  	if (fprintf(lockfile, "%ld\n", (long)pid) < 0) {
  		(*report)("fprintf() to pid file '%s' failed", filename);
  		(void)fclose(lockfile);

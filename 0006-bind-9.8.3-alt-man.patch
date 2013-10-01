@@ -127,18 +127,17 @@ diff --git a/bind/bin/rndc/rndc.8 b/bind/bin/rndc/rndc.8
 index defaced..defaced 100644
 --- a/bind/bin/rndc/rndc.8
 +++ b/bind/bin/rndc/rndc.8
-@@ -118,6 +118,10 @@ For the complete set of commands supported by
- \fBrndc\fR, see the BIND 9 Administrator Reference Manual or run
+@@ -121,6 +121,9 @@ can be seen by running
  \fBrndc\fR
- without arguments to see its help message.
-+.PP
+ without arguments.
+ .PP
 +To debug \fBnamed\fR with \fBrndc\fR(8),
 +use \fBcontrol\fR(8) for the \fBbind\-debug\fR facility.
 +.PP
- .SH "LIMITATIONS"
+ Currently supported commands are:
  .PP
- \fBrndc\fR
-@@ -136,8 +140,8 @@ Several error messages could be clearer.
+ \fBreload\fR
+@@ -408,8 +411,8 @@ Several error messages could be clearer.
  \fBrndc\-confgen\fR(8),
  \fBnamed\fR(8),
  \fBnamed.conf\fR(5),
