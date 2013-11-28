@@ -442,6 +442,7 @@ fi
 %changelog
 * Thu Nov 28 2013 Fr. Br. George <george@altlinux.ru> 9.9.4-alt2
 - Update to ftp://ftp.isc.org/isc/bind9/9.9.4-P1/bind-9.9.4-P1.tar.gz
+- (CVE-2013-6230 is fixed in this version)
 
 * Tue Oct 01 2013 Fr. Br. George <george@altlinux.ru> 9.9.4-alt1
 - Update to ftp://ftp.isc.org/isc/bind9/9.9.4/bind-9.9.4.tar.gz

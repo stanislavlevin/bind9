@@ -1,7 +1,7 @@
 From 0 Mon Sep 17 00:00:00 2001
 From: "Fr. Br. George" <george@altlinux.org>
 Date: Mon, 15 Oct 2012 15:44:28 +0400
-Subject: [PATCH 09] bind-9.9.1-alt-ads-remove
+Subject: [PATCH] bind-9.9.1-alt-ads-remove
 
 
 diff --git a/bind/bin/named/main.c b/bind/bin/named/main.c
