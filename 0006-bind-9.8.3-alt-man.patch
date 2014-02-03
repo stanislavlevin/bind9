@@ -8,7 +8,7 @@ diff --git a/bind/bin/check/named-checkconf.8 b/bind/bin/check/named-checkconf.8
 index defaced..defaced 100644
 --- a/bind/bin/check/named-checkconf.8
 +++ b/bind/bin/check/named-checkconf.8
-@@ -109,7 +109,8 @@ returns an exit status of 1 if errors were detected and 0 otherwise.
+@@ -117,7 +117,8 @@ returns an exit status of 1 if errors were detected and 0 otherwise.
  .PP
  \fBnamed\fR(8),
  \fBnamed\-checkzone\fR(8),
@@ -66,16 +66,16 @@ diff --git a/bind/bin/dnssec/dnssec-signzone.8 b/bind/bin/dnssec/dnssec-signzone
 index defaced..defaced 100644
 --- a/bind/bin/dnssec/dnssec-signzone.8
 +++ b/bind/bin/dnssec/dnssec-signzone.8
-@@ -422,7 +422,8 @@ db.example.com.signed
+@@ -432,7 +432,8 @@ db.example.com.signed
  .SH "SEE ALSO"
  .PP
  \fBdnssec\-keygen\fR(8),
 -BIND 9 Administrator Reference Manual,
 +BIND 9 Administrator Reference Manual
 +(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR),
- RFC 4033.
+ RFC 4033,
+ RFC 4641.
  .SH "AUTHOR"
- .PP
 diff --git a/bind/bin/named/named.8 b/bind/bin/named/named.8
 index defaced..defaced 100644
 --- a/bind/bin/named/named.8
@@ -121,7 +121,7 @@ index defaced..defaced 100644
 +BIND 9 Administrator Reference Manual
 +(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
  .SH "COPYRIGHT"
- Copyright \(co 2004\-2011, 2013 Internet Systems Consortium, Inc. ("ISC")
+ Copyright \(co 2004\-2011, 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
  .br
 diff --git a/bind/bin/rndc/rndc.8 b/bind/bin/rndc/rndc.8
 index defaced..defaced 100644
@@ -137,7 +137,7 @@ index defaced..defaced 100644
  Currently supported commands are:
  .PP
  \fBreload\fR
-@@ -408,8 +411,8 @@ Several error messages could be clearer.
+@@ -411,8 +414,8 @@ Several error messages could be clearer.
  \fBrndc\-confgen\fR(8),
  \fBnamed\fR(8),
  \fBnamed.conf\fR(5),

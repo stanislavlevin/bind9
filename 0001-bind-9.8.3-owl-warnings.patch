@@ -14,19 +14,18 @@ index defaced..defaced 100644
  		safe.@O@ serial.@O@ sha1.@O@ sha2.@O@ sockaddr.@O@ stats.@O@ \
 -		string.@O@ strtoul.@O@ symtab.@O@ task.@O@ taskpool.@O@ \
 +		string.@O@ symtab.@O@ task.@O@ taskpool.@O@ \
- 		timer.@O@ version.@O@ ${UNIXOBJS} ${NLSOBJS} ${THREADOBJS}
+ 		tm.@O@ timer.@O@ version.@O@ \
+ 		${UNIXOBJS} ${NLSOBJS} ${THREADOBJS}
  SYMTBLOBJS =	backtrace-emptytbl.@O@
- 
-@@ -79,8 +79,7 @@ SRCS =		@ISC_EXTRA_SRCS@ \
+@@ -80,7 +80,7 @@ SRCS =		@ISC_EXTRA_SRCS@ \
  		parseint.c portset.c quota.c radix.c random.c \
  		ratelimiter.c refcount.c region.c regex.c result.c rwlock.c \
  		safe.c serial.c sha1.c sha2.c sockaddr.c stats.c string.c \
--		strtoul.c symtab.c symtbl-empty.c task.c taskpool.c timer.c \
--		version.c
-+		symtab.c symtbl-empty.c task.c taskpool.c timer.c \
+-		strtoul.c symtab.c task.c taskpool.c timer.c \
++		symtab.c task.c taskpool.c timer.c \
+ 		tm.c version.c
  
  LIBS =		@LIBS@
- 
 diff --git a/bind/lib/isc/unix/net.c b/bind/lib/isc/unix/net.c
 index defaced..defaced 100644
 --- a/bind/lib/isc/unix/net.c
