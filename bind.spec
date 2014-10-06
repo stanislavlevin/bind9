@@ -1,6 +1,6 @@
 Name: bind
 Version: 9.9.5
-Release: alt2
+Release: alt3
 
 Summary: ISC BIND - DNS server
 License: BSD-style
@@ -233,6 +233,8 @@ s,@SBINDIR@,%_sbindir,g;
 	--includedir=%{_includedir}/bind9 \
 	--disable-openssl-version-check \
 	--with-libtool \
+	--with-gssapi=yes \
+	--disable-isc-spnego \
 	
 %make_build
 # Build queryperf
@@ -379,6 +381,10 @@ fi
 %exclude %_sbindir/lwresd
 %exclude %_man8dir/lwresd*
 %_sbindir/*
+ 
+# TODO
+#    /usr/bin/bind9-config
+#    /usr/share/man/man1/bind9-config.1.gz
 
 %_sysconfdir/named.conf
 %_sysconfdir/bind.keys
@@ -440,6 +446,9 @@ fi
 %exclude %docdir/COPYRIGHT
 
 %changelog
+* Mon Oct 06 2014 Fr. Br. George <george@altlinux.ru> 9.9.5-alt3
+- Build with GSSAPI
+
 * Tue Jun 17 2014 Fr. Br. George <george@altlinux.ru> 9.9.5-alt2
 - Updated to ftp://ftp.isc.org/isc/bind9/9.9.5-P1/bind-9.9.5-P1.tar.gz
 
