@@ -1,6 +1,6 @@
 #!@PYTHON@
 ############################################################################
-# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +26,32 @@ from collections import defaultdict
 import pprint
 
 prog='dnssec-coverage'
+
+# These routines permit platform-independent location of BIND 9 tools
+if os.name == 'nt':
+    import win32con
+    import win32api
+
+def prefix(bindir = ''):
+    if os.name != 'nt':
+        return os.path.join('@prefix@', bindir)
+
+    bind_subkey = "Software\\ISC\\BIND"
+    hKey = None
+    keyFound = True
+    try:
+        hKey = win32api.RegOpenKeyEx(win32con.HKEY_LOCAL_MACHINE, bind_subkey)
+    except:
+        keyFound = False
+    if keyFound:
+        try:
+            (namedBase, _) = win32api.RegQueryValueEx(hKey, "InstallDir")
+        except:
+            keyFound = False
+        win32api.RegCloseKey(hKey)
+    if keyFound:
+        return os.path.join(namedBase, bindir)
+    return os.path.join(win32api.GetSystemDirectory(), bindir)
 
 ########################################################################
 # Class Event
@@ -78,7 +104,7 @@ class Key:
         self.alg = int(alg)
         self.keyid = int(keyid)
 
-        kfp = file(key_file, "r")
+        kfp = open(key_file, "r")
         for line in kfp:
             if line[0] == ';':
                 continue
@@ -106,7 +132,7 @@ class Key:
                 self.sep = False
         kfp.close()
 
-        pfp = file(private_file, "rU")
+        pfp = open(private_file, "rU")
         propDict = dict()
         for propLine in pfp:
             propDef = propLine.strip()
@@ -620,11 +646,8 @@ def set_path(command, default=None):
 def parse_args():
     """Read command line arguments, set global 'args' structure"""
     global args
-    bindir = 'bin';
-
     compilezone = set_path('named-compilezone',
-                           os.path.join('@prefix@', bindir,
-                                        'named-compilezone'))
+                           os.path.join(prefix('bin'), 'named-compilezone'))
 
     parser = argparse.ArgumentParser(description=prog + ': checks future ' +
                                      'DNSKEY coverage for a zone')

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -20,8 +20,6 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-RANDFILE=random.data
-
 status=0
 n=1
 
@@ -35,7 +33,7 @@ showprivate () {
     echo "-- $@ --"
     $DIG $DIGOPTS +nodnssec +short @$2 -t type65534 $1 | cut -f3 -d' ' |
         while read record; do
-            perl -e 'my $rdata = pack("H*", @ARGV[0]);
+            $PERL -e 'my $rdata = pack("H*", @ARGV[0]);
                 die "invalid record" unless length($rdata) == 5;
                 my ($alg, $key, $remove, $complete) = unpack("CnCC", $rdata);
                 my $action = "signing";
@@ -60,7 +58,7 @@ checkprivate () {
 
 # check that a zone file is raw format, version 0
 israw0 () {
-    cat $1 | perl -e 'binmode STDIN;
+    cat $1 | $PERL -e 'binmode STDIN;
 		      read(STDIN, $input, 8);
                       ($style, $version) = unpack("NN", $input);
                       exit 1 if ($style != 2 || $version != 0);'
@@ -69,7 +67,7 @@ israw0 () {
 
 # check that a zone file is raw format, version 1
 israw1 () {
-    cat $1 | perl -e 'binmode STDIN;
+    cat $1 | $PERL -e 'binmode STDIN;
 		      read(STDIN, $input, 8);
                       ($style, $version) = unpack("NN", $input);
                       exit 1 if ($style != 2 || $version != 1);'
@@ -260,7 +258,7 @@ $DIG $DIGOPTS a.wild.optout.example. \
 $DIG $DIGOPTS a.wild.optout.example. \
 	@10.53.0.4 a > dig.out.ns4.test$n || ret=1
 $PERL ../digcomp.pl dig.out.ns3.test$n dig.out.ns4.test$n || ret=1
-grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null && ret=1
 grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -1706,6 +1704,16 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking that DS at a RFC 1918 empty zone lookup succeeds ($n)"
+ret=0
+$DIG $DIGOPTS +noauth 10.in-addr.arpa ds @10.53.0.2 >dig.out.ns2.test$n || ret=1
+$DIG $DIGOPTS +noauth 10.in-addr.arpa ds @10.53.0.6 >dig.out.ns6.test$n || ret=1
+$PERL ../digcomp.pl dig.out.ns2.test$n dig.out.ns6.test$n || ret=1
+grep "status: NOERROR" dig.out.ns6.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:checking expired signatures remain with "'"allow-update { none; };"'" and no keys available ($n)"
 ret=0
 $DIG $DIGOPTS +noauth expired.example. +dnssec @10.53.0.3 soa > dig.out.ns3.test$n || ret=1
@@ -1728,7 +1736,7 @@ echo "I:checking that the NSEC3 record for the apex is properly signed when a DN
 ret=0
 (
 cd ns3
-kskname=`$KEYGEN -q -3 -r ../random.data -fk update-nsec3.example`
+kskname=`$KEYGEN -q -3 -r $RANDFILE -fk update-nsec3.example`
 (
 echo zone update-nsec3.example
 echo server 10.53.0.3 5300
@@ -2102,7 +2110,6 @@ ret=0
 $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 freeze expiring.example 2>&1 | sed 's/^/I:ns3 /'
 (
 cd ns3
-RANDFILE=../random.data
 for file in K*.moved; do
   mv $file `basename $file .moved`
 done
@@ -2348,6 +2355,14 @@ grep "SERVFAIL" dig.out.ns4.1.test$n > /dev/null && ret=1
 $DIG $DIGOPTS ns secure.example \
 	@10.53.0.4 > dig.out.ns4.2.test$n || ret=1
 grep "SERVFAIL" dig.out.ns4.2.test$n > /dev/null && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that split rrsigs are handled ($n)"
+ret=0
+$DIG $DIGOPTS split-rrsig soa @10.53.0.7 > dig.out.test$n || ret=1
+awk 'BEGIN { ok=0; } $4 == "SOA" { if ($7 > 1) ok=1; } END { if (!ok) exit(1); }' dig.out.test$n || ret=1 
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

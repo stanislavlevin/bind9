@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -97,6 +97,7 @@ typedef struct dns_fetchevent {
 							  UDP buffer. */
 #define DNS_FETCHOPT_WANTNSID           0x80         /*%< Request NSID */
 
+/* Reserved in use by adb.c		0x00400000 */
 #define	DNS_FETCHOPT_EDNSVERSIONSET	0x00800000
 #define	DNS_FETCHOPT_EDNSVERSIONMASK	0xff000000
 #define	DNS_FETCHOPT_EDNSVERSIONSHIFT	24

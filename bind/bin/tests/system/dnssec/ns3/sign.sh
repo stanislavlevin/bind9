@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2004, 2006-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -19,8 +19,6 @@
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
-
-RANDFILE=../random.data
 
 zone=secure.example.
 infile=secure.example.db.in
@@ -68,7 +66,7 @@ $SIGNER -P -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
 # Change the signer field of the a.b.keyless.example SIG A
 # to point to a provably nonexistent KEY record.
 mv $zonefile.signed $zonefile.tmp
-<$zonefile.tmp perl -p -e 's/ keyless.example/ b.keyless.example/
+<$zonefile.tmp $PERL -p -e 's/ keyless.example/ b.keyless.example/
     if /^a.b.keyless.example/../NXT/;' >$zonefile.signed
 rm -f $zonefile.tmp
 

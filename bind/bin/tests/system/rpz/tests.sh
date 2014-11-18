@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -21,11 +21,12 @@ SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 ns=10.53.0
-ns1=$ns.1			    # root, defining the others
-ns2=$ns.2			    # server whose answers are rewritten
-ns3=$ns.3			    # resolve that does the rewriting
-ns4=$ns.4			    # another server that is rewritten
-ns5=$ns.5			    # check performance with this server
+ns1=$ns.1		# root, defining the others
+ns2=$ns.2		# authoritative server whose records are rewritten
+ns3=$ns.3		# main rewriting resolver
+ns4=$ns.4		# another authoritative server that is rewritten
+ns5=$ns.5		# another rewriting resolver
+ns6=$ns.6		# a forwarding server
 
 HAVE_CORE=
 SAVE_RESULTS=
@@ -180,6 +181,11 @@ clean_result () {
 # $1=dig args $2=other dig output file
 ckresult () {
     #ckalive "$1" "I:server crashed by 'dig $1'" || return 1
+    if grep "flags:.* aa .*ad;" $DIGNM; then
+	setret "I:'dig $1' AA and AD set;"
+    elif grep "flags:.* aa .*ad;" $DIGNM; then
+	setret "I:'dig $1' AD set;"
+    fi
     if $PERL $SYSTEMTESTTOP/digcomp.pl $DIGNM $2 >/dev/null; then
 	clean_result ${DIGNM}*
 	return 0
@@ -295,6 +301,36 @@ nochange a0-1.tld2s srv +auth +dnssec	# 30 no write for +DNSSEC and no record
 nxdomain a0-1.tld2s srv			# 31
 end_group
 
+ckstats $ns3 ns3 20
+ckstats $ns5 ns5 0
+ckstats $ns6 ns6 0
+
+start_group "NXDOMAIN/NODATA action on QNAME trigger" test1
+nxdomain a0-1.tld2 @$ns6                   # 1
+nodata a3-1.tld2 @$ns6                     # 2
+nodata a3-2.tld2 @$ns6                     # 3 nodata at DNAME itself
+nxdomain a4-2.tld2 @$ns6                   # 4 rewrite based on CNAME target
+nxdomain a4-2-cname.tld2 @$ns6             # 5
+nodata a4-3-cname.tld2 @$ns6               # 6
+addr 12.12.12.12  "a4-1.sub1.tld2 @$ns6"   # 7 A replacement
+addr 12.12.12.12  "a4-1.sub2.tld2 @$ns6"   # 8 A replacement with wildcard
+addr 127.4.4.1    "a4-4.tld2 @$ns6"        # 9 prefer 1st conflicting QNAME zone
+addr 12.12.12.12  "nxc1.sub1.tld2 @$ns6"   # 10 replace NXDOMAIN w/ CNAME
+addr 12.12.12.12  "nxc2.sub1.tld2 @$ns6"   # 11 replace NXDOMAIN w/ CNAME chain
+addr 127.6.2.1    "a6-2.tld2 @$ns6"        # 12
+addr 56.56.56.56  "a3-6.tld2 @$ns6"        # 13 wildcard CNAME
+addr 57.57.57.57  "a3-7.sub1.tld2 @$ns6"   # 14 wildcard CNAME
+addr 127.0.0.16   "a4-5-cname3.tld2 @$ns6" # 15 CNAME chain
+addr 127.0.0.17   "a4-6-cname3.tld2 @$ns6" # 16 stop short in CNAME chain
+nxdomain c1.crash2.tld3 @$ns6              # 17 assert in rbtdb.c
+nxdomain a0-1.tld2 +dnssec @$ns6           # 18 simple DO=1 without sigs
+nxdomain a0-1s-cname.tld2s  +dnssec @$ns6  # 19
+
+end_group
+ckstats $ns3 ns3 42
+ckstats $ns5 ns5 0
+ckstats $ns6 ns6 0
+
 start_group "IP rewrites" test2
 nodata a3-1.tld2			# 1 NODATA
 nochange a3-2.tld2			# 2 no policy record so no change
@@ -312,7 +348,7 @@ addr 14.14.14.14 a5-4.tld2		# 13 prefer QNAME to IP
 nochange a5-4.tld2	    +norecurse	# 14 check that RD=1 is required
 nochange a4-4.tld2			# 15 PASSTHRU
 nxdomain c2.crash2.tld3			# 16 assert in rbtdb.c
-ckstats $ns3 ns3 29
+ckstats $ns3 ns3 51
 nxdomain a7-1.tld2			# 17 slave policy zone (RT34450)
 cp ns2/blv2.tld2.db.in ns2/bl.tld2.db
 $RNDCCMD 10.53.0.2 reload bl.tld2
@@ -335,7 +371,7 @@ do
 	sleep 1
 done
 nxdomain a7-1.tld2			# 19 slave policy zone (RT34450)
-ckstats $ns3 ns3 31
+ckstats $ns3 ns3 53
 end_group
 
 # check that IP addresses for previous group were deleted from the radix tree
@@ -477,11 +513,11 @@ if test -n "$QPERF"; then
 
     MIN_PERCENT=30
     if test "$PERCENT" -lt $MIN_PERCENT; then
-	setret "I:$RPZ qps with rpz or $PERCENT% is below $MIN_PERCENT% of $NORPZ qps"
+	echo "I:$RPZ qps with rpz or $PERCENT% is below $MIN_PERCENT% of $NORPZ qps"
     fi
 
     if test "$PERCENT" -ge 100; then
-	setret "I:$RPZ qps with RPZ or $PERCENT% of $NORPZ qps without RPZ is too high"
+	echo "I:$RPZ qps with RPZ or $PERCENT% of $NORPZ qps without RPZ is too high"
     fi
 
     ckstats $ns5 ns5 203
@@ -490,7 +526,7 @@ else
     echo "I:performance not checked; queryperf not available"
 fi
 
-ckstats $ns3 ns3 57
+ckstats $ns3 ns3 79
 
 # restart the main test RPZ server to see if that creates a core file
 if test -z "$HAVE_CORE"; then

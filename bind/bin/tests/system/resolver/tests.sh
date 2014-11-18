@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -400,6 +400,20 @@ grep "ANSWER: 1" dig.ns7.out.${n} > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
 status=`expr $status + $ret`
 #HERE >>>
+
+n=`expr $n + 1`
+echo "I:check that '-t aaaa' in .digrc does not have unexpected side effects ($n)"
+ret=0
+echo "-t aaaa" > .digrc
+env HOME=`pwd` $DIG @10.53.0.4 -p 5300 . > dig.out.1.${n} || ret=1
+env HOME=`pwd` $DIG @10.53.0.4 -p 5300 . A > dig.out.2.${n} || ret=1
+env HOME=`pwd` $DIG @10.53.0.4 -p 5300 -x 127.0.0.1 > dig.out.3.${n} || ret=1
+grep ';\..*IN.*AAAA$' dig.out.1.${n} > /dev/null || ret=1
+grep ';\..*IN.*A$' dig.out.2.${n} > /dev/null || ret=1
+grep 'extra type option' dig.out.2.${n} > /dev/null && ret=1
+grep ';1\.0\.0\.127\.in-addr\.arpa\..*IN.*PTR$' dig.out.3.${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
 
 echo "I:exit status: $status"
 exit $status

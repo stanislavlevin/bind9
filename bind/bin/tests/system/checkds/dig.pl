@@ -1,6 +1,6 @@
-#!/bin/sh -e
+#!/usr/bin/perl
 #
-# Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -16,9 +16,35 @@
 
 # $Id$
 
-OPENSSL_ECDSA="@OPENSSL_ECDSA@"
-if test -z "$OPENSSL_ECDSA"
-then
-    echo "I:This test requires a openssl version with ecdsa support." >&2
-    exit 255
-fi
+my $arg;
+my $ext;
+my $file;
+
+foreach $arg (@ARGV) {
+    if ($arg =~ /^\+/) {
+        next;
+    }
+    if ($arg =~ /^-t/) {
+        next;
+    }
+    if ($arg =~ /^ds$/i) {
+        $ext = "ds";
+        next;
+    }
+    if ($arg =~ /^dlv$/i) {
+        $ext = "dlv";
+        next;
+    }
+    if ($arg =~ /^dnskey$/i) {
+        $ext = "dnskey";
+        next;
+    }
+    $file = $arg;
+    next;
+}
+
+open F, $file . "." . $ext . ".db" || die $!;
+while (<F>) {
+    print;
+}
+close F;

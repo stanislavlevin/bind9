@@ -1,6 +1,6 @@
-#!/bin/sh -e
+#!/bin/sh
 #
-# Copyright (C) 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,11 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: prereq.sh.in,v 1.4 2010/12/27 13:38:43 marka Exp $
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
 
-OPENSSL_GOST="@OPENSSL_GOST@"
-if test -z "$OPENSSL_GOST"
-then
-    echo "I:This test requires a openssl version with gost support." >&2
-    exit 255
-fi
+$SHELL ../genzone.sh 1 >ns1/example.db

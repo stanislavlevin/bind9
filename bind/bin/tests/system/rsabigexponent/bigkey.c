@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,8 +16,9 @@
 
 /* $Id$ */
 
-#ifdef OPENSSL
 #include <config.h>
+
+#if defined(OPENSSL)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -180,8 +181,9 @@ main(int argc, char **argv) {
 	CHECK(isc_mem_create(0, 0, &mctx), "isc_mem_create()");
 	CHECK(isc_entropy_create(mctx, &ectx), "isc_entropy_create()");
 	CHECK(isc_entropy_usebestsource(ectx, &source,
-					"random.data", ISC_ENTROPY_KEYBOARDNO),
-	      "isc_entropy_usebestsource(\"random.data\")");
+					"../random.data",
+					ISC_ENTROPY_KEYBOARDNO),
+	      "isc_entropy_usebestsource(\"../random.data\")");
 	CHECK(dst_lib_init2(mctx, ectx, NULL, 0), "dst_lib_init2()");
 	CHECK(isc_log_create(mctx, &log_, &logconfig), "isc_log_create()");
 	isc_log_setcontext(log_);
@@ -240,8 +242,12 @@ main(int argc, char **argv) {
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <isc/util.h>
+
 int
 main(int argc, char **argv) {
+	UNUSED(argc);
+	UNUSED(argv);
 	fprintf(stderr, "Compiled without OpenSSL\n");
 	exit(1);
 }

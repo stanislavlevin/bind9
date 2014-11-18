@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,8 +13,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* $Id$ */
 
 /*
  * This provides a very simple example of an external loadable DLZ
@@ -135,8 +133,14 @@ add_name(struct dlz_example_data *state, struct record *list,
 		return (ISC_R_NOSPACE);
 
 	strncpy(list[i].name, name, sizeof(list[i].name));
+	list[i].name[sizeof(list[i].name) - 1] = '\0';
+
 	strncpy(list[i].type, type, sizeof(list[i].type));
+	list[i].type[sizeof(list[i].type) - 1] = '\0';
+
 	strncpy(list[i].data, data, sizeof(list[i].data));
+	list[i].data[sizeof(list[i].data) - 1] = '\0';
+
 	list[i].ttl = ttl;
 
 	return (ISC_R_SUCCESS);
@@ -250,7 +254,7 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 	}
 	va_end(ap);
 
-	if (argc < 2) {
+	if (argc < 2 || argv[1][0] == '\0') {
 		if (state->log != NULL)
 			state->log(ISC_LOG_ERROR,
 				   "dlz_example: please specify a zone name");
@@ -258,11 +262,16 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 		return (ISC_R_FAILURE);
 	}
 
-	state->zone_name = strdup(argv[1]);
+	/* Ensure zone name is absolute */
+	state->zone_name = malloc(strlen(argv[1]) + 2);
 	if (state->zone_name == NULL) {
 		free(state);
 		return (ISC_R_NOMEMORY);
 	}
+	if (argv[1][strlen(argv[1]) - 1] == '.')
+		strcpy(state->zone_name, argv[1]);
+	else
+		sprintf(state->zone_name, "%s.", argv[1]);
 
 	n = snprintf(soa_data, sizeof(soa_data),
 		     "%s hostmaster.%s 123 900 600 86400 3600",
@@ -307,15 +316,19 @@ dlz_destroy(void *dbdata) {
 	free(state);
 }
 
-
 /*
  * See if we handle a given zone
  */
 isc_result_t
 dlz_findzonedb(void *dbdata, const char *name) {
 	struct dlz_example_data *state = (struct dlz_example_data *)dbdata;
+	char absolute[1024];
 
 	if (strcasecmp(state->zone_name, name) == 0)
+		return (ISC_R_SUCCESS);
+
+	snprintf(absolute, sizeof(absolute), "%s.", name);
+	if (strcasecmp(state->zone_name, absolute) == 0)
 		return (ISC_R_SUCCESS);
 
 	return (ISC_R_NOTFOUND);
@@ -568,6 +581,7 @@ modrdataset(struct dlz_example_data *state, const char *name,
 	    const char *rdatastr, struct record *list)
 {
 	char *full_name, *dclass, *type, *data, *ttlstr, *buf;
+	char absolute[1024];
 	isc_result_t result;
 #if defined(WIN32) || defined(_REENTRANT)
 	char *saveptr = NULL;
@@ -604,6 +618,11 @@ modrdataset(struct dlz_example_data *state, const char *name,
 	data = STRTOK_R(NULL, "\t", &saveptr);
 	if (data == NULL)
 		goto error;
+
+	if (name[strlen(name) - 1] != '.') {
+		snprintf(absolute, sizeof(absolute), "%s.", name);
+		name = absolute;
+	}
 
 	result = add_name(state, list, name, type,
 			  strtoul(ttlstr, NULL, 10), data);
@@ -647,7 +666,6 @@ dlz_subrdataset(const char *name, const char *rdatastr,
 
 	return (modrdataset(state, name, rdatastr, &state->deletes[0]));
 }
-
 
 isc_result_t
 dlz_delrdataset(const char *name, const char *type,
