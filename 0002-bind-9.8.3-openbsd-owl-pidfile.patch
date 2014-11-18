@@ -22,7 +22,7 @@ diff --git a/bind/bin/named/main.c b/bind/bin/named/main.c
 index defaced..defaced 100644
 --- a/bind/bin/named/main.c
 +++ b/bind/bin/named/main.c
-@@ -309,7 +309,7 @@ usage(void) {
+@@ -307,7 +307,7 @@ usage(void) {
  		"[-E engine] [-f|-g]\n"
  		"             [-n number_of_cpus] [-p port] [-s] "
  		"[-t chrootdir] [-u username]\n"
@@ -31,7 +31,7 @@ index defaced..defaced 100644
  }
  
  static void
-@@ -464,9 +464,8 @@ parse_command_line(int argc, char *argv[]) {
+@@ -462,9 +462,8 @@ parse_command_line(int argc, char *argv[]) {
  			ns_g_foreground = ISC_TRUE;
  			ns_g_logstderr = ISC_TRUE;
  			break;
@@ -42,7 +42,7 @@ index defaced..defaced 100644
  			break;
  		case 'l':
  			ns_g_lwresdonly = ISC_TRUE;
-@@ -739,6 +738,12 @@ setup(void) {
+@@ -749,6 +748,12 @@ setup(void) {
  	char *instance = NULL;
  #endif
  
@@ -59,7 +59,7 @@ diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
 index defaced..defaced 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -5315,16 +5315,20 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -5350,16 +5350,20 @@ load_configuration(const char *filename, ns_server_t *server,
  	/*
  	 * Write the PID file.
  	 */
@@ -89,7 +89,7 @@ index defaced..defaced 100644
  
  	/*
  	 * Configure the server-wide session key.  This must be done before
-@@ -5657,7 +5661,6 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -5692,7 +5696,6 @@ load_configuration(const char *filename, ns_server_t *server,
  		}
  	}
  

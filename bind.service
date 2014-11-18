@@ -10,6 +10,7 @@ EnvironmentFile=-/etc/sysconfig/named
 #Environment=KRB5_KTNAME=/etc/named.keytab
 PIDFile=/var/run/named.pid
 
+ExecStartPre=/etc/init.d/bind rndc_keygen
 ExecStartPre=/usr/sbin/named-checkconf -z /etc/named.conf
 ExecStart=/usr/sbin/named $OPTIONS
 

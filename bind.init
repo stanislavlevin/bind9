@@ -106,8 +106,9 @@ case "$1" in
 			reload
 		fi
 		;;
+	rndc_keygen) rndc_keygen || return 1;;
 	*)
-		msg_usage "${0##*/} {start|stop|restart|reload|status|condstop|condrestart}"
+		msg_usage "${0##*/} {start|stop|restart|reload|status|condstop|condrestart|rndc_keygen}"
 		RETVAL=1
 esac
 

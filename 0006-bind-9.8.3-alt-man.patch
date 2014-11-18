@@ -52,7 +52,7 @@ diff --git a/bind/bin/dnssec/dnssec-keygen.8 b/bind/bin/dnssec/dnssec-keygen.8
 index defaced..defaced 100644
 --- a/bind/bin/dnssec/dnssec-keygen.8
 +++ b/bind/bin/dnssec/dnssec-keygen.8
-@@ -294,7 +294,8 @@ and
+@@ -299,7 +299,8 @@ and
  .SH "SEE ALSO"
  .PP
  \fBdnssec\-signzone\fR(8),
@@ -66,7 +66,7 @@ diff --git a/bind/bin/dnssec/dnssec-signzone.8 b/bind/bin/dnssec/dnssec-signzone
 index defaced..defaced 100644
 --- a/bind/bin/dnssec/dnssec-signzone.8
 +++ b/bind/bin/dnssec/dnssec-signzone.8
-@@ -432,7 +432,8 @@ db.example.com.signed
+@@ -437,7 +437,8 @@ db.example.com.signed
  .SH "SEE ALSO"
  .PP
  \fBdnssec\-keygen\fR(8),

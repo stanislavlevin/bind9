@@ -1,6 +1,6 @@
 Name: bind
-Version: 9.9.5
-Release: alt3
+Version: 9.9.6
+Release: alt1
 
 Summary: ISC BIND - DNS server
 License: BSD-style
@@ -217,6 +217,9 @@ s,@DOCDIR@,%docdir,g;
 s,@SBINDIR@,%_sbindir,g;
 ' --
 
+# XXX oldish stuff introduced in 9.9.6
+sed -i 's/AC_DEFINE(\(.*\), 1)/AC_DEFINE(\1, 1, [\1])/' configure.in
+
 %build
 %autoreconf
 %configure \
@@ -227,6 +230,7 @@ s,@SBINDIR@,%_sbindir,g;
 	 %{subst_with openssl} \
 	 %{subst_enable ipv6} \
 	 %{subst_enable static} \
+	--enable-rrl \
 	--enable-exportlib \
 	--with-export-libdir=%{_libdir} \
 	--with-export-includedir=%{_includedir} \
@@ -446,6 +450,12 @@ fi
 %exclude %docdir/COPYRIGHT
 
 %changelog
+* Tue Nov 18 2014 Fr. Br. George <george@altlinux.ru> 9.9.6-alt1
+- Update to ftp://ftp.isc.org/isc/bind9/9.9.6/bind-9.9.6.tar.gz
+- Fix old style autoheader AC_DEFINE
+- Enable ratelimits (Closes: #30398)
+- Provide initial rndc_keygen (Closes: #28034)
+
 * Mon Oct 06 2014 Fr. Br. George <george@altlinux.ru> 9.9.5-alt3
 - Build with GSSAPI
 
