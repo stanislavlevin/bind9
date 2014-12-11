@@ -59,7 +59,7 @@ diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
 index defaced..defaced 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -5350,16 +5350,20 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -5360,16 +5360,20 @@ load_configuration(const char *filename, ns_server_t *server,
  	/*
  	 * Write the PID file.
  	 */
@@ -89,7 +89,7 @@ index defaced..defaced 100644
  
  	/*
  	 * Configure the server-wide session key.  This must be done before
-@@ -5692,7 +5696,6 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -5702,7 +5706,6 @@ load_configuration(const char *filename, ns_server_t *server,
  		}
  	}
  

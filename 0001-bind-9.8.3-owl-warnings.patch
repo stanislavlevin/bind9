@@ -8,7 +8,7 @@ diff --git a/bind/lib/isc/Makefile.in b/bind/lib/isc/Makefile.in
 index defaced..defaced 100644
 --- a/bind/lib/isc/Makefile.in
 +++ b/bind/lib/isc/Makefile.in
-@@ -63,7 +63,7 @@ OBJS =		@ISC_EXTRA_OBJS@ \
+@@ -61,7 +61,7 @@ OBJS =		@ISC_EXTRA_OBJS@ \
  		ratelimiter.@O@ refcount.@O@ region.@O@ regex.@O@ result.@O@ \
  		rwlock.@O@ \
  		safe.@O@ serial.@O@ sha1.@O@ sha2.@O@ sockaddr.@O@ stats.@O@ \
@@ -17,7 +17,7 @@ index defaced..defaced 100644
  		tm.@O@ timer.@O@ version.@O@ \
  		${UNIXOBJS} ${NLSOBJS} ${THREADOBJS}
  SYMTBLOBJS =	backtrace-emptytbl.@O@
-@@ -80,7 +80,7 @@ SRCS =		@ISC_EXTRA_SRCS@ \
+@@ -78,7 +78,7 @@ SRCS =		@ISC_EXTRA_SRCS@ \
  		parseint.c portset.c quota.c radix.c random.c \
  		ratelimiter.c refcount.c region.c regex.c result.c rwlock.c \
  		safe.c serial.c sha1.c sha2.c sockaddr.c stats.c string.c \
