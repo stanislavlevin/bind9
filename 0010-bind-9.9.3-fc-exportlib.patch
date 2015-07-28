@@ -110,7 +110,7 @@ diff --git a/bind/lib/export/isc/Makefile.in b/bind/lib/export/isc/Makefile.in
 index defaced..defaced 100644
 --- a/bind/lib/export/isc/Makefile.in
 +++ b/bind/lib/export/isc/Makefile.in
-@@ -103,6 +103,10 @@ SRCS =		@ISC_EXTRA_SRCS@ \
+@@ -105,6 +105,10 @@ SRCS =		@ISC_EXTRA_SRCS@ \
  
  LIBS =		@LIBS@
  
@@ -121,7 +121,7 @@ index defaced..defaced 100644
  SUBDIRS =	include unix nls @ISC_THREAD_DIR@
  TARGETS =	timestamp
  
-@@ -116,26 +120,26 @@ version.@O@: ${srcdir}/version.c
+@@ -118,26 +122,26 @@ version.@O@: ${srcdir}/version.c
  		-DLIBAGE=${LIBAGE} \
  		-c ${srcdir}/version.c
  

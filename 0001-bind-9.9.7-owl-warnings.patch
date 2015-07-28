@@ -1,7 +1,7 @@
 From 0 Mon Sep 17 00:00:00 2001
 From: "Fr. Br. George" <george@altlinux.org>
 Date: Mon, 15 Oct 2012 15:44:28 +0400
-Subject: [PATCH] bind-9.8.3-owl-warnings
+Subject: [PATCH] bind-9.9.7-owl-warnings
 
 
 diff --git a/bind/lib/isc/Makefile.in b/bind/lib/isc/Makefile.in
@@ -41,22 +41,6 @@ index defaced..defaced 100644
  static isc_once_t 	once_ipv6pktinfo = ISC_ONCE_INIT;
 +#  endif
  # endif
- #endif /* ISC_PLATFORM_HAVEIPV6 */
- 
-@@ -314,7 +314,6 @@ initialize_ipv6only(void) {
- 	RUNTIME_CHECK(isc_once_do(&once_ipv6only,
- 				  try_ipv6only) == ISC_R_SUCCESS);
- }
--#endif /* WANT_IPV6 */
- 
- #ifdef ISC_PLATFORM_HAVEIN6PKTINFO
- static void
-@@ -368,6 +367,7 @@ initialize_ipv6pktinfo(void) {
- 	RUNTIME_CHECK(isc_once_do(&once_ipv6pktinfo,
- 				  try_ipv6pktinfo) == ISC_R_SUCCESS);
- }
-+#endif /* WANT_IPV6 */
- #endif /* ISC_PLATFORM_HAVEIN6PKTINFO */
  #endif /* ISC_PLATFORM_HAVEIPV6 */
  
 diff --git a/bind/lib/lwres/Makefile.in b/bind/lib/lwres/Makefile.in

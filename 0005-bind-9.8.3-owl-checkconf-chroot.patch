@@ -28,7 +28,7 @@ index defaced..defaced 100644
  	isc_boolean_t print = ISC_FALSE;
  	unsigned int flags = 0;
  
-@@ -499,12 +500,7 @@ main(int argc, char **argv) {
+@@ -528,12 +529,7 @@ main(int argc, char **argv) {
  			break;
  
  		case 't':
@@ -42,7 +42,7 @@ index defaced..defaced 100644
  			break;
  
  		case 'p':
-@@ -548,6 +544,20 @@ main(int argc, char **argv) {
+@@ -577,6 +573,20 @@ main(int argc, char **argv) {
  
  	if (isc_commandline_index + 1 < argc)
  		usage();
