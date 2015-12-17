@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009-2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@ while true; do
         exit 1
     fi
 
-    if grep "example.nil/IN.*Transfer completed" ns2/named.run > /dev/null
+    if grep "example.nil/IN.*Transfer status" ns2/named.run > /dev/null
     then
         break
     else
@@ -527,6 +527,17 @@ sleep 2
 for alg in md5 sha1 sha224 sha256 sha384 sha512; do
     $DIG +short @10.53.0.1 -p 5300 ${alg}.keytests.nil | grep 10.10.10.3 > /dev/null 2>&1 || ret=1
 done
+if [ $ret -ne 0 ]; then
+    echo "I:failed"
+    status=1
+fi
+
+n=`expr $n + 1`
+ret=0
+echo "I:add a very large record. ($n)"
+$NSUPDATE verylarge || ret=1
+$DIG +noedns +tcp @10.53.0.1 -p 5300 txt txt.update.nil > dig.out.ns1.test$n
+grep "ANSWER: 1," dig.out.ns1.test$n > /dev/null || ret=1
 if [ $ret -ne 0 ]; then
     echo "I:failed"
     status=1
