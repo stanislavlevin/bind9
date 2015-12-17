@@ -8,7 +8,7 @@ diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
 index defaced..defaced 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -5535,8 +5535,12 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -5642,8 +5642,12 @@ load_configuration(const char *filename, ns_server_t *server,
  				      "no source of entropy found");
  		} else {
  			const char *randomdev = cfg_obj_asstring(obj);
@@ -22,7 +22,7 @@ index defaced..defaced 100644
  			if (result != ISC_R_SUCCESS)
  				isc_log_write(ns_g_lctx,
  					      NS_LOGCATEGORY_GENERAL,
-@@ -5569,16 +5573,9 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -5676,16 +5680,9 @@ load_configuration(const char *filename, ns_server_t *server,
  	/*
  	 * Relinquish root privileges.
  	 */

@@ -80,7 +80,7 @@ diff --git a/bind/bin/named/named.8 b/bind/bin/named/named.8
 index defaced..defaced 100644
 --- a/bind/bin/named/named.8
 +++ b/bind/bin/named/named.8
-@@ -256,6 +256,18 @@ inherits the
+@@ -262,6 +262,18 @@ inherits the
  should be set explicitly in the script used to start the
  \fBnamed\fR
  process.
@@ -99,7 +99,7 @@ index defaced..defaced 100644
  .SH "FILES"
  .PP
  \fI/etc/named.conf\fR
-@@ -277,7 +289,8 @@ RFC 1035,
+@@ -283,7 +295,8 @@ RFC 1035,
  \fBrndc\fR(8),
  \fBlwresd\fR(8),
  \fBnamed.conf\fR(5),
@@ -127,7 +127,7 @@ diff --git a/bind/bin/rndc/rndc.8 b/bind/bin/rndc/rndc.8
 index defaced..defaced 100644
 --- a/bind/bin/rndc/rndc.8
 +++ b/bind/bin/rndc/rndc.8
-@@ -121,6 +121,9 @@ can be seen by running
+@@ -123,6 +123,9 @@ can be seen by running
  \fBrndc\fR
  without arguments.
  .PP
@@ -136,8 +136,8 @@ index defaced..defaced 100644
 +.PP
  Currently supported commands are:
  .PP
- \fBreload\fR
-@@ -411,8 +414,8 @@ Several error messages could be clearer.
+ \fBaddzone \fR\fB\fIzone\fR\fR\fB \fR\fB[\fIclass\fR [\fIview\fR]]\fR\fB \fR\fB\fIconfiguration\fR\fR\fB \fR
+@@ -446,8 +449,8 @@ Several error messages could be clearer.
  \fBrndc\-confgen\fR(8),
  \fBnamed\fR(8),
  \fBnamed.conf\fR(5),
