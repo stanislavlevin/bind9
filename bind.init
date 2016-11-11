@@ -28,10 +28,7 @@ rndc_keygen()
 	local rndc="@ROOT@/etc/rndc.key"
 	if [ -w "$rndc" ] && grep -Eqs '^[[:space:]]*secret[[:space:]]+"@RNDC_KEY@";$' "$rndc"; then
 		echo -n 'Generating RNDC key: '
-		local key
-		if key=`rndc-confgen -A -r /dev/urandom` &&
-		   [ -n "$key" ] &&
-		   subst "s,^\([[:space:]]*secret[[:space:]]\+\)\"@RNDC_KEY@\";,\1\"$key\";," "$rndc"; then
+		if rndc-confgen -a -c "$rndc" -r /dev/urandom; then
 			success 'RNDC key generation'
 			RETVAL=0
 		else
