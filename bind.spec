@@ -68,7 +68,8 @@ Provides: bind-chroot(%_chrootdir)
 Obsoletes: bind-chroot, bind-debug, bind-slave, caching-nameserver
 # Because of /etc/syslog.d/ feature.
 Conflicts: syslogd < 1.4.1-alt11
-PreReq: bind-control chrooted syslogd-daemon
+PreReq: bind-control >= 1.2
+PreReq: chrooted syslogd-daemon
 PreReq: libbind = %EVR
 
 # due to %_chrootdir/dev/log
@@ -302,7 +303,7 @@ rm -fv %buildroot%docdir/*/{Makefile*,README-SGML,*.dsl*,*.sh*,*.xml}
 /usr/sbin/groupadd -r -f named
 /usr/sbin/useradd -r -g named -d %_chrootdir -s /dev/null -n -c "Domain Name Server" named >/dev/null 2>&1 ||:
 [ -f %_initdir/named -a ! -L %_initdir/named ] && /sbin/chkconfig --del named ||:
-%pre_control bind-debug bind-slave
+%pre_control bind-chroot bind-debug bind-slave
 
 %preun
 %preun_service bind
@@ -318,6 +319,7 @@ if grep -qs '^SYSLOGD_OPTIONS=.*-a %_chrootdir/dev/log' "$SYSLOGD_CONFIG"; then
 	fi
 fi
 
+%post_control -s enabled bind-chroot
 %post_control -s disabled bind-debug bind-slave
 %post_service bind
 
@@ -330,6 +332,12 @@ fi
 
 %preun -n lwresd
 %preun_service lwresd
+
+%triggerun -- bind < 9.10.4
+F=/etc/sysconfig/bind
+if [ $2 -gt 0 -a -f $F ]; then
+	grep -q '^#\?CHROOT=' $F || echo '#CHROOT="-t /"' >> $F
+fi
 
 %files -n libbind
 %_libdir/lib*.so.*

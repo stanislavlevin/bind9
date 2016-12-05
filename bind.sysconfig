@@ -1,3 +1,5 @@
 # ISC named startup options
 # Use -4 for ipv4 only behaviour. See named(8) for details.
 EXTRAOPTIONS=""
+# Starting with bind 9.10, chrooted mode is under control(1).
+#CHROOT="-t /"
