@@ -43,11 +43,9 @@ Patch0003: 0003-openbsd-owl-chroot-defaults.patch
 Patch0004: 0004-alt-owl-chroot.patch
 Patch0005: 0005-owl-checkconf-chroot.patch
 Patch0006: 0006-alt-man.patch
-Patch0007: 0007-alt-owl-rndc-confgen.patch
-Patch0008: 0008-alt-nofile.patch
-Patch0009: 0009-alt-ads-remove.patch
-Patch0010: 0010-fc-exportlib.patch
-Patch0011: 0011-Minimize-linux-capabilities.patch
+Patch0007: 0007-alt-nofile.patch
+Patch0008: 0008-alt-ads-remove.patch
+Patch0009: 0009-Minimize-linux-capabilities.patch
 
 # root directory for chrooted environment.
 %define _chrootdir %_localstatedir/bind
@@ -197,8 +195,6 @@ rather than the DNS protocol.
 %patch0007 -p2
 %patch0008 -p2
 %patch0009 -p2
-%patch0010 -p2
-%patch0011 -p2
 
 install -D -pm644 %_sourcedir/rfc1912.txt doc/rfc/rfc1912.txt
 install -pm644 %_sourcedir/bind.README.bind-devel README.bind-devel

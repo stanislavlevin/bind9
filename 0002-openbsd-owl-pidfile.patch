@@ -9,7 +9,7 @@ diff --git a/bind/bin/named/include/named/globals.h b/bind/bin/named/include/nam
 index defaced..defaced 100644
 --- a/bind/bin/named/include/named/globals.h
 +++ b/bind/bin/named/include/named/globals.h
-@@ -144,6 +144,8 @@ EXTERN const char *		ns_g_defaultpidfile 	INIT(NS_LOCALSTATEDIR
+@@ -146,6 +146,8 @@ EXTERN const char *		ns_g_defaultpidfile 	INIT(NS_LOCALSTATEDIR
  EXTERN const char *		lwresd_g_defaultpidfile INIT(NS_LOCALSTATEDIR
  							     "/run/lwresd.pid");
  #endif
@@ -22,7 +22,7 @@ diff --git a/bind/bin/named/main.c b/bind/bin/named/main.c
 index defaced..defaced 100644
 --- a/bind/bin/named/main.c
 +++ b/bind/bin/named/main.c
-@@ -316,6 +316,7 @@ usage(void) {
+@@ -322,6 +322,7 @@ usage(void) {
  	fprintf(stderr,
  		"usage: named [-4|-6] [-c conffile] [-d debuglevel] "
  		"[-E engine] [-f|-g]\n"
@@ -30,7 +30,7 @@ index defaced..defaced 100644
  		"             [-n number_of_cpus] [-p port] [-s] "
  		"[-S sockets] [-t chrootdir]\n"
  		"             [-u username] [-U listeners] "
-@@ -483,9 +484,8 @@ parse_command_line(int argc, char *argv[]) {
+@@ -492,9 +493,8 @@ parse_command_line(int argc, char *argv[]) {
  			ns_g_foreground = ISC_TRUE;
  			ns_g_logstderr = ISC_TRUE;
  			break;
@@ -41,7 +41,7 @@ index defaced..defaced 100644
  			break;
  		case 'l':
  			ns_g_lwresdonly = ISC_TRUE;
-@@ -815,6 +815,12 @@ setup(void) {
+@@ -897,6 +897,12 @@ setup(void) {
  	char *instance = NULL;
  #endif
  
@@ -58,7 +58,7 @@ diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
 index defaced..defaced 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -5454,16 +5454,20 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -5908,16 +5908,20 @@ load_configuration(const char *filename, ns_server_t *server,
  	/*
  	 * Write the PID file.
  	 */
@@ -88,7 +88,7 @@ index defaced..defaced 100644
  
  	/*
  	 * Configure the server-wide session key.  This must be done before
-@@ -5795,7 +5799,6 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -6249,7 +6253,6 @@ load_configuration(const char *filename, ns_server_t *server,
  		}
  	}
  

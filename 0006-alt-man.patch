@@ -24,7 +24,7 @@ diff --git a/bind/bin/check/named-checkzone.8 b/bind/bin/check/named-checkzone.8
 index defaced..defaced 100644
 --- a/bind/bin/check/named-checkzone.8
 +++ b/bind/bin/check/named-checkzone.8
-@@ -310,9 +310,10 @@ returns an exit status of 1 if errors were detected and 0 otherwise\&.
+@@ -325,9 +325,10 @@ returns an exit status of 1 if errors were detected and 0 otherwise\&.
  .SH "SEE ALSO"
  .PP
  \fBnamed\fR(8),
@@ -41,7 +41,7 @@ diff --git a/bind/bin/confgen/rndc-confgen.8 b/bind/bin/confgen/rndc-confgen.8
 index defaced..defaced 100644
 --- a/bind/bin/confgen/rndc-confgen.8
 +++ b/bind/bin/confgen/rndc-confgen.8
-@@ -215,7 +215,8 @@ named\&.conf, run
+@@ -220,7 +220,8 @@ named\&.conf, run
  \fBrndc\fR(8),
  \fBrndc.conf\fR(5),
  \fBnamed\fR(8),
@@ -55,7 +55,7 @@ diff --git a/bind/bin/dnssec/dnssec-keygen.8 b/bind/bin/dnssec/dnssec-keygen.8
 index defaced..defaced 100644
 --- a/bind/bin/dnssec/dnssec-keygen.8
 +++ b/bind/bin/dnssec/dnssec-keygen.8
-@@ -337,8 +337,9 @@ and
+@@ -339,8 +339,9 @@ and
  Kexample\&.com\&.+003+26160\&.private\&.
  .SH "SEE ALSO"
  .PP
@@ -71,7 +71,7 @@ diff --git a/bind/bin/dnssec/dnssec-signzone.8 b/bind/bin/dnssec/dnssec-signzone
 index defaced..defaced 100644
 --- a/bind/bin/dnssec/dnssec-signzone.8
 +++ b/bind/bin/dnssec/dnssec-signzone.8
-@@ -455,8 +455,9 @@ db\&.example\&.com\&.signed
+@@ -471,8 +471,9 @@ db\&.example\&.com\&.signed
  .\}
  .SH "SEE ALSO"
  .PP
@@ -87,7 +87,7 @@ diff --git a/bind/bin/named/named.8 b/bind/bin/named/named.8
 index defaced..defaced 100644
 --- a/bind/bin/named/named.8
 +++ b/bind/bin/named/named.8
-@@ -332,6 +332,18 @@ inherits the
+@@ -341,6 +341,18 @@ inherits the
  should be set explicitly in the script used to start the
  \fBnamed\fR
  process\&.
@@ -106,7 +106,7 @@ index defaced..defaced 100644
  .SH "FILES"
  .PP
  /etc/named\&.conf
-@@ -353,7 +365,8 @@ RFC 1035,
+@@ -362,7 +374,8 @@ RFC 1035,
  \fBrndc\fR(8),
  \fBlwresd\fR(8),
  \fBnamed.conf\fR(5),
@@ -120,7 +120,7 @@ diff --git a/bind/bin/named/named.conf.5 b/bind/bin/named/named.conf.5
 index defaced..defaced 100644
 --- a/bind/bin/named/named.conf.5
 +++ b/bind/bin/named/named.conf.5
-@@ -657,7 +657,8 @@ zone \fIstring\fR \fIoptional_class\fR {
+@@ -660,7 +660,8 @@ zone \fIstring\fR \fIoptional_class\fR {
  \fBnamed\fR(8),
  \fBnamed-checkconf\fR(8),
  \fBrndc\fR(8),
@@ -134,7 +134,7 @@ diff --git a/bind/bin/rndc/rndc.8 b/bind/bin/rndc/rndc.8
 index defaced..defaced 100644
 --- a/bind/bin/rndc/rndc.8
 +++ b/bind/bin/rndc/rndc.8
-@@ -138,6 +138,9 @@ can be seen by running
+@@ -143,6 +143,9 @@ can be seen by running
  \fBrndc\fR
  without arguments\&.
  .PP
@@ -144,7 +144,7 @@ index defaced..defaced 100644
  Currently supported commands are:
  .PP
  \fBaddzone \fR\fB\fIzone\fR\fR\fB \fR\fB[\fIclass\fR [\fIview\fR]]\fR\fB \fR\fB\fIconfiguration\fR\fR\fB \fR
-@@ -461,7 +464,8 @@ Several error messages could be clearer\&.
+@@ -492,7 +495,8 @@ Several error messages could be clearer\&.
  \fBnamed\fR(8),
  \fBnamed.conf\fR(5),
  \fBndc\fR(8),
