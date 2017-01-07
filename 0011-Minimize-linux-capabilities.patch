@@ -1,0 +1,249 @@
+From 0 Mon Sep 17 00:00:00 2001
+From: "Dmitry V. Levin" <ldv@altlinux.org>
+Date: Wed, 11 Jan 2017 15:27:28 +0000
+Subject: [PATCH] Minimize linux capabilities
+
+When PR_SET_KEEPCAPS is enables before the user change,
+disable it back after the change.
+
+If HAVE_LINUX_CAPABILITY_H is enabled, minimize linux capabilities early
+like in HAVE_LINUXTHREADS mode: lower capabilities to
+CAP_SYS_RESOURCE|CAP_NET_BIND_SERVICE at the end of the first user
+change in ns_os_changeuser, and clear remaining capabilities later when
+ns_os_dropprivs is called right after the second ns_os_changeuser call
+in load_configuration.
+
+If HAVE_LINUXTHREADS is enabled, keep the saved set-user-ID during the
+first user change in ns_os_changeuser, and finalize the switch later
+when ns_os_dropprivs is called right after the second ns_os_changeuser
+call in load_configuration.  This trick activates NPTL feature
+of forcing process credential changes over all threads.
+
+diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
+index defaced..defaced 100644
+--- a/bind/bin/named/server.c
++++ b/bind/bin/named/server.c
+@@ -5696,6 +5696,7 @@ load_configuration(const char *filename, ns_server_t *server,
+ 	 */
+ 	if (first_time) {
+ 		ns_os_changeuser();
++		ns_os_dropprivs();
+ 	}
+ 
+ 	/*
+diff --git a/bind/bin/named/unix/include/named/os.h b/bind/bin/named/unix/include/named/os.h
+index defaced..defaced 100644
+--- a/bind/bin/named/unix/include/named/os.h
++++ b/bind/bin/named/unix/include/named/os.h
+@@ -59,6 +59,9 @@ int
+ ns_os_open_randomdev(void);
+ 
+ void
++ns_os_dropprivs(void);
++
++void
+ ns_os_writepidfile(const char *filename, isc_boolean_t first_time);
+ 
+ void
+diff --git a/bind/bin/named/unix/os.c b/bind/bin/named/unix/os.c
+index defaced..defaced 100644
+--- a/bind/bin/named/unix/os.c
++++ b/bind/bin/named/unix/os.c
+@@ -173,7 +173,7 @@ linux_setcaps(cap_t caps) {
+ #endif
+ 	char strbuf[ISC_STRERRORSIZE];
+ 
+-	if ((getuid() != 0 && !non_root_caps) || non_root)
++	if ((caps && getuid() != 0 && !non_root_caps) || non_root)
+ 		return;
+ #ifndef HAVE_LIBCAP
+ 	memset(&caphead, 0, sizeof(caphead));
+@@ -367,6 +367,32 @@ linux_keepcaps(void) {
+ 			non_root = ISC_TRUE;
+ 	}
+ }
++
++static void
++linux_losecaps(void) {
++	if (prctl(PR_SET_KEEPCAPS, 0, 0, 0, 0) < 0 && errno != EINVAL) {
++		char strbuf[ISC_STRERRORSIZE];
++		isc__strerror(errno, strbuf, sizeof(strbuf));
++		ns_main_earlyfatal("prctl(PR_SET_KEEPCAPS, 0) failed: %s",
++				   strbuf);
++	}
++}
++
++# ifdef PR_SET_DUMPABLE
++static void
++linux_set_dumpable(void) {
++	/*
++	 * Restore the ability of named to drop core after the setuid()
++	 * call has disabled it.
++	 */
++	if (prctl(PR_SET_DUMPABLE, 1, 0, 0, 0) < 0) {
++		char strbuf[ISC_STRERRORSIZE];
++		isc__strerror(errno, strbuf, sizeof(strbuf));
++		ns_main_earlywarning("prctl(PR_SET_DUMPABLE) failed: %s",
++				     strbuf);
++	}
++}
++# endif /* PR_SET_DUMPABLE */
+ #endif
+ 
+ #endif	/* HAVE_LINUX_CAPABILITY_H */
+@@ -602,28 +628,53 @@ ns_os_changeuser(void) {
+ 		ns_main_earlyfatal("setgid(): %s", strbuf);
+ 	}
+ 
++#ifdef HAVE_LINUXTHREADS
++	if (setresuid(runas_pw->pw_uid, runas_pw->pw_uid, -1) < 0) {
++#else
+ 	if (setuid(runas_pw->pw_uid) < 0) {
++#endif
+ 		isc__strerror(errno, strbuf, sizeof(strbuf));
+ 		ns_main_earlyfatal("setuid(): %s", strbuf);
+ 	}
+ 
+-#if defined(HAVE_SYS_PRCTL_H) && defined(PR_SET_DUMPABLE)
+-	/*
+-	 * Restore the ability of named to drop core after the setuid()
+-	 * call has disabled it.
+-	 */
+-	if (prctl(PR_SET_DUMPABLE,1,0,0,0) < 0) {
+-		isc__strerror(errno, strbuf, sizeof(strbuf));
+-		ns_main_earlywarning("prctl(PR_SET_DUMPABLE) failed: %s",
+-				     strbuf);
+-	}
++#ifdef PR_SET_DUMPABLE
++	linux_set_dumpable();
+ #endif
+-#if defined(HAVE_LINUX_CAPABILITY_H) && !defined(HAVE_LINUXTHREADS)
++#if defined(HAVE_LINUX_CAPABILITY_H)
+ 	linux_minprivs();
+ #endif
+ }
+ 
+ void
++ns_os_dropprivs(void) {
++#ifdef HAVE_LINUXTHREADS
++	char strbuf[ISC_STRERRORSIZE];
++	if (runas_pw == NULL)
++		return;
++	if (setresuid(runas_pw->pw_uid, runas_pw->pw_uid, runas_pw->pw_uid) < 0) {
++		isc__strerror(errno, strbuf, sizeof(strbuf));
++		ns_main_earlyfatal("setresuid(): %s", strbuf);
++	}
++
++# ifdef PR_SET_DUMPABLE
++	linux_set_dumpable();
++# endif
++#elif defined(HAVE_LINUX_CAPABILITY_H)
++	cap_t caps;
++# ifdef HAVE_LIBCAP
++	cap_t curcaps;
++	char strbuf[ISC_STRERRORSIZE];
++# endif
++
++	INIT_CAP;
++	linux_setcaps(caps);
++# ifdef HAVE_LIBCAP
++	FREE_CAP;
++# endif
++#endif /* HAVE_LINUXTHREADS || HAVE_LINUX_CAPABILITY_H */
++}
++
++void
+ ns_os_adjustnofile(void) {
+ #ifdef HAVE_LINUXTHREADS
+ 	isc_result_t result;
+@@ -647,12 +698,10 @@ ns_os_minprivs(void) {
+ 	linux_keepcaps();
+ #endif
+ 
+-#ifdef HAVE_LINUXTHREADS
+ 	ns_os_changeuser(); /* Call setuid() before threads are started */
+-#endif
+ 
+-#if defined(HAVE_LINUX_CAPABILITY_H) && defined(HAVE_LINUXTHREADS)
+-	linux_minprivs();
++#ifdef HAVE_SYS_PRCTL_H
++	linux_losecaps();
+ #endif
+ }
+ 
+@@ -695,18 +744,21 @@ static int
+ mkdirpath(char *filename, void (*report)(const char *, ...)) {
+ 	char *slash = strrchr(filename, '/');
+ 	char strbuf[ISC_STRERRORSIZE];
+-	unsigned int mode;
+ 
+ 	if (slash != NULL && slash != filename) {
+ 		struct stat sb;
+ 		*slash = '\0';
+ 
+ 		if (stat(filename, &sb) == -1) {
++#ifdef WANT_SETPERMS
++			unsigned int mode;
+ 			if (errno != ENOENT) {
++#endif /* WANT_SETPERMS */
+ 				isc__strerror(errno, strbuf, sizeof(strbuf));
+ 				(*report)("couldn't stat '%s': %s", filename,
+ 					  strbuf);
+ 				goto error;
++#ifdef WANT_SETPERMS
+ 			}
+ 			if (mkdirpath(filename, report) == -1)
+ 				goto error;
+@@ -735,6 +787,7 @@ mkdirpath(char *filename, void (*report)(const char *, ...)) {
+ 				(*report)("couldn't chown '%s': %s", filename,
+ 					  strbuf);
+ 			}
++#endif /* WANT_SETPERMS */
+ 		}
+ 		*slash = '/';
+ 	}
+@@ -745,6 +798,7 @@ mkdirpath(char *filename, void (*report)(const char *, ...)) {
+ 	return (-1);
+ }
+ 
++#ifdef WANT_SETPERMS
+ static void
+ setperms(uid_t uid, gid_t gid) {
+ 	char strbuf[ISC_STRERRORSIZE];
+@@ -786,6 +840,7 @@ setperms(uid_t uid, gid_t gid) {
+ 	}
+ #endif
+ }
++#endif /* WANT_SETPERMS */
+ 
+ FILE *
+ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
+@@ -793,6 +848,9 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
+ 	FILE *fp;
+ 	int fd;
+ 
++#ifndef WANT_SETPERMS
++	UNUSED(switch_user);
++#endif /* WANT_SETPERMS */
+ 	/*
+ 	 * Make the containing directory if it doesn't exist.
+ 	 */
+@@ -809,6 +867,7 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
+ 	}
+ 	free(f);
+ 
++#ifdef WANT_SETPERMS
+ 	if (switch_user && runas_pw != NULL) {
+ #ifndef HAVE_LINUXTHREADS
+ 		gid_t oldgid = getgid();
+@@ -845,7 +904,9 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
+ 					     "or reconfigure the filename.");
+ #endif /* HAVE_LINUXTHREADS */
+ 		}
+-	} else {
++	} else
++#endif /* WANT_SETPERMS */
++	{
+ 		fd = safe_open(filename, mode, ISC_FALSE);
+ 	}
+ 
