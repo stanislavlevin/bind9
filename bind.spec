@@ -76,6 +76,9 @@ BuildPreReq: coreutils
 # due to broken configure script
 BuildPreReq: gcc-c++
 
+# for better --enable-linux-caps experience
+BuildPreReq: libcap-devel
+
 %{?_with_openssl:BuildPreReq: libssl-devel}
 
 %package utils
@@ -230,7 +233,7 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.in
 	--localstatedir=/var \
 	--with-randomdev=/dev/random \
 	--disable-threads \
-	--disable-linux-caps \
+	--enable-linux-caps \
 	 %{subst_with openssl} \
 	 %{subst_enable ipv6} \
 	 %{subst_enable static} \
