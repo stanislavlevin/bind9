@@ -232,7 +232,7 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.in
 %configure \
 	--localstatedir=/var \
 	--with-randomdev=/dev/random \
-	--disable-threads \
+	--enable-threads \
 	--enable-linux-caps \
 	 %{subst_with openssl} \
 	 %{subst_enable ipv6} \
