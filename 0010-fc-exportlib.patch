@@ -1,7 +1,7 @@
 From 0 Mon Sep 17 00:00:00 2001
-From: <->
+From: - <->
 Date: Mon, 10 Jun 2013 15:31:19 +0400
-Subject: [PATCH] bind-9.9.3-fc-exportlib
+Subject: [PATCH] fc-exportlib
 
 
 diff --git a/bind/lib/export/dns/Makefile.in b/bind/lib/export/dns/Makefile.in

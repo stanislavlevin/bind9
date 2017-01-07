@@ -1,89 +1,96 @@
 From 0 Mon Sep 17 00:00:00 2001
-From: <->
+From: - <->
 Date: Mon, 15 Oct 2012 15:44:28 +0400
-Subject: [PATCH] bind-9.8.3-alt-man
+Subject: [PATCH] alt-man
 
 
 diff --git a/bind/bin/check/named-checkconf.8 b/bind/bin/check/named-checkconf.8
 index defaced..defaced 100644
 --- a/bind/bin/check/named-checkconf.8
 +++ b/bind/bin/check/named-checkconf.8
-@@ -117,7 +117,8 @@ returns an exit status of 1 if errors were detected and 0 otherwise.
+@@ -131,8 +131,9 @@ returns an exit status of 1 if errors were detected and 0 otherwise\&.
+ .SH "SEE ALSO"
  .PP
  \fBnamed\fR(8),
- \fBnamed\-checkzone\fR(8),
--BIND 9 Administrator Reference Manual.
+-\fBnamed-checkzone\fR(8),
+-BIND 9 Administrator Reference Manual\&.
++\fBnamed\-checkzone\fR(8),
 +BIND 9 Administrator Reference Manual
 +(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
  .SH "AUTHOR"
  .PP
- Internet Systems Consortium
+ \fBInternet Systems Consortium, Inc\&.\fR
 diff --git a/bind/bin/check/named-checkzone.8 b/bind/bin/check/named-checkzone.8
 index defaced..defaced 100644
 --- a/bind/bin/check/named-checkzone.8
 +++ b/bind/bin/check/named-checkzone.8
-@@ -296,8 +296,9 @@ returns an exit status of 1 if errors were detected and 0 otherwise.
+@@ -310,9 +310,10 @@ returns an exit status of 1 if errors were detected and 0 otherwise\&.
+ .SH "SEE ALSO"
  .PP
  \fBnamed\fR(8),
- \fBnamed\-checkconf\fR(8),
--RFC 1035,
--BIND 9 Administrator Reference Manual.
-+BIND 9 Administrator Reference Manual
-+(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR),
-+RFC 1035.
- .SH "AUTHOR"
- .PP
- Internet Systems Consortium
-diff --git a/bind/bin/confgen/rndc-confgen.8 b/bind/bin/confgen/rndc-confgen.8
-index defaced..defaced 100644
---- a/bind/bin/confgen/rndc-confgen.8
-+++ b/bind/bin/confgen/rndc-confgen.8
-@@ -200,7 +200,8 @@ statements to be manually inserted into
- \fBrndc\fR(8),
- \fBrndc.conf\fR(5),
- \fBnamed\fR(8),
--BIND 9 Administrator Reference Manual.
+-\fBnamed-checkconf\fR(8),
++\fBnamed\-checkconf\fR(8),
+ RFC 1035,
+-BIND 9 Administrator Reference Manual\&.
 +BIND 9 Administrator Reference Manual
 +(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
  .SH "AUTHOR"
  .PP
- Internet Systems Consortium
+ \fBInternet Systems Consortium, Inc\&.\fR
+diff --git a/bind/bin/confgen/rndc-confgen.8 b/bind/bin/confgen/rndc-confgen.8
+index defaced..defaced 100644
+--- a/bind/bin/confgen/rndc-confgen.8
++++ b/bind/bin/confgen/rndc-confgen.8
+@@ -215,7 +215,8 @@ named\&.conf, run
+ \fBrndc\fR(8),
+ \fBrndc.conf\fR(5),
+ \fBnamed\fR(8),
+-BIND 9 Administrator Reference Manual\&.
++BIND 9 Administrator Reference Manual
++(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
+ .SH "AUTHOR"
+ .PP
+ \fBInternet Systems Consortium, Inc\&.\fR
 diff --git a/bind/bin/dnssec/dnssec-keygen.8 b/bind/bin/dnssec/dnssec-keygen.8
 index defaced..defaced 100644
 --- a/bind/bin/dnssec/dnssec-keygen.8
 +++ b/bind/bin/dnssec/dnssec-keygen.8
-@@ -299,7 +299,8 @@ and
+@@ -337,8 +337,9 @@ and
+ Kexample\&.com\&.+003+26160\&.private\&.
  .SH "SEE ALSO"
  .PP
- \fBdnssec\-signzone\fR(8),
+-\fBdnssec-signzone\fR(8),
 -BIND 9 Administrator Reference Manual,
++\fBdnssec\-signzone\fR(8),
 +BIND 9 Administrator Reference Manual
 +(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR),
  RFC 2539,
  RFC 2845,
- RFC 4034.
+ RFC 4034\&.
 diff --git a/bind/bin/dnssec/dnssec-signzone.8 b/bind/bin/dnssec/dnssec-signzone.8
 index defaced..defaced 100644
 --- a/bind/bin/dnssec/dnssec-signzone.8
 +++ b/bind/bin/dnssec/dnssec-signzone.8
-@@ -437,7 +437,8 @@ db.example.com.signed
+@@ -455,8 +455,9 @@ db\&.example\&.com\&.signed
+ .\}
  .SH "SEE ALSO"
  .PP
- \fBdnssec\-keygen\fR(8),
+-\fBdnssec-keygen\fR(8),
 -BIND 9 Administrator Reference Manual,
++\fBdnssec\-keygen\fR(8),
 +BIND 9 Administrator Reference Manual
 +(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR),
  RFC 4033,
- RFC 4641.
+ RFC 4641\&.
  .SH "AUTHOR"
 diff --git a/bind/bin/named/named.8 b/bind/bin/named/named.8
 index defaced..defaced 100644
 --- a/bind/bin/named/named.8
 +++ b/bind/bin/named/named.8
-@@ -262,6 +262,18 @@ inherits the
+@@ -332,6 +332,18 @@ inherits the
  should be set explicitly in the script used to start the
  \fBnamed\fR
- process.
+ process\&.
 +.PP
 +By default, \fBnamed\fR is configured to run in readonly chroot jail
 +\fI@ROOT@\fR with no extra privileges.
@@ -98,38 +105,38 @@ index defaced..defaced 100644
 +use \fBcontrol\fR(8) for the \fBbind\-debug\fR facility.
  .SH "FILES"
  .PP
- \fI/etc/named.conf\fR
-@@ -283,7 +295,8 @@ RFC 1035,
+ /etc/named\&.conf
+@@ -353,7 +365,8 @@ RFC 1035,
  \fBrndc\fR(8),
  \fBlwresd\fR(8),
  \fBnamed.conf\fR(5),
--BIND 9 Administrator Reference Manual.
+-BIND 9 Administrator Reference Manual\&.
 +BIND 9 Administrator Reference Manual
 +(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
  .SH "AUTHOR"
  .PP
- Internet Systems Consortium
+ \fBInternet Systems Consortium, Inc\&.\fR
 diff --git a/bind/bin/named/named.conf.5 b/bind/bin/named/named.conf.5
 index defaced..defaced 100644
 --- a/bind/bin/named/named.conf.5
 +++ b/bind/bin/named/named.conf.5
-@@ -594,7 +594,8 @@ zone \fIstring\fR \fIoptional_class\fR {
+@@ -657,7 +657,8 @@ zone \fIstring\fR \fIoptional_class\fR {
  \fBnamed\fR(8),
- \fBnamed\-checkconf\fR(8),
+ \fBnamed-checkconf\fR(8),
  \fBrndc\fR(8),
--BIND 9 Administrator Reference Manual.
+-BIND 9 Administrator Reference Manual\&.
 +BIND 9 Administrator Reference Manual
 +(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
- .SH "COPYRIGHT"
- Copyright \(co 2004\-2011, 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
- .br
+ .SH "AUTHOR"
+ .PP
+ \fBInternet Systems Consortium, Inc\&.\fR
 diff --git a/bind/bin/rndc/rndc.8 b/bind/bin/rndc/rndc.8
 index defaced..defaced 100644
 --- a/bind/bin/rndc/rndc.8
 +++ b/bind/bin/rndc/rndc.8
-@@ -123,6 +123,9 @@ can be seen by running
+@@ -138,6 +138,9 @@ can be seen by running
  \fBrndc\fR
- without arguments.
+ without arguments\&.
  .PP
 +To debug \fBnamed\fR with \fBrndc\fR(8),
 +use \fBcontrol\fR(8) for the \fBbind\-debug\fR facility.
@@ -137,28 +144,27 @@ index defaced..defaced 100644
  Currently supported commands are:
  .PP
  \fBaddzone \fR\fB\fIzone\fR\fR\fB \fR\fB[\fIclass\fR [\fIview\fR]]\fR\fB \fR\fB\fIconfiguration\fR\fR\fB \fR
-@@ -446,8 +449,8 @@ Several error messages could be clearer.
- \fBrndc\-confgen\fR(8),
+@@ -461,7 +464,8 @@ Several error messages could be clearer\&.
  \fBnamed\fR(8),
  \fBnamed.conf\fR(5),
--\fBndc\fR(8),
--BIND 9 Administrator Reference Manual.
+ \fBndc\fR(8),
+-BIND 9 Administrator Reference Manual\&.
 +BIND 9 Administrator Reference Manual
 +(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
  .SH "AUTHOR"
  .PP
- Internet Systems Consortium
+ \fBInternet Systems Consortium, Inc\&.\fR
 diff --git a/bind/bin/rndc/rndc.conf.5 b/bind/bin/rndc/rndc.conf.5
 index defaced..defaced 100644
 --- a/bind/bin/rndc/rndc.conf.5
 +++ b/bind/bin/rndc/rndc.conf.5
-@@ -203,7 +203,8 @@ statement in the BIND 9 Administrator Reference Manual for details.
+@@ -233,7 +233,8 @@ statement in the BIND 9 Administrator Reference Manual for details\&.
  \fBrndc\fR(8),
- \fBrndc\-confgen\fR(8),
+ \fBrndc-confgen\fR(8),
  \fBmmencode\fR(1),
--BIND 9 Administrator Reference Manual.
+-BIND 9 Administrator Reference Manual\&.
 +BIND 9 Administrator Reference Manual
 +(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
  .SH "AUTHOR"
  .PP
- Internet Systems Consortium
+ \fBInternet Systems Consortium, Inc\&.\fR

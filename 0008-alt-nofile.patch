@@ -1,7 +1,7 @@
 From 0 Mon Sep 17 00:00:00 2001
-From: <->
+From: - <->
 Date: Mon, 15 Oct 2012 15:44:28 +0400
-Subject: [PATCH] bind-9.8.3-alt-nofile
+Subject: [PATCH] alt-nofile
 
 
 diff --git a/bind/lib/isc/unix/resource.c b/bind/lib/isc/unix/resource.c

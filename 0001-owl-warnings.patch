@@ -1,7 +1,7 @@
 From 0 Mon Sep 17 00:00:00 2001
-From: <->
+From: - <->
 Date: Mon, 15 Oct 2012 15:44:28 +0400
-Subject: [PATCH] bind-9.9.7-owl-warnings
+Subject: [PATCH] owl-warnings
 
 
 diff --git a/bind/lib/isc/Makefile.in b/bind/lib/isc/Makefile.in
@@ -26,23 +26,6 @@ index defaced..defaced 100644
  		tm.c version.c
  
  LIBS =		@LIBS@
-diff --git a/bind/lib/isc/unix/net.c b/bind/lib/isc/unix/net.c
-index defaced..defaced 100644
---- a/bind/lib/isc/unix/net.c
-+++ b/bind/lib/isc/unix/net.c
-@@ -103,10 +103,10 @@ const struct in6_addr isc_net_in6addrloop = IN6ADDR_LOOPBACK_INIT;
- 
- # if defined(WANT_IPV6)
- static isc_once_t 	once_ipv6only = ISC_ONCE_INIT;
--# endif
- 
--# if defined(ISC_PLATFORM_HAVEIN6PKTINFO)
-+#  if defined(ISC_PLATFORM_HAVEIN6PKTINFO)
- static isc_once_t 	once_ipv6pktinfo = ISC_ONCE_INIT;
-+#  endif
- # endif
- #endif /* ISC_PLATFORM_HAVEIPV6 */
- 
 diff --git a/bind/lib/lwres/Makefile.in b/bind/lib/lwres/Makefile.in
 index defaced..defaced 100644
 --- a/bind/lib/lwres/Makefile.in
