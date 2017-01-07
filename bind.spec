@@ -37,16 +37,16 @@ Source44: bind.empty
 Source50: bind.service
 
 # NB: there must be at least one patch :)
-Patch0001: 0001-bind-9.9.7-owl-warnings.patch
-Patch0002: 0002-bind-9.8.3-openbsd-owl-pidfile.patch
-Patch0003: 0003-bind-9.9.1-openbsd-owl-chroot-defaults.patch
-Patch0004: 0004-bind-9.9.1-alt-owl-chroot.patch
-Patch0005: 0005-bind-9.8.3-owl-checkconf-chroot.patch
-Patch0006: 0006-bind-9.8.3-alt-man.patch
-Patch0007: 0007-bind-9.8.3-alt-owl-rndc-confgen.patch
-Patch0008: 0008-bind-9.8.3-alt-nofile.patch
-Patch0009: 0009-bind-9.9.1-alt-ads-remove.patch
-Patch0010: 0010-bind-9.9.3-fc-exportlib.patch
+Patch0001: 0001-owl-warnings.patch
+Patch0002: 0002-openbsd-owl-pidfile.patch
+Patch0003: 0003-openbsd-owl-chroot-defaults.patch
+Patch0004: 0004-alt-owl-chroot.patch
+Patch0005: 0005-owl-checkconf-chroot.patch
+Patch0006: 0006-alt-man.patch
+Patch0007: 0007-alt-owl-rndc-confgen.patch
+Patch0008: 0008-alt-nofile.patch
+Patch0009: 0009-alt-ads-remove.patch
+Patch0010: 0010-fc-exportlib.patch
 Patch0011: 0011-Fix-CVE-2016-2776.patch
 Patch0012: 0012-CVE-2016-8864-It-was-possible-to-trigger-assertions-.patch
 
