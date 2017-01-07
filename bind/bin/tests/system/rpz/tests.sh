@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -547,6 +547,10 @@ echo "I:checking that ttl values are not zeroed when qtype is '*'"
 $DIG +noall +answer -p 5300 @$ns3 any a3-2.tld2 > dig.out.any
 ttl=`awk '/a3-2 tld2 text/ {print $2}' dig.out.any`
 if test ${ttl:=0} -eq 0; then setret I:failed; fi
+
+echo "I:checking rpz with delegation fails correctly"
+$DIG -p 5300 @$ns3 ns example.com > dig.out.delegation
+grep "status: SERVFAIL" dig.out.delegation > /dev/null || setret "I:failed"
 
 echo "I:exit status: $status"
 exit $status

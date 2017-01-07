@@ -274,6 +274,8 @@ isc_hash_ctxcreate
 isc_hash_ctxdetach
 isc_hash_ctxinit
 isc_hash_destroy
+isc_hash_function
+isc_hash_function_reverse
 isc_hash_init
 isc_heap_create
 isc_heap_decreased
@@ -427,6 +429,7 @@ isc_netaddr_getzone
 isc_netaddr_isexperimental
 isc_netaddr_islinklocal
 isc_netaddr_ismulticast
+isc_netaddr_isnetzero
 isc_netaddr_issitelocal
 isc_netaddr_masktoprefixlen
 isc_netaddr_prefixok
@@ -544,6 +547,7 @@ isc_sockaddr_hash
 isc_sockaddr_isexperimental
 isc_sockaddr_islinklocal
 isc_sockaddr_ismulticast
+isc_sockaddr_isnetzero
 isc_sockaddr_issitelocal
 isc_sockaddr_pf
 isc_sockaddr_setport
