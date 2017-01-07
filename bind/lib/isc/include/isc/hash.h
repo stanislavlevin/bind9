@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2009, 2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -19,6 +19,8 @@
 
 #ifndef ISC_HASH_H
 #define ISC_HASH_H 1
+
+#include <isc/types.h>
 
 /*****
  ***** Module Info
@@ -179,6 +181,22 @@ isc_hash_calc(const unsigned char *key, unsigned int keylen,
  * is a DNS name.
  */
 /*@}*/
+
+void
+isc__hash_setvec(const isc_uint16_t *vec);
+
+/*!<
+ * \brief Set the contents of the random vector used in hashing.
+ *
+ * WARNING: This function is meant to be used only in testing code. It
+ * must not be used anywhere in normally running code.
+ *
+ * The hash context must have been created beforehand, otherwise this
+ * function is a nop.
+ *
+ * 'vec' is not documented here on purpose. You should know what you are
+ * doing before using this function.
+ */
 
 isc_uint32_t
 isc_hash_function(const void *data, size_t length,

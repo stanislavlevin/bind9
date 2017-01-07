@@ -1,4 +1,4 @@
-.\" Copyright (C) 2004, 2005, 2007, 2009, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004, 2005, 2007, 2009, 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2001, 2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -19,12 +19,12 @@
 .\"     Title: rndc-confgen
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 2009-06-15
+.\"      Date: 2013-03-14
 .\"    Manual: BIND9
 .\"    Source: ISC
 .\"  Language: English
 .\"
-.TH "RNDC\-CONFGEN" "8" "2009\-06\-15" "ISC" "BIND9"
+.TH "RNDC\-CONFGEN" "8" "2013\-03\-14" "ISC" "BIND9"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -48,7 +48,7 @@
 rndc-confgen \- rndc key generation tool
 .SH "SYNOPSIS"
 .HP \w'\fBrndc\-confgen\fR\ 'u
-\fBrndc\-confgen\fR [\fB\-a\fR] [\fB\-b\ \fR\fB\fIkeysize\fR\fR] [\fB\-c\ \fR\fB\fIkeyfile\fR\fR] [\fB\-h\fR] [\fB\-k\ \fR\fB\fIkeyname\fR\fR] [\fB\-p\ \fR\fB\fIport\fR\fR] [\fB\-r\ \fR\fB\fIrandomfile\fR\fR] [\fB\-s\ \fR\fB\fIaddress\fR\fR] [\fB\-t\ \fR\fB\fIchrootdir\fR\fR] [\fB\-u\ \fR\fB\fIuser\fR\fR]
+\fBrndc\-confgen\fR [\fB\-a\fR] [\fB\-A\ \fR\fB\fIalgorithm\fR\fR] [\fB\-b\ \fR\fB\fIkeysize\fR\fR] [\fB\-c\ \fR\fB\fIkeyfile\fR\fR] [\fB\-h\fR] [\fB\-k\ \fR\fB\fIkeyname\fR\fR] [\fB\-p\ \fR\fB\fIport\fR\fR] [\fB\-r\ \fR\fB\fIrandomfile\fR\fR] [\fB\-s\ \fR\fB\fIaddress\fR\fR] [\fB\-t\ \fR\fB\fIchrootdir\fR\fR] [\fB\-u\ \fR\fB\fIuser\fR\fR]
 .SH "DESCRIPTION"
 .PP
 \fBrndc\-confgen\fR
@@ -118,9 +118,14 @@ named\&.conf
 as directed\&.
 .RE
 .PP
+\-A \fIalgorithm\fR
+.RS 4
+Specifies the algorithm to use for the TSIG key\&. Available choices are: hmac\-md5, hmac\-sha1, hmac\-sha224, hmac\-sha256, hmac\-sha384 and hmac\-sha512\&. The default is hmac\-md5\&.
+.RE
+.PP
 \-b \fIkeysize\fR
 .RS 4
-Specifies the size of the authentication key in bits\&. Must be between 1 and 512 bits; the default is 128\&.
+Specifies the size of the authentication key in bits\&. Must be between 1 and 512 bits; the default is the hash size\&.
 .RE
 .PP
 \-c \fIkeyfile\fR
@@ -221,7 +226,7 @@ BIND 9 Administrator Reference Manual\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2004, 2005, 2007, 2009, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004, 2005, 2007, 2009, 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2001, 2003 Internet Software Consortium.
 .br

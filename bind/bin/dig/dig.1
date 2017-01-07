@@ -1,4 +1,4 @@
-.\" Copyright (C) 2004-2011, 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2011, 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -19,12 +19,12 @@
 .\"     Title: dig
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 2014-02-12
+.\"      Date: 2014-02-19
 .\"    Manual: BIND9
 .\"    Source: ISC
 .\"  Language: English
 .\"
-.TH "DIG" "1" "2014\-02\-12" "ISC" "BIND9"
+.TH "DIG" "1" "2014\-02\-19" "ISC" "BIND9"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -365,6 +365,11 @@ and the query options that have been applied\&. This comment is printed by defau
 Toggle the display of comment lines in the output\&. The default is to print comments\&.
 .RE
 .PP
+\fB+[no]crypto\fR
+.RS 4
+Toggle the display of cryptographic fields in DNSSEC records\&. The contents of these field are unnecessary to debug most DNSSEC validation failures and removing them makes it easier to see the common failures\&. The default is to display the fields\&. When omitted they are replaced by the string "[omitted]" or in the DNSKEY case the key id is displayed as the replacement, e\&.g\&. "[ key id = value ]"\&.
+.RE
+.PP
 \fB+[no]defname\fR
 .RS 4
 Deprecated, treated as a synonym for
@@ -392,6 +397,32 @@ option were given\&.
 Specify the EDNS version to query with\&. Valid values are 0 to 255\&. Setting the EDNS version will cause a EDNS query to be sent\&.
 \fB+noedns\fR
 clears the remembered EDNS version\&. EDNS is set to 0 by default\&.
+.RE
+.PP
+\fB+[no]ednsflags[=#]\fR
+.RS 4
+Set the must\-be\-zero EDNS flags bits (Z bits) to the specified value\&. Decimal, hex and octal encodings are accepted\&. Setting a named flag (e\&.g\&. DO) will silently be ignored\&. By default, no Z bits are set\&.
+.RE
+.PP
+\fB+[no]ednsnegotiation\fR
+.RS 4
+Enable / disable EDNS version negotiation\&. By default EDNS version negotiation is enabled\&.
+.RE
+.PP
+\fB+[no]ednsopt[=code[:value]]\fR
+.RS 4
+Specify EDNS option with code point
+\fBcode\fR
+and optionally payload of
+\fBvalue\fR
+as a hexadecimal string\&.
+\fB+noednsopt\fR
+clears the EDNS options to to be sent\&.
+.RE
+.PP
+\fB+[no]expire\fR
+.RS 4
+Send an EDNS Expire option\&.
 .RE
 .PP
 \fB+[no]fail\fR
@@ -457,6 +488,11 @@ attempts to find the authoritative name servers for the zone containing the name
 \fB+[no]onesoa\fR
 .RS 4
 Print only one (starting) SOA record when performing an AXFR\&. The default is to print both the starting and ending SOA records\&.
+.RE
+.PP
+\fB+[no]opcode=value\fR
+.RS 4
+Set [restore] the DNS message opcode to the specified value\&. The default value is QUERY (0)\&.
 .RE
 .PP
 \fB+[no]qr\fR
@@ -527,6 +563,12 @@ Perform [do not perform] a search showing intermediate results\&.
 Chase DNSSEC signature chains\&. Requires dig be compiled with \-DDIG_SIGCHASE\&.
 .RE
 .PP
+\fB+[no]sit\fR\fB[=####]\fR
+.RS 4
+Send a Source Identity Token EDNS option, with optional value\&. Replaying a SIT from a previous response will allow the server to identify a previous client\&. The default is
+\fB+nosit\fR\&. Currently using experimental value 65001 for the option code\&.
+.RE
+.PP
 \fB+split=W\fR
 .RS 4
 Split long hex\- or base64\-formatted fields in resource records into chunks of
@@ -543,6 +585,17 @@ causes fields not to be split at all\&. The default is 56 characters, or 44 char
 \fB+[no]stats\fR
 .RS 4
 This query option toggles the printing of statistics: when the query was made, the size of the reply and so on\&. The default behavior is to print the query statistics\&.
+.RE
+.PP
+\fB+[no]subnet=addr[/prefix\-length]\fR
+.RS 4
+Send (don\*(Aqt send) an EDNS Client Subnet option with the specified IP address or network prefix\&.
+.sp
+\fBdig +subnet=0\&.0\&.0\&.0/0\fR, or simply
+\fBdig +subnet=0\fR
+for short, sends an EDNS client\-subnet option with an empty address and a source prefix\-length of zero, which signals a resolver that the client\*(Aqs address information must
+\fInot\fR
+be used when resolving this query\&.
 .RE
 .PP
 \fB+[no]tcp\fR
@@ -684,7 +737,7 @@ There are probably too many query options\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2004-2011, 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004-2011, 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000-2003 Internet Software Consortium.
 .br

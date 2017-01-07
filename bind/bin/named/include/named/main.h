@@ -27,7 +27,7 @@
 /*
  * Commandline arguments for named; also referenced in win32/ntservice.c
  */
-#define NS_MAIN_ARGS "46c:C:d:E:fFgi:lM:m:n:N:p:P:sS:t:T:U:u:vVx:"
+#define NS_MAIN_ARGS "46c:C:d:D:E:fFgi:lM:m:n:N:p:P:sS:t:T:U:u:vVx:"
 
 ISC_PLATFORM_NORETURN_PRE void
 ns_main_earlyfatal(const char *format, ...)

@@ -18,12 +18,12 @@
 .\"     Title: dnssec-verify
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 2012-06-26
+.\"      Date: 2014-01-15
 .\"    Manual: BIND9
 .\"    Source: ISC
 .\"  Language: English
 .\"
-.TH "DNSSEC\-VERIFY" "8" "2012\-06\-26" "ISC" "BIND9"
+.TH "DNSSEC\-VERIFY" "8" "2014\-01\-15" "ISC" "BIND9"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -57,6 +57,13 @@ verifies that a zone is fully signed for each algorithm found in the DNSKEY RRse
 \-c \fIclass\fR
 .RS 4
 Specifies the DNS class of the zone\&.
+.RE
+.PP
+\-E \fIengine\fR
+.RS 4
+Specifies the cryptographic hardware to use, when applicable\&.
+.sp
+When BIND is built with OpenSSL PKCS#11 support, this defaults to the string "pkcs11", which identifies an OpenSSL engine that can drive a cryptographic accelerator or hardware service module\&. When BIND is built with native PKCS#11 cryptography (\-\-enable\-native\-pkcs11), it defaults to the path of the PKCS#11 provider library specified via "\-\-with\-pkcs11"\&.
 .RE
 .PP
 \-I \fIinput\-format\fR

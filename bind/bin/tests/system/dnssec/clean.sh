@@ -33,8 +33,6 @@ rm -f nosign.before
 rm -f ns*/*.nta
 rm -f ns*/named.lock
 rm -f ns1/managed.key.id
-rm -f ns1/resolve.key
-rm -f ns1/sample.key
 rm -f ns1/root.db ns2/example.db ns3/secure.example.db
 rm -f ns2/algroll.db
 rm -f ns2/badparam.db ns2/badparam.db.bad
@@ -90,7 +88,6 @@ rm -f ns7/multiple.example.bk ns7/nsec3.example.bk ns7/optout.example.bk
 rm -f ns7/split-rrsig.db ns7/split-rrsig.db.unsplit
 rm -f nsupdate.out*
 rm -f rndc.out.*
-rm -f sample.out*
 rm -f signer/*.db
 rm -f signer/example.db.after signer/example.db.before
 rm -f signer/example.db.changed

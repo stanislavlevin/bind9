@@ -48,12 +48,16 @@
 #include <dns/view.h>
 
 #include <dst/result.h>
+#ifdef PKCS11CRYPTO
+#include <pk11/result.h>
+#endif
 
 #include <dlz/dlz_dlopen_driver.h>
 
 #ifdef HAVE_GPERFTOOLS_PROFILER
 #include <gperftools/profiler.h>
 #endif
+
 
 /*
  * Defining NS_MAIN provides storage declarations (rather than extern)
@@ -70,6 +74,7 @@
 #include <named/server.h>
 #include <named/lwresd.h>
 #include <named/main.h>
+#include <named/seccomp.h>
 #ifdef HAVE_LIBSCF
 #include <named/ns_smf_globals.h>
 #endif
@@ -100,6 +105,7 @@
 #define BACKTRACE_MAXFRAME 128
 #endif
 
+extern int isc_dscp_check_value;
 extern unsigned int dns_zone_mkey_hour;
 extern unsigned int dns_zone_mkey_day;
 extern unsigned int dns_zone_mkey_month;
@@ -473,6 +479,9 @@ parse_command_line(int argc, char *argv[]) {
 			ns_g_debuglevel = parse_int(isc_commandline_argument,
 						    "debug level");
 			break;
+		case 'D':
+			/* Descriptive comment for 'ps'. */
+			break;
 		case 'E':
 			ns_g_engine = isc_commandline_argument;
 			break;
@@ -534,8 +543,15 @@ parse_command_line(int argc, char *argv[]) {
 			break;
 		case 'T':	/* NOT DOCUMENTED */
 			/*
+			 * force the server to behave (or misbehave) in
+			 * specified ways for testing purposes.
+			 *
 			 * clienttest: make clients single shot with their
 			 * 	       own memory context.
+			 * delay=xxxx: delay client responses by xxxx ms to
+			 *	       simulate remote servers.
+			 * dscp=x:     check that dscp values are as
+			 * 	       expected and assert otherwise.
 			 */
 			if (!strcmp(isc_commandline_argument, "clienttest"))
 				ns_g_clienttest = ISC_TRUE;
@@ -554,10 +570,16 @@ parse_command_line(int argc, char *argv[]) {
 			else if (!strncmp(isc_commandline_argument,
 					  "maxudp=", 7))
 				maxudp = atoi(isc_commandline_argument + 7);
+			else if (!strncmp(isc_commandline_argument,
+					  "delay=", 6))
+				ns_g_delay = atoi(isc_commandline_argument + 6);
 			else if (!strcmp(isc_commandline_argument, "nosyslog"))
 				ns_g_nosyslog = ISC_TRUE;
 			else if (!strcmp(isc_commandline_argument, "nonearest"))
 				ns_g_nonearest = ISC_TRUE;
+			else if (!strncmp(isc_commandline_argument, "dscp=", 5))
+				isc_dscp_check_value =
+					   atoi(isc_commandline_argument + 5);
 			else if (!strncmp(isc_commandline_argument,
 					  "mkeytimers=", 11))
 			{
@@ -644,6 +666,12 @@ parse_command_line(int argc, char *argv[]) {
 			       LIBXML_DOTTED_VERSION);
 			printf("linked to libxml2 version: %s\n",
 			       xmlParserVersion);
+#endif
+#if defined(HAVE_JSON) && defined(JSON_C_VERSION)
+			printf("compiled with libjson-c version: %s\n",
+			       JSON_C_VERSION);
+			printf("linked to libjson-c version: %s\n",
+			       json_c_version());
 #endif
 			exit(0);
 		case 'F':
@@ -806,6 +834,60 @@ dump_symboltable(void) {
 		}
 	}
 }
+
+#ifdef HAVE_LIBSECCOMP
+static void
+setup_seccomp() {
+	scmp_filter_ctx ctx;
+	unsigned int i;
+	int ret;
+
+	/* Make sure the lists are in sync */
+	INSIST((sizeof(scmp_syscalls) / sizeof(int)) ==
+	       (sizeof(scmp_syscall_names) / sizeof(const char *)));
+
+	ctx = seccomp_init(SCMP_ACT_KILL);
+	if (ctx == NULL) {
+		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+			      NS_LOGMODULE_MAIN, ISC_LOG_WARNING,
+			      "libseccomp activation failed");
+		return;
+	}
+
+	for (i = 0 ; i < sizeof(scmp_syscalls)/sizeof(*(scmp_syscalls)); i++) {
+		ret = seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
+				       scmp_syscalls[i], 0);
+		if (ret < 0)
+			isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+				      NS_LOGMODULE_MAIN, ISC_LOG_WARNING,
+				      "libseccomp rule failed: %s",
+				      scmp_syscall_names[i]);
+
+		else
+			isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+				      NS_LOGMODULE_MAIN, ISC_LOG_DEBUG(9),
+				      "added libseccomp rule: %s",
+				      scmp_syscall_names[i]);
+	}
+
+	ret = seccomp_load(ctx);
+	if (ret < 0) {
+		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+			      NS_LOGMODULE_MAIN, ISC_LOG_WARNING,
+			      "libseccomp unable to load filter");
+	} else {
+		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+			      NS_LOGMODULE_MAIN, ISC_LOG_NOTICE,
+			      "libseccomp sandboxing active");
+	}
+
+	/*
+	 * Release filter in ctx. Filters already loaded are not
+	 * affected.
+	 */
+	seccomp_release(ctx);
+}
+#endif /* HAVE_LIBSECCOMP */
 
 static void
 setup(void) {
@@ -1025,6 +1107,10 @@ setup(void) {
 #endif
 
 	ns_server_create(ns_g_mctx, &ns_g_server);
+
+#ifdef HAVE_LIBSECCOMP
+	setup_seccomp();
+#endif /* HAVE_LIBSECCOMP */
 }
 
 static void
@@ -1189,6 +1275,9 @@ main(int argc, char *argv[]) {
 	dns_result_register();
 	dst_result_register();
 	isccc_result_register();
+#ifdef PKCS11CRYPTO
+	pk11_result_register();
+#endif
 
 	parse_command_line(argc, argv);
 

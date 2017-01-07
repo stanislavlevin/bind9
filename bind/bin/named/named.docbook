@@ -18,7 +18,7 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="man.named">
   <info>
-    <date>2014-02-20</date>
+    <date>2014-02-19</date>
   </info>
   <refentryinfo>
     <corpname>ISC</corpname>
@@ -65,6 +65,7 @@
       <arg choice="opt" rep="norepeat"><option>-6</option></arg>
       <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">config-file</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-d <replaceable class="parameter">debug-level</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-D <replaceable class="parameter">string</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-E <replaceable class="parameter">engine-name</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-f</option></arg>
       <arg choice="opt" rep="norepeat"><option>-g</option></arg>
@@ -154,14 +155,32 @@
       </varlistentry>
 
       <varlistentry>
+        <term>-D <replaceable class="parameter">string</replaceable></term>
+        <listitem>
+          <para>
+	    Specifies a string that is used to identify a instance of
+	    <command>named</command> in a process listing.  The contents
+	    of <replaceable class="parameter">string</replaceable> are
+	    not examined.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term>-E <replaceable class="parameter">engine-name</replaceable></term>
         <listitem>
           <para>
-            Use a crypto hardware (OpenSSL engine) for the crypto operations
-            it supports, for instance re-signing with private keys from
-            a secure key store. When compiled with PKCS#11 support
-            <replaceable class="parameter">engine-name</replaceable>
-            defaults to pkcs11, the empty name resets it to no engine.
+            When applicable, specifies the hardware to use for
+            cryptographic operations, such as a secure key store used
+            for signing.
+          </para>
+          <para>
+            When BIND is built with OpenSSL PKCS#11 support, this defaults
+            to the string "pkcs11", which identifies an OpenSSL engine
+            that can drive a cryptographic accelerator or hardware service
+            module.  When BIND is built with native PKCS#11 cryptography
+            (--enable-native-pkcs11), it defaults to the path of the PKCS#11
+            provider library specified via "--with-pkcs11".
           </para>
         </listitem>
       </varlistentry>
@@ -259,6 +278,9 @@
 	  <para>
 	    Allow <command>named</command> to use up to
 	    <replaceable class="parameter">#max-socks</replaceable> sockets.
+            The default value is 4096 on systems built with default
+            configuration options, and 21000 on systems built with
+            "configure --with-tuning=large".
 	  </para>
           <warning>
             <para>

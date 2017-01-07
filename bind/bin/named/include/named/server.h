@@ -113,6 +113,8 @@ struct ns_server {
 	dns_name_t		*session_keyname;
 	unsigned int		session_keyalg;
 	isc_uint16_t		session_keybits;
+	isc_boolean_t		interface_auto;
+	unsigned char		secret[32];	/*%< Source Identity Token */
 };
 
 #define NS_SERVER_MAGIC			ISC_MAGIC('S','V','E','R')
@@ -179,16 +181,15 @@ enum {
 	dns_nsstatscounter_nsidopt = 43,
 	dns_nsstatscounter_expireopt = 44,
 	dns_nsstatscounter_otheropt = 45,
-	dns_nsstatscounter_ecsopt = 46,
 
-	dns_nsstatscounter_sitopt = 47,
-	dns_nsstatscounter_sitbadsize = 48,
-	dns_nsstatscounter_sitbadtime = 49,
-	dns_nsstatscounter_sitnomatch = 50,
-	dns_nsstatscounter_sitmatch = 51,
-	dns_nsstatscounter_sitnew = 52,
+	dns_nsstatscounter_sitopt = 46,
+	dns_nsstatscounter_sitbadsize = 47,
+	dns_nsstatscounter_sitbadtime = 48,
+	dns_nsstatscounter_sitnomatch = 49,
+	dns_nsstatscounter_sitmatch = 50,
+	dns_nsstatscounter_sitnew = 51,
 
-	dns_nsstatscounter_max = 53
+	dns_nsstatscounter_max = 52
 };
 
 void
@@ -212,6 +213,13 @@ ns_server_reloadwanted(ns_server_t *server);
  * may be called asynchronously, from outside the server's task.
  * If a reload is already scheduled or in progress, the call
  * is ignored.
+ */
+
+void
+ns_server_scan_interfaces(ns_server_t *server);
+/*%<
+ * Trigger a interface scan.
+ * Must only be called when running under server->task.
  */
 
 void
@@ -358,7 +366,7 @@ ns_add_reserved_dispatch(ns_server_t *server, const isc_sockaddr_t *addr);
  * Enable or disable dnssec validation.
  */
 isc_result_t
-ns_server_validation(ns_server_t *server, isc_lex_t *lex);
+ns_server_validation(ns_server_t *server, isc_lex_t *lex, isc_buffer_t *text);
 
 /*%
  * Add a zone to a running process
@@ -377,4 +385,11 @@ ns_server_del_zone(ns_server_t *server, isc_lex_t *lex, isc_buffer_t *text);
  */
 isc_result_t
 ns_server_signing(ns_server_t *server, isc_lex_t *lex, isc_buffer_t *text);
+
+/*%
+ * Lists status information for a given zone (e.g., name, type, files,
+ * load time, expiry, etc).
+ */
+isc_result_t
+ns_server_zonestatus(ns_server_t *server, isc_lex_t *lex, isc_buffer_t *text);
 #endif /* NAMED_SERVER_H */

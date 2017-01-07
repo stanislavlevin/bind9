@@ -27,7 +27,7 @@
 </div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
-<div class="cmdsynopsis"><p><code class="command">pkcs11-destroy</code>  [<code class="option">-m <em class="replaceable"><code>module</code></em></code>] [<code class="option">-s <em class="replaceable"><code>slot</code></em></code>] { -i <em class="replaceable"><code>ID</code></em>  |   -l <em class="replaceable"><code>label</code></em> } [<code class="option">-p <em class="replaceable"><code>PIN</code></em></code>]</p></div>
+<div class="cmdsynopsis"><p><code class="command">pkcs11-destroy</code>  [<code class="option">-m <em class="replaceable"><code>module</code></em></code>] [<code class="option">-s <em class="replaceable"><code>slot</code></em></code>] { -i <em class="replaceable"><code>ID</code></em>  |   -l <em class="replaceable"><code>label</code></em> } [<code class="option">-p <em class="replaceable"><code>PIN</code></em></code>] [<code class="option">-w <em class="replaceable"><code>seconds</code></em></code>]</p></div>
 </div>
 <div class="refsection">
 <a name="id-1.7"></a><h2>DESCRIPTION</h2>
@@ -37,9 +37,9 @@
       <code class="option">label</code>.
     </p>
 <p>
-      Matching keys are displayed before being destroyed.  There is a
-      five second delay to allow the user to interrupt the process
-      before the destruction takes place.
+      Matching keys are displayed before being destroyed.  By default,
+      there is a five second delay to allow the user to interrupt the
+      process before the destruction takes place.
     </p>
 </div>
 <div class="refsection">
@@ -69,13 +69,20 @@
             Specify the PIN for the device.  If no PIN is provided on the
             command line, <span class="command"><strong>pkcs11-destroy</strong></span> will prompt for it.
           </p></dd>
+<dt><span class="term">-w <em class="replaceable"><code>seconds</code></em></span></dt>
+<dd><p>
+            Specify how long to pause before carrying out key destruction.
+            The default is five seconds.  If set to <code class="literal">0</code>,
+            destruction will be immediate.
+          </p></dd>
 </dl></div>
 </div>
 <div class="refsection">
 <a name="id-1.9"></a><h2>SEE ALSO</h2>
 <p>
       <span class="citerefentry"><span class="refentrytitle">pkcs11-keygen</span>(8)</span>,
-      <span class="citerefentry"><span class="refentrytitle">pkcs11-list</span>(8)</span>
+      <span class="citerefentry"><span class="refentrytitle">pkcs11-list</span>(8)</span>,
+      <span class="citerefentry"><span class="refentrytitle">pkcs11-tokens</span>(8)</span>
     </p>
 </div>
 </div></body>

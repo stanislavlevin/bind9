@@ -30,7 +30,6 @@ rm -f ns1/root.db
 rm -f ns2/example.db
 rm -f ns2/private.secure.example.db ns2/bar.db
 rm -f ns3/autonsec3.example.db
-rm -f ns3/kg.out ns3/s.out ns3/st.out
 rm -f ns3/nsec.example.db
 rm -f ns3/nsec3.example.db
 rm -f ns3/nsec3.nsec3.example.db
@@ -50,6 +49,7 @@ rm -f ns3/prepub.example.db.in
 rm -f ns3/secure-to-insecure2.example.db
 rm -f ns3/nozsk.example.db ns3/inaczsk.example.db
 rm -f ns3/reconf.example.db
+rm -f ns3/kg.out ns3/s.out ns3/st.out
 rm -f ns3/ttl*.db
 rm -f signing.out.*
 rm -f ns3/*.nzf

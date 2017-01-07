@@ -17,7 +17,7 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="man.pkcs11-destroy">
   <info>
-    <date>2009-10-05</date>
+    <date>2014-01-15</date>
   </info>
   <refentryinfo>
     <corpname>ISC</corpname>
@@ -54,6 +54,7 @@
         <arg choice="plain" rep="norepeat">-l <replaceable class="parameter">label</replaceable></arg>
       </group>
       <arg choice="opt" rep="norepeat"><option>-p <replaceable class="parameter">PIN</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-w <replaceable class="parameter">seconds</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -65,9 +66,9 @@
       <option>label</option>.
     </para>
     <para>
-      Matching keys are displayed before being destroyed.  There is a
-      five second delay to allow the user to interrupt the process
-      before the destruction takes place.
+      Matching keys are displayed before being destroyed.  By default,
+      there is a five second delay to allow the user to interrupt the
+      process before the destruction takes place.
     </para>
   </refsection>
 
@@ -122,6 +123,17 @@
           </para>
         </listitem>
       </varlistentry>
+
+      <varlistentry>
+        <term>-w <replaceable class="parameter">seconds</replaceable></term>
+        <listitem>
+          <para>
+            Specify how long to pause before carrying out key destruction.
+            The default is five seconds.  If set to <literal>0</literal>,
+            destruction will be immediate.
+          </para>
+        </listitem>
+      </varlistentry>
     </variablelist>
   </refsection>
 
@@ -133,6 +145,9 @@
       </citerefentry>,
       <citerefentry>
         <refentrytitle>pkcs11-list</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkcs11-tokens</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>
     </para>
   </refsection>

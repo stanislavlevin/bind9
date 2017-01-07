@@ -138,11 +138,18 @@ generic_totext_key(ARGS_TOTEXT) {
 		RETERR(str_totext(" (", target));
 	RETERR(str_totext(tctx->linebreak, target));
 
-	if (tctx->width == 0)   /* No splitting */
-		RETERR(isc_base64_totext(&sr, 60, "", target));
-	else
-		RETERR(isc_base64_totext(&sr, tctx->width - 2,
-					tctx->linebreak, target));
+	if ((tctx->flags & DNS_STYLEFLAG_NOCRYPTO) == 0) {
+		if (tctx->width == 0)   /* No splitting */
+			RETERR(isc_base64_totext(&sr, 60, "", target));
+		else
+			RETERR(isc_base64_totext(&sr, tctx->width - 2,
+						 tctx->linebreak, target));
+	} else {
+		dns_rdata_toregion(rdata, &tmpr);
+		snprintf(buf, sizeof(buf), "[key id = %u]",
+			 dst_region_computeid(&tmpr, algorithm));
+		RETERR(str_totext(buf, target));
+	}
 
 	if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0)
 		RETERR(str_totext(tctx->linebreak, target));

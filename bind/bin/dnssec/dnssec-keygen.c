@@ -57,6 +57,10 @@
 
 #include <dst/dst.h>
 
+#ifdef PKCS11CRYPTO
+#include <pk11/result.h>
+#endif
+
 #include "dnssectool.h"
 
 #define MAX_RSA 4096 /* should be long enough... */
@@ -118,10 +122,15 @@ usage(void) {
 	fprintf(stderr, "        (DNSKEY generation defaults to ZONE)\n");
 	fprintf(stderr, "    -c <class>: (default: IN)\n");
 	fprintf(stderr, "    -d <digest bits> (0 => max, default)\n");
-#ifdef USE_PKCS11
-	fprintf(stderr, "    -E <engine name> (default \"pkcs11\")\n");
+	fprintf(stderr, "    -E <engine>:\n");
+#if defined(PKCS11CRYPTO)
+	fprintf(stderr, "        path to PKCS#11 provider library "
+				"(default is %s)\n", PK11_LIB_LOCATION);
+#elif defined(USE_PKCS11)
+	fprintf(stderr, "        name of an OpenSSL engine to use "
+				"(default is \"pkcs11\")\n");
 #else
-	fprintf(stderr, "    -E <engine name>\n");
+	fprintf(stderr, "        name of an OpenSSL engine to use\n");
 #endif
 	fprintf(stderr, "    -f <keyflag>: KSK | REVOKE\n");
 	fprintf(stderr, "    -g <generator>: use specified generator "
@@ -133,7 +142,6 @@ usage(void) {
 			"records with (default: 0)\n");
 	fprintf(stderr, "    -T <rrtype>: DNSKEY | KEY (default: DNSKEY; "
 			"use KEY for SIG(0))\n");
-	fprintf(stderr, "        ECCGOST:\tignored\n");
 	fprintf(stderr, "    -t <type>: "
 			"AUTHCONF | NOAUTHCONF | NOAUTH | NOCONF "
 			"(default: AUTHCONF)\n");
@@ -223,7 +231,7 @@ main(int argc, char **argv) {
 	isc_log_t	*log = NULL;
 	isc_entropy_t	*ectx = NULL;
 #ifdef USE_PKCS11
-	const char	*engine = "pkcs11";
+	const char	*engine = PKCS11_ENGINE;
 #else
 	const char	*engine = NULL;
 #endif
@@ -250,6 +258,9 @@ main(int argc, char **argv) {
 	if (argc == 1)
 		usage();
 
+#ifdef PKCS11CRYPTO
+	pk11_result_register();
+#endif
 	dns_result_register();
 
 	isc_commandline_errprint = ISC_FALSE;

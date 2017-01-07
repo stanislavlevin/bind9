@@ -40,7 +40,7 @@
 <div>
 <div><h1 class="title">
 <a name="id-1"></a>BIND 9 Administrator Reference Manual</h1></div>
-<div><p class="releaseinfo">BIND Version 9.9.9-P5</p></div>
+<div><p class="releaseinfo">BIND Version 9.10.4-P5</p></div>
 <div><p class="copyright">Copyright © 2004-2015 Internet Systems Consortium, Inc. ("ISC")</p></div>
 <div><p class="copyright">Copyright © 2000-2003 Internet Software Consortium.</p></div>
 </div>
@@ -131,19 +131,25 @@
 <dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.11.3">Validating Resolver</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.11.4">Authoritative Server</a></span></dt>
 </dl></dd>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#pkcs11">PKCS #11 (Cryptoki) support</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#pkcs11">PKCS#11 (Cryptoki) support</a></span></dt>
 <dd><dl>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.12.4">Prerequisites</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.12.5">Building BIND 9 with PKCS#11</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.12.6">PKCS #11 Tools</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.12.7">Using the HSM</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.12.8">Specifying the engine on the command line</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.12.9">Running named with automatic zone re-signing</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.12.6">Prerequisites</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.12.7">Native PKCS#11</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.12.8">OpenSSL-based PKCS#11</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.12.9">PKCS#11 Tools</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.12.10">Using the HSM</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.12.11">Specifying the engine on the command line</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.12.12">Running named with automatic zone re-signing</a></span></dt>
+</dl></dd>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#dlz-info">DLZ (Dynamically Loadable Zones)</a></span></dt>
+<dd><dl>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.13.6">Configuring DLZ</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.13.7">Sample DLZ Driver</a></span></dt>
 </dl></dd>
 <dt><span class="section"><a href="Bv9ARM.ch04.html#ipv6">IPv6 Support in <acronym class="acronym">BIND</acronym> 9</a></span></dt>
 <dd><dl>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.13.6">Address Lookups Using AAAA Records</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.13.7">Address to Name Lookups Using Nibble Format</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.14.6">Address Lookups Using AAAA Records</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#id-1.5.14.7">Address to Name Lookups Using Nibble Format</a></span></dt>
 </dl></dd>
 </dl></dd>
 <dt><span class="chapter"><a href="Bv9ARM.ch05.html">5. The <acronym class="acronym">BIND</acronym> 9 Lightweight Resolver</a></span></dt>
@@ -233,7 +239,7 @@
 </dl></dd>
 <dt><span class="appendix"><a href="Bv9ARM.ch09.html">A. Release Notes</a></span></dt>
 <dd><dl>
-<dt><span class="section"><a href="Bv9ARM.ch09.html#id-1.10.2">Release Notes for BIND Version 9.9.9-P5</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch09.html#id-1.10.2">Release Notes for BIND Version 9.10.4-P5</a></span></dt>
 <dd><dl>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_intro">Introduction</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_download">Download</a></span></dt>
@@ -279,7 +285,10 @@
 <span class="refentrytitle"><a href="man.host.html">host</a></span><span class="refpurpose"> &#8212; DNS lookup utility</span>
 </dt>
 <dt>
-<span class="refentrytitle"><a href="man.dnssec-checkds.html"><span class="application">dnssec-checkds</span></a></span><span class="refpurpose"> &#8212; A DNSSEC delegation consistency checking tool.</span>
+<span class="refentrytitle"><a href="man.delv.html">delv</a></span><span class="refpurpose"> &#8212; DNS lookup and validation utility</span>
+</dt>
+<dt>
+<span class="refentrytitle"><a href="man.dnssec-checkds.html"><span class="application">dnssec-checkds</span></a></span><span class="refpurpose"> &#8212; DNSSEC delegation consistency checking tool</span>
 </dt>
 <dt>
 <span class="refentrytitle"><a href="man.dnssec-coverage.html"><span class="application">dnssec-coverage</span></a></span><span class="refpurpose"> &#8212; checks future DNSKEY coverage for a zone</span>
@@ -288,7 +297,7 @@
 <span class="refentrytitle"><a href="man.dnssec-dsfromkey.html"><span class="application">dnssec-dsfromkey</span></a></span><span class="refpurpose"> &#8212; DNSSEC DS RR generation tool</span>
 </dt>
 <dt>
-<span class="refentrytitle"><a href="man.dnssec-importkey.html"><span class="application">dnssec-importkey</span></a></span><span class="refpurpose"> &#8212; Import DNSKEY records from external systems so they can be managed.</span>
+<span class="refentrytitle"><a href="man.dnssec-importkey.html"><span class="application">dnssec-importkey</span></a></span><span class="refpurpose"> &#8212; import DNSKEY records from external systems so they can be managed</span>
 </dt>
 <dt>
 <span class="refentrytitle"><a href="man.dnssec-keyfromlabel.html"><span class="application">dnssec-keyfromlabel</span></a></span><span class="refpurpose"> &#8212; DNSSEC key generation tool</span>
@@ -297,10 +306,10 @@
 <span class="refentrytitle"><a href="man.dnssec-keygen.html"><span class="application">dnssec-keygen</span></a></span><span class="refpurpose"> &#8212; DNSSEC key generation tool</span>
 </dt>
 <dt>
-<span class="refentrytitle"><a href="man.dnssec-revoke.html"><span class="application">dnssec-revoke</span></a></span><span class="refpurpose"> &#8212; Set the REVOKED bit on a DNSSEC key</span>
+<span class="refentrytitle"><a href="man.dnssec-revoke.html"><span class="application">dnssec-revoke</span></a></span><span class="refpurpose"> &#8212; set the REVOKED bit on a DNSSEC key</span>
 </dt>
 <dt>
-<span class="refentrytitle"><a href="man.dnssec-settime.html"><span class="application">dnssec-settime</span></a></span><span class="refpurpose"> &#8212; Set the key timing metadata for a DNSSEC key</span>
+<span class="refentrytitle"><a href="man.dnssec-settime.html"><span class="application">dnssec-settime</span></a></span><span class="refpurpose"> &#8212; set the key timing metadata for a DNSSEC key</span>
 </dt>
 <dt>
 <span class="refentrytitle"><a href="man.dnssec-signzone.html"><span class="application">dnssec-signzone</span></a></span><span class="refpurpose"> &#8212; DNSSEC zone signing tool</span>
@@ -325,6 +334,9 @@
 </dt>
 <dt>
 <span class="refentrytitle"><a href="man.named-journalprint.html"><span class="application">named-journalprint</span></a></span><span class="refpurpose"> &#8212; print zone journal in human-readable form</span>
+</dt>
+<dt>
+<span class="refentrytitle"><a href="man.named-rrchecker.html"><span class="application">named-rrchecker</span></a></span><span class="refpurpose"> &#8212; syntax checker for individual DNS resource records</span>
 </dt>
 <dt>
 <span class="refentrytitle"><a href="man.nsupdate.html"><span class="application">nsupdate</span></a></span><span class="refpurpose"> &#8212; Dynamic DNS update utility</span>
@@ -373,6 +385,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.9.9-P5 (Extended Support Version)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.4-P5</p>
 </body>
 </html>

@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id$
+# $Id: start.pl,v 1.30 2012/02/06 23:46:44 tbox Exp $
 
 # Framework for starting test servers.
 # Based on the type of server specified, check for port availability, remove
@@ -180,14 +180,21 @@ sub start_server {
 			close FH;
 			$command .= "$options";
 		} else {
+			$command .= "-D $server ";
 			$command .= "-m record,size,mctx ";
 			$command .= "-T clienttest ";
 			$command .= "-T nosoa " 
 				if (-e "$testdir/$server/named.nosoa");
 			$command .= "-T noaa " 
 				if (-e "$testdir/$server/named.noaa");
-			$command .= "-T dropedns "
+			$command .= "-T noedns " 
+				if (-e "$testdir/$server/named.noedns");
+			$command .= "-T dropedns " 
 				if (-e "$testdir/$server/named.dropedns");
+			$command .= "-T maxudp512 " 
+				if (-e "$testdir/$server/named.maxudp512");
+			$command .= "-T maxudp1460 " 
+				if (-e "$testdir/$server/named.maxudp1460");
 			$command .= "-c named.conf -d 99 -g -U 4";
 		}
 		$command .= " -T notcp"

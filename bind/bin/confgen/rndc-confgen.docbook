@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2004, 2005, 2007, 2009, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004, 2005, 2007, 2009, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2001, 2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="man.rndc-confgen">
   <info>
-    <date>2009-06-15</date>
+    <date>2013-03-14</date>
   </info>
   <refentryinfo>
     <corpname>ISC</corpname>
@@ -42,6 +42,7 @@
       <year>2005</year>
       <year>2007</year>
       <year>2009</year>
+      <year>2013</year>
       <year>2014</year>
       <year>2015</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
@@ -57,6 +58,7 @@
     <cmdsynopsis sepchar=" ">
       <command>rndc-confgen</command>
       <arg choice="opt" rep="norepeat"><option>-a</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-A <replaceable class="parameter">algorithm</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-b <replaceable class="parameter">keysize</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">keyfile</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-h</option></arg>
@@ -132,11 +134,23 @@
       </varlistentry>
 
       <varlistentry>
+        <term>-A <replaceable class="parameter">algorithm</replaceable></term>
+        <listitem>
+          <para>
+            Specifies the algorithm to use for the TSIG key.  Available
+            choices are: hmac-md5, hmac-sha1, hmac-sha224, hmac-sha256,
+            hmac-sha384 and hmac-sha512.  The default is hmac-md5.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term>-b <replaceable class="parameter">keysize</replaceable></term>
         <listitem>
           <para>
             Specifies the size of the authentication key in bits.
-            Must be between 1 and 512 bits; the default is 128.
+            Must be between 1 and 512 bits; the default is the
+            hash size.
           </para>
         </listitem>
       </varlistentry>

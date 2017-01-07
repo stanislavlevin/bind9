@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -813,11 +813,12 @@ ns_lwresd_configure(isc_mem_t *mctx, const cfg_obj_t *config) {
 			isc_uint32_t i;
 
 			CHECK(ns_config_getiplist(config, listenerslist,
-						  port, mctx, &addrs, &count));
+						  port, mctx, &addrs, NULL,
+						  &count));
 			for (i = 0; i < count; i++)
 				CHECK(configure_listener(&addrs[i], lwresd,
 							 mctx, &newlisteners));
-			ns_config_putiplist(mctx, &addrs, count);
+			ns_config_putiplist(mctx, &addrs, NULL, count);
 		}
 		ns_lwdmanager_detach(&lwresd);
 	}
@@ -846,7 +847,7 @@ ns_lwresd_configure(isc_mem_t *mctx, const cfg_obj_t *config) {
 	ISC_LIST_APPENDLIST(listeners, newlisteners, link);
 
 	if (addrs != NULL)
-		ns_config_putiplist(mctx, &addrs, count);
+		ns_config_putiplist(mctx, &addrs, NULL, count);
 
 	if (lwresd != NULL)
 		ns_lwdmanager_detach(&lwresd);

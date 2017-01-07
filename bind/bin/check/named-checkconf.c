@@ -180,14 +180,17 @@ configure_zone(const char *vclass, const char *view,
 	const char *zfile = NULL;
 	const cfg_obj_t *maps[4];
 	const cfg_obj_t *mastersobj = NULL;
+	const cfg_obj_t *inviewobj = NULL;
 	const cfg_obj_t *zoptions = NULL;
 	const cfg_obj_t *classobj = NULL;
 	const cfg_obj_t *typeobj = NULL;
 	const cfg_obj_t *fileobj = NULL;
+	const cfg_obj_t *dlzobj = NULL;
 	const cfg_obj_t *dbobj = NULL;
 	const cfg_obj_t *obj = NULL;
 	const cfg_obj_t *fmtobj = NULL;
 	dns_masterformat_t masterformat;
+	dns_ttl_t maxttl = 0;
 
 	zone_options = DNS_ZONEOPT_CHECKNS | DNS_ZONEOPT_MANYERRORS;
 
@@ -209,6 +212,10 @@ configure_zone(const char *vclass, const char *view,
 	}
 	maps[i] = NULL;
 
+	cfg_map_get(zoptions, "in-view", &inviewobj);
+	if (inviewobj != NULL)
+		return (ISC_R_SUCCESS);
+
 	cfg_map_get(zoptions, "type", &typeobj);
 	if (typeobj == NULL)
 		return (ISC_R_FAILURE);
@@ -220,6 +227,10 @@ configure_zone(const char *vclass, const char *view,
 	if (dbobj != NULL &&
 	    strcmp("rbt", cfg_obj_asstring(dbobj)) != 0 &&
 	    strcmp("rbt64", cfg_obj_asstring(dbobj)) != 0)
+		return (ISC_R_SUCCESS);
+
+	cfg_map_get(zoptions, "dlz", &dlzobj);
+	if (dlzobj != NULL)
 		return (ISC_R_SUCCESS);
 
 	cfg_map_get(zoptions, "file", &fileobj);
@@ -376,11 +387,20 @@ configure_zone(const char *vclass, const char *view,
 			masterformat = dns_masterformat_text;
 		else if (strcasecmp(masterformatstr, "raw") == 0)
 			masterformat = dns_masterformat_raw;
+		else if (strcasecmp(masterformatstr, "map") == 0)
+			masterformat = dns_masterformat_map;
 		else
 			INSIST(0);
 	}
 
-	result = load_zone(mctx, zname, zfile, masterformat, zclass, NULL);
+	obj = NULL;
+	if (get_maps(maps, "max-zone-ttl", &obj)) {
+		maxttl = cfg_obj_asuint32(obj);
+		zone_options2 |= DNS_ZONEOPT2_CHECKTTL;
+	}
+
+	result = load_zone(mctx, zname, zfile, masterformat,
+			   zclass, maxttl, NULL);
 	if (result != ISC_R_SUCCESS)
 		fprintf(stderr, "%s/%s/%s: %s\n", view, zname, zclass,
 			dns_result_totext(result));

@@ -28,11 +28,27 @@ grep "status: NXDOMAIN" dig.out > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-if [ -x ${SAMPLE} ] ; then
+if [ -x ${RESOLVE} ] ; then
 echo "I:checking non-cachable NXDOMAIN response handling using dns_client"
    ret=0
-   ${SAMPLE} -p 5300 -t a 10.53.0.1 nxdomain.example.net 2> sample.out || ret=1
-   grep "resolution failed: ncache nxdomain" sample.out > /dev/null || ret=1
+   ${RESOLVE} -p 5300 -t a -s 10.53.0.1 nxdomain.example.net 2> resolve.out || ret=1
+   grep "resolution failed: ncache nxdomain" resolve.out > /dev/null || ret=1
+   if [ $ret != 0 ]; then echo "I:failed"; fi
+   status=`expr $status + $ret`
+fi
+
+if [ -x ${RESOLVE} ] ; then
+echo "I:checking that local bound address can be set (Can't query from a denied address)"
+   ret=0
+   ${RESOLVE} -b 10.53.0.8 -p 5300 -t a -s 10.53.0.1 www.example.org 2> resolve.out || ret=1
+   grep "resolution failed: SERVFAIL" resolve.out > /dev/null || ret=1
+   if [ $ret != 0 ]; then echo "I:failed"; fi
+   status=`expr $status + $ret`
+
+echo "I:checking that local bound address can be set (Can query from an allowed address)"
+   ret=0
+   ${RESOLVE} -b 10.53.0.1 -p 5300 -t a -s 10.53.0.1 www.example.org > resolve.out || ret=1
+   grep "www.example.org..*.192.0.2.1" resolve.out > /dev/null || ret=1
    if [ $ret != 0 ]; then echo "I:failed"; fi
    status=`expr $status + $ret`
 fi
@@ -44,11 +60,11 @@ grep "status: NOERROR" dig.out > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-if [ -x ${SAMPLE} ] ; then
+if [ -x ${RESOLVE} ] ; then
     echo "I:checking non-cachable NODATA response handling using dns_client"
     ret=0
-    ${SAMPLE} -p 5300 -t a 10.53.0.1 nodata.example.net 2> sample.out || ret=1
-    grep "resolution failed: ncache nxrrset" sample.out > /dev/null || ret=1
+    ${RESOLVE} -p 5300 -t a -s 10.53.0.1 nodata.example.net 2> resolve.out || ret=1
+    grep "resolution failed: ncache nxrrset" resolve.out > /dev/null || ret=1
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
 fi
@@ -57,11 +73,11 @@ echo "I:checking handling of bogus referrals"
 # If the server has the "INSIST(!external)" bug, this query will kill it.
 $DIG +tcp www.example.com. a @10.53.0.1 -p 5300 >/dev/null || status=1
 
-if [ -x ${SAMPLE} ] ; then
+if [ -x ${RESOLVE} ] ; then
     echo "I:checking handling of bogus referrals using dns_client"
     ret=0
-    ${SAMPLE} -p 5300 -t a 10.53.0.1 www.example.com 2> sample.out || ret=1
-    egrep "resolution failed: (failure|SERVFAIL)" sample.out > /dev/null || ret=1
+    ${RESOLVE} -p 5300 -t a -s 10.53.0.1 www.example.com 2> resolve.out || ret=1
+    grep "resolution failed: SERVFAIL" resolve.out > /dev/null || ret=1
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
 fi
@@ -97,11 +113,11 @@ if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
 
-if [ -x ${SAMPLE} ] ; then
+if [ -x ${RESOLVE} ] ; then
     echo "I:checking answer IPv4 address filtering using dns_client (accept)"
     ret=0
-    ${SAMPLE} -p 5300 -t a 10.53.0.1 www.example.org > sample.out || ret=1
-    grep "www.example.org..*.192.0.2.1" sample.out > /dev/null || ret=1
+    ${RESOLVE} -p 5300 -t a -s 10.53.0.1 www.example.org > resolve.out || ret=1
+    grep "www.example.org..*.192.0.2.1" resolve.out > /dev/null || ret=1
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
 fi
@@ -113,11 +129,11 @@ grep "status: NOERROR" dig.out > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-if [ -x ${SAMPLE} ] ; then
+if [ -x ${RESOLVE} ] ; then
     echo "I:checking answer IPv6 address filtering using dns_client (accept)"
     ret=0
-    ${SAMPLE} -p 5300 -t aaaa 10.53.0.1 www.example.org > sample.out || ret=1
-    grep "www.example.org..*.2001:db8:beef::1" sample.out > /dev/null || ret=1
+    ${RESOLVE} -p 5300 -t aaaa -s 10.53.0.1 www.example.org > resolve.out || ret=1
+    grep "www.example.org..*.2001:db8:beef::1" resolve.out > /dev/null || ret=1
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
 fi
@@ -136,12 +152,12 @@ grep "status: NOERROR" dig.out > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-if [ -x ${SAMPLE} ] ; then
+if [ -x ${RESOLVE} ] ; then
     echo "I:checking CNAME target filtering using dns_client (accept)"
     ret=0
-    ${SAMPLE} -p 5300 -t a 10.53.0.1 goodcname.example.net > sample.out || ret=1
-    grep "goodcname.example.net..*.goodcname.example.org." sample.out > /dev/null || ret=1
-    grep "goodcname.example.org..*.192.0.2.1" sample.out > /dev/null || ret=1
+    ${RESOLVE} -p 5300 -t a -s 10.53.0.1 goodcname.example.net > resolve.out || ret=1
+    grep "goodcname.example.net..*.goodcname.example.org." resolve.out > /dev/null || ret=1
+    grep "goodcname.example.org..*.192.0.2.1" resolve.out > /dev/null || ret=1
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
 fi
@@ -153,12 +169,12 @@ grep "status: NOERROR" dig.out > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-if [ -x ${SAMPLE} ] ; then
+if [ -x ${RESOLVE} ] ; then
     echo "I:checking CNAME target filtering using dns_client (accept due to subdomain)"
     ret=0
-    ${SAMPLE} -p 5300 -t a 10.53.0.1 cname.sub.example.org > sample.out || ret=1
-    grep "cname.sub.example.org..*.ok.sub.example.org." sample.out > /dev/null || ret=1
-    grep "ok.sub.example.org..*.192.0.2.1" sample.out > /dev/null || ret=1
+    ${RESOLVE} -p 5300 -t a -s 10.53.0.1 cname.sub.example.org > resolve.out || ret=1
+    grep "cname.sub.example.org..*.ok.sub.example.org." resolve.out > /dev/null || ret=1
+    grep "ok.sub.example.org..*.192.0.2.1" resolve.out > /dev/null || ret=1
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
 fi
@@ -177,12 +193,12 @@ grep "status: NOERROR" dig.out > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-if [ -x ${SAMPLE} ] ; then
+if [ -x ${RESOLVE} ] ; then
     echo "I:checking DNAME target filtering using dns_client (accept)"
     ret=0
-    ${SAMPLE} -p 5300 -t a 10.53.0.1 foo.gooddname.example.net > sample.out || ret=1
-    grep "foo.gooddname.example.net..*.gooddname.example.org" sample.out > /dev/null || ret=1
-    grep "foo.gooddname.example.org..*.192.0.2.1" sample.out > /dev/null || ret=1
+    ${RESOLVE} -p 5300 -t a -s 10.53.0.1 foo.gooddname.example.net > resolve.out || ret=1
+    grep "foo.gooddname.example.net..*.gooddname.example.org" resolve.out > /dev/null || ret=1
+    grep "foo.gooddname.example.org..*.192.0.2.1" resolve.out > /dev/null || ret=1
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
 fi
@@ -194,12 +210,12 @@ grep "status: NOERROR" dig.out > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-if [ -x ${SAMPLE} ] ; then
+if [ -x ${RESOLVE} ] ; then
     echo "I:checking DNAME target filtering using dns_client (accept due to subdomain)"
     ret=0
-    ${SAMPLE} -p 5300 -t a 10.53.0.1 www.dname.sub.example.org > sample.out || ret=1
-    grep "www.dname.sub.example.org..*.ok.sub.example.org." sample.out > /dev/null || ret=1
-    grep "www.ok.sub.example.org..*.192.0.2.1" sample.out > /dev/null || ret=1
+    ${RESOLVE} -p 5300 -t a -s 10.53.0.1 www.dname.sub.example.org > resolve.out || ret=1
+    grep "www.dname.sub.example.org..*.ok.sub.example.org." resolve.out > /dev/null || ret=1
+    grep "www.ok.sub.example.org..*.192.0.2.1" resolve.out > /dev/null || ret=1
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
 fi
@@ -398,6 +414,77 @@ if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
+echo "I:check prefetch (${n})"
+ret=0
+$DIG @10.53.0.5 -p 5300 fetch.tld txt > dig.out.1.${n} || ret=1
+ttl1=`awk '/"A" "short" "ttl"/ { print $2 - 2 }' dig.out.1.${n}`
+# sleep so we are in prefetch range
+sleep ${ttl1:-0}
+# trigger prefetch
+$DIG @10.53.0.5 -p 5300 fetch.tld txt > dig.out.2.${n} || ret=1
+ttl2=`awk '/"A" "short" "ttl"/ { print $2 }' dig.out.2.${n}`
+sleep 1
+# check that prefetch occured
+$DIG @10.53.0.5 -p 5300 fetch.tld txt > dig.out.3.${n} || ret=1
+ttl=`awk '/"A" "short" "ttl"/ { print $2 }' dig.out.3.${n}`
+test ${ttl:-0} -gt ${ttl2:-1} || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check prefetch disabled (${n})"
+ret=0
+$DIG @10.53.0.7 -p 5300 fetch.example.net txt > dig.out.1.${n} || ret=1
+ttl1=`awk '/"A" "short" "ttl"/ { print $2 - 2 }' dig.out.1.${n}`
+# sleep so we are in expire range
+sleep ${ttl1:-0}
+# look for ttl = 1, allow for one miss at getting zero ttl
+zerotonine="0 1 2 3 4 5 6 7 8 9"
+for i in $zerotonine $zerotonine $zerotonine $zerotonine
+do 
+	$DIG @10.53.0.7 -p 5300 fetch.example.net txt > dig.out.2.${n} || ret=1
+	ttl2=`awk '/"A" "short" "ttl"/ { print $2 }' dig.out.2.${n}`
+	test ${ttl2:-2} -eq 1 && break
+	$PERL -e 'select(undef, undef, undef, 0.05);' 
+done
+test ${ttl2:-2} -eq 1 || ret=1
+# delay so that any prefetched record will have a lower ttl than expected
+sleep 3
+# check that prefetch has not occured
+$DIG @10.53.0.7 -p 5300 fetch.example.net txt > dig.out.3.${n} || ret=1
+ttl=`awk '/"A" "short" "ttl"/ { print $2 - 2 }' dig.out.3.${n}`
+test ${ttl:-0} -eq ${ttl1:-1} || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check prefetch qtype * (${n})"
+ret=0
+$DIG @10.53.0.5 -p 5300 fetchall.tld any > dig.out.1.${n} || ret=1
+ttl1=`awk '/"A" "short" "ttl"/ { print $2 - 2 }' dig.out.1.${n}`
+# sleep so we are in prefetch range
+sleep ${ttl1:-0}
+# trigger prefetch
+$DIG @10.53.0.5 -p 5300 fetchall.tld any > dig.out.2.${n} || ret=1
+ttl2=`awk '/"A" "short" "ttl"/ { print $2 }' dig.out.2.${n}`
+sleep 1
+# check that the nameserver is still alive
+$DIG @10.53.0.5 -p 5300 fetchall.tld any > dig.out.3.${n} || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that E was logged on EDNS queries in the query log (${n})"
+ret=0
+$DIG @10.53.0.5 -p 5300 +edns edns.fetchall.tld any > dig.out.2.${n} || ret=1
+grep "query: edns.fetchall.tld IN ANY +E" ns5/named.run > /dev/null || ret=1
+$DIG @10.53.0.5 -p 5300 +noedns noedns.fetchall.tld any > dig.out.2.${n} || ret=1
+grep "query: noedns.fetchall.tld IN ANY" ns5/named.run > /dev/null || ret=1
+grep "query: noedns.fetchall.tld IN ANY +E" ns5/named.run > /dev/null && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
 echo "I:check that '-t aaaa' in .digrc does not have unexpected side effects ($n)"
 ret=0
 echo "-t aaaa" > .digrc
@@ -417,6 +504,32 @@ ret=0
 $DIG soa all-cnames @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
 grep "status: SERVFAIL" dig.out.ns5.test${n} > /dev/null || ret=1
 grep "skipping nameserver 'cname.tld' because it is a CNAME, while resolving 'all-cnames/SOA'" ns5/named.run > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that unexpected opcodes are handled correctly (${n})"
+ret=0
+$DIG soa all-cnames @10.53.0.5 -p 5300 +opcode=status > dig.out.ns5.test${n} || ret=1
+grep "status: NOTIMP" dig.out.ns5.test${n} > /dev/null || ret=1
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that EDNS client subnet with non-zeroed bits is handled correctly (${n})"
+ret=0
+# 0001 (IPv4) 1f (31 significant bits) 00 (0) ffffffff (255.255.255.255)
+$DIG soa . @10.53.0.5 -p 5300 +ednsopt=8:00011f00ffffffff > dig.out.ns5.test${n} || ret=1
+grep "status: FORMERR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "; EDNS: version:" dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that dig +subnet zeros address bits correctly (${n})"
+ret=0
+$DIG +qr soa . @10.53.0.5 -p 5300 +subnet=255.255.255.255/23 > dig.out.ns5.test${n} || ret=1
+grep "status: NOERROR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "CLIENT-SUBNET: 255.255.254.0/23/0" dig.out.ns5.test${n} > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

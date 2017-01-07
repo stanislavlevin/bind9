@@ -144,6 +144,7 @@ const FileData installFiles[] =
 	{"libisccc.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
 	{"libdns.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
 	{"liblwres.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+	{"libirs.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
 #ifdef OPENSSL
 	{"libeay32.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
 #endif
@@ -173,14 +174,17 @@ const FileData installFiles[] =
 	{"dig.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
 	{"host.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
 	{"nslookup.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
+	{"delv.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
 	{"arpaname.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
 	{"nsec3hash.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"genrandom.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"rndc-confgen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"ddns-confgen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"tsig-keygen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"dnssec-keygen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"dnssec-signzone.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"dnssec-dsfromkey.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"dnssec-importkey.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"dnssec-keyfromlabel.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"dnssec-revoke.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"dnssec-settime.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
@@ -189,10 +193,14 @@ const FileData installFiles[] =
 	{"named-checkzone.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"named-compilezone.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"named-journalprint.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"named-rrchecker.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"isc-hmac-fixup.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+#ifdef USE_PKCS11
 	{"pkcs11-destroy.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"pkcs11-keygen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"pkcs11-list.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"pkcs11-tokens.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+#endif
 #ifdef USE_PYTHON
 	{"dnssec-checkds.py", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"dnssec-coverage.py", FileData::BinDir, FileData::Normal, FALSE, FALSE},

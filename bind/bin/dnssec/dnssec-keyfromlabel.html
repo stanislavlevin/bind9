@@ -80,16 +80,50 @@
             default.
           </p></dd>
 <dt><span class="term">-E <em class="replaceable"><code>engine</code></em></span></dt>
-<dd><p>
-            Specifies the name of the crypto hardware (OpenSSL engine).
-            When compiled with PKCS#11 support it defaults to "pkcs11".
-          </p></dd>
+<dd>
+<p>
+            Specifies the cryptographic hardware to use.
+          </p>
+<p>
+            When BIND is built with OpenSSL PKCS#11 support, this defaults
+            to the string "pkcs11", which identifies an OpenSSL engine
+            that can drive a cryptographic accelerator or hardware service
+            module.  When BIND is built with native PKCS#11 cryptography
+            (--enable-native-pkcs11), it defaults to the path of the PKCS#11
+            provider library specified via "--with-pkcs11".
+          </p>
+</dd>
 <dt><span class="term">-l <em class="replaceable"><code>label</code></em></span></dt>
-<dd><p>
-            Specifies the label of the key pair in the crypto hardware.
-            The label may be preceded by an optional OpenSSL engine name,
-            separated by a colon, as in "pkcs11:keylabel".
-          </p></dd>
+<dd>
+<p>
+            Specifies the label for a key pair in the crypto hardware.
+          </p>
+<p>
+            When <acronym class="acronym">BIND</acronym> 9 is built with OpenSSL-based
+            PKCS#11 support, the label is an arbitrary string that
+            identifies a particular key.  It may be preceded by an
+            optional OpenSSL engine name, followed by a colon, as in
+            "pkcs11:<em class="replaceable"><code>keylabel</code></em>".
+          </p>
+<p>
+            When <acronym class="acronym">BIND</acronym> 9 is built with native PKCS#11
+            support, the label is a PKCS#11 URI string in the format
+            "pkcs11:<code class="option">keyword</code>=<em class="replaceable"><code>value</code></em>[<span class="optional">;<code class="option">keyword</code>=<em class="replaceable"><code>value</code></em>;...</span>]"
+            Keywords include "token", which identifies the HSM; "object", which
+            identifies the key; and "pin-source", which identifies a file from
+            which the HSM's PIN code can be obtained.  The label will be
+            stored in the on-disk "private" file.
+          </p>
+<p>
+            If the label contains a
+            <code class="option">pin-source</code> field, tools using the generated
+            key files will be able to use the HSM for signing and other
+            operations without any need for an operator to manually enter
+            a PIN.  Note: Making the HSM's PIN accessible in this manner
+            may reduce the security advantage of using an HSM; be sure
+            this is what you want to do before making use of this feature.
+          </p>
+</dd>
 <dt><span class="term">-n <em class="replaceable"><code>nametype</code></em></span></dt>
 <dd><p>
             Specifies the owner type of the key.  The value of
@@ -304,7 +338,8 @@
 <p><span class="citerefentry"><span class="refentrytitle">dnssec-keygen</span>(8)</span>,
       <span class="citerefentry"><span class="refentrytitle">dnssec-signzone</span>(8)</span>,
       <em class="citetitle">BIND 9 Administrator Reference Manual</em>,
-      <em class="citetitle">RFC 4034</em>.
+      <em class="citetitle">RFC 4034</em>,
+      <em class="citetitle">The PKCS#11 URI Scheme (draft-pechanec-pkcs11uri-13)</em>.
     </p>
 </div>
 </div></body>

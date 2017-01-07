@@ -947,8 +947,9 @@ dns_tsig_sign(dns_message_t *msg) {
 		isc_buffer_t headerbuf;
 		isc_uint16_t digestbits;
 
-		ret = dst_context_create2(key->key, mctx,
-					  DNS_LOGCATEGORY_DNSSEC, &ctx);
+		ret = dst_context_create3(key->key, mctx,
+					  DNS_LOGCATEGORY_DNSSEC,
+					  ISC_TRUE, &ctx);
 		if (ret != ISC_R_SUCCESS)
 			return (ret);
 
@@ -1134,7 +1135,6 @@ dns_tsig_sign(dns_message_t *msg) {
 	datalist->rdclass = dns_rdataclass_any;
 	datalist->type = dns_rdatatype_tsig;
 	ISC_LIST_APPEND(datalist->rdata, rdata, link);
-	dns_rdataset_init(dataset);
 	RUNTIME_CHECK(dns_rdatalist_tordataset(datalist, dataset)
 		      == ISC_R_SUCCESS);
 	msg->tsig = dataset;
@@ -1345,8 +1345,9 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 		sig_r.base = tsig.signature;
 		sig_r.length = tsig.siglen;
 
-		ret = dst_context_create2(key, mctx,
-					  DNS_LOGCATEGORY_DNSSEC, &ctx);
+		ret = dst_context_create3(key, mctx,
+					  DNS_LOGCATEGORY_DNSSEC,
+					  ISC_FALSE, &ctx);
 		if (ret != ISC_R_SUCCESS)
 			return (ret);
 
@@ -1578,9 +1579,9 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 	key = tsigkey->key;
 
 	if (msg->tsigctx == NULL) {
-		ret = dst_context_create2(key, mctx,
+		ret = dst_context_create3(key, mctx,
 					  DNS_LOGCATEGORY_DNSSEC,
-					  &msg->tsigctx);
+					  ISC_FALSE, &msg->tsigctx);
 		if (ret != ISC_R_SUCCESS)
 			goto cleanup_querystruct;
 

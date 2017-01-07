@@ -46,48 +46,59 @@
 </div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
-<div class="cmdsynopsis"><p><code class="command">ddns-confgen</code>  [<code class="option">-a <em class="replaceable"><code>algorithm</code></em></code>] [<code class="option">-h</code>] [<code class="option">-k <em class="replaceable"><code>keyname</code></em></code>] [<code class="option">-r <em class="replaceable"><code>randomfile</code></em></code>] [ -s <em class="replaceable"><code>name</code></em>  |   -z <em class="replaceable"><code>zone</code></em> ] [<code class="option">-q</code>] [name]</p></div>
+<div class="cmdsynopsis"><p><code class="command">tsig-keygen</code>  [<code class="option">-a <em class="replaceable"><code>algorithm</code></em></code>] [<code class="option">-h</code>] [<code class="option">-r <em class="replaceable"><code>randomfile</code></em></code>] [name]</p></div>
+<div class="cmdsynopsis"><p><code class="command">ddns-confgen</code>  [<code class="option">-a <em class="replaceable"><code>algorithm</code></em></code>] [<code class="option">-h</code>] [<code class="option">-k <em class="replaceable"><code>keyname</code></em></code>] [<code class="option">-q</code>] [<code class="option">-r <em class="replaceable"><code>randomfile</code></em></code>] [ -s <em class="replaceable"><code>name</code></em>  |   -z <em class="replaceable"><code>zone</code></em> ]</p></div>
 </div>
 <div class="refsection">
-<a name="id-1.14.24.7"></a><h2>DESCRIPTION</h2>
-<p><span class="command"><strong>ddns-confgen</strong></span>
-      generates a key for use by <span class="command"><strong>nsupdate</strong></span>
-      and <span class="command"><strong>named</strong></span>.  It simplifies configuration
-      of dynamic zones by generating a key and providing the
-      <span class="command"><strong>nsupdate</strong></span> and <span class="command"><strong>named.conf</strong></span>
-      syntax that will be needed to use it, including an example
-      <span class="command"><strong>update-policy</strong></span> statement.
+<a name="id-1.14.26.7"></a><h2>DESCRIPTION</h2>
+<p>
+      <span class="command"><strong>tsig-keygen</strong></span> and <span class="command"><strong>ddns-confgen</strong></span>
+      are invocation methods for a utility that generates keys for use
+      in TSIG signing.  The resulting keys can be used, for example,
+      to secure dynamic DNS updates to a zone or for the
+      <span class="command"><strong>rndc</strong></span> command channel.
     </p>
 <p>
-      If a domain name is specified on the command line, it will
-      be used in the name of the generated key and in the sample
-      <span class="command"><strong>named.conf</strong></span> syntax.  For example,
-      <span class="command"><strong>ddns-confgen example.com</strong></span> would
-      generate a key called "ddns-key.example.com", and sample
-      <span class="command"><strong>named.conf</strong></span> command that could be used
-      in the zone definition for "example.com".
+      When run as <span class="command"><strong>tsig-keygen</strong></span>, a domain name
+      can be specified on the command line which will be used as
+      the name of the generated key.  If no name is specified,
+      the default is <code class="constant">tsig-key</code>.
+    </p>
+<p>
+      When run as <span class="command"><strong>ddns-confgen</strong></span>, the generated
+      key is accompanied by configuration text and instructions
+      that can be used with <span class="command"><strong>nsupdate</strong></span> and
+      <span class="command"><strong>named</strong></span> when setting up dynamic DNS,
+      including an example <span class="command"><strong>update-policy</strong></span>
+      statement.  (This usage similar to the
+      <span class="command"><strong>rndc-confgen</strong></span> command for setting
+      up command channel security.)
     </p>
 <p>
       Note that <span class="command"><strong>named</strong></span> itself can configure a
-      local DDNS key for use with <span class="command"><strong>nsupdate -l</strong></span>.
+      local DDNS key for use with <span class="command"><strong>nsupdate -l</strong></span>:
+      it does this when a zone is configured with
+      <span class="command"><strong>update-policy local;</strong></span>.
       <span class="command"><strong>ddns-confgen</strong></span> is only needed when a
-      more elaborate configuration is required: for instance, if
-      <span class="command"><strong>nsupdate</strong></span> is to be used from a remote system.
+      more elaborate configuration is required: for instance,
+      if <span class="command"><strong>nsupdate</strong></span> is to be used from a remote
+      system.
     </p>
 </div>
 <div class="refsection">
-<a name="id-1.14.24.8"></a><h2>OPTIONS</h2>
+<a name="id-1.14.26.8"></a><h2>OPTIONS</h2>
 <div class="variablelist"><dl class="variablelist">
 <dt><span class="term">-a <em class="replaceable"><code>algorithm</code></em></span></dt>
 <dd><p>
             Specifies the algorithm to use for the TSIG key.  Available
             choices are: hmac-md5, hmac-sha1, hmac-sha224, hmac-sha256,
             hmac-sha384 and hmac-sha512.  The default is hmac-sha256.
+            Options are case-insensitive, and the "hmac-" prefix
+            may be omitted.
 	  </p></dd>
 <dt><span class="term">-h</span></dt>
 <dd><p>
-	    Prints a short summary of the options and arguments to
-	    <span class="command"><strong>ddns-confgen</strong></span>.
+	    Prints a short summary of options and arguments.
 	  </p></dd>
 <dt><span class="term">-k <em class="replaceable"><code>keyname</code></em></span></dt>
 <dd><p>
@@ -103,8 +114,9 @@
 	  </p></dd>
 <dt><span class="term">-q</span></dt>
 <dd><p>
-	    Quiet mode:  Print only the key, with no explanatory text or
-            usage examples.
+	    (<span class="command"><strong>ddns-confgen</strong></span> only.) Quiet mode:  Print
+            only the key, with no explanatory text or usage examples;
+            This is essentially identical to <span class="command"><strong>tsig-keygen</strong></span>.
 	  </p></dd>
 <dt><span class="term">-r <em class="replaceable"><code>randomfile</code></em></span></dt>
 <dd><p>
@@ -120,11 +132,12 @@
 	  </p></dd>
 <dt><span class="term">-s <em class="replaceable"><code>name</code></em></span></dt>
 <dd><p>
-	    Single host mode: The example <span class="command"><strong>named.conf</strong></span> text
-	    shows how to set an update policy for the specified
-	    <em class="replaceable"><code>name</code></em>
-	    using the "name" nametype.
-	    The default key name is
+            (<span class="command"><strong>ddns-confgen</strong></span> only.)
+	    Generate configuration example to allow dynamic updates
+            of a single hostname.  The example <span class="command"><strong>named.conf</strong></span>
+            text shows how to set an update policy for the specified
+            <em class="replaceable"><code>name</code></em>
+	    using the "name" nametype.  The default key name is
 	    ddns-key.<em class="replaceable"><code>name</code></em>.
 	    Note that the "self" nametype cannot be used, since
 	    the name to be updated may differ from the key name.
@@ -132,18 +145,20 @@
 	  </p></dd>
 <dt><span class="term">-z <em class="replaceable"><code>zone</code></em></span></dt>
 <dd><p>
-	    zone mode:  The example <span class="command"><strong>named.conf</strong></span> text
+            (<span class="command"><strong>ddns-confgen</strong></span> only.)
+	    Generate configuration example to allow dynamic updates
+            of a zone:  The example <span class="command"><strong>named.conf</strong></span> text
             shows how to set an update policy for the specified
 	    <em class="replaceable"><code>zone</code></em>
-	    using the "zonesub" nametype, allowing updates to all subdomain
-	    names within
-	    that <em class="replaceable"><code>zone</code></em>.
+	    using the "zonesub" nametype, allowing updates to
+            all subdomain names within that
+            <em class="replaceable"><code>zone</code></em>.
 	    This option cannot be used with the <code class="option">-s</code> option.
 	  </p></dd>
 </dl></div>
 </div>
 <div class="refsection">
-<a name="id-1.14.24.9"></a><h2>SEE ALSO</h2>
+<a name="id-1.14.26.9"></a><h2>SEE ALSO</h2>
 <p><span class="citerefentry"><span class="refentrytitle">nsupdate</span>(1)</span>,
       <span class="citerefentry"><span class="refentrytitle">named.conf</span>(5)</span>,
       <span class="citerefentry"><span class="refentrytitle">named</span>(8)</span>,
@@ -170,6 +185,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.9.9-P5 (Extended Support Version)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.4-P5</p>
 </body>
 </html>

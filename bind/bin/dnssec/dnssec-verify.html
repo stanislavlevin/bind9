@@ -44,6 +44,20 @@
 <dd><p>
             Specifies the DNS class of the zone.
           </p></dd>
+<dt><span class="term">-E <em class="replaceable"><code>engine</code></em></span></dt>
+<dd>
+<p>
+            Specifies the cryptographic hardware to use, when applicable.
+          </p>
+<p>
+            When BIND is built with OpenSSL PKCS#11 support, this defaults
+            to the string "pkcs11", which identifies an OpenSSL engine
+            that can drive a cryptographic accelerator or hardware service
+            module.  When BIND is built with native PKCS#11 cryptography
+            (--enable-native-pkcs11), it defaults to the path of the PKCS#11
+            provider library specified via "--with-pkcs11".
+          </p>
+</dd>
 <dt><span class="term">-I <em class="replaceable"><code>input-format</code></em></span></dt>
 <dd><p>
             The format of the input zone file.

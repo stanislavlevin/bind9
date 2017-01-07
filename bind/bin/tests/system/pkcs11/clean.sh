@@ -15,5 +15,6 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 rm -f K* ns1/K* keyset-* dsset-* ns1/*.db ns1/*.signed ns1/*.jnl
-rm -f dig.out
-rm -f ns1/key ns1/named.memstats
+rm -f dig.out pin
+rm -f ns1/*.key ns1/named.memstats
+rm -f supported

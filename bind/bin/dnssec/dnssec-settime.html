@@ -23,7 +23,7 @@
 <a name="man.dnssec-settime"></a><div class="titlepage"></div>
 <div class="refnamediv">
 <h2>Name</h2>
-<p><span class="application">dnssec-settime</span> &#8212; Set the key timing metadata for a DNSSEC key</p>
+<p><span class="application">dnssec-settime</span> &#8212; set the key timing metadata for a DNSSEC key</p>
 </div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
@@ -97,10 +97,19 @@
             Sets the debugging level.
           </p></dd>
 <dt><span class="term">-E <em class="replaceable"><code>engine</code></em></span></dt>
-<dd><p>
-            Use the given OpenSSL engine. When compiled with PKCS#11 support
-            it defaults to pkcs11; the empty name resets it to no engine.
-          </p></dd>
+<dd>
+<p>
+            Specifies the cryptographic hardware to use, when applicable.
+          </p>
+<p>
+            When BIND is built with OpenSSL PKCS#11 support, this defaults
+            to the string "pkcs11", which identifies an OpenSSL engine
+            that can drive a cryptographic accelerator or hardware service
+            module.  When BIND is built with native PKCS#11 cryptography
+            (--enable-native-pkcs11), it defaults to the path of the PKCS#11
+            provider library specified via "--with-pkcs11".
+          </p>
+</dd>
 </dl></div>
 </div>
 <div class="refsection">

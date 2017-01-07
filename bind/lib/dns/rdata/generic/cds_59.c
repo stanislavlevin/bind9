@@ -14,9 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id$ */
-
-/* draft-ietf-dnsext-delegation-signer-05.txt */
+/* draft-ietf-dnsop-delegation-trust-maintainance-14 */
 
 #ifndef RDATA_GENERIC_CDS_59_C
 #define RDATA_GENERIC_CDS_59_C
@@ -27,6 +25,8 @@
 #include <isc/sha2.h>
 
 #include <dns/ds.h>
+
+#include "dst_gost.h"
 
 static inline isc_result_t
 fromtext_cds(ARGS_FROMTEXT) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012, 2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -97,7 +97,7 @@ ATF_TC_BODY(edns_client_subnet, tc) {
 			  0x00, 0x08, 0x00, 0x04,
 			  0x00, 0x00, 0x00, 0x00
 			},
-			8, ISC_FALSE
+			8, ISC_TRUE
 		},
 		{
 			/* Option code family 1 (ipv4), source 0, scope 0 */
@@ -222,9 +222,9 @@ ATF_TC_BODY(edns_client_subnet, tc) {
 					    &dctx, 0, &target1);
 		dns_decompress_invalidate(&dctx);
 		if (test_data[i].ok)
-			ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+			ATF_CHECK_EQ(result, ISC_R_SUCCESS);
 		else
-			ATF_REQUIRE(result != ISC_R_SUCCESS);
+			ATF_CHECK(result != ISC_R_SUCCESS);
 	}
 }
 

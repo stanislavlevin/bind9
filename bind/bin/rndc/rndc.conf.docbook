@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2004, 2005, 2007, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004, 2005, 2007, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000, 2001  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="man.rndc.conf">
   <info>
-    <date>2007-06-18</date>
+    <date>2013-03-14</date>
   </info>
   <refentryinfo>
     <corpname>ISC</corpname>
@@ -41,6 +41,7 @@
       <year>2004</year>
       <year>2005</year>
       <year>2007</year>
+      <year>2013</year>
       <year>2014</year>
       <year>2015</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
@@ -122,11 +123,12 @@
     <para>
       The <option>key</option> statement begins with an identifying
       string, the name of the key.  The statement has two clauses.
-      <option>algorithm</option> identifies the encryption algorithm
+      <option>algorithm</option> identifies the authentication algorithm
       for <command>rndc</command> to use; currently only HMAC-MD5
-      is
+      (for compatibility), HMAC-SHA1, HMAC-SHA224, HMAC-SHA256
+      (default), HMAC-SHA384 and HMAC-SHA512 are
       supported.  This is followed by a secret clause which contains
-      the base-64 encoding of the algorithm's encryption key.  The
+      the base-64 encoding of the algorithm's authentication key.  The
       base-64 string is enclosed in double quotes.
     </para>
     <para>
@@ -169,14 +171,14 @@
     </para>
     <para><programlisting>
       key samplekey {
-        algorithm       hmac-md5;
+        algorithm       hmac-sha256;
         secret          "6FMfj43Osz4lyb24OIe2iGEz9lf1llJO+lz";
       };
 </programlisting>
     </para>
     <para><programlisting>
       key testkey {
-        algorithm	hmac-md5;
+        algorithm	hmac-sha256;
         secret		"R3HI8P6BKw9ZwXwN3VZKuQ==";
       };
     </programlisting>
@@ -189,8 +191,8 @@
       Commands to the localhost server will use the samplekey key, which
       must also be defined in the server's configuration file with the
       same name and secret.  The key statement indicates that samplekey
-      uses the HMAC-MD5 algorithm and its secret clause contains the
-      base-64 encoding of the HMAC-MD5 secret enclosed in double quotes.
+      uses the HMAC-SHA256 algorithm and its secret clause contains the
+      base-64 encoding of the HMAC-SHA256 secret enclosed in double quotes.
     </para>
     <para>
       If <command>rndc -s testserver</command> is used then <command>rndc</command> will

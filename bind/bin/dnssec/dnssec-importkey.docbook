@@ -17,7 +17,7 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="man.dnssec-importkey">
   <info>
-    <date>2014-02-07</date>
+    <date>2014-02-20</date>
   </info>
   <refentryinfo>
     <corpname>ISC</corpname>
@@ -32,7 +32,7 @@
 
   <refnamediv>
     <refname><application>dnssec-importkey</application></refname>
-    <refpurpose>Import DNSKEY records from external systems so they can be managed.</refpurpose>
+    <refpurpose>import DNSKEY records from external systems so they can be managed</refpurpose>
   </refnamediv>
 
   <docinfo>

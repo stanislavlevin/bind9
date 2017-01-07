@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2006, 2007, 2009-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2009-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
 
 /* $Id$ */
 
-/* draft-ietf-dnsext-delegation-signer-05.txt */
+/* RFC3658 */
 
 #ifndef RDATA_GENERIC_DLV_32769_C
 #define RDATA_GENERIC_DLV_32769_C
@@ -28,6 +28,7 @@
 
 #include <dns/ds.h>
 
+#include "dst_gost.h"
 
 static inline isc_result_t
 fromtext_dlv(ARGS_FROMTEXT) {

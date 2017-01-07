@@ -43,8 +43,14 @@
 #include <dst/dst.h>
 #include <dst/gssapi.h>
 
+#include "dst_internal.h"
+
 #define TEMP_BUFFER_SZ 8192
 #define TKEY_RANDOM_AMOUNT 16
+
+#ifdef PKCS11CRYPTO
+#include <pk11/pk11.h>
+#endif
 
 #define RETERR(x) do { \
 	result = (x); \
@@ -185,7 +191,6 @@ add_rdata_to_list(dns_message_t *msg, dns_name_t *name, dns_rdata_t *rdata,
 	ISC_LIST_APPEND(newlist->rdata, newrdata, link);
 
 	RETERR(dns_message_gettemprdataset(msg, &newset));
-	dns_rdataset_init(newset);
 	RETERR(dns_rdatalist_tordataset(newlist, newset));
 
 	ISC_LIST_INIT(newname->list);
@@ -398,8 +403,8 @@ process_dhtkey(dns_message_t *msg, dns_name_t *signer, dns_name_t *name,
 	if (randomdata == NULL)
 		goto failure;
 
-	result = isc_entropy_getdata(tctx->ectx, randomdata,
-				     TKEY_RANDOM_AMOUNT, NULL, 0);
+	result = dst__entropy_getdata(randomdata, TKEY_RANDOM_AMOUNT,
+				      ISC_FALSE);
 	if (result != ISC_R_SUCCESS) {
 		tkey_log("process_dhtkey: failed to obtain entropy: %s",
 			 isc_result_totext(result));
@@ -888,7 +893,6 @@ buildquery(dns_message_t *msg, dns_name_t *name,
 	RETERR(dns_message_gettempname(msg, &aname));
 
 	RETERR(dns_message_gettemprdataset(msg, &question));
-	dns_rdataset_init(question);
 	dns_rdataset_makequestion(question, dns_rdataclass_any,
 				  dns_rdatatype_tkey);
 
@@ -908,7 +912,6 @@ buildquery(dns_message_t *msg, dns_name_t *name,
 	ISC_LIST_APPEND(tkeylist->rdata, rdata, link);
 
 	RETERR(dns_message_gettemprdataset(msg, &tkeyset));
-	dns_rdataset_init(tkeyset);
 	RETERR(dns_rdatalist_tordataset(tkeylist, tkeyset));
 
 	dns_name_init(qname, NULL);

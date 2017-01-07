@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id$ */
+/* $Id: control.c,v 1.49 2012/01/31 23:47:31 tbox Exp $ */
 
 /*! \file */
 
@@ -221,6 +221,9 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 		   command_compare(command, NS_COMMAND_THAW)) {
 		result = ns_server_freeze(ns_g_server, ISC_FALSE, lex,
 					  text);
+	} else if (command_compare(command, NS_COMMAND_SCAN)) {
+		result = ISC_R_SUCCESS;
+		ns_server_scan_interfaces(ns_g_server);
 	} else if (command_compare(command, NS_COMMAND_SYNC)) {
 		result = ns_server_sync(ns_g_server, lex, text);
 	} else if (command_compare(command, NS_COMMAND_RECURSING)) {
@@ -233,7 +236,7 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 	} else if (command_compare(command, NS_COMMAND_NOTIFY)) {
 		result = ns_server_notifycommand(ns_g_server, lex, text);
 	} else if (command_compare(command, NS_COMMAND_VALIDATION)) {
-		result = ns_server_validation(ns_g_server, lex);
+		result = ns_server_validation(ns_g_server, lex, text);
 	} else if (command_compare(command, NS_COMMAND_SIGN) ||
 		   command_compare(command, NS_COMMAND_LOADKEYS)) {
 		result = ns_server_rekey(ns_g_server, lex, text);
@@ -243,6 +246,8 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 		result = ns_server_del_zone(ns_g_server, lex, text);
 	} else if (command_compare(command, NS_COMMAND_SIGNING)) {
 		result = ns_server_signing(ns_g_server, lex, text);
+	} else if (command_compare(command, NS_COMMAND_ZONESTATUS)) {
+		result = ns_server_zonestatus(ns_g_server, lex, text);
 	} else {
 		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
 			      NS_LOGMODULE_CONTROL, ISC_LOG_WARNING,

@@ -41,6 +41,10 @@
 
 #include <dst/dst.h>
 
+#ifdef PKCS11CRYPTO
+#include <pk11/result.h>
+#endif
+
 #include "dnssectool.h"
 
 #define MAX_RSA 4096 /* should be long enough... */
@@ -74,10 +78,15 @@ usage(void) {
 			       "NSEC3RSASHA1 if using -3)\n");
 	fprintf(stderr, "    -3: use NSEC3-capable algorithm\n");
 	fprintf(stderr, "    -c class (default: IN)\n");
-#ifdef USE_PKCS11
-	fprintf(stderr, "    -E enginename (default: pkcs11)\n");
+	fprintf(stderr, "    -E <engine>:\n");
+#if defined(PKCS11CRYPTO)
+	fprintf(stderr, "        path to PKCS#11 provider library "
+				"(default is %s)\n", PK11_LIB_LOCATION);
+#elif defined(USE_PKCS11)
+	fprintf(stderr, "        name of an OpenSSL engine to use "
+				"(default is \"pkcs11\")\n");
 #else
-	fprintf(stderr, "    -E enginename\n");
+	fprintf(stderr, "        name of an OpenSSL engine to use\n");
 #endif
 	fprintf(stderr, "    -f keyflag: KSK | REVOKE\n");
 	fprintf(stderr, "    -K directory: directory in which to place "
@@ -122,7 +131,7 @@ main(int argc, char **argv) {
 	const char	*predecessor = NULL;
 	dst_key_t	*prevkey = NULL;
 #ifdef USE_PKCS11
-	const char	*engine = "pkcs11";
+	const char	*engine = PKCS11_ENGINE;
 #else
 	const char	*engine = NULL;
 #endif
@@ -168,6 +177,9 @@ main(int argc, char **argv) {
 
 	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
 
+#ifdef PKCS11CRYPTO
+	pk11_result_register();
+#endif
 	dns_result_register();
 
 	isc_commandline_errprint = ISC_FALSE;
@@ -556,7 +568,7 @@ main(int argc, char **argv) {
 
 	/* associate the key */
 	ret = dst_key_fromlabel(name, alg, flags, protocol,
-				rdclass, engine, label, NULL, mctx, &key);
+				rdclass, "pkcs11", label, NULL, mctx, &key);
 	isc_entropy_stopcallbacksources(ectx);
 
 	if (ret != ISC_R_SUCCESS) {
@@ -564,7 +576,7 @@ main(int argc, char **argv) {
 		char algstr[DNS_SECALG_FORMATSIZE];
 		dns_name_format(name, namestr, sizeof(namestr));
 		dns_secalg_format(alg, algstr, sizeof(algstr));
-		fatal("failed to get key %s/%s: %s\n",
+		fatal("failed to get key %s/%s: %s",
 		      namestr, algstr, isc_result_totext(ret));
 		/* NOTREACHED */
 		exit(-1);

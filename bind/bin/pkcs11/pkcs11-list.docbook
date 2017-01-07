@@ -137,6 +137,9 @@
       </citerefentry>,
       <citerefentry>
         <refentrytitle>pkcs11-keygen</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkcs11-tokens</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>
     </para>
   </refsection>

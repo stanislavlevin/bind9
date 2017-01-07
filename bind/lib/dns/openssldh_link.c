@@ -477,6 +477,9 @@ openssldh_tofile(const dst_key_t *key, const char *directory) {
 	if (key->keydata.dh == NULL)
 		return (DST_R_NULLKEY);
 
+	if (key->external)
+		return (DST_R_EXTERNALKEY);
+
 	dh = key->keydata.dh;
 
 	memset(bufs, 0, sizeof(bufs));
@@ -541,6 +544,9 @@ openssldh_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	ret = dst__privstruct_parse(key, DST_ALG_DH, lexer, mctx, &priv);
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
+
+	if (key->external)
+		DST_RET(DST_R_EXTERNALKEY);
 
 	dh = DH_new();
 	if (dh == NULL)
@@ -644,6 +650,7 @@ openssldh_cleanup(void) {
 
 static dst_func_t openssldh_functions = {
 	NULL, /*%< createctx */
+	NULL, /*%< createctx2 */
 	NULL, /*%< destroyctx */
 	NULL, /*%< adddata */
 	NULL, /*%< openssldh_sign */

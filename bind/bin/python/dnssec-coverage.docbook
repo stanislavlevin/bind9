@@ -17,7 +17,7 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="man.dnssec-coverage">
   <info>
-    <date>2013-03-21</date>
+    <date>2014-01-11</date>
   </info>
   <refentryinfo>
     <corpname>ISC</corpname>
@@ -48,11 +48,14 @@
     <cmdsynopsis sepchar=" ">
       <command>dnssec-coverage</command>
       <arg choice="opt" rep="norepeat"><option>-K <replaceable class="parameter">directory</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-l <replaceable class="parameter">length</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-f <replaceable class="parameter">file</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-d <replaceable class="parameter">DNSKEY TTL</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-m <replaceable class="parameter">max TTL</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-r <replaceable class="parameter">interval</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">compilezone path</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-k</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-z</option></arg>
       <arg choice="opt" rep="norepeat">zone</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -91,6 +94,16 @@
 
     <variablelist>
       <varlistentry>
+        <term>-K <replaceable class="parameter">directory</replaceable></term>
+        <listitem>
+          <para>
+            Sets the directory in which keys can be found.  Defaults to the
+            current working directory.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term>-f <replaceable class="parameter">file</replaceable></term>
         <listitem>
           <para>
@@ -104,11 +117,18 @@
       </varlistentry>
 
       <varlistentry>
-        <term>-K <replaceable class="parameter">directory</replaceable></term>
+        <term>-l <replaceable class="parameter">duration</replaceable></term>
         <listitem>
           <para>
-            Sets the directory in which keys can be found.  Defaults to the
-            current working directory.
+            The length of time to check for DNSSEC coverage.  Key events
+            scheduled further into the future than <option>duration</option>
+            will be ignored, and assumed to be correct.
+          </para>
+          <para>
+            The value of <option>duration</option> can be set in seconds,
+            or in larger units of time by adding a suffix: 'mi' for minutes,
+            'h' for hours, 'd' for days, 'w' for weeks, 'mo' for months,
+            'y' for years.
           </para>
         </listitem>
       </varlistentry>
@@ -188,6 +208,27 @@
           </para>
         </listitem>
       </varlistentry>
+
+      <varlistentry>
+        <term>-k</term>
+        <listitem>
+          <para>
+	    Only check KSK coverage; ignore ZSK events. Cannot be
+            used with <option>-z</option>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-z</term>
+        <listitem>
+          <para>
+	    Only check ZSK coverage; ignore KSK events. Cannot be
+            used with <option>-k</option>.
+          </para>
+        </listitem>
+      </varlistentry>
+
 
       <varlistentry>
         <term>-c <replaceable class="parameter">compilezone path</replaceable></term>

@@ -48,7 +48,7 @@
 nsupdate \- Dynamic DNS update utility
 .SH "SYNOPSIS"
 .HP \w'\fBnsupdate\fR\ 'u
-\fBnsupdate\fR [\fB\-d\fR] [\fB\-D\fR] [\fB\-L\ \fR\fB\fIlevel\fR\fR] [[\fB\-g\fR] | [\fB\-o\fR] | [\fB\-l\fR] | [\fB\-y\ \fR\fB\fI[hmac:]\fR\fIkeyname:secret\fR\fR] | [\fB\-k\ \fR\fB\fIkeyfile\fR\fR]] [\fB\-t\ \fR\fB\fItimeout\fR\fR] [\fB\-u\ \fR\fB\fIudptimeout\fR\fR] [\fB\-r\ \fR\fB\fIudpretries\fR\fR] [\fB\-R\ \fR\fB\fIrandomdev\fR\fR] [\fB\-v\fR] [\fB\-V\fR] [filename]
+\fBnsupdate\fR [\fB\-d\fR] [\fB\-D\fR] [\fB\-L\ \fR\fB\fIlevel\fR\fR] [[\fB\-g\fR] | [\fB\-o\fR] | [\fB\-l\fR] | [\fB\-y\ \fR\fB\fI[hmac:]\fR\fIkeyname:secret\fR\fR] | [\fB\-k\ \fR\fB\fIkeyfile\fR\fR]] [\fB\-t\ \fR\fB\fItimeout\fR\fR] [\fB\-u\ \fR\fB\fIudptimeout\fR\fR] [\fB\-r\ \fR\fB\fIudpretries\fR\fR] [\fB\-R\ \fR\fB\fIrandomdev\fR\fR] [\fB\-v\fR] [\fB\-T\fR] [\fB\-P\fR] [\fB\-V\fR] [filename]
 .SH "DESCRIPTION"
 .PP
 \fBnsupdate\fR
@@ -141,6 +141,14 @@ Set the logging debug level\&. If zero, logging is disabled\&.
 Set the port to use for connections to a name server\&. The default is 53\&.
 .RE
 .PP
+\-P
+.RS 4
+Print the list of private BIND\-specific resource record types whose format is understood by
+\fBnsupdate\fR\&. See also the
+\fB\-T\fR
+option\&.
+.RE
+.PP
 \-r \fIudpretries\fR
 .RS 4
 The number of UDP retries\&. The default is 3\&. If zero, only one update request will be made\&.
@@ -160,6 +168,20 @@ indicates that keyboard input should be used\&. This option may be specified mul
 \-t \fItimeout\fR
 .RS 4
 The maximum time an update request can take before it is aborted\&. The default is 300 seconds\&. Zero can be used to disable the timeout\&.
+.RE
+.PP
+\-T
+.RS 4
+Print the list of IANA standard resource record types whose format is understood by
+\fBnsupdate\fR\&.
+\fBnsupdate\fR
+will exit after the lists are printed\&. The
+\fB\-T\fR
+option can be combined with the
+\fB\-P\fR
+option\&.
+.sp
+Other types can be entered using "TYPEXXXXX" where "XXXXX" is the decimal value of the type with no leading zeros\&. The rdata, if present, will be parsed using the UNKNOWN rdata format, (<backslash> <hash> <space> <length> <space> <hexstring>)\&.
 .RE
 .PP
 \-u \fIudptimeout\fR

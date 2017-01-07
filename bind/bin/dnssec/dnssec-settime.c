@@ -39,6 +39,10 @@
 
 #include <dst/dst.h>
 
+#ifdef PKCS11CRYPTO
+#include <pk11/result.h>
+#endif
+
 #include "dnssectool.h"
 
 const char *program = "dnssec-settime";
@@ -55,9 +59,12 @@ usage(void) {
 	fprintf(stderr,	"    %s [options] keyfile\n\n", program);
 	fprintf(stderr, "Version: %s\n", VERSION);
 	fprintf(stderr, "General options:\n");
-#ifdef USE_PKCS11
+#if defined(PKCS11CRYPTO)
+	fprintf(stderr, "    -E engine:          specify PKCS#11 provider "
+					"(default: %s)\n", PK11_LIB_LOCATION);
+#elif defined(USE_PKCS11)
 	fprintf(stderr, "    -E engine:          specify OpenSSL engine "
-						 "(default \"pkcs11\")\n");
+					   "(default \"pkcs11\")\n");
 #else
 	fprintf(stderr, "    -E engine:          specify OpenSSL engine\n");
 #endif
@@ -118,7 +125,7 @@ int
 main(int argc, char **argv) {
 	isc_result_t	result;
 #ifdef USE_PKCS11
-	const char	*engine = "pkcs11";
+	const char	*engine = PKCS11_ENGINE;
 #else
 	const char	*engine = NULL;
 #endif
@@ -165,6 +172,9 @@ main(int argc, char **argv) {
 
 	setup_logging(mctx, &log);
 
+#ifdef PKCS11CRYPTO
+	pk11_result_register();
+#endif
 	dns_result_register();
 
 	isc_commandline_errprint = ISC_FALSE;

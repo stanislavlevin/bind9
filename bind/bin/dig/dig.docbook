@@ -1,5 +1,7 @@
+<!DOCTYPE book [
+<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2011, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2011, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -17,9 +19,8 @@
 
 <!-- Converted by db4-upgrade version 1.0 -->
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="man.dig">
-
   <info>
-    <date>2014-02-12</date>
+    <date>2014-02-19</date>
   </info>
   <refentryinfo>
     <corpname>ISC</corpname>
@@ -50,6 +51,7 @@
       <year>2013</year>
       <year>2014</year>
       <year>2015</year>
+      <year>2016</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -200,7 +202,7 @@
 	  <term><constant>type</constant></term>
 	  <listitem>
 	    <para>
-	      indicates what type of query is required —
+	      indicates what type of query is required &mdash;
 	      ANY, A, MX, SIG, etc.
 	      <parameter>type</parameter> can be any valid query
 	      type.  If no
@@ -588,6 +590,22 @@
 	</varlistentry>
 
 	<varlistentry>
+	  <term><option>+[no]crypto</option></term>
+	  <listitem>
+	    <para>
+	      Toggle the display of cryptographic fields in DNSSEC
+	      records.  The contents of these field are unnecessary
+	      to debug most DNSSEC validation failures and removing
+	      them makes it easier to see the common failures.  The
+	      default is to display the fields.  When omitted they
+	      are replaced by the string "[omitted]" or in the
+	      DNSKEY case the key id is displayed as the replacement,
+	      e.g. "[ key id = value ]".
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
 	  <term><option>+[no]defname</option></term>
 	  <listitem>
 	    <para>
@@ -631,6 +649,49 @@
 	       a EDNS query to be sent.  <option>+noedns</option>
 	       clears the remembered EDNS version.  EDNS is set to
 	       0 by default.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>+[no]ednsflags[=#]</option></term>
+	  <listitem>
+	    <para>
+	      Set the must-be-zero EDNS flags bits (Z bits) to the
+	      specified value. Decimal, hex and octal encodings are
+	      accepted. Setting a named flag (e.g. DO) will silently be
+	      ignored. By default, no Z bits are set.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>+[no]ednsnegotiation</option></term>
+	  <listitem>
+	    <para>
+	      Enable / disable EDNS version negotiation. By default
+	      EDNS version negotiation is enabled.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>+[no]ednsopt[=code[:value]]</option></term>
+	  <listitem>
+	    <para>
+	      Specify EDNS option with code point <option>code</option>
+	      and optionally payload of <option>value</option> as a
+	      hexadecimal string.  <option>+noednsopt</option>
+	      clears the EDNS options to to be sent.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>+[no]expire</option></term>
+	  <listitem>
+	    <para>
+	      Send an EDNS Expire option.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -743,6 +804,16 @@
 	      Print only one (starting) SOA record when performing
 	      an AXFR. The default is to print both the starting
 	      and ending SOA records.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>+[no]opcode=value</option></term>
+	  <listitem>
+	    <para>
+	      Set [restore] the DNS message opcode to the specified
+	      value.  The default value is QUERY (0).
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -865,6 +936,19 @@
 	</varlistentry>
 
 	<varlistentry>
+	  <term><option>+[no]sit<optional>=####</optional></option></term>
+	  <listitem>
+	    <para>
+	      Send a Source Identity Token EDNS option, with optional
+	      value.  Replaying a SIT from a previous response will
+	      allow the server to identify a previous client.  The
+	      default is <option>+nosit</option>.  Currently using
+	      experimental value 65001 for the option code.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
 	  <term><option>+split=W</option></term>
 	  <listitem>
 	    <para>
@@ -888,6 +972,25 @@
 	      when the query was made, the size of the reply and
 	      so on.  The default behavior is to print the query
 	      statistics.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>+[no]subnet=addr[/prefix-length]</option></term>
+	  <listitem>
+	    <para>
+	      Send (don't send) an EDNS Client Subnet option with the
+	      specified IP address or network prefix.
+	    </para>
+	    <para>
+              <command>dig +subnet=0.0.0.0/0</command>, or simply
+              <command>dig +subnet=0</command> for short, sends an EDNS
+              client-subnet option with an empty address and a source
+              prefix-length of zero, which signals a resolver that
+              the client's address information must
+              <emphasis>not</emphasis> be used when resolving
+              this query.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -1103,4 +1206,5 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
       There are probably too many query options.
     </para>
   </refsection>
+
 </refentry>

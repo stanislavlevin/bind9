@@ -379,6 +379,17 @@
 	      Toggle the display of comment lines in the output.
 	      The default is to print comments.
 	    </p></dd>
+<dt><span class="term"><code class="option">+[no]crypto</code></span></dt>
+<dd><p>
+	      Toggle the display of cryptographic fields in DNSSEC
+	      records.  The contents of these field are unnecessary
+	      to debug most DNSSEC validation failures and removing
+	      them makes it easier to see the common failures.  The
+	      default is to display the fields.  When omitted they
+	      are replaced by the string "[omitted]" or in the
+	      DNSKEY case the key id is displayed as the replacement,
+	      e.g. "[ key id = value ]".
+	    </p></dd>
 <dt><span class="term"><code class="option">+[no]defname</code></span></dt>
 <dd><p>
 	      Deprecated, treated as a synonym for
@@ -406,6 +417,29 @@
 	       a EDNS query to be sent.  <code class="option">+noedns</code>
 	       clears the remembered EDNS version.  EDNS is set to
 	       0 by default.
+	    </p></dd>
+<dt><span class="term"><code class="option">+[no]ednsflags[=#]</code></span></dt>
+<dd><p>
+	      Set the must-be-zero EDNS flags bits (Z bits) to the
+	      specified value. Decimal, hex and octal encodings are
+	      accepted. Setting a named flag (e.g. DO) will silently be
+	      ignored. By default, no Z bits are set.
+	    </p></dd>
+<dt><span class="term"><code class="option">+[no]ednsnegotiation</code></span></dt>
+<dd><p>
+	      Enable / disable EDNS version negotiation. By default
+	      EDNS version negotiation is enabled.
+	    </p></dd>
+<dt><span class="term"><code class="option">+[no]ednsopt[=code[:value]]</code></span></dt>
+<dd><p>
+	      Specify EDNS option with code point <code class="option">code</code>
+	      and optionally payload of <code class="option">value</code> as a
+	      hexadecimal string.  <code class="option">+noednsopt</code>
+	      clears the EDNS options to to be sent.
+	    </p></dd>
+<dt><span class="term"><code class="option">+[no]expire</code></span></dt>
+<dd><p>
+	      Send an EDNS Expire option.
 	    </p></dd>
 <dt><span class="term"><code class="option">+[no]fail</code></span></dt>
 <dd><p>
@@ -473,6 +507,11 @@
 	      Print only one (starting) SOA record when performing
 	      an AXFR. The default is to print both the starting
 	      and ending SOA records.
+	    </p></dd>
+<dt><span class="term"><code class="option">+[no]opcode=value</code></span></dt>
+<dd><p>
+	      Set [restore] the DNS message opcode to the specified
+	      value.  The default value is QUERY (0).
 	    </p></dd>
 <dt><span class="term"><code class="option">+[no]qr</code></span></dt>
 <dd><p>
@@ -543,6 +582,14 @@
 	      Chase DNSSEC signature chains.  Requires dig be
 	      compiled with -DDIG_SIGCHASE.
 	    </p></dd>
+<dt><span class="term"><code class="option">+[no]sit[<span class="optional">=####</span>]</code></span></dt>
+<dd><p>
+	      Send a Source Identity Token EDNS option, with optional
+	      value.  Replaying a SIT from a previous response will
+	      allow the server to identify a previous client.  The
+	      default is <code class="option">+nosit</code>.  Currently using
+	      experimental value 65001 for the option code.
+	    </p></dd>
 <dt><span class="term"><code class="option">+split=W</code></span></dt>
 <dd><p>
 	      Split long hex- or base64-formatted fields in resource
@@ -561,6 +608,22 @@
 	      so on.  The default behavior is to print the query
 	      statistics.
 	    </p></dd>
+<dt><span class="term"><code class="option">+[no]subnet=addr[/prefix-length]</code></span></dt>
+<dd>
+<p>
+	      Send (don't send) an EDNS Client Subnet option with the
+	      specified IP address or network prefix.
+	    </p>
+<p>
+              <span class="command"><strong>dig +subnet=0.0.0.0/0</strong></span>, or simply
+              <span class="command"><strong>dig +subnet=0</strong></span> for short, sends an EDNS
+              client-subnet option with an empty address and a source
+              prefix-length of zero, which signals a resolver that
+              the client's address information must
+              <span class="emphasis"><em>not</em></span> be used when resolving
+              this query.
+	    </p>
+</dd>
 <dt><span class="term"><code class="option">+[no]tcp</code></span></dt>
 <dd><p>
 	      Use [do not use] TCP when querying name servers. The
@@ -746,6 +809,6 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.9.9-P5 (Extended Support Version)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.4-P5</p>
 </body>
 </html>

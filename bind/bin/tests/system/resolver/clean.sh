@@ -20,7 +20,9 @@
 rm -f */named.memstats
 rm -f */named.run
 rm -f */ans.run
-rm -f dig.out dig.out.* dig.ns*.out*
+rm -f */*.jdb
+rm -f dig.out dig.out.*
+rm -f dig.*.out.*
 rm -f dig.*.foo.*
 rm -f dig.*.bar.*
 rm -f dig.*.prime.*
@@ -30,5 +32,5 @@ rm -f ns6/example.net.db.signed ns6/example.net.db
 rm -f ns6/dsset-example.net. ns6/example.net.db.signed.jnl
 rm -f ns6/to-be-removed.tld.db ns6/to-be-removed.tld.db.jnl
 rm -f ns7/server.db ns7/server.db.jnl ns7/named.conf
-rm -f sample.out
+rm -f resolve.out
 rm -f .digrc

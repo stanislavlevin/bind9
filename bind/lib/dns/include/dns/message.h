@@ -143,6 +143,7 @@ typedef int dns_messagetextflag_t;
 #define DNS_MESSAGETEXTFLAG_NOHEADERS	0x0002
 #define DNS_MESSAGETEXTFLAG_ONESOA	0x0004
 #define DNS_MESSAGETEXTFLAG_OMITSOA	0x0008
+#define DNS_MESSAGETEXTFLAG_COMMENTDATA	0x0010
 
 /*
  * Dynamic update names for these sections.
@@ -180,7 +181,7 @@ typedef int dns_messagetextflag_t;
 						      additional section. */
 #define DNS_MESSAGERENDER_PREFER_AAAA	0x0010	/*%< prefer AAAA records in
 						  additional section. */
-#ifdef ALLOW_FILTER_AAAA_ON_V4
+#ifdef ALLOW_FILTER_AAAA
 #define DNS_MESSAGERENDER_FILTER_AAAA	0x0020	/*%< filter AAAA records */
 #endif
 
@@ -215,6 +216,8 @@ struct dns_message {
 	unsigned int			verify_attempted : 1;
 	unsigned int			free_query : 1;
 	unsigned int			free_saved : 1;
+	unsigned int			sitok : 1;
+	unsigned int			sitbad : 1;
 	unsigned int			tkey : 1;
 	unsigned int			rdclass_set : 1;
 
@@ -1361,6 +1364,21 @@ dns_message_gettimeadjust(dns_message_t *msg);
  *
  * Requires:
  *\li	msg be a valid message.
+ */
+
+void
+dns_message_logpacket(dns_message_t *message, const char *description,
+		      isc_logcategory_t *category, isc_logmodule_t *module,
+		      int level, isc_mem_t *mctx);
+void
+dns_message_logfmtpacket(dns_message_t *message, const char *description,
+			 isc_logcategory_t *category, isc_logmodule_t *module,
+			 const dns_master_style_t *style, int level,
+			 isc_mem_t *mctx);
+/*%<
+ * Log 'message' at the specified logging parameters.
+ * 'description' will be emitted at the start of the message and will
+ * normally end with a newline.
  */
 
 isc_result_t

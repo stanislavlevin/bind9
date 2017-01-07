@@ -998,11 +998,14 @@ version(void) {
 	fputs("nsupdate " VERSION "\n", stderr);
 }
 
-#define PARSE_ARGS_FMT "dDML:y:ghlovk:p:r:R::t:u:V"
+#define PARSE_ARGS_FMT "dDML:y:ghlovk:p:Pr:R::t:Tu:V"
 
 static void
 pre_parse_args(int argc, char **argv) {
+	dns_rdatatype_t t;
 	int ch;
+	char buf[100];
+	isc_boolean_t doexit = ISC_FALSE;
 
 	while ((ch = isc_commandline_parse(argc, argv, PARSE_ARGS_FMT)) != -1) {
 		switch (ch) {
@@ -1021,17 +1024,42 @@ pre_parse_args(int argc, char **argv) {
 					argv[0], isc_commandline_option);
 			fprintf(stderr, "usage: nsupdate [-dD] [-L level] [-l]"
 				"[-g | -o | -y keyname:secret | -k keyfile] "
-				"[-v] [-V] [filename]\n");
+				"[-v] [-V] [-P] [-T] [filename]\n");
 			exit(1);
+
+		case 'P':
+			for (t = 0xff00; t <= 0xfffe; t++) {
+				if (dns_rdatatype_ismeta(t))
+					continue;
+				dns_rdatatype_format(t, buf, sizeof(buf));
+				if (strncmp(buf, "TYPE", 4) != 0)
+					fprintf(stdout, "%s\n", buf);
+			}
+			doexit = ISC_TRUE;
+			break;
+
+		case 'T':
+			for (t = 1; t <= 0xfeff; t++) {
+				if (dns_rdatatype_ismeta(t))
+					continue;
+				dns_rdatatype_format(t, buf, sizeof(buf));
+				if (strncmp(buf, "TYPE", 4) != 0)
+					fprintf(stdout, "%s\n", buf);
+			}
+			doexit = ISC_TRUE;
+			break;
 
 		case 'V':
 			version();
-			exit(1);
+			doexit = ISC_TRUE;
+			break;
 
 		default:
 			break;
 		}
 	}
+	if (doexit)
+		exit(0);
 	isc_commandline_reset = ISC_TRUE;
 	isc_commandline_index = 1;
 }
@@ -1347,7 +1375,6 @@ make_prereq(char *cmdline, isc_boolean_t ispositive, isc_boolean_t isrrset) {
 	rdata->rdclass = rdatalist->rdclass;
 	rdata->type = rdatatype;
 	ISC_LIST_APPEND(rdatalist->rdata, rdata, link);
-	dns_rdataset_init(rdataset);
 	dns_rdatalist_tordataset(rdatalist, rdataset);
 	ISC_LIST_INIT(name->list);
 	ISC_LIST_APPEND(name->list, rdataset, link);
@@ -1843,7 +1870,6 @@ update_addordelete(char *cmdline, isc_boolean_t isdelete) {
 	rdatalist->covers = rdatatype;
 	rdatalist->ttl = (dns_ttl_t)ttl;
 	ISC_LIST_APPEND(rdatalist->rdata, rdata, link);
-	dns_rdataset_init(rdataset);
 	dns_rdatalist_tordataset(rdatalist, rdataset);
 	ISC_LIST_INIT(name->list);
 	ISC_LIST_APPEND(name->list, rdataset, link);

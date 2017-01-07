@@ -120,7 +120,7 @@ then
 fi
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
 eval count=`cat dig.out.2.test$n`
-[ $count -le 50 ] || ret=1
+[ $count -le 50 ] || { ret=1; echo "I: count ($count) !<= 50"; }
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
@@ -134,7 +134,7 @@ $DIG $DIGOPTS @10.53.0.3 indirect6.example.org > dig.out.1.test$n || ret=1
 grep "status: NOERROR" dig.out.1.test$n > /dev/null || ret=1
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
 eval count=`cat dig.out.2.test$n`
-[ $count -le 50 ] || ret=1
+[ $count -le 50 ] || { ret=1; echo "I: count ($count) !<= 50"; }
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
@@ -156,7 +156,7 @@ then
 fi
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
 eval count=`cat dig.out.2.test$n`
-[ $count -le 40 ] || ret=1
+[ $count -le 40 ] || { ret=1; echo "I: count ($count) !<= 40"; }
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
@@ -170,7 +170,7 @@ $DIG $DIGOPTS @10.53.0.3 indirect8.example.org > dig.out.1.test$n || ret=1
 grep "status: NOERROR" dig.out.1.test$n > /dev/null || ret=1
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
 eval count=`cat dig.out.2.test$n`
-[ $count -le 40 ] || ret=1
+[ $count -le 40 ] || { ret=1; echo "I: count ($count) !<= 40"; }
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
@@ -185,7 +185,7 @@ eval count=`cat dig.out.2.test$n`
 [ $count -lt 50 ] || ret=1
 $DIG $DIGOPTS +short @10.53.0.7 count txt > dig.out.3.test$n || ret=1
 eval count=`cat dig.out.3.test$n`
-[ $count -lt 50 ] || ret=1
+[ $count -lt 50 ] || { ret=1; echo "I: count ($count) !<= 50";  }
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

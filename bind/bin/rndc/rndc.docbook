@@ -18,7 +18,7 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="man.rndc">
   <info>
-    <date>2013-12-04</date>
+    <date>2014-08-15</date>
   </info>
   <refentryinfo>
     <corpname>ISC</corpname>
@@ -61,6 +61,7 @@
       <arg choice="opt" rep="norepeat"><option>-k <replaceable class="parameter">key-file</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-s <replaceable class="parameter">server</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-p <replaceable class="parameter">port</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-q</option></arg>
       <arg choice="opt" rep="norepeat"><option>-V</option></arg>
       <arg choice="opt" rep="norepeat"><option>-y <replaceable class="parameter">key_id</replaceable></option></arg>
       <arg choice="req" rep="norepeat">command</arg>
@@ -79,12 +80,14 @@
       arguments.
     </para>
     <para><command>rndc</command>
-      communicates with the name server
-      over a TCP connection, sending commands authenticated with
-      digital signatures.  In the current versions of
+      communicates with the name server over a TCP connection, sending
+      commands authenticated with digital signatures.  In the current
+      versions of
       <command>rndc</command> and <command>named</command>,
-      the only supported authentication algorithm is HMAC-MD5,
-      which uses a shared secret on each end of the connection.
+      the only supported authentication algorithms are HMAC-MD5
+      (for compatibility), HMAC-SHA1, HMAC-SHA224, HMAC-SHA256
+      (default), HMAC-SHA384 and HMAC-SHA512.
+      They use a shared secret on each end of the connection.
       This provides TSIG-style authentication for the command
       request and the name server's response.  All commands sent
       over the channel must be signed by a key_id known to the
@@ -161,6 +164,16 @@
 	    <replaceable class="parameter">port</replaceable>
 	    instead
 	    of BIND 9's default control channel port, 953.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-q</term>
+	<listitem>
+	  <para>
+	    Quiet mode: Message text returned by the server
+	    will not be printed except when there is an error.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -254,7 +267,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><userinput>delzone <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional> </userinput></term>
+	<term><userinput>delzone <optional>-clean</optional> <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional> </userinput></term>
 	<listitem>
 	  <para>
 	    Delete a zone while the server is running.
@@ -263,7 +276,17 @@
 	    in this manner.
 	  </para>
 	  <para>
-	    See also <command>rndc addzone</command>
+	    If the <option>-clean</option> is specified,
+	    the zone's master file (and journal file, if any)
+	    will be deleted along with the zone.  Without the
+	    <option>-clean</option> option, zone files must
+	    be cleaned up by hand.  (If the zone is of
+	    type "slave" or "stub", the files needing to
+	    be cleaned up will be reported in the output
+	    of the <command>rndc delzone</command> command.)
+	  </para>
+	  <para>
+	    See also <command>rndc addzone</command>.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -296,8 +319,8 @@
 	<term><userinput>flushname</userinput> <replaceable>name</replaceable> <optional><replaceable>view</replaceable></optional> </term>
 	<listitem>
 	  <para>
-	    Flushes the given name from the view's DNS cache
-	    and, if applicable, from the view's nameserver address
+	    Flushes the given name from the server's DNS cache
+	    and, if applicable, from the server's nameserver address
 	    database or bad-server cache.
 	  </para>
 	</listitem>
@@ -308,9 +331,8 @@
 	<listitem>
 	  <para>
 	    Flushes the given name, and all of its subdomains,
-	    from the view's DNS cache.  Note that this does
-	    <emphasis>not</emphasis> affect he server's address
-	    database or bad-server cache.
+	    from the server's DNS cache, the address database,
+	    and the bad server cache.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -371,6 +393,9 @@
 	    allow dynamic DNS.
 	    (See "Dynamic Update Policies" in the Administrator
 	    Reference Manual for more details.)
+	  </para>
+	  <para>
+	    See also <command>rndc loadkeys</command>.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -492,6 +517,18 @@
       </varlistentry>
 
       <varlistentry>
+	<term><userinput>scan</userinput></term>
+	<listitem>
+	  <para>
+	     Scan the list of available network interfaces
+	     for changes, without performing a full
+	     <command>reconfig</command> or waiting for the
+	     <command>interface-interval</command> timer.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
 	<term><userinput>secroots <optional><replaceable>view ...</replaceable></optional></userinput></term>
 	<listitem>
 	  <para>
@@ -576,8 +613,10 @@
 	    defines the number of additional times to apply
 	    the algorithm when generating an NSEC3 hash.  The
 	    <option>salt</option> is a string of data expressed
-	    in hexadecimal, or a hyphen (`-') if no salt is
-	    to be used.
+	    in hexadecimal, a hyphen (`-') if no salt is
+	    to be used, or the keyword <literal>auto</literal>,
+	    which causes <command>named</command> to generate a
+	    random 64-bit salt.
 	  </para>
 	  <para>
 	    So, for example, to create an NSEC3 chain using
@@ -723,6 +762,23 @@
 	    set to <userinput>yes</userinput> or
 	    <userinput>auto</userinput> to be effective.
 	    It defaults to enabled.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>zonestatus <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional></userinput></term>
+	<listitem>
+	  <para>
+	    Displays the current status of the given zone,
+	    including the master file name and any include
+	    files from which it was loaded, when it was most
+	    recently loaded, the current serial number, the
+	    number of nodes, whether the zone supports
+	    dynamic updates, whether the zone is DNSSEC
+	    signed, whether it uses automatic DNSSEC key
+	    management or inline signing, and the scheduled
+	    refresh or expiry times for the zone.
 	  </para>
 	</listitem>
       </varlistentry>

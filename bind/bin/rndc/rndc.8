@@ -19,12 +19,12 @@
 .\"     Title: rndc
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 2013-12-04
+.\"      Date: 2014-08-15
 .\"    Manual: BIND9
 .\"    Source: ISC
 .\"  Language: English
 .\"
-.TH "RNDC" "8" "2013\-12\-04" "ISC" "BIND9"
+.TH "RNDC" "8" "2014\-08\-15" "ISC" "BIND9"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -48,7 +48,7 @@
 rndc \- name server control utility
 .SH "SYNOPSIS"
 .HP \w'\fBrndc\fR\ 'u
-\fBrndc\fR [\fB\-b\ \fR\fB\fIsource\-address\fR\fR] [\fB\-c\ \fR\fB\fIconfig\-file\fR\fR] [\fB\-k\ \fR\fB\fIkey\-file\fR\fR] [\fB\-s\ \fR\fB\fIserver\fR\fR] [\fB\-p\ \fR\fB\fIport\fR\fR] [\fB\-V\fR] [\fB\-y\ \fR\fB\fIkey_id\fR\fR] {command}
+\fBrndc\fR [\fB\-b\ \fR\fB\fIsource\-address\fR\fR] [\fB\-c\ \fR\fB\fIconfig\-file\fR\fR] [\fB\-k\ \fR\fB\fIkey\-file\fR\fR] [\fB\-s\ \fR\fB\fIserver\fR\fR] [\fB\-p\ \fR\fB\fIport\fR\fR] [\fB\-q\fR] [\fB\-V\fR] [\fB\-y\ \fR\fB\fIkey_id\fR\fR] {command}
 .SH "DESCRIPTION"
 .PP
 \fBrndc\fR
@@ -62,7 +62,7 @@ is invoked with no command line options or arguments, it prints a short summary 
 communicates with the name server over a TCP connection, sending commands authenticated with digital signatures\&. In the current versions of
 \fBrndc\fR
 and
-\fBnamed\fR, the only supported authentication algorithm is HMAC\-MD5, which uses a shared secret on each end of the connection\&. This provides TSIG\-style authentication for the command request and the name server\*(Aqs response\&. All commands sent over the channel must be signed by a key_id known to the server\&.
+\fBnamed\fR, the only supported authentication algorithms are HMAC\-MD5 (for compatibility), HMAC\-SHA1, HMAC\-SHA224, HMAC\-SHA256 (default), HMAC\-SHA384 and HMAC\-SHA512\&. They use a shared secret on each end of the connection\&. This provides TSIG\-style authentication for the command request and the name server\*(Aqs response\&. All commands sent over the channel must be signed by a key_id known to the server\&.
 .PP
 \fBrndc\fR
 reads a configuration file to determine how to contact the name server and decide what algorithm and key it should use\&.
@@ -109,6 +109,11 @@ configuration file will be used\&.
 Send commands to TCP port
 \fIport\fR
 instead of BIND 9\*(Aqs default control channel port, 953\&.
+.RE
+.PP
+\-q
+.RS 4
+Quiet mode: Message text returned by the server will not be printed except when there is an error\&.
 .RE
 .PP
 \-V
@@ -171,14 +176,22 @@ See also
 \fBrndc delzone\fR\&.
 .RE
 .PP
-\fBdelzone \fR\fB\fIzone\fR\fR\fB \fR\fB[\fIclass\fR [\fIview\fR]]\fR\fB \fR
+\fBdelzone \fR\fB[\-clean]\fR\fB \fR\fB\fIzone\fR\fR\fB \fR\fB[\fIclass\fR [\fIview\fR]]\fR\fB \fR
 .RS 4
 Delete a zone while the server is running\&. Only zones that were originally added via
 \fBrndc addzone\fR
 can be deleted in this manner\&.
 .sp
+If the
+\fB\-clean\fR
+is specified, the zone\*(Aqs master file (and journal file, if any) will be deleted along with the zone\&. Without the
+\fB\-clean\fR
+option, zone files must be cleaned up by hand\&. (If the zone is of type "slave" or "stub", the files needing to be cleaned up will be reported in the output of the
+\fBrndc delzone\fR
+command\&.)
+.sp
 See also
-\fBrndc addzone\fR
+\fBrndc addzone\fR\&.
 .RE
 .PP
 \fBdumpdb \fR\fB[\-all|\-cache|\-zone|\-adb|\-bad]\fR\fB \fR\fB[\fIview \&.\&.\&.\fR]\fR
@@ -195,14 +208,12 @@ Flushes the server\*(Aqs cache\&.
 .PP
 \fBflushname\fR \fIname\fR [\fIview\fR]
 .RS 4
-Flushes the given name from the view\*(Aqs DNS cache and, if applicable, from the view\*(Aqs nameserver address database or bad\-server cache\&.
+Flushes the given name from the server\*(Aqs DNS cache and, if applicable, from the server\*(Aqs nameserver address database or bad\-server cache\&.
 .RE
 .PP
 \fBflushtree\fR \fIname\fR [\fIview\fR]
 .RS 4
-Flushes the given name, and all of its subdomains, from the view\*(Aqs DNS cache\&. Note that this does
-\fInot\fR
-affect he server\*(Aqs address database or bad\-server cache\&.
+Flushes the given name, and all of its subdomains, from the server\*(Aqs DNS cache, the address database, and the bad server cache\&.
 .RE
 .PP
 \fBfreeze \fR\fB[\fIzone\fR [\fIclass\fR [\fIview\fR]]]\fR
@@ -235,6 +246,9 @@ This command requires that the
 \fBauto\-dnssec\fR
 zone option be set to
 maintain, and also requires the zone to be configured to allow dynamic DNS\&. (See "Dynamic Update Policies" in the Administrator Reference Manual for more details\&.)
+.sp
+See also
+\fBrndc loadkeys\fR\&.
 .RE
 .PP
 \fBnotify \fR\fB\fIzone\fR\fR\fB \fR\fB[\fIclass\fR [\fIview\fR]]\fR
@@ -309,6 +323,15 @@ If the zone is configured to use
 \fBinline\-signing\fR, the signed version of the zone is discarded; after the retransfer of the unsigned version is complete, the signed version will be regenerated with all new signatures\&.
 .RE
 .PP
+\fBscan\fR
+.RS 4
+Scan the list of available network interfaces for changes, without performing a full
+\fBreconfig\fR
+or waiting for the
+\fBinterface\-interval\fR
+timer\&.
+.RE
+.PP
 \fBsecroots \fR\fB[\fIview \&.\&.\&.\fR]\fR
 .RS 4
 Dump the server\*(Aqs security roots to the secroots file for the specified views\&. If no view is specified, security roots for all views are dumped\&.
@@ -358,7 +381,10 @@ or
 \fBiterations\fR
 defines the number of additional times to apply the algorithm when generating an NSEC3 hash\&. The
 \fBsalt\fR
-is a string of data expressed in hexadecimal, or a hyphen (`\-\*(Aq) if no salt is to be used\&.
+is a string of data expressed in hexadecimal, a hyphen (`\-\*(Aq) if no salt is to be used, or the keyword
+auto, which causes
+\fBnamed\fR
+to generate a random 64\-bit salt\&.
 .sp
 So, for example, to create an NSEC3 chain using the SHA\-1 hash algorithm, no opt\-out flag, 10 iterations, and a salt value of "FFFF", use:
 \fBrndc signing \-nsec3param 1 0 10 FFFF \fR\fB\fIzone\fR\fR\&. To set the opt\-out flag, 15 iterations, and no salt, use:
@@ -446,6 +472,11 @@ also needs to be set to
 or
 \fBauto\fR
 to be effective\&. It defaults to enabled\&.
+.RE
+.PP
+\fBzonestatus \fR\fB\fIzone\fR\fR\fB \fR\fB[\fIclass\fR [\fIview\fR]]\fR
+.RS 4
+Displays the current status of the given zone, including the master file name and any include files from which it was loaded, when it was most recently loaded, the current serial number, the number of nodes, whether the zone supports dynamic updates, whether the zone is DNSSEC signed, whether it uses automatic DNSSEC key management or inline signing, and the scheduled refresh or expiry times for the zone\&.
 .RE
 .SH "LIMITATIONS"
 .PP

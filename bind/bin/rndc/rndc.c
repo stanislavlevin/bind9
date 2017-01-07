@@ -76,6 +76,7 @@ static unsigned int remoteport = 0;
 static isc_socketmgr_t *socketmgr = NULL;
 static unsigned char databuf[2048];
 static isccc_ccmsg_t ccmsg;
+static isc_uint32_t algorithm;
 static isccc_region_t secret;
 static isc_boolean_t failed = ISC_FALSE;
 static isc_boolean_t c_flag = ISC_FALSE;
@@ -86,6 +87,7 @@ static char *args;
 static char program[256];
 static isc_socket_t *sock = NULL;
 static isc_uint32_t serial;
+static isc_boolean_t quiet = ISC_FALSE;
 
 static void rndc_startconnect(isc_sockaddr_t *addr, isc_task_t *task);
 
@@ -102,7 +104,7 @@ command is one of the following:\n\
 \n\
   addzone zone [class [view]] { zone-options }\n\
 		Add zone to given view. Requires new-zone-file option.\n\
-  delzone zone [class [view]]\n\
+  delzone [-clean] zone [class [view]]\n\
 		Removes zone from given view. Requires new-zone-file option.\n\
   dumpdb [-all|-cache|-zones|-adb|-bad|-fail] [view ...]\n\
 		Dump cache(s) to the dump file (named_dump.db).\n\
@@ -134,6 +136,7 @@ command is one of the following:\n\
 		Reload a single zone.\n\
   retransfer zone [class [view]]\n\
 		Retransfer a single zone without checking serial number.\n\
+  scan		Scan available network interfaces for changes.\n\
   secroots [view ...]\n\
 		Write security roots to the secroots file.\n\
   sign zone [class [view]]\n\
@@ -173,6 +176,8 @@ command is one of the following:\n\
 		configured and TKEY-negotiated keys.\n\
   validation newstate [view]\n\
 		Enable / disable DNSSEC validation.\n\
+  zonestatus zone [class [view]]\n\
+		Display the current status of a zone.\n\
 \n\
 Version: %s\n",
 		progname, version);
@@ -246,7 +251,8 @@ rndc_recvdone(isc_task_t *task, isc_event_t *event) {
 	source.rstart = isc_buffer_base(&ccmsg.buffer);
 	source.rend = isc_buffer_used(&ccmsg.buffer);
 
-	DO("parse message", isccc_cc_fromwire(&source, &response, &secret));
+	DO("parse message",
+	   isccc_cc_fromwire(&source, &response, algorithm, &secret));
 
 	data = isccc_alist_lookup(response, "_data");
 	if (!isccc_alist_alistp(data))
@@ -263,8 +269,8 @@ rndc_recvdone(isc_task_t *task, isc_event_t *event) {
 
 	result = isccc_cc_lookupstring(data, "text", &textmsg);
 	if (result == ISC_R_SUCCESS) {
-		if (strlen(textmsg) != 0U)
-			printf("%s\n", textmsg);
+		if ((!quiet || failed) && strlen(textmsg) != 0U)
+			fprintf(failed ? stderr : stdout, "%s\n", textmsg);
 	} else if (result != ISC_R_NOTFOUND)
 		fprintf(stderr, "%s: parsing response failed: %s\n",
 			progname, isc_result_totext(result));
@@ -301,7 +307,8 @@ rndc_recvnonce(isc_task_t *task, isc_event_t *event) {
 		      "* the remote server is using an older version of"
 		      " the command protocol,\n"
 		      "* this host is not authorized to connect,\n"
-		      "* the clocks are not synchronized, or\n"
+		      "* the clocks are not synchronized,\n"
+		      "* the key signing algorithm is incorrect, or\n"
 		      "* the key is invalid.");
 
 	if (ccmsg.result != ISC_R_SUCCESS)
@@ -310,7 +317,8 @@ rndc_recvnonce(isc_task_t *task, isc_event_t *event) {
 	source.rstart = isc_buffer_base(&ccmsg.buffer);
 	source.rend = isc_buffer_used(&ccmsg.buffer);
 
-	DO("parse message", isccc_cc_fromwire(&source, &response, &secret));
+	DO("parse message",
+	   isccc_cc_fromwire(&source, &response, algorithm, &secret));
 
 	_ctrl = isccc_alist_lookup(response, "_ctrl");
 	if (!isccc_alist_alistp(_ctrl))
@@ -337,7 +345,8 @@ rndc_recvnonce(isc_task_t *task, isc_event_t *event) {
 	}
 	message.rstart = databuf + 4;
 	message.rend = databuf + sizeof(databuf);
-	DO("render message", isccc_cc_towire(request, &message, &secret));
+	DO("render message",
+	   isccc_cc_towire(request, &message, algorithm, &secret));
 	len = sizeof(databuf) - REGION_SIZE(message);
 	isc_buffer_init(&b, databuf, 4);
 	isc_buffer_putuint32(&b, len - 4);
@@ -399,7 +408,8 @@ rndc_connected(isc_task_t *task, isc_event_t *event) {
 		fatal("out of memory");
 	message.rstart = databuf + 4;
 	message.rend = databuf + sizeof(databuf);
-	DO("render message", isccc_cc_towire(request, &message, &secret));
+	DO("render message",
+	   isccc_cc_towire(request, &message, algorithm, &secret));
 	len = sizeof(databuf) - REGION_SIZE(message);
 	isc_buffer_init(&b, databuf, 4);
 	isc_buffer_putuint32(&b, len - 4);
@@ -479,7 +489,7 @@ parse_config(isc_mem_t *mctx, isc_log_t *log, const char *keyname,
 	const cfg_obj_t *address = NULL;
 	const cfg_listelt_t *elt;
 	const char *secretstr;
-	const char *algorithm;
+	const char *algorithmstr;
 	static char secretarray[1024];
 	const cfg_type_t *conftype = &cfg_type_rndcconf;
 	isc_boolean_t key_only = ISC_FALSE;
@@ -583,10 +593,22 @@ parse_config(isc_mem_t *mctx, isc_log_t *log, const char *keyname,
 		fatal("key must have algorithm and secret");
 
 	secretstr = cfg_obj_asstring(secretobj);
-	algorithm = cfg_obj_asstring(algorithmobj);
+	algorithmstr = cfg_obj_asstring(algorithmobj);
 
-	if (strcasecmp(algorithm, "hmac-md5") != 0)
-		fatal("unsupported algorithm: %s", algorithm);
+	if (strcasecmp(algorithmstr, "hmac-md5") == 0)
+		algorithm = ISCCC_ALG_HMACMD5;
+	else if (strcasecmp(algorithmstr, "hmac-sha1") == 0)
+		algorithm = ISCCC_ALG_HMACSHA1;
+	else if (strcasecmp(algorithmstr, "hmac-sha224") == 0)
+		algorithm = ISCCC_ALG_HMACSHA224;
+	else if (strcasecmp(algorithmstr, "hmac-sha256") == 0)
+		algorithm = ISCCC_ALG_HMACSHA256;
+	else if (strcasecmp(algorithmstr, "hmac-sha384") == 0)
+		algorithm = ISCCC_ALG_HMACSHA384;
+	else if (strcasecmp(algorithmstr, "hmac-sha512") == 0)
+		algorithm = ISCCC_ALG_HMACSHA512;
+	else
+		fatal("unsupported algorithm: %s", algorithmstr);
 
 	secret.rstart = (unsigned char *)secretarray;
 	secret.rend = (unsigned char *)secretarray + sizeof(secretarray);
@@ -703,8 +725,8 @@ parse_config(isc_mem_t *mctx, isc_log_t *log, const char *keyname,
 
 int
 main(int argc, char **argv) {
-	isc_boolean_t show_final_mem = ISC_FALSE;
 	isc_result_t result = ISC_R_SUCCESS;
+	isc_boolean_t show_final_mem = ISC_FALSE;
 	isc_taskmgr_t *taskmgr = NULL;
 	isc_task_t *task = NULL;
 	isc_log_t *log = NULL;
@@ -737,7 +759,7 @@ main(int argc, char **argv) {
 
 	isc_commandline_errprint = ISC_FALSE;
 
-	while ((ch = isc_commandline_parse(argc, argv, "b:c:hk:Mmp:s:Vy:"))
+	while ((ch = isc_commandline_parse(argc, argv, "b:c:hk:Mmp:qs:Vy:"))
 	       != -1) {
 		switch (ch) {
 		case 'b':
@@ -774,6 +796,10 @@ main(int argc, char **argv) {
 			if (remoteport > 65535 || remoteport == 0)
 				fatal("port '%s' out of range",
 				      isc_commandline_argument);
+			break;
+
+		case 'q':
+			quiet = ISC_TRUE;
 			break;
 
 		case 's':

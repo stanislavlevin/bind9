@@ -12,9 +12,8 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-rm -f badoptoption.out 
 rm -f nametoolong.out 
-rm -f noquestions.out 
 rm -f twoquestions.out 
+rm -f noquestions.out 
 rm -f ns*/named.run
 rm -f ns*/named.memstats

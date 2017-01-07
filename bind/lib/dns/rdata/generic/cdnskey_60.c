@@ -14,13 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id$ */
-
-/*
- * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
- */
-
-/* RFC2535 */
+/* draft-ietf-dnsop-delegation-trust-maintainance-14 */
 
 #ifndef RDATA_GENERIC_CDNSKEY_60_C
 #define RDATA_GENERIC_CDNSKEY_60_C

@@ -2,9 +2,9 @@ Copyright (C) 2004, 2005, 2007-2009, 2012-2014  Internet Systems Consortium, Inc
 Copyright (C) 2001, 2003  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
-NOTES ON BIND 9.9 FOR WINDOWS:
+NOTES ON BIND 9.10 FOR WINDOWS:
 
-BIND 9.9 is known to run on Windows XP, Vista, Windows 7,
+BIND 9.10 is known to run on Windows XP, Vista, Windows 7,
 and Windows Server 2003 and higher.
   
 KIT INSTALLATION:
@@ -122,9 +122,9 @@ INCLUDED TOOLS:
 The following tools have been built for Windows: dig, nslookup,
 host, nsupdate, ddns-confgen, rndc, rndc-confgen, named-checkconf,
 named-checkzone, named-compilezone, named-journalprint,
-dnssec-importkey, dnssec-keygen, dnssec-signzone, dnssec-dsfromkey,
-dnssec-keyfromlabel, dnssec-revoke, dnssec-settime and
-dnssec-verify.  The latter tools are for use with DNSSEC.  All tools
+named-rrchecker, dnssec-importkey, dnssec-keygen, dnssec-signzone,
+dnssec-dsfromkey, dnssec-keyfromlabel, dnssec-revoke, dnssec-settime
+and dnssec-verify.  The latter tools are for use with DNSSEC.  All tools
 are installed in the "%ProgramFiles%\ISC BIND 9\bin" directory.
 
 IMPORTANT NOTE ON USING THE TOOLS:

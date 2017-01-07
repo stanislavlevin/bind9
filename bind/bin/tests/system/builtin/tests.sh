@@ -44,7 +44,6 @@ if [ $ret != 0 ] ; then echo I:failed; status=`expr $status + $ret`; fi
 
 VERSION=`../../../../isc-config.sh  --version | cut -d = -f 2`
 HOSTNAME=`./gethostname`
-NSID=`./gethostname | sed -e 's/\(.\)/(\1)/g' -e 's/)(/) (/g'`
 
 n=`expr $n + 1`
 ret=0
@@ -107,7 +106,7 @@ n=`expr $n + 1`
 ret=0
 echo "I:Checking that server-id hostname works for EDNS name server ID request ($n)"
 $DIG +norec +nsid foo @10.53.0.2 -p 5300 > dig.out.ns2.$n
-grep "^; NSID: .* $NSID" dig.out.ns2.$n > /dev/null || ret=1
+grep "^; NSID: .* (\"$HOSTNAME\")$" dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ] ; then echo I:failed; status=`expr $status + $ret`; fi
 
 n=`expr $n + 1`
@@ -121,7 +120,7 @@ n=`expr $n + 1`
 ret=0
 echo "I:Checking that custom server-id works for EDNS name server ID request ($n)"
 $DIG +norec +nsid foo @10.53.0.3 -p 5300 > dig.out.ns3.$n
-grep "^; NSID: .* (t) (h) (i) (s) (.) (i) (s) (.) (a) (.) (t) (e) (s) (t) (.) (o) (f) (.) (s) (e) (r) (v) (e) (r) (-) (i) (d)" dig.out.ns3.$n > /dev/null || ret=1
+grep "^; NSID: .* (\"this.is.a.test.of.server-id\")$" dig.out.ns3.$n > /dev/null || ret=1
 if [ $ret != 0 ] ; then echo I:failed; status=`expr $status + $ret`; fi
 
 exit $status

@@ -21,8 +21,9 @@ top_srcdir =	@top_srcdir@
 
 VERSION=@BIND9_VERSION@
 
-SUBDIRS =	make unit lib bin doc @LIBEXPORT@
+SUBDIRS =	make unit lib bin doc
 TARGETS =
+PREREQS =	bind.keys.h
 
 MANPAGES =	isc-config.sh.1
 
@@ -35,6 +36,9 @@ MANOBJS =	${MANPAGES} ${HTMLPAGES}
 newrr:
 	cd lib/dns; ${MAKE} newrr
 
+bind.keys.h: ${top_srcdir}/bind.keys ${srcdir}/util/bindkeys.pl
+	${PERL} ${srcdir}/util/bindkeys.pl < ${top_srcdir}/bind.keys > $@
+
 distclean::
 	rm -f config.cache config.h config.log config.status TAGS
 	rm -f libtool isc-config.sh configure.lineno
@@ -44,6 +48,7 @@ distclean::
 # to make it.
 maintainer-clean::
 	rm -f configure
+	rm -f bind.keys.h
 
 docclean manclean maintainer-clean::
 	rm -f ${MANOBJS}
