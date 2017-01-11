@@ -9236,6 +9236,7 @@ load_configuration(const char *filename, named_server_t *server,
 	 */
 	if (first_time) {
 		named_os_changeuser();
+		named_os_dropprivs();
 	}
 
 	/*

@@ -39,7 +39,9 @@
 #include <isc/result.h>
 #include <isc/strerr.h>
 #include <isc/string.h>
+#ifndef WANT_SETPERMS
 #include <isc/util.h>
+#endif /* WANT_SETPERMS */
 
 #include <named/globals.h>
 #include <named/main.h>
@@ -73,7 +75,7 @@ static void
 linux_setcaps(cap_t caps) {
 	char strbuf[ISC_STRERRORSIZE];
 
-	if ((getuid() != 0 && !non_root_caps) || non_root) {
+	if ((caps && getuid() != 0 && !non_root_caps) || non_root) {
 		return;
 	}
 	if (cap_set_proc(caps) < 0) {
@@ -244,6 +246,16 @@ linux_keepcaps(void) {
 		if (getuid() != 0) {
 			non_root = true;
 		}
+	}
+}
+
+static void
+linux_losecaps(void) {
+	if (prctl(PR_SET_KEEPCAPS, 0, 0, 0, 0) < 0 && errno != EINVAL) {
+		char strbuf[ISC_STRERRORSIZE];
+		strerror_r(errno, strbuf, sizeof(strbuf));
+		named_main_earlyfatal("prctl(PR_SET_KEEPCAPS, 0) failed: %s",
+				   strbuf);
 	}
 }
 
@@ -453,7 +465,7 @@ named_os_changeuser(void) {
 		named_main_earlyfatal("setgid(): %s", strbuf);
 	}
 
-	if (setuid(runas_pw->pw_uid) < 0) {
+	if (setresuid(runas_pw->pw_uid, runas_pw->pw_uid, -1) < 0) {
 		strerror_r(errno, strbuf, sizeof(strbuf));
 		named_main_earlyfatal("setuid(): %s", strbuf);
 	}
@@ -470,6 +482,31 @@ named_os_changeuser(void) {
 	}
 
 	linux_minprivs();
+#endif /* if defined(HAVE_SYS_CAPABILITY_H) */
+}
+
+void
+named_os_dropprivs(void) {
+	char strbuf[ISC_STRERRORSIZE];
+	if (runas_pw == NULL) {
+		return;
+	}
+	if (setresuid(runas_pw->pw_uid, runas_pw->pw_uid, runas_pw->pw_uid) < 0) {
+		strerror_r(errno, strbuf, sizeof(strbuf));
+		named_main_earlyfatal("setresuid(): %s", strbuf);
+	}
+
+#if defined(HAVE_SYS_CAPABILITY_H)
+	/*
+	 * Restore the ability of named to drop core after the setuid()
+	 * call has disabled it.
+	 */
+	if (prctl(PR_SET_DUMPABLE, 1, 0, 0, 0) < 0) {
+		strerror_r(errno, strbuf, sizeof(strbuf));
+		named_main_earlywarning("prctl(PR_SET_DUMPABLE) failed: %s",
+					strbuf);
+	}
+
 #endif /* if defined(HAVE_SYS_CAPABILITY_H) */
 }
 
@@ -505,7 +542,7 @@ named_os_minprivs(void) {
 #if defined(HAVE_SYS_CAPABILITY_H)
 	linux_keepcaps();
 	named_os_changeuser();
-	linux_minprivs();
+	linux_losecaps();
 #endif /* if defined(HAVE_SYS_CAPABILITY_H) */
 }
 
@@ -574,18 +611,21 @@ static int
 mkdirpath(char *filename, void (*report)(const char *, ...)) {
 	char *slash = strrchr(filename, '/');
 	char strbuf[ISC_STRERRORSIZE];
-	unsigned int mode;
 
 	if (slash != NULL && slash != filename) {
 		struct stat sb;
 		*slash = '\0';
 
 		if (stat(filename, &sb) == -1) {
+#ifdef WANT_SETPERMS
+			unsigned int mode;
 			if (errno != ENOENT) {
+#endif /* WANT_SETPERMS */
 				strerror_r(errno, strbuf, sizeof(strbuf));
 				(*report)("couldn't stat '%s': %s", filename,
 					  strbuf);
 				goto error;
+#ifdef WANT_SETPERMS
 			}
 			if (mkdirpath(filename, report) == -1) {
 				goto error;
@@ -616,6 +656,7 @@ mkdirpath(char *filename, void (*report)(const char *, ...)) {
 				(*report)("couldn't chown '%s': %s", filename,
 					  strbuf);
 			}
+#endif /* WANT_SETPERMS */
 		}
 		*slash = '/';
 	}
@@ -626,6 +667,7 @@ error:
 	return (-1);
 }
 
+#ifdef WANT_SETPERMS
 #if !HAVE_SYS_CAPABILITY_H
 static void
 setperms(uid_t uid, gid_t gid) {
@@ -675,6 +717,7 @@ setperms(uid_t uid, gid_t gid) {
 #endif /* if defined(HAVE_SETEUID) */
 }
 #endif /* HAVE_SYS_CAPABILITY_H */
+#endif /* WANT_SETPERMS */
 
 FILE *
 named_os_openfile(const char *filename, mode_t mode, bool switch_user) {
@@ -682,6 +725,9 @@ named_os_openfile(const char *filename, mode_t mode, bool switch_user) {
 	FILE *fp;
 	int fd;
 
+#ifndef WANT_SETPERMS
+	UNUSED(switch_user);
+#endif /* WANT_SETPERMS */
 	/*
 	 * Make the containing directory if it doesn't exist.
 	 */
@@ -698,6 +744,7 @@ named_os_openfile(const char *filename, mode_t mode, bool switch_user) {
 	}
 	free(f);
 
+#ifdef WANT_SETPERMS
 	if (switch_user && runas_pw != NULL) {
 		uid_t olduid = getuid();
 		gid_t oldgid = getgid();
@@ -731,7 +778,9 @@ named_os_openfile(const char *filename, mode_t mode, bool switch_user) {
 						"directory permissions "
 						"or reconfigure the filename.");
 		}
-	} else {
+	} else
+#endif /* WANT_SETPERMS */
+	{
 		fd = safe_open(filename, mode, false);
 	}
 

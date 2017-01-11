@@ -53,6 +53,9 @@ FILE *
 named_os_openfile(const char *filename, mode_t mode, bool switch_user);
 
 void
+named_os_dropprivs(void);
+
+void
 named_os_writepidfile(const char *filename, bool first_time);
 
 bool
