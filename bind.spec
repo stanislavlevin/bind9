@@ -224,9 +224,6 @@ s,@DOCDIR@,%docdir,g;
 s,@SBINDIR@,%_sbindir,g;
 ' --
 
-# XXX oldish stuff introduced in 9.9.6
-sed -i 's/AC_DEFINE(\(.*\), 1)/AC_DEFINE(\1, 1, [\1])/' configure.in
-
 sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.in
 
 %build
