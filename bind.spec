@@ -397,10 +397,12 @@ fi
 %ghost %attr(666,root,root) %_chrootdir/dev/*
 
 %files utils
+%_bindir/delv
 %_bindir/dig
 %_bindir/host
 %_bindir/nslookup
 %_bindir/nsupdate
+%_man1dir/delv.*
 %_man1dir/dig.*
 %_man1dir/host.*
 %_man1dir/nslookup.*
