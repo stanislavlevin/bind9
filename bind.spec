@@ -69,7 +69,7 @@ Obsoletes: bind-chroot, bind-debug, bind-slave, caching-nameserver
 # Because of /etc/syslog.d/ feature.
 Conflicts: syslogd < 1.4.1-alt11
 PreReq: bind-control chrooted syslogd-daemon
-PreReq: libbind = %version-%release
+PreReq: libbind = %EVR
 
 # due to %_chrootdir/dev/log
 BuildPreReq: coreutils
@@ -85,28 +85,28 @@ BuildPreReq: libcap-devel
 %package utils
 Summary: Utilities provided by ISC BIND
 Group: Networking/Other
-Requires: libbind = %version-%release
+Requires: libbind = %EVR
 
 %package -n libbind
 Summary: Shared library used by ISC BIND
 Group: System/Libraries
-Provides: libdns = %version-%release
-Provides: libisc = %version-%release
-Provides: libisccc = %version-%release
-Provides: libisccfg = %version-%release
-Provides: liblwres = %version-%release
+Provides: libdns = %EVR
+Provides: libisc = %EVR
+Provides: libisccc = %EVR
+Provides: libisccfg = %EVR
+Provides: liblwres = %EVR
 Obsoletes: libdns8, libdns9, libdns10, libdns11, libdns16
 Obsoletes: libisc4, libisc7, libisccc0, libisccfg0, liblwres1
 
 %package devel
 Summary: ISC BIND development libraries and headers
 Group: Development/C
-Requires: libbind = %version-%release
+Requires: libbind = %EVR
 
 %package devel-static
 Summary: ISC BIND static development libraries
 Group: Development/C
-Requires: %name-devel = %version-%release
+Requires: %name-devel = %EVR
 
 %package -n libisc-export
 Summary: ISC BIND exportable libraries to build third party applications with
@@ -117,7 +117,7 @@ Provides: %name-lite
 %package -n libisc-export-devel
 Summary: ISC BIND development anvironment for exportable libraries
 Group: Development/C
-Requires: libisc-export = %version-%release
+Requires: libisc-export = %EVR
 # RH compat
 Provides: %name-lite-devel
 
@@ -131,7 +131,7 @@ Prefix: %prefix
 Summary: Lightweight resolver daemon
 Group: System/Servers
 PreReq: /var/resolv, chkconfig, shadow-utils
-Requires: libbind = %version-%release
+Requires: libbind = %EVR
 
 %description
 The Berkeley Internet Name Domain (BIND) implements an Internet domain
