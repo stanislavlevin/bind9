@@ -350,6 +350,7 @@ fi
 %endif
 
 %files
+%_bindir/named-rrchecker
 %exclude %_sbindir/lwresd
 %exclude %_man8dir/lwresd*
 %_sbindir/*
@@ -360,6 +361,7 @@ fi
 %config(noreplace) %_sysconfdir/rndc.conf
 %_unitdir/bind.service
 
+%_man1dir/named-rrchecker.1*
 %_man5dir/*
 %_man8dir/*
 %_man1dir/arpaname*
