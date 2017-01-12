@@ -290,6 +290,8 @@ install -pm644 contrib/queryperf/README %buildroot%docdir/README.queryperf
 bzip2 -9q %buildroot%docdir/{*/*.txt,FAQ,CHANGES}
 rm -fv %buildroot%docdir/*/{Makefile*,README-SGML,*.dsl*,*.sh*,*.xml}
 
+%define _unpackaged_files_terminate_build 1
+
 %pre
 /usr/sbin/groupadd -r -f named
 /usr/sbin/useradd -r -g named -d %_chrootdir -s /dev/null -n -c "Domain Name Server" named >/dev/null 2>&1 ||:
