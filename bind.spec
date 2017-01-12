@@ -265,8 +265,13 @@ for n in localhost localdomain 127.in-addr.arpa empty; do
 done
 
 install -pm640 addon/rndc.key bind.keys %buildroot%_chrootdir%_sysconfdir/
-ln -snfr %buildroot%_chrootdir%_sysconfdir/{named.conf,bind.keys} \
+ln -snfr %buildroot%_sysconfdir/bind/{named.conf,bind.keys} \
 	%buildroot%_sysconfdir/
+
+# Create symlinks for unchrooted bind.
+ln -snf . %buildroot%_chrootdir%_sysconfdir/bind
+ln -snf ../zone %buildroot%_chrootdir%_sysconfdir/zone
+ln -snfr %buildroot%_chrootdir%_sysconfdir %buildroot%_sysconfdir/bind
 
 # Make use of syslogd-1.4.1-alt11 /etc/syslog.d/ feature.
 /usr/bin/mksock %buildroot%_chrootdir/dev/log
@@ -357,8 +362,9 @@ fi
 %exclude %_sbindir/lwresd
 %exclude %_man8dir/lwresd*
 %_sbindir/*
-%_sysconfdir/named.conf
+%_sysconfdir/bind
 %_sysconfdir/bind.keys
+%_sysconfdir/named.conf
 %config %_initdir/bind
 %config %_sysconfdir/sysconfig/bind
 %config(noreplace) %_sysconfdir/rndc.conf
@@ -392,6 +398,8 @@ fi
 %config(noreplace) %_chrootdir%_sysconfdir/*.conf
 %config(noreplace) %verify(not md5 mtime size) %_chrootdir%_sysconfdir/rndc.key
 %_chrootdir%_sysconfdir/bind.keys
+%attr(-,root,root) %_chrootdir%_sysconfdir/bind
+%attr(-,root,root) %_chrootdir%_sysconfdir/zone
 %config %_chrootdir/zone/localhost
 %config %_chrootdir/zone/localdomain
 %config %_chrootdir/zone/127.in-addr.arpa
