@@ -1,5 +1,5 @@
 Name: bind
-Version: 9.9.9
+Version: 9.10.4
 Release: alt1
 
 Summary: ISC BIND - DNS server
@@ -215,6 +215,7 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.in
 	--enable-linux-caps \
 	--enable-fetchlimit \
 	--enable-fixed-rrset \
+	--disable-seccomp \
 	 %{subst_with openssl} \
 	 %{subst_enable ipv6} \
 	 %{subst_enable static} \
@@ -436,6 +437,19 @@ fi
 %exclude %docdir/COPYRIGHT
 
 %changelog
+* Thu Jan 12 2017 Dmitry V. Levin <ldv@altlinux.org> 9.10.4-alt1
+- 9.9.9-P5 -> 9.10.4-P5 (closes: #30124, #32590).
+- Enabled multiprocessing support.
+- bind: bind.service: fixed EnvironmentFile.
+- bind: options.conf: fixed typo in comment (closes: #31359).
+- bind: enabled "fixed" ordering support in rrset-order statement.
+- bind: packaged named-rrchecker.
+- bind: imported "dynamic-db" statement support from Fedora
+  (by Sergey Bolshakov).
+- bind: placed chrooted mode under control(1) (by Sergey Bolshakov).
+- bind-devel: packaged bind9-config.
+- bind-utils: packaged delv.
+
 * Sat Jan 07 2017 Dmitry V. Levin <ldv@altlinux.org> 9.9.9-alt1
 - 9.9.8-P4 -> 9.9.9-P5.
 - Implemented early drop of linux capabilities.
