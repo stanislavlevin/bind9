@@ -258,6 +258,9 @@ popd # contrib/queryperf
 %install
 %makeinstall_std
 
+# Install additional headers.
+install -pm644 lib/isc/unix/errno2result.h %buildroot%_includedir/bind9/isc/
+
 # Install queryperf.
 install -pm755 contrib/queryperf/queryperf %buildroot%_sbindir/
 
