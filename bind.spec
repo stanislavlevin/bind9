@@ -336,8 +336,10 @@ fi
 
 %files devel
 %_libdir/*.so
+%_bindir/bind9-config
 %_bindir/isc-config.sh
 %_includedir/bind9
+%_man1dir/bind9-config.1*
 %_man3dir/*
 %dir %docdir
 %docdir/README.bind-devel
@@ -351,11 +353,6 @@ fi
 %exclude %_sbindir/lwresd
 %exclude %_man8dir/lwresd*
 %_sbindir/*
- 
-# TODO
-#    /usr/bin/bind9-config
-#    /usr/share/man/man1/bind9-config.1.gz
-
 %_sysconfdir/named.conf
 %_sysconfdir/bind.keys
 %config %_initdir/bind
