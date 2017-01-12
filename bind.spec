@@ -256,14 +256,6 @@ pushd contrib/queryperf
 popd # contrib/queryperf
 
 %install
-rln()
-{
-	local target=$1 && shift
-	local source=$1 && shift
-	target=`relative "$target" "$source"`
-	ln -snf "$target" "%buildroot$source"
-}
-
 %makeinstall_std
 
 # Install queryperf.
