@@ -212,11 +212,10 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.in
 	--with-randomdev=/dev/random \
 	--enable-threads \
 	--enable-linux-caps \
+	--enable-fetchlimit \
 	 %{subst_with openssl} \
 	 %{subst_enable ipv6} \
 	 %{subst_enable static} \
-	--enable-rrl \
-	--enable-fetchlimit \
 	--includedir=%{_includedir}/bind9 \
 	--disable-openssl-version-check \
 	--with-libtool \
