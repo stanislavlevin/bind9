@@ -6,13 +6,13 @@ After=network.target
 
 [Service]
 Type=forking
-EnvironmentFile=-/etc/sysconfig/named
+EnvironmentFile=-/etc/sysconfig/bind
 #Environment=KRB5_KTNAME=/etc/named.keytab
 PIDFile=/var/run/named.pid
 
 ExecStartPre=/etc/init.d/bind rndc_keygen
 ExecStartPre=/usr/sbin/named-checkconf -z /etc/named.conf
-ExecStart=/usr/sbin/named $OPTIONS
+ExecStart=/usr/sbin/named $EXTRAOPTIONS
 
 ExecReload=/bin/sh -c '/usr/sbin/rndc reload > /dev/null 2>&1 || /bin/kill -HUP $MAINPID'
 
