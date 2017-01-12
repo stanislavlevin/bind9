@@ -213,6 +213,7 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.in
 	--enable-threads \
 	--enable-linux-caps \
 	--enable-fetchlimit \
+	--enable-fixed-rrset \
 	 %{subst_with openssl} \
 	 %{subst_enable ipv6} \
 	 %{subst_enable static} \
