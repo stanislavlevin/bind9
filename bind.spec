@@ -102,24 +102,13 @@ Obsoletes: libisc4, libisc7, libisccc0, libisccfg0, liblwres1
 Summary: ISC BIND development libraries and headers
 Group: Development/C
 Requires: libbind = %EVR
+Provides: libisc-export-devel = %EVR
+Obsoletes: libisc-export-devel < %version
 
 %package devel-static
 Summary: ISC BIND static development libraries
 Group: Development/C
 Requires: %name-devel = %EVR
-
-%package -n libisc-export
-Summary: ISC BIND exportable libraries to build third party applications with
-Group: System/Libraries
-# RH compat
-Provides: %name-lite
-
-%package -n libisc-export-devel
-Summary: ISC BIND development anvironment for exportable libraries
-Group: Development/C
-Requires: libisc-export = %EVR
-# RH compat
-Provides: %name-lite-devel
 
 %package doc
 Summary: Documentation for ISC BIND
@@ -163,16 +152,6 @@ API man pages for libdns, libisc, libisccc, libisccfg and liblwres.
 These are only needed if you want to compile statically linked packages
 that need more BIND %version%vsuffix nameserver API than the resolver
 code provided by glibc.
-
-%description -n libisc-export
-This package contains shared libraries used by third-party projects that
-require standard ISC BIND %version%vsuffix libaries without using
-nameserver API.
-
-%description -n libisc-export-devel
-This package contains develompent environment for third-party projects
-that require standard ISC BIND %version%vsuffix libaries without using
-nameserver API.
 
 %description doc
 This package provides various documents that are useful for maintaining
@@ -238,9 +217,6 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.in
 	 %{subst_enable static} \
 	--enable-rrl \
 	--enable-fetchlimit \
-	--enable-exportlib \
-	--with-export-libdir=%{_libdir} \
-	--with-export-includedir=%{_includedir} \
 	--includedir=%{_includedir}/bind9 \
 	--disable-openssl-version-check \
 	--with-libtool \
@@ -349,7 +325,6 @@ fi
 %preun_service lwresd
 
 %files -n libbind
-%exclude  %_libdir/*export.*
 %_libdir/lib*.so.*
 %dir %docdir
 %docdir/COPYRIGHT
@@ -360,11 +335,7 @@ fi
 %_man8dir/lwresd.*
 %ghost %attr(644,root,root) /var/run/lwresd.pid
 
-%files -n libisc-export
-%_libdir/lib*-export.so.*
-
 %files devel
-%exclude  %_libdir/*export.*
 %_libdir/*.so
 %_bindir/isc-config.sh
 %_includedir/bind9
@@ -376,11 +347,6 @@ fi
 %files devel-static
 %_libdir/*.a
 %endif
-
-%files -n libisc-export-devel
-%exclude %_includedir/bind9
-%_includedir/*
-%_libdir/lib*-export.so
 
 %files
 %exclude %_sbindir/lwresd
