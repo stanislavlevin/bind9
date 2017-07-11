@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -569,7 +569,7 @@ gss_accept_sec_context_spnego(OM_uint32 *minor_status,
 			      gss_cred_id_t *delegated_cred_handle)
 {
 	NegTokenInit init_token;
-	OM_uint32 major_status;
+	OM_uint32 major_status = GSS_S_COMPLETE;
 	OM_uint32 minor_status2;
 	gss_buffer_desc ibuf, obuf;
 	gss_buffer_t ot = NULL;
@@ -685,7 +685,7 @@ gss_accept_sec_context_spnego(OM_uint32 *minor_status,
 	if (ot != NULL && ot->length != 0U)
 		gss_release_buffer(&minor_status2, ot);
 
-	return (ret);
+	return (ret != GSS_S_COMPLETE ? (OM_uint32) ret : major_status);
 }
 
 /* decapsulate.c */

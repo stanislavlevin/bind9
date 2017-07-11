@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -65,6 +65,19 @@
 			isc_lex_ungettoken(lexer, &token); \
 			return (_r); \
 		} \
+	} while (0)
+
+#define CHECK(op)						\
+	do { result = (op);					\
+		if (result != ISC_R_SUCCESS) goto cleanup;	\
+	} while (0)
+
+#define CHECKTOK(op)						\
+	do { result = (op);					\
+		if (result != ISC_R_SUCCESS) {			\
+			isc_lex_ungettoken(lexer, &token);	\
+			goto cleanup;				\
+		}						\
 	} while (0)
 
 #define DNS_AS_STR(t) ((t).value.as_textregion.base)
@@ -2246,7 +2259,7 @@ fromtext_error(void (*callback)(dns_rdatacallbacks_t *, const char *, ...),
 
 dns_rdatatype_t
 dns_rdata_covers(dns_rdata_t *rdata) {
-	if (rdata->type == 46)
+	if (rdata->type == dns_rdatatype_rrsig)
 		return (covers_rrsig(rdata));
 	return (covers_sig(rdata));
 }

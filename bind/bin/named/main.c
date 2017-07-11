@@ -105,10 +105,10 @@
 #define BACKTRACE_MAXFRAME 128
 #endif
 
-extern int isc_dscp_check_value;
-extern unsigned int dns_zone_mkey_hour;
-extern unsigned int dns_zone_mkey_day;
-extern unsigned int dns_zone_mkey_month;
+LIBISC_EXTERNAL_DATA extern int isc_dscp_check_value;
+LIBDNS_EXTERNAL_DATA extern unsigned int dns_zone_mkey_hour;
+LIBDNS_EXTERNAL_DATA extern unsigned int dns_zone_mkey_day;
+LIBDNS_EXTERNAL_DATA extern unsigned int dns_zone_mkey_month;
 
 static isc_boolean_t	want_stats = ISC_FALSE;
 static char		program_name[ISC_DIR_NAMEMAX] = "named";
@@ -613,6 +613,12 @@ parse_command_line(int argc, char *argv[]) {
 					ns_main_earlyfatal("bad mkeytimer");
 			} else if (!strcmp(isc_commandline_argument, "notcp"))
 				ns_g_notcp = ISC_TRUE;
+			else if (!strncmp(isc_commandline_argument, "tat=", 4))
+				ns_g_tat_interval =
+					   atoi(isc_commandline_argument + 4);
+			else if (!strcmp(isc_commandline_argument,
+					 "keepstderr"))
+				ns_g_keepstderr = ISC_TRUE;
 			else
 				fprintf(stderr, "unknown -T flag '%s\n",
 					isc_commandline_argument);
@@ -658,8 +664,15 @@ parse_command_line(int argc, char *argv[]) {
 #ifdef OPENSSL
 			printf("compiled with OpenSSL version: %s\n",
 			       OPENSSL_VERSION_TEXT);
+#if !defined(LIBRESSL_VERSION_NUMBER) && \
+    OPENSSL_VERSION_NUMBER >= 0x10100000L /* 1.1.0 or higher */
+			printf("linked to OpenSSL version: %s\n",
+			       OpenSSL_version(OPENSSL_VERSION));
+
+#else
 			printf("linked to OpenSSL version: %s\n",
 			       SSLeay_version(SSLEAY_VERSION));
+#endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
 #endif
 #ifdef HAVE_LIBXML2
 			printf("compiled with libxml2 version: %s\n",
@@ -1116,6 +1129,9 @@ setup(void) {
 static void
 cleanup(void) {
 	destroy_managers();
+
+	if (ns_g_mapped != NULL)
+		dns_acl_detach(&ns_g_mapped);
 
 	ns_server_destroy(&ns_g_server);
 

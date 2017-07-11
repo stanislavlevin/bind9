@@ -400,7 +400,7 @@ exit_check(ns_client_t *client) {
 		INSIST(client->newstate <= NS_CLIENTSTATE_READY);
 		if (client->nreads > 0)
 			dns_tcpmsg_cancelread(&client->tcpmsg);
-		if (! client->nreads == 0) {
+		if (client->nreads != 0) {
 			/* Still waiting for read cancel completion. */
 			return (ISC_TRUE);
 		}
@@ -909,6 +909,16 @@ client_sendpkg(ns_client_t *client, isc_buffer_t *buffer) {
 
 	isc_buffer_usedregion(buffer, &r);
 
+	/*
+	 * If this is a UDP client and the IPv6 packet can't be
+	 * encapsulated without generating a PTB on a 1500 octet
+	 * MTU link force fragmentation at 1280 if it is a IPv6
+	 * response.
+	 */
+	client->sendevent->attributes &= ~ISC_SOCKEVENTATTR_USEMINMTU;
+	if (!TCP_CLIENT(client) && r.length > 1432)
+		client->sendevent->attributes |= ISC_SOCKEVENTATTR_USEMINMTU;
+
 	CTRACE("sendto");
 
 	result = isc_socket_sendto2(sock, &r, client->task,
@@ -988,7 +998,8 @@ client_send(ns_client_t *client) {
 
 	CTRACE("send");
 
-	if ((client->attributes & NS_CLIENTATTR_RA) != 0)
+	if (client->message->opcode == dns_opcode_query &&
+	    (client->attributes & NS_CLIENTATTR_RA) != 0)
 		client->message->flags |= DNS_MESSAGEFLAG_RA;
 
 	if ((client->attributes & NS_CLIENTATTR_WANTDNSSEC) != 0)

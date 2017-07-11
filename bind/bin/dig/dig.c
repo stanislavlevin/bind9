@@ -32,6 +32,8 @@
 #include <isc/task.h>
 #include <isc/util.h>
 
+#include <pk11/site.h>
+
 #include <dns/byaddr.h>
 #include <dns/fixedname.h>
 #include <dns/masterdump.h>
@@ -208,6 +210,7 @@ help(void) {
 "                 +[no]expire         (Request time to expire)\n"
 "                 +[no]fail           (Don't try next server on SERVFAIL)\n"
 "                 +[no]identify       (ID responders in short answers)\n"
+"                 +[no]idnout         (convert IDN response)\n"
 "                 +[no]ignore         (Don't revert to TCP for TC responses.)"
 "\n"
 "                 +[no]keepopen       (Keep the TCP socket open between queries)\n"
@@ -714,7 +717,7 @@ cleanup:
 static void
 printgreeting(int argc, char **argv, dig_lookup_t *lookup) {
 	int i;
-	int remaining;
+	size_t remaining;
 	static isc_boolean_t first = ISC_TRUE;
 	char append[MXNAME];
 
@@ -1022,13 +1025,29 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 	case 'i':
 		switch (cmd[1]) {
 		case 'd': /* identify */
-			FULLCHECK("identify");
-			lookup->identify = state;
+			switch (cmd[2]) {
+			case 'e':
+				FULLCHECK("identify");
+				lookup->identify = state;
+				break;
+			case 'n':
+				FULLCHECK("idnout");
+#ifndef WITH_IDN
+				fprintf(stderr, ";; IDN support not enabled\n");
+#else
+				lookup->idnout = state;
+#endif
+				break;
+			default:
+				goto invalid_option;
+			}
 			break;
 		case 'g': /* ignore */
-		default: /* Inherits default for compatibility */
+		default: /*
+			  * Inherits default for compatibility (+[no]i*).
+			  */
 			FULLCHECK("ignore");
-			lookup->ignore = ISC_TRUE;
+			lookup->ignore = state;
 		}
 		break;
 	case 'k':
@@ -1529,7 +1548,7 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 		}
 		*open_type_class = ISC_FALSE;
 		tr.base = value;
-		tr.length = strlen(value);
+		tr.length = (unsigned int) strlen(value);
 		result = dns_rdataclass_fromtext(&rdclass,
 						 (isc_textregion_t *)&tr);
 		if (result == ISC_R_SUCCESS) {
@@ -1580,7 +1599,7 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 			result = ISC_R_SUCCESS;
 		} else {
 			tr.base = value;
-			tr.length = strlen(value);
+			tr.length = (unsigned int) strlen(value);
 			result = dns_rdatatype_fromtext(&rdtype,
 						(isc_textregion_t *)&tr);
 			if (result == ISC_R_SUCCESS &&
@@ -1635,7 +1654,11 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 			ptr = ptr2;
 			ptr2 = ptr3;
 		} else  {
+#ifndef PK11_MD5_DISABLE
 			hmacname = DNS_TSIG_HMACMD5_NAME;
+#else
+			hmacname = DNS_TSIG_HMACSHA256_NAME;
+#endif
 			digestbits = 0;
 		}
 		strncpy(keynametext, ptr, sizeof(keynametext));
@@ -1859,7 +1882,8 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 					result = ISC_R_SUCCESS;
 				} else {
 					tr.base = rv[0];
-					tr.length = strlen(rv[0]);
+					tr.length =
+						(unsigned int) strlen(rv[0]);
 					result = dns_rdatatype_fromtext(&rdtype,
 						(isc_textregion_t *)&tr);
 					if (result == ISC_R_SUCCESS &&

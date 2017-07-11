@@ -15,8 +15,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id$ */
-
 /*! \file */
 
 #include <config.h>
@@ -83,6 +81,8 @@
 #include <devpoll.h>
 #endif
 #endif
+
+#include <netinet/tcp.h>
 
 #include "errno2result.h"
 
@@ -1513,12 +1513,12 @@ build_msghdr_send(isc__socket_t *sock, isc_socketevent_t *dev,
 	msg->msg_control = NULL;
 	msg->msg_controllen = 0;
 	msg->msg_flags = 0;
-#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
-	if ((sock->type == isc_sockettype_udp)
-	    && ((dev->attributes & ISC_SOCKEVENTATTR_PKTINFO) != 0)) {
-#if defined(IPV6_USE_MIN_MTU)
-		int use_min_mtu = 1;	/* -1, 0, 1 */
-#endif
+#if defined(USE_CMSG)
+
+#if defined(ISC_PLATFORM_HAVEIN6PKTINFO)
+	if ((sock->type == isc_sockettype_udp) &&
+	    ((dev->attributes & ISC_SOCKEVENTATTR_PKTINFO) != 0))
+	{
 		struct in6_pktinfo *pktinfop;
 
 		socket_log(sock, NULL, TRACE,
@@ -1536,12 +1536,15 @@ build_msghdr_send(isc__socket_t *sock, isc_socketevent_t *dev,
 		cmsgp->cmsg_len = cmsg_len(sizeof(struct in6_pktinfo));
 		pktinfop = (struct in6_pktinfo *)CMSG_DATA(cmsgp);
 		memmove(pktinfop, &dev->pktinfo, sizeof(struct in6_pktinfo));
+	}
+#endif
+
 #if defined(IPV6_USE_MIN_MTU)
-		/*
-		 * Set IPV6_USE_MIN_MTU as a per packet option as FreeBSD
-		 * ignores setsockopt(IPV6_USE_MIN_MTU) when IPV6_PKTINFO
-		 * is used.
-		 */
+	if ((sock->type == isc_sockettype_udp) &&
+	    ((dev->attributes & ISC_SOCKEVENTATTR_USEMINMTU) != 0))
+	{
+		int use_min_mtu = 1;	/* -1, 0, 1 */
+
 		cmsgp = (struct cmsghdr *)(sock->sendcmsgbuf +
 					   msg->msg_controllen);
 		msg->msg_controllen += cmsg_space(sizeof(use_min_mtu));
@@ -1551,8 +1554,8 @@ build_msghdr_send(isc__socket_t *sock, isc_socketevent_t *dev,
 		cmsgp->cmsg_type = IPV6_USE_MIN_MTU;
 		cmsgp->cmsg_len = cmsg_len(sizeof(use_min_mtu));
 		memmove(CMSG_DATA(cmsgp), &use_min_mtu, sizeof(use_min_mtu));
-#endif
 	}
+#endif
 
 	if (isc_dscp_check_value > -1) {
 		if (sock->type == isc_sockettype_udp)
@@ -1630,7 +1633,7 @@ build_msghdr_send(isc__socket_t *sock, isc_socketevent_t *dev,
 		}
 #endif
 	}
-#endif /* USE_CMSG && ISC_PLATFORM_HAVEIPV6 */
+#endif /* USE_CMSG */
 #else /* ISC_NET_BSD44MSGHDR */
 	msg->msg_accrights = NULL;
 	msg->msg_accrightslen = 0;
@@ -2558,6 +2561,15 @@ use_min_mtu(isc__socket_t *sock) {
 #endif
 }
 
+static void
+set_tcp_maxseg(isc__socket_t *sock, int size) {
+#ifdef TCP_MAXSEG
+	if (sock->type == isc_sockettype_tcp)
+		(void)setsockopt(sock->fd, IPPROTO_TCP, TCP_MAXSEG,
+				(void *)&size, sizeof(size));
+#endif
+}
+
 static isc_result_t
 opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 	   isc__socket_t *dup_socket)
@@ -2763,7 +2775,10 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 	/*
 	 * Use minimum mtu if possible.
 	 */
-	use_min_mtu(sock);
+	if (sock->type == isc_sockettype_tcp && sock->pf == AF_INET6) {
+		use_min_mtu(sock);
+		set_tcp_maxseg(sock, 1280 - 20 - 40); /* 1280 - TCP - IPV6 */
+	}
 
 #if defined(USE_CMSG) || defined(SO_RCVBUF)
 	if (sock->type == isc_sockettype_udp) {
@@ -2846,11 +2861,24 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 #if defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DONT)
 		/*
 		 * Turn off Path MTU discovery on IPv4/UDP sockets.
+		 * Prefer IP_PMTUDISC_OMIT over IP_PMTUDISC_DONT
+		 * if it available.
 		 */
 		if (sock->pf == AF_INET) {
-			int action = IP_PMTUDISC_DONT;
-			(void)setsockopt(sock->fd, IPPROTO_IP, IP_MTU_DISCOVER,
-					 &action, sizeof(action));
+			int action;
+#if defined(IP_PMTUDISC_OMIT)
+			action = IP_PMTUDISC_OMIT;
+			if (setsockopt(sock->fd, IPPROTO_IP,
+				       IP_MTU_DISCOVER, &action,
+				       sizeof(action)) < 0) {
+#endif
+				action = IP_PMTUDISC_DONT;
+				(void)setsockopt(sock->fd, IPPROTO_IP,
+						 IP_MTU_DISCOVER,
+						 &action, sizeof(action));
+#if defined(IP_PMTUDISC_OMIT)
+			}
+#endif
 		}
 #endif
 #if defined(IP_DONTFRAG)
@@ -3664,6 +3692,7 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 		 * Use minimum mtu if possible.
 		 */
 		use_min_mtu(NEWCONNSOCK(dev));
+		set_tcp_maxseg(NEWCONNSOCK(dev), 1280 - 20 - 40);
 
 		/*
 		 * Ensure DSCP settings are inherited across accept.
@@ -4208,15 +4237,15 @@ watcher(void *uap) {
 	const char *fnname = "ioctl(DP_POLL)";
 	struct dvpoll dvp;
 	int pass;
+#if defined(ISC_SOCKET_USE_POLLWATCH)
+	pollstate_t pollstate = poll_idle;
+#endif
 #elif defined (USE_SELECT)
 	const char *fnname = "select()";
 	int maxfd;
 	int ctlfd;
 #endif
 	char strbuf[ISC_STRERRORSIZE];
-#ifdef ISC_SOCKET_USE_POLLWATCH
-	pollstate_t pollstate = poll_idle;
-#endif
 
 #if defined (USE_SELECT)
 	/*

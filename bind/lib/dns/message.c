@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -2669,7 +2669,10 @@ dns_message_reply(dns_message_t *msg, isc_boolean_t want_question_section) {
 	 * We now clear most flags and then set QR, ensuring that the
 	 * reply's flags will be in a reasonable state.
 	 */
-	msg->flags &= DNS_MESSAGE_REPLYPRESERVE;
+	if (msg->opcode == dns_opcode_query)
+		msg->flags &= DNS_MESSAGE_REPLYPRESERVE;
+	else
+		msg->flags = 0;
 	msg->flags |= DNS_MESSAGEFLAG_QR;
 
 	/*
@@ -3055,12 +3058,19 @@ dns_message_signer(dns_message_t *msg, dns_name_t *signer) {
 
 		result = dns_rdata_tostruct(&rdata, &tsig, NULL);
 		INSIST(result == ISC_R_SUCCESS);
-		if (msg->tsigstatus != dns_rcode_noerror)
-			result = DNS_R_TSIGVERIFYFAILURE;
-		else if (tsig.error != dns_rcode_noerror)
-			result = DNS_R_TSIGERRORSET;
-		else
+		if (msg->verified_sig &&
+		    msg->tsigstatus == dns_rcode_noerror &&
+		    tsig.error == dns_rcode_noerror)
+		{
 			result = ISC_R_SUCCESS;
+		} else if ((!msg->verified_sig) ||
+			   (msg->tsigstatus != dns_rcode_noerror))
+		{
+			result = DNS_R_TSIGVERIFYFAILURE;
+		} else {
+			INSIST(tsig.error != dns_rcode_noerror);
+			result = DNS_R_TSIGERRORSET;
+		}
 		dns_rdata_freestruct(&tsig);
 
 		if (msg->tsigkey == NULL) {
@@ -3324,9 +3334,6 @@ render_ecs(isc_buffer_t *ecsbuf, isc_buffer_t *target) {
 	addrlen = isc_buffer_getuint8(ecsbuf);
 	scopelen = isc_buffer_getuint8(ecsbuf);
 
-	if (addrlen == 0 && family != 0)
-		return (DNS_R_OPTERR);
-
 	addrbytes = (addrlen + 7) / 8;
 	if (isc_buffer_remaininglength(ecsbuf) < addrbytes)
 		return (DNS_R_OPTERR);
@@ -3334,7 +3341,6 @@ render_ecs(isc_buffer_t *ecsbuf, isc_buffer_t *target) {
 	if (addrbytes > sizeof(addr))
 		return (DNS_R_OPTERR);
 
-	ADD_STRING(target, ": ");
 	memset(addr, 0, sizeof(addr));
 	for (i = 0; i < addrbytes; i ++)
 		addr[i] = isc_buffer_getuint8(ecsbuf);
@@ -3356,12 +3362,10 @@ render_ecs(isc_buffer_t *ecsbuf, isc_buffer_t *target) {
 		inet_ntop(AF_INET6, addr, addr_text, sizeof(addr_text));
 		break;
 	default:
-		snprintf(addr_text, sizeof(addr_text),
-			 "Unsupported family %u", family);
-		ADD_STRING(target, addr_text);
-		return (ISC_R_SUCCESS);
+		return (DNS_R_OPTERR);
 	}
 
+	ADD_STRING(target, ": ");
 	ADD_STRING(target, addr_text);
 	snprintf(addr_text, sizeof(addr_text), "/%d/%d", addrlen, scopelen);
 	ADD_STRING(target, addr_text);

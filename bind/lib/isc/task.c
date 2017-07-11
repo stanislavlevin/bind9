@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -548,6 +548,7 @@ task_send(isc__task_t *task, isc_event_t **eventp) {
 	REQUIRE(event != NULL);
 	REQUIRE(event->ev_type > 0);
 	REQUIRE(task->state != task_state_done);
+	REQUIRE(!ISC_LINK_LINKED(event, ev_ratelink));
 
 	XTRACE("task_send");
 

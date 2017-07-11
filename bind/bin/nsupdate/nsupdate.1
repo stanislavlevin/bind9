@@ -1,4 +1,4 @@
-.\" Copyright (C) 2004-2012, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2012, 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -218,7 +218,9 @@ hmac\-sha384, or
 hmac\-sha512\&. If
 \fIhmac\fR
 is not specified, the default is
-hmac\-md5\&.
+hmac\-md5
+or if MD5 was disabled
+hmac\-sha256\&.
 .sp
 NOTE: Use of the
 \fB\-y\fR
@@ -293,7 +295,9 @@ Specifies that all updates are to be TSIG\-signed using the
 pair\&. If
 \fIhmac\fR
 is specified, then it sets the signing algorithm in use; the default is
-hmac\-md5\&. The
+hmac\-md5
+or if MD5 was disabled
+hmac\-sha256\&. The
 \fBkey\fR
 command overrides any key specified on the command line via
 \fB\-y\fR
@@ -515,7 +519,7 @@ The TSIG key is redundantly stored in two separate files\&. This is a consequenc
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2004-2012, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004-2012, 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000-2003 Internet Software Consortium.
 .br
