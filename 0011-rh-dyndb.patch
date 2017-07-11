@@ -27,9 +27,9 @@ index defaced..defaced 100644
  #include <dns/dlz.h>
 +#include <dns/dynamic_db.h>
  #include <dns/dns64.h>
+ #include <dns/events.h>
  #include <dns/forward.h>
- #include <dns/journal.h>
-@@ -1310,6 +1311,71 @@ configure_peer(const cfg_obj_t *cpeer, isc_mem_t *mctx, dns_peer_t **peerp) {
+@@ -1393,6 +1394,71 @@ configure_peer(const cfg_obj_t *cpeer, isc_mem_t *mctx, dns_peer_t **peerp) {
  }
  
  static isc_result_t
@@ -101,15 +101,15 @@ index defaced..defaced 100644
  disable_algorithms(const cfg_obj_t *disabled, dns_resolver_t *resolver) {
  	isc_result_t result;
  	const cfg_obj_t *algorithms;
-@@ -2349,6 +2415,7 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
- 	const cfg_obj_t *dlz;
+@@ -2453,6 +2519,7 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
+ 	const cfg_obj_t *dlvobj = NULL;
  	unsigned int dlzargc;
  	char **dlzargv;
 +	const cfg_obj_t *dynamic_db_list;
  	const cfg_obj_t *disabled;
  	const cfg_obj_t *obj;
  #ifdef ENABLE_FETCHLIMIT
-@@ -3704,6 +3771,37 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
+@@ -3812,6 +3879,37 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
  		dns_view_setrootdelonly(view, ISC_FALSE);
  
  	/*
@@ -147,7 +147,7 @@ index defaced..defaced 100644
  	 * Setup automatic empty zones.  If recursion is off then
  	 * they are disabled by default.
  	 */
-@@ -5457,6 +5555,7 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -5745,6 +5843,7 @@ load_configuration(const char *filename, ns_server_t *server,
  		cfg_aclconfctx_detach(&ns_g_aclconfctx);
  	CHECK(cfg_aclconfctx_create(ns_g_mctx, &ns_g_aclconfctx));
  
@@ -155,7 +155,7 @@ index defaced..defaced 100644
  	/*
  	 * Parse the global default pseudo-config file.
  	 */
-@@ -6685,6 +6784,8 @@ shutdown_server(isc_task_t *task, isc_event_t *event) {
+@@ -6992,6 +7091,8 @@ shutdown_server(isc_task_t *task, isc_event_t *event) {
  			dns_view_detach(&view);
  	}
  
@@ -656,7 +656,7 @@ diff --git a/bind/lib/dns/include/dns/types.h b/bind/lib/dns/include/dns/types.h
 index defaced..defaced 100644
 --- a/bind/lib/dns/include/dns/types.h
 +++ b/bind/lib/dns/include/dns/types.h
-@@ -64,6 +64,7 @@ typedef struct dns_dlzimplementation		dns_dlzimplementation_t;
+@@ -62,6 +62,7 @@ typedef struct dns_dlzimplementation		dns_dlzimplementation_t;
  typedef struct dns_dlzdb			dns_dlzdb_t;
  typedef ISC_LIST(dns_dlzdb_t)			dns_dlzdblist_t;
  typedef struct dns_sdlzimplementation		dns_sdlzimplementation_t;
@@ -688,15 +688,15 @@ index defaced..defaced 100644
  static cfg_type_t cfg_type_ixfrdifftype;
  static cfg_type_t cfg_type_key;
  static cfg_type_t cfg_type_logfile;
-@@ -969,6 +970,7 @@ namedconf_or_view_clauses[] = {
- 	{ "key", &cfg_type_key, CFG_CLAUSEFLAG_MULTI },
- 	{ "zone", &cfg_type_zone, CFG_CLAUSEFLAG_MULTI },
+@@ -979,6 +980,7 @@ namedconf_clauses[] = {
+ static cfg_clausedef_t
+ namedconf_or_view_clauses[] = {
  	{ "dlz", &cfg_type_dlz, CFG_CLAUSEFLAG_MULTI },
 +	{ "dynamic-db", &cfg_type_dynamic_db, CFG_CLAUSEFLAG_MULTI },
- 	{ "server", &cfg_type_server, CFG_CLAUSEFLAG_MULTI },
- 	{ "trusted-keys", &cfg_type_dnsseckeys, CFG_CLAUSEFLAG_MULTI },
+ 	{ "key", &cfg_type_key, CFG_CLAUSEFLAG_MULTI },
  	{ "managed-keys", &cfg_type_managedkeys, CFG_CLAUSEFLAG_MULTI },
-@@ -2230,6 +2232,40 @@ static cfg_type_t cfg_type_dialuptype = {
+ 	{ "server", &cfg_type_server, CFG_CLAUSEFLAG_MULTI },
+@@ -2262,6 +2264,40 @@ static cfg_type_t cfg_type_dialuptype = {
  	&cfg_rep_string, dialup_enums
  };
  
@@ -736,4 +736,4 @@ index defaced..defaced 100644
 +
  static const char *notify_enums[] = { "explicit", "master-only", NULL };
  static isc_result_t
- parse_notify_type(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
+ parse_notify_type(cfg_parser_t *pctx, const cfg_type_t *type,

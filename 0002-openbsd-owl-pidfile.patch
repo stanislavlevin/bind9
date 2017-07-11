@@ -41,7 +41,7 @@ index defaced..defaced 100644
  			break;
  		case 'l':
  			ns_g_lwresdonly = ISC_TRUE;
-@@ -897,6 +897,12 @@ setup(void) {
+@@ -910,6 +910,12 @@ setup(void) {
  	char *instance = NULL;
  #endif
  
@@ -58,7 +58,7 @@ diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
 index defaced..defaced 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -5908,16 +5908,20 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -6205,16 +6205,20 @@ load_configuration(const char *filename, ns_server_t *server,
  	/*
  	 * Write the PID file.
  	 */
@@ -88,7 +88,7 @@ index defaced..defaced 100644
  
  	/*
  	 * Configure the server-wide session key.  This must be done before
-@@ -6249,7 +6253,6 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -6551,7 +6555,6 @@ load_configuration(const char *filename, ns_server_t *server,
  		}
  	}
  
@@ -114,7 +114,7 @@ diff --git a/bind/bin/named/unix/os.c b/bind/bin/named/unix/os.c
 index defaced..defaced 100644
 --- a/bind/bin/named/unix/os.c
 +++ b/bind/bin/named/unix/os.c
-@@ -55,6 +55,8 @@
+@@ -56,6 +56,8 @@
  #endif
  
  static char *pidfile = NULL;
@@ -123,7 +123,7 @@ index defaced..defaced 100644
  static int devnullfd = -1;
  
  #ifndef ISC_FACILITY
-@@ -850,35 +852,56 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
+@@ -851,35 +853,56 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
  	return (fp);
  }
  
@@ -191,7 +191,7 @@ index defaced..defaced 100644
  		return;
  	}
  #ifdef HAVE_LINUXTHREADS
-@@ -889,22 +912,23 @@ ns_os_writepidfile(const char *filename, isc_boolean_t first_time) {
+@@ -890,22 +913,23 @@ ns_os_writepidfile(const char *filename, isc_boolean_t first_time) {
  	if (fprintf(lockfile, "%ld\n", (long)pid) < 0) {
  		(*report)("fprintf() to pid file '%s' failed", filename);
  		(void)fclose(lockfile);

@@ -8,10 +8,10 @@ diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
 index defaced..defaced 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -6110,8 +6110,12 @@ load_configuration(const char *filename, ns_server_t *server,
- 				      "no source of entropy found");
+@@ -6408,8 +6408,12 @@ load_configuration(const char *filename, ns_server_t *server,
  		} else {
  			const char *randomdev = cfg_obj_asstring(obj);
+ 			int level = ISC_LOG_ERROR;
 -			result = isc_entropy_createfilesource(ns_g_entropy,
 +			if (strcmp(randomdev, PATH_RANDOMDEV))
 +				result = isc_entropy_createfilesource(ns_g_entropy,
@@ -19,10 +19,10 @@ index defaced..defaced 100644
 +			else
 +				result = isc_entropy_createfilefd(ns_g_entropy,
 +							      ns_os_open_randomdev(), ISC_FALSE, ISC_FALSE);
- 			if (result != ISC_R_SUCCESS)
- 				isc_log_write(ns_g_lctx,
- 					      NS_LOGCATEGORY_GENERAL,
-@@ -6144,16 +6148,8 @@ load_configuration(const char *filename, ns_server_t *server,
+ #ifdef PATH_RANDOMDEV
+ 			if (ns_g_fallbackentropy != NULL)
+ 				level = ISC_LOG_INFO;
+@@ -6446,16 +6450,8 @@ load_configuration(const char *filename, ns_server_t *server,
  	/*
  	 * Relinquish root privileges.
  	 */
@@ -58,7 +58,7 @@ diff --git a/bind/bin/named/unix/os.c b/bind/bin/named/unix/os.c
 index defaced..defaced 100644
 --- a/bind/bin/named/unix/os.c
 +++ b/bind/bin/named/unix/os.c
-@@ -397,6 +397,19 @@ ns_os_init(const char *progname) {
+@@ -398,6 +398,19 @@ ns_os_init(const char *progname) {
  #endif
  }
  
@@ -78,7 +78,7 @@ index defaced..defaced 100644
  void
  ns_os_daemonize(void) {
  	pid_t pid;
-@@ -520,6 +533,7 @@ ns_os_chroot(const char *root) {
+@@ -521,6 +534,7 @@ ns_os_chroot(const char *root) {
  #endif
  	if (root != NULL) {
  #ifdef HAVE_CHROOT
