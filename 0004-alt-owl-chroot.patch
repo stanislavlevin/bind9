@@ -8,7 +8,7 @@ diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
 index defaced..defaced 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -6408,8 +6408,12 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -6414,8 +6414,12 @@ load_configuration(const char *filename, ns_server_t *server,
  		} else {
  			const char *randomdev = cfg_obj_asstring(obj);
  			int level = ISC_LOG_ERROR;
@@ -22,7 +22,7 @@ index defaced..defaced 100644
  #ifdef PATH_RANDOMDEV
  			if (ns_g_fallbackentropy != NULL)
  				level = ISC_LOG_INFO;
-@@ -6446,16 +6450,8 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -6452,16 +6456,8 @@ load_configuration(const char *filename, ns_server_t *server,
  	/*
  	 * Relinquish root privileges.
  	 */

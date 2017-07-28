@@ -1,28 +1,29 @@
 From 0 Mon Sep 17 00:00:00 2001
 From: "Dmitry V. Levin" <ldv@altlinux.org>
 Date: Thu, 12 Jan 2017 16:41:01 +0000
-Subject: [PATCH] Link libirs with libdns and libisccfg
+Subject: [PATCH] Link libirs with libdns, libisc, and libisccfg
 
 
 diff --git a/bind/lib/irs/Makefile.in b/bind/lib/irs/Makefile.in
 index defaced..defaced 100644
 --- a/bind/lib/irs/Makefile.in
 +++ b/bind/lib/irs/Makefile.in
-@@ -43,6 +43,8 @@ SRCS =		context.c \
+@@ -43,6 +43,9 @@ SRCS =		context.c \
  		gai_strerror.c getaddrinfo.c getnameinfo.c \
  		resconf.c
  
 +DNSLIBS =	../../lib/dns/libdns.@A@
++ISCLIBS =	../../lib/isc/libisc.@A@
 +ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
  LIBS =		@LIBS@
  
  SUBDIRS =	include
-@@ -67,7 +69,7 @@ libirs.la: ${OBJS} version.@O@
+@@ -67,7 +70,7 @@ libirs.la: ${OBJS} version.@O@
  	${LIBTOOL_MODE_LINK} \
  		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libirs.la -rpath ${libdir} \
  		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
 -		${OBJS} version.@O@ ${LIBS}
-+		${OBJS} version.@O@ ${DNSLIBS} ${ISCCFGLIBS} ${LIBS}
++		${OBJS} version.@O@ ${DNSLIBS} ${ISCLIBS} ${ISCCFGLIBS} ${LIBS}
  
  timestamp: libirs.@A@
  	touch timestamp

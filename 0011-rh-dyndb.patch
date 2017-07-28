@@ -147,7 +147,7 @@ index defaced..defaced 100644
  	 * Setup automatic empty zones.  If recursion is off then
  	 * they are disabled by default.
  	 */
-@@ -5745,6 +5843,7 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -5751,6 +5849,7 @@ load_configuration(const char *filename, ns_server_t *server,
  		cfg_aclconfctx_detach(&ns_g_aclconfctx);
  	CHECK(cfg_aclconfctx_create(ns_g_mctx, &ns_g_aclconfctx));
  
@@ -155,7 +155,7 @@ index defaced..defaced 100644
  	/*
  	 * Parse the global default pseudo-config file.
  	 */
-@@ -6992,6 +7091,8 @@ shutdown_server(isc_task_t *task, isc_event_t *event) {
+@@ -6998,6 +7097,8 @@ shutdown_server(isc_task_t *task, isc_event_t *event) {
  			dns_view_detach(&view);
  	}
  
@@ -186,7 +186,7 @@ index defaced..defaced 100644
  		iptable.c journal.c keydata.c keytable.c lib.c log.c \
  		lookup.c master.c masterdump.c message.c \
  		name.c ncache.c nsec.c nsec3.c order.c peer.c portlist.c \
-@@ -142,6 +142,12 @@ libdns.@SA@: ${OBJS}
+@@ -141,6 +141,12 @@ libdns.@SA@: ${OBJS}
  	${AR} ${ARFLAGS} $@ ${OBJS}
  	${RANLIB} $@
  

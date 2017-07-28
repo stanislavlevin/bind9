@@ -1,6 +1,6 @@
 Name: bind
-Version: 9.10.5.P3
-%define src_version 9.10.5-P3
+Version: 9.10.6
+%define src_version 9.10.6
 Release: alt1
 
 Summary: ISC BIND - DNS server
@@ -45,7 +45,7 @@ Patch0006: 0006-alt-man.patch
 Patch0007: 0007-alt-nofile.patch
 Patch0008: 0008-alt-ads-remove.patch
 Patch0009: 0009-Minimize-linux-capabilities.patch
-Patch0010: 0010-Link-libirs-with-libdns-and-libisccfg.patch
+Patch0010: 0010-Link-libirs-with-libdns-libisc-and-libisccfg.patch
 Patch0011: 0011-rh-dyndb.patch
 
 # root directory for chrooted environment.
@@ -287,12 +287,12 @@ touch %buildroot/var/run/{named,lwresd}.pid
 
 # Package documentation files
 mkdir -p %buildroot%docdir
-cp -a CHANGES COPYRIGHT FAQ README* \
+cp -a CHANGES COPYRIGHT README* \
 	doc/{arm,misc,rfc} \
 	%buildroot%docdir/
 install -pm644 contrib/queryperf/README %buildroot%docdir/README.queryperf
 
-xz -9 %buildroot%docdir/{*/*.txt,FAQ,CHANGES}
+xz -9 %buildroot%docdir/{*/*.txt,CHANGES}
 rm -fv %buildroot%docdir/*/{Makefile*,README-SGML,*.dsl*,*.sh*,*.xml}
 
 %define _unpackaged_files_terminate_build 1
@@ -384,7 +384,6 @@ fi
 
 %dir %docdir
 %docdir/README*
-%docdir/FAQ*
 %docdir/misc
 %exclude %docdir/README.bind-devel
 
@@ -430,11 +429,13 @@ fi
 %files doc
 %docdir
 %exclude %docdir/README*
-%exclude %docdir/FAQ.xz
 %exclude %docdir/misc
 %exclude %docdir/COPYRIGHT
 
 %changelog
+* Fri Jul 28 2017 Dmitry V. Levin <ldv@altlinux.org> 9.10.6-alt1
+- 9.10.5-P3 -> 9.10.6.
+
 * Tue Jul 11 2017 Dmitry V. Levin <ldv@altlinux.org> 9.10.5.P3-alt1
 - 9.10.4-P8 -> 9.10.5-P3
   (fixes: CVE-2017-3140, CVE-2017-3141, CVE-2017-3142, CVE-2017-3143).

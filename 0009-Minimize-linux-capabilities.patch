@@ -23,7 +23,7 @@ diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
 index defaced..defaced 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -6452,6 +6452,7 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -6458,6 +6458,7 @@ load_configuration(const char *filename, ns_server_t *server,
  	 */
  	if (first_time) {
  		ns_os_changeuser();

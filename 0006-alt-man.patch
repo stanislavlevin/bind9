@@ -120,10 +120,10 @@ diff --git a/bind/bin/named/named.conf.5 b/bind/bin/named/named.conf.5
 index defaced..defaced 100644
 --- a/bind/bin/named/named.conf.5
 +++ b/bind/bin/named/named.conf.5
-@@ -668,7 +668,8 @@ zone \fIstring\fR \fIoptional_class\fR {
- \fBnamed\fR(8),
+@@ -945,7 +945,8 @@ zone \fIstring\fR [ \fIclass\fR ] {
  \fBnamed-checkconf\fR(8),
  \fBrndc\fR(8),
+ \fBrndc-confgen\fR(8),
 -BIND 9 Administrator Reference Manual\&.
 +BIND 9 Administrator Reference Manual
 +(\fB\fI@DOCDIR@/arm/Bv9ARM.html\fR).
