@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -4755,6 +4755,7 @@ isc__socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
 		result = ISC_R_UNEXPECTED;
 		goto cleanup;
 	}
+	isc_thread_setname(manager->watcher, "isc-socket");
 #endif /* USE_WATCHER_THREAD */
 	isc_mem_attach(mctx, &manager->mctx);
 

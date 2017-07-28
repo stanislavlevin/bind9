@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -2025,6 +2025,7 @@ del_name(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 	dns_rbtnode_t *nmnode;
 	dns_rpz_nm_data_t *nm_data, del_data;
 	isc_result_t result;
+	isc_boolean_t exists;
 
 	/*
 	 * We need a summary database of names even with 1 policy zone,
@@ -2068,6 +2069,9 @@ del_name(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 	del_data.wild.qname &= nm_data->wild.qname;
 	del_data.wild.ns &= nm_data->wild.ns;
 
+	exists = ISC_TF(del_data.set.qname != 0 || del_data.set.ns != 0 ||
+			del_data.wild.qname != 0 || del_data.wild.ns != 0);
+
 	nm_data->set.qname &= ~del_data.set.qname;
 	nm_data->set.ns &= ~del_data.set.ns;
 	nm_data->wild.qname &= ~del_data.wild.qname;
@@ -2088,7 +2092,8 @@ del_name(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 		}
 	}
 
-	adj_trigger_cnt(rpzs, rpz_num, rpz_type, NULL, 0, ISC_FALSE);
+	if (exists)
+		adj_trigger_cnt(rpzs, rpz_num, rpz_type, NULL, 0, ISC_FALSE);
 }
 
 /*

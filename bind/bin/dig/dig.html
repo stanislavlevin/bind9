@@ -482,6 +482,33 @@
 	      The default is to print comments.
 	    </p>
 	  </dd>
+<dt><span class="term"><code class="option">+[no]cookie[<span class="optional">=####</span>]</code></span></dt>
+<dd>
+	    <p>
+	      Send an COOKIE EDNS option, containing an optional
+	      <em class="replaceable"><code>value</code></em>.  Replaying a COOKIE
+	      from a previous response will allow the server to
+	      identify a previous client.  The default is
+	      <code class="option">+nocookie</code>.
+	    </p>
+	    <p>
+	      <span class="command"><strong>+cookie</strong></span> is automatically set when +trace
+	      is in use, to better emulate the default queries from a
+	      nameserver.
+	    </p>
+	    <p>
+	      This option was formerly called <code class="option">+[no]sit</code>
+              (Server Identity Token). In BIND 9.10.0 through BIND 9.10.2,
+              it sent the experimental option code 65001.  This was
+              changed to option code 10 in BIND 9.10.3 when the DNS
+              COOKIE option was allocated.
+	    </p>
+	    <p>
+	      The <code class="option">+[no]sit</code> is now deprecated, but has
+              been retained as a synonym for <code class="option">+[no]cookie</code>
+              for backward compatibility within the BIND 9.10 branch.
+	    </p>
+	  </dd>
 <dt><span class="term"><code class="option">+[no]crypto</code></span></dt>
 <dd>
 	    <p>
@@ -552,8 +579,11 @@
 	    <p>
 	      Specify EDNS option with code point <code class="option">code</code>
 	      and optionally payload of <code class="option">value</code> as a
-	      hexadecimal string.  <code class="option">+noednsopt</code>
-	      clears the EDNS options to to be sent.
+	      hexadecimal string.  <code class="option">code</code> can be
+	      either an EDNS option name (for example,
+	      <code class="literal">NSID</code> or <code class="literal">ECS</code>),
+	      or an arbitrary numeric value.  <code class="option">+noednsopt</code>
+	      clears the EDNS options to be sent.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+[no]expire</code></span></dt>
@@ -753,11 +783,10 @@
 <dt><span class="term"><code class="option">+[no]sit[<span class="optional">=####</span>]</code></span></dt>
 <dd>
 	    <p>
-	      Send a Source Identity Token EDNS option, with optional
-	      value.  Replaying a SIT from a previous response will
-	      allow the server to identify a previous client.  The
-	      default is <code class="option">+nosit</code>.  Currently using
-	      experimental value 65001 for the option code.
+	      This option is a synonym for <code class="option">+[no]cookie</code>.
+	    </p>
+	    <p>
+	      The <code class="option">+[no]sit</code> is deprecated.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+split=W</code></span></dt>

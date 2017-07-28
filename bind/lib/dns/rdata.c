@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1590,8 +1590,8 @@ multitxt_totext(isc_region_t *source, isc_buffer_t *target) {
 				tl -= 4;
 				continue;
 			}
-			/* double quote, semi-colon, backslash */
-			if (*sp == 0x22 || *sp == 0x3b || *sp == 0x5c) {
+			/* double quote, backslash */
+			if (*sp == 0x22 || *sp == 0x5c) {
 				if (tl < 2)
 					return (ISC_R_NOSPACE);
 				*tp++ = '\\';

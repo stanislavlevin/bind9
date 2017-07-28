@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -197,6 +197,9 @@ help(void) {
 "                 +[no]cl             (Control display of class in records)\n"
 "                 +[no]cmd            (Control display of command line)\n"
 "                 +[no]comments       (Control display of comment lines)\n"
+#ifdef ISC_PLATFORM_USESIT
+"                 +[no]cookie         (Add a COOKIE option to the request)\n"
+#endif
 "                 +[no]crypto         (Control display of cryptographic "
 				       "fields in records)\n"
 "                 +[no]defname        (Use search list (+[no]search))\n"
@@ -234,7 +237,7 @@ help(void) {
 "                 +[no]sigchase       (Chase DNSSEC signatures)\n"
 #endif
 #ifdef ISC_PLATFORM_USESIT
-"                 +[no]sit            (Request a Source Identity Token)\n"
+"                 +[no]sit            (A synonym for +[no]cookie)\n"
 #endif
 "                 +[no]split=##       (Split hex/base64 fields into chunks)\n"
 "                 +[no]stats          (Control display of statistics)\n"
@@ -481,6 +484,32 @@ printrdataset(dns_name_t *owner_name, dns_rdataset_t *rdataset,
 }
 #endif
 
+static isc_boolean_t
+isdotlocal(dns_message_t *msg) {
+	isc_result_t result;
+	static unsigned char local_ndata[] = { "\005local\0" };
+	static unsigned char local_offsets[] = { 0, 6 };
+	static dns_name_t local = {
+		DNS_NAME_MAGIC,
+		local_ndata, 7, 2,
+		DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
+		local_offsets, NULL,
+		{(void *)-1, (void *)-1},
+		{NULL, NULL}
+	};
+
+	for (result = dns_message_firstname(msg, DNS_SECTION_QUESTION);
+	     result == ISC_R_SUCCESS;
+	     result = dns_message_nextname(msg, DNS_SECTION_QUESTION))
+	{
+		dns_name_t *name = NULL;
+		dns_message_currentname(msg, DNS_SECTION_QUESTION, &name);
+		if (dns_name_issubdomain(name, &local))
+			return (ISC_TRUE);
+	}
+	return (ISC_FALSE);
+}
+
 /*
  * Callback from dighost.c to print the reply from a server
  */
@@ -562,6 +591,12 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 			printf(";; Got answer:\n");
 
 		if (headers) {
+			if (isdotlocal(msg)) {
+				printf(";; WARNING: .local is reserved for "
+				       "Multicast DNS\n;; You are currently "
+				       "testing what happens when an mDNS "
+				       "query is leaked to DNS\n");
+			}
 			printf(";; ->>HEADER<<- opcode: %s, status: %s, "
 			       "id: %u\n",
 			       opcodetext[msg->opcode],
@@ -895,10 +930,23 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 			printcmd = state;
 			break;
 		case 'o': /* comments */
-			FULLCHECK("comments");
-			lookup->comments = state;
-			if (lookup == default_lookup)
-				pluscomm = state;
+#ifdef ISC_PLATFORM_USESIT
+			switch (cmd[2]) {
+			case 'o':
+				FULLCHECK("cookie");
+				goto sit;
+			case 'm':
+#endif
+				FULLCHECK("comments");
+				lookup->comments = state;
+				if (lookup == default_lookup)
+					pluscomm = state;
+#ifdef ISC_PLATFORM_USESIT
+				break;
+			default:
+				goto invalid_option;
+			}
+#endif
 			break;
 		case 'r':
 			FULLCHECK("crypto");
@@ -1241,6 +1289,7 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 #ifdef ISC_PLATFORM_USESIT
 			case 't': /* sit */
 				FULLCHECK("sit");
+ sit:
 				if (state && lookup->edns == -1)
 					lookup->edns = 0;
 				lookup->sit = state;
@@ -1306,7 +1355,10 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 			}
 			if (lookup->edns == -1)
 				lookup->edns = 0;
-
+			if (lookup->ecs_addr != NULL) {
+				isc_mem_free(mctx, lookup->ecs_addr);
+				lookup->ecs_addr = NULL;
+			}
 			result = parse_netprefix(&lookup->ecs_addr, value);
 			if (result != ISC_R_SUCCESS)
 				fatal("Couldn't parse client");

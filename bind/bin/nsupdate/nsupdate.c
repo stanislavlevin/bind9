@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -2098,10 +2098,10 @@ do_next_command(char *cmdline) {
 "oldgsstsig                (use Microsoft's GSS_TSIG to sign the request)\n"
 "zone name                 (set the zone to be updated)\n"
 "class CLASS               (set the zone's DNS class, e.g. IN (default), CH)\n"
-"[prereq] nxdomain name    (does this name not exist)\n"
-"[prereq] yxdomain name    (does this name exist)\n"
-"[prereq] nxrrset ....     (does this RRset exist)\n"
-"[prereq] yxrrset ....     (does this RRset not exist)\n"
+"[prereq] nxdomain name    (require that this name does not exist)\n"
+"[prereq] yxdomain name    (require that this name exists)\n"
+"[prereq] nxrrset ....     (require that this RRset does not exist)\n"
+"[prereq] yxrrset ....     (require that this RRset exists)\n"
 "[update] add ....         (add the given record to the zone)\n"
 "[update] del[ete] ....    (remove the given record(s) from the zone)\n");
 		return (STATUS_MORE);
@@ -2751,10 +2751,8 @@ start_gssrequest(dns_name_t *master) {
 		if (kserver == NULL)
 			fatal("out of memory");
 	}
-	if (servers == NULL)
-		get_addresses(namestr, dnsport, kserver, 1);
-	else
-		memmove(kserver, &servers[ns_inuse], sizeof(isc_sockaddr_t));
+
+	memmove(kserver, &master_servers[master_inuse], sizeof(isc_sockaddr_t));
 
 	dns_fixedname_init(&fname);
 	servname = dns_fixedname_name(&fname);
@@ -2899,11 +2897,11 @@ recvgss(isc_task_t *task, isc_event_t *event) {
 	}
 
 	if (eresult != ISC_R_SUCCESS) {
-		next_server("recvgss", addr, eresult);
+		next_master("recvgss", addr, eresult);
 		ddebug("Destroying request [%p]", request);
 		dns_request_destroy(&request);
 		dns_message_renderreset(tsigquery);
-		sendrequest(&servers[ns_inuse], tsigquery, &request);
+		sendrequest(&master_servers[master_inuse], tsigquery, &request);
 		isc_mem_put(gmctx, reqinfo, sizeof(nsu_gssinfo_t));
 		isc_event_free(&event);
 		return;

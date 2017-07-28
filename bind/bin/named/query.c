@@ -698,7 +698,7 @@ ns_query_init(ns_client_t *client) {
 	return (result);
 }
 
-static inline ns_dbversion_t *
+static ns_dbversion_t *
 query_findversion(ns_client_t *client, dns_db_t *db) {
 	ns_dbversion_t *dbversion;
 
@@ -975,12 +975,16 @@ rpz_log_rewrite(ns_client_t *client, isc_boolean_t disabled,
 }
 
 static void
-rpz_log_fail(ns_client_t *client, int level, dns_name_t *p_name,
-	     dns_rpz_type_t rpz_type, const char *str, isc_result_t result)
+rpz_log_fail_helper(ns_client_t *client, int level, dns_name_t *p_name,
+		    dns_rpz_type_t rpz_type1, dns_rpz_type_t rpz_type2,
+		    const char *str, isc_result_t result)
 {
 	char qnamebuf[DNS_NAME_FORMATSIZE];
 	char p_namebuf[DNS_NAME_FORMATSIZE];
 	const char *failed;
+	const char *slash;
+	const char *rpztypestr1;
+	const char *rpztypestr2;
 
 	if (!isc_log_wouldlog(ns_g_lctx, level))
 		return;
@@ -992,14 +996,32 @@ rpz_log_fail(ns_client_t *client, int level, dns_name_t *p_name,
 		failed = "failed: ";
 	else
 		failed = ": ";
+
+	rpztypestr1 = dns_rpz_type2str(rpz_type1);
+	if (rpz_type2 != DNS_RPZ_TYPE_BAD) {
+		slash = "/";
+		rpztypestr2 = dns_rpz_type2str(rpz_type2);
+	} else {
+		slash = "";
+		rpztypestr2 = "";
+	}
+
 	dns_name_format(client->query.qname, qnamebuf, sizeof(qnamebuf));
 	dns_name_format(p_name, p_namebuf, sizeof(p_namebuf));
 	ns_client_log(client, NS_LOGCATEGORY_QUERY_ERRORS,
 		      NS_LOGMODULE_QUERY, level,
-		      "rpz %s rewrite %s via %s%s%s%s",
-		      dns_rpz_type2str(rpz_type),
+		      "rpz %s%s%s rewrite %s via %s%s%s%s",
+		      rpztypestr1, slash, rpztypestr2,
 		      qnamebuf, p_namebuf,
 		      str, failed, isc_result_totext(result));
+}
+
+static void
+rpz_log_fail(ns_client_t *client, int level, dns_name_t *p_name,
+	     dns_rpz_type_t rpz_type, const char *str, isc_result_t result)
+{
+	rpz_log_fail_helper(client, level, p_name,
+			    rpz_type, DNS_RPZ_TYPE_BAD, str, result);
 }
 
 /*
@@ -1180,6 +1202,8 @@ query_getdb(ns_client_t *client, dns_name_t *name, dns_rdatatype_t qtype,
 					     zonelabels, &cm, &ci, &tdbp);
 		 /* If we successful, we found a better match. */
 		if (tresult == ISC_R_SUCCESS) {
+			ns_dbversion_t *dbversion;
+
 			/*
 			 * If the previous search returned a zone, detach it.
 			 */
@@ -1198,15 +1222,16 @@ query_getdb(ns_client_t *client, dns_name_t *name, dns_rdatatype_t qtype,
 			 */
 			*versionp = NULL;
 
-			/*
-			 * Get our database version.
-			 */
-			dns_db_currentversion(tdbp, versionp);
-
-			/*
-			 * Be sure to return our database.
-			 */
-			*dbp = tdbp;
+			dbversion = query_findversion(client, tdbp);
+			if (dbversion == NULL) {
+				tresult = ISC_R_NOMEMORY;
+			} else {
+				/*
+				 * Be sure to return our database.
+				 */
+				*dbp = tdbp;
+				*versionp = dbversion->version;
+			}
 
 			/*
 			 * We return a null zone, No stats for DLZ zones.
@@ -1286,6 +1311,7 @@ query_addadditional(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 	dns_rdatatype_t type;
 	dns_clientinfomethods_t cm;
 	dns_clientinfo_t ci;
+	dns_rdatasetadditional_t additionaltype;
 
 	REQUIRE(NS_CLIENT_VALID(client));
 	REQUIRE(qtype != dns_rdatatype_any);
@@ -1309,6 +1335,7 @@ query_addadditional(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 	added_something = ISC_FALSE;
 	need_addname = ISC_FALSE;
 	zone = NULL;
+	additionaltype = dns_rdatasetadditional_fromauth;
 
 	dns_clientinfomethods_init(&cm, ns_client_sourceip);
 	dns_clientinfo_init(&ci, client);
@@ -1382,6 +1409,7 @@ query_addadditional(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 	 */
 
  try_cache:
+	additionaltype = dns_rdatasetadditional_fromcache;
 	result = query_getcachedb(client, name, qtype, &db, DNS_GETDB_NOLOG);
 	if (result != ISC_R_SUCCESS)
 		/*
@@ -1398,19 +1426,15 @@ query_addadditional(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 	}
 	result = dns_db_findext(db, name, version, type,
 				client->query.dboptions |
-				 DNS_DBFIND_GLUEOK | DNS_DBFIND_ADDITIONALOK,
+				DNS_DBFIND_GLUEOK | DNS_DBFIND_ADDITIONALOK,
 				client->now, &node, fname, &cm, &ci,
 				rdataset, sigrdataset);
 
 	dns_cache_updatestats(client->view->cache, result);
-	if (result == DNS_R_GLUE &&
-	    validate(client, db, fname, rdataset, sigrdataset))
-		result = ISC_R_SUCCESS;
 	if (!WANTDNSSEC(client))
 		query_putrdataset(client, &sigrdataset);
 	if (result == ISC_R_SUCCESS)
 		goto found;
-
 
 	if (dns_rdataset_isassociated(rdataset))
 		dns_rdataset_disassociate(rdataset);
@@ -1446,6 +1470,8 @@ query_addadditional(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 		goto cleanup;
 
 	dns_db_attach(client->query.gluedb, &db);
+
+	additionaltype = dns_rdatasetadditional_fromglue;
 	result = dns_db_findext(db, name, version, type,
 				client->query.dboptions | DNS_DBFIND_GLUEOK,
 				client->now, &node, fname, &cm, &ci,
@@ -1538,11 +1564,23 @@ query_addadditional(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 #ifdef ALLOW_FILTER_AAAA
 			have_a = ISC_TRUE;
 #endif
-			if (!query_isduplicate(client, fname,
-					       dns_rdatatype_a, &mname)) {
+			if (additionaltype == dns_rdatasetadditional_fromcache &&
+			    (DNS_TRUST_PENDING(rdataset->trust) ||
+			     DNS_TRUST_GLUE(rdataset->trust)) &&
+			    !validate(client, db, fname, rdataset, sigrdataset))
+			{
+				dns_rdataset_disassociate(rdataset);
+				if (sigrdataset != NULL &&
+				    dns_rdataset_isassociated(sigrdataset))
+					dns_rdataset_disassociate(sigrdataset);
+				/* treat as if not found */
+			} else if (!query_isduplicate(client, fname,
+					       dns_rdatatype_a, &mname))
+			{
 				if (mname != fname) {
 					if (mname != NULL) {
-						query_releasename(client, &fname);
+						query_releasename(client,
+								  &fname);
 						fname = mname;
 					} else
 						need_addname = ISC_TRUE;
@@ -1597,11 +1635,23 @@ query_addadditional(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 			      !dns_rdataset_isassociated(sigrdataset)))))
 				goto addname;
 #endif
-			if (!query_isduplicate(client, fname,
-					       dns_rdatatype_aaaa, &mname)) {
+			if (additionaltype == dns_rdatasetadditional_fromcache &&
+			    (DNS_TRUST_PENDING(rdataset->trust) ||
+			     DNS_TRUST_GLUE(rdataset->trust)) &&
+			    !validate(client, db, fname, rdataset, sigrdataset))
+			{
+				dns_rdataset_disassociate(rdataset);
+				if (sigrdataset != NULL &&
+				    dns_rdataset_isassociated(sigrdataset))
+					dns_rdataset_disassociate(sigrdataset);
+				/* treat as if not found */
+			} else if (!query_isduplicate(client, fname,
+					       dns_rdatatype_aaaa, &mname))
+			{
 				if (mname != fname) {
 					if (mname != NULL) {
-						query_releasename(client, &fname);
+						query_releasename(client,
+								  &fname);
 						fname = mname;
 					} else
 						need_addname = ISC_TRUE;
@@ -5069,8 +5119,9 @@ rpz_rewrite_ns_skip(ns_client_t *client, dns_name_t *nsname,
 	st = client->query.rpz_st;
 
 	if (str != NULL)
-		rpz_log_fail(client, level, nsname, DNS_RPZ_TYPE_NSIP,
-			     str, result);
+		rpz_log_fail_helper(client, level, nsname,
+				    DNS_RPZ_TYPE_NSIP, DNS_RPZ_TYPE_NSDNAME,
+				    str, result);
 	if (st->r.ns_rdataset != NULL &&
 	    dns_rdataset_isassociated(st->r.ns_rdataset))
 		dns_rdataset_disassociate(st->r.ns_rdataset);

@@ -665,7 +665,7 @@ struct dns_rbtdb {
 	 * context to use for the heap (which differs from the main
 	 * database memory context in the case of a cache).
 	 */
-	isc_mem_t *			hmctx;
+	isc_mem_t			*hmctx;
 	isc_heap_t                      **heaps;
 
 	/*
@@ -1054,9 +1054,7 @@ ttl_sooner(void *v1, void *v2) {
 	rdatasetheader_t *h1 = v1;
 	rdatasetheader_t *h2 = v2;
 
-	if (h1->rdh_ttl < h2->rdh_ttl)
-		return (ISC_TRUE);
-	return (ISC_FALSE);
+	return (ISC_TF(h1->rdh_ttl < h2->rdh_ttl));
 }
 
 static isc_boolean_t
@@ -1064,10 +1062,9 @@ resign_sooner(void *v1, void *v2) {
 	rdatasetheader_t *h1 = v1;
 	rdatasetheader_t *h2 = v2;
 
-	if (h1->resign < h2->resign ||
-	    (h1->resign == h2->resign && h1->resign_lsb < h2->resign_lsb))
-		return (ISC_TRUE);
-	return (ISC_FALSE);
+	return (ISC_TF(h1->resign < h2->resign ||
+		       (h1->resign == h2->resign &&
+			h1->resign_lsb < h2->resign_lsb)));
 }
 
 /*%
@@ -1907,7 +1904,13 @@ delete_node(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node) {
 		name = dns_fixedname_name(&fname);
 		dns_rbt_fullnamefromnode(node, name);
 
+		/*
+		 * dns_rbt_deletenode() may keep the node if it has a
+		 * down pointer, but we mustn't call dns_rpz_delete() on
+		 * it again.
+		 */
 		node_has_rpz = node->rpz;
+		node->rpz = 0;
 		result = dns_rbt_deletenode(rbtdb->tree, node, ISC_FALSE);
 		if (result == ISC_R_SUCCESS &&
 		    rbtdb->rpzs != NULL && node_has_rpz)
@@ -1944,7 +1947,13 @@ delete_node(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node) {
 					      isc_result_totext(result));
 			}
 		}
+		/*
+		 * dns_rbt_deletenode() may keep the node if it has a
+		 * down pointer, but we mustn't call dns_rpz_delete() on
+		 * it again.
+		 */
 		node_has_rpz = node->rpz;
+		node->rpz = 0;
 		result = dns_rbt_deletenode(rbtdb->tree, node, ISC_FALSE);
 		if (result == ISC_R_SUCCESS &&
 		    rbtdb->rpzs != NULL && node_has_rpz)
@@ -6221,7 +6230,8 @@ add32(dns_rbtdb_t *rbtdb, dns_rbtnode_t *rbtnode, rbtdb_version_t *rbtversion,
 				update_newheader(newheader, header);
 				if (loading && RESIGN(newheader) &&
 				    RESIGN(header) &&
-				    header->resign < newheader->resign) {
+				    resign_sooner(header, newheader))
+				{
 					newheader->resign = header->resign;
 					newheader->resign_lsb =
 							header->resign_lsb;
@@ -7145,8 +7155,12 @@ loadnode(dns_rbtdb_t *rbtdb, dns_name_t *name, dns_rbtnode_t **nodep,
 
 		/*
 		 * Remove the node we just added above.
+		 * dns_rbt_deletenode() may keep the node if it has a
+		 * down pointer, but we mustn't call dns_rpz_delete() on
+		 * it again.
 		 */
 		node_has_rpz = node->rpz;
+		node->rpz = 0;
 		tmpresult = dns_rbt_deletenode(rbtdb->tree, node, ISC_FALSE);
 		if (tmpresult == ISC_R_SUCCESS) {
 			/*
@@ -7323,7 +7337,9 @@ rbt_datafixer(dns_rbtnode_t *rbtnode, void *base, size_t filesize,
 		header->node = rbtnode;
 		header->node_is_relative = 0;
 
-		if (rbtdb != NULL && RESIGN(header) && header->resign != 0) {
+		if (rbtdb != NULL && RESIGN(header) &&
+		    (header->resign != 0 || header->resign_lsb != 0))
+		{
 			int idx = header->node->locknum;
 			result = isc_heap_insert(rbtdb->heaps[idx], header);
 			if (result != ISC_R_SUCCESS)
@@ -7971,7 +7987,7 @@ setsigningtime(dns_db_t *db, dns_rdataset_t *rdataset, isc_stdtime_t resign) {
 	NODE_LOCK(&rbtdb->node_locks[header->node->locknum].lock,
 		  isc_rwlocktype_write);
 
-	oldresign = header->resign;
+	oldresign = (header->resign << 1) | header->resign_lsb;
 	header->resign = (isc_stdtime_t)(dns_time64_from32(resign) >> 1);
 	header->resign_lsb = resign & 0x1;
 	if (header->heap_index != 0) {
@@ -8019,7 +8035,7 @@ getsigningtime(dns_db_t *db, dns_rdataset_t *rdataset,
 		}
 		if (header == NULL)
 			header = this;
-		else if (isc_serial_lt(this->resign, header->resign)) {
+		else if (resign_sooner(this, header)) {
 			locknum = header->node->locknum;
 			NODE_UNLOCK(&rbtdb->node_locks[locknum].lock,
 				    isc_rwlocktype_read);

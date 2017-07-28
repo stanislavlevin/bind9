@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009-2017  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -714,6 +714,22 @@ ret=0
 $DIG @10.53.0.7 -p 5300 zero.example.net txt > dig.out.1.${n} || ret=1
 ttl=`awk '/"A" "zero" "ttl"/ { print $2 }' dig.out.1.${n}`
 test ${ttl:-1} -eq 0 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that 'ad' in not returned in truncated answer with empty answer and authority sections to request with +ad (${n})"
+ret=0
+$DIG @10.53.0.6 -p 5300 dnskey ds.example.net +bufsize=512 +ad +nodnssec +ignore +norec > dig.out.$n
+grep "flags: qr aa tc; QUERY: 1, ANSWER: 0, AUTHORITY: 0" dig.out.$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that 'ad' in not returned in truncated answer with empty answer and authority sections to request with +dnssec (${n})"
+ret=0
+$DIG @10.53.0.6 -p 5300 dnskey ds.example.net +bufsize=512 +noad +dnssec +ignore +norec > dig.out.$n
+grep "flags: qr aa tc; QUERY: 1, ANSWER: 0, AUTHORITY: 0" dig.out.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -34,6 +34,7 @@
       <year>2014</year>
       <year>2015</year>
       <year>2016</year>
+      <year>2017</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -253,11 +254,8 @@
 	  <emphasis>resolver</emphasis> library, which sends queries to one or
 	  more <emphasis>name servers</emphasis> and interprets the responses.
 	  The <acronym>BIND</acronym> 9 software distribution
-	  contains a
-	  name server, <command>named</command>, and a resolver
-	  library, <command>liblwres</command>.  The older
-	  <command>libbind</command> resolver library is also available
-	  from ISC as a separate download.
+	  contains a name server, <command>named</command>, and a
+	  resolver library, <command>liblwres</command>.
 	</para>
 
 	</section>
