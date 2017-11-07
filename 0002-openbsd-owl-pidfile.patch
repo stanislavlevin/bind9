@@ -9,20 +9,20 @@ diff --git a/bind/bin/named/include/named/globals.h b/bind/bin/named/include/nam
 index defaced..defaced 100644
 --- a/bind/bin/named/include/named/globals.h
 +++ b/bind/bin/named/include/named/globals.h
-@@ -146,6 +146,8 @@ EXTERN const char *		ns_g_defaultpidfile 	INIT(NS_LOCALSTATEDIR
+@@ -145,6 +145,8 @@ EXTERN const char *		ns_g_defaultpidfile 	INIT(NS_LOCALSTATEDIR
  EXTERN const char *		lwresd_g_defaultpidfile INIT(NS_LOCALSTATEDIR
  							     "/run/lwresd.pid");
  #endif
 +EXTERN const char *		ns_g_pidfile		INIT(NS_LOCALSTATEDIR
 +							    "/run/named.pid");
  
- EXTERN const char *		ns_g_username		INIT(NULL);
- 
+ #ifdef HAVE_DNSTAP
+ EXTERN const char *		ns_g_defaultdnstap
 diff --git a/bind/bin/named/main.c b/bind/bin/named/main.c
 index defaced..defaced 100644
 --- a/bind/bin/named/main.c
 +++ b/bind/bin/named/main.c
-@@ -322,6 +322,7 @@ usage(void) {
+@@ -320,6 +320,7 @@ usage(void) {
  	fprintf(stderr,
  		"usage: named [-4|-6] [-c conffile] [-d debuglevel] "
  		"[-E engine] [-f|-g]\n"
@@ -30,7 +30,7 @@ index defaced..defaced 100644
  		"             [-n number_of_cpus] [-p port] [-s] "
  		"[-S sockets] [-t chrootdir]\n"
  		"             [-u username] [-U listeners] "
-@@ -492,9 +493,8 @@ parse_command_line(int argc, char *argv[]) {
+@@ -516,9 +517,8 @@ parse_command_line(int argc, char *argv[]) {
  			ns_g_foreground = ISC_TRUE;
  			ns_g_logstderr = ISC_TRUE;
  			break;
@@ -41,7 +41,7 @@ index defaced..defaced 100644
  			break;
  		case 'l':
  			ns_g_lwresdonly = ISC_TRUE;
-@@ -910,6 +910,12 @@ setup(void) {
+@@ -960,6 +960,12 @@ setup(void) {
  	char *instance = NULL;
  #endif
  
@@ -58,7 +58,7 @@ diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
 index defaced..defaced 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -6211,16 +6211,20 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -7645,16 +7645,20 @@ load_configuration(const char *filename, ns_server_t *server,
  	/*
  	 * Write the PID file.
  	 */
@@ -88,7 +88,7 @@ index defaced..defaced 100644
  
  	/*
  	 * Configure the server-wide session key.  This must be done before
-@@ -6557,7 +6561,6 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -8021,7 +8025,6 @@ load_configuration(const char *filename, ns_server_t *server,
  		}
  	}
  
@@ -100,7 +100,7 @@ diff --git a/bind/bin/named/unix/include/named/os.h b/bind/bin/named/unix/includ
 index defaced..defaced 100644
 --- a/bind/bin/named/unix/include/named/os.h
 +++ b/bind/bin/named/unix/include/named/os.h
-@@ -53,6 +53,9 @@ FILE *
+@@ -49,6 +49,9 @@ FILE *
  ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user);
  
  void
@@ -109,31 +109,31 @@ index defaced..defaced 100644
 +void
  ns_os_writepidfile(const char *filename, isc_boolean_t first_time);
  
- void
+ isc_boolean_t
 diff --git a/bind/bin/named/unix/os.c b/bind/bin/named/unix/os.c
 index defaced..defaced 100644
 --- a/bind/bin/named/unix/os.c
 +++ b/bind/bin/named/unix/os.c
-@@ -56,6 +56,8 @@
- #endif
+@@ -48,6 +48,8 @@
  
  static char *pidfile = NULL;
+ static char *lockfile = NULL;
 +static isc_boolean_t preopenpidfile = ISC_FALSE;
 +static FILE *pidref = NULL;
  static int devnullfd = -1;
+ static int singletonfd = -1;
  
- #ifndef ISC_FACILITY
-@@ -851,35 +853,56 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
+@@ -872,35 +874,56 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
  	return (fp);
  }
  
 -void
 -ns_os_writepidfile(const char *filename, isc_boolean_t first_time) {
--	FILE *lockfile;
+-	FILE *fh;
 -	pid_t pid;
 +static FILE*
 +open_pidfile(const char *filename, isc_boolean_t first_time) {
-+	static FILE *lockfile=NULL;
++	static FILE *fh=NULL;
  	char strbuf[ISC_STRERRORSIZE];
  	void (*report)(const char *, ...);
  
@@ -157,9 +157,9 @@ index defaced..defaced 100644
 +		return NULL;
  	}
  
- 	lockfile = ns_os_openfile(filename, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH,
+ 	fh = ns_os_openfile(filename, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH,
  				  first_time);
-+	return lockfile;
++	return fh;
 +}
 +
 +void
@@ -170,7 +170,7 @@ index defaced..defaced 100644
 +
 +void
 +ns_os_writepidfile(const char *filename, isc_boolean_t first_time) {
-+	FILE *lockfile;
++	FILE *fh;
 +	pid_t pid;
 +	void (*report)(const char *, ...);
 +
@@ -181,40 +181,42 @@ index defaced..defaced 100644
 +	report = first_time ? ns_main_earlyfatal : ns_main_earlywarning;
 +
 +	if (preopenpidfile == ISC_TRUE)
-+		lockfile = pidref;
++		fh = pidref;
 +	else
-+		lockfile = open_pidfile(filename, first_time);
++		fh = open_pidfile(filename, first_time);
 +
- 	if (lockfile == NULL) {
+ 	if (fh == NULL) {
 -		cleanup_pidfile();
 +		if (preopenpidfile == ISC_FALSE) cleanup_pidfile();
  		return;
  	}
  #ifdef HAVE_LINUXTHREADS
-@@ -890,22 +913,23 @@ ns_os_writepidfile(const char *filename, isc_boolean_t first_time) {
- 	if (fprintf(lockfile, "%ld\n", (long)pid) < 0) {
+@@ -911,16 +934,17 @@ ns_os_writepidfile(const char *filename, isc_boolean_t first_time) {
+ 	if (fprintf(fh, "%ld\n", (long)pid) < 0) {
  		(*report)("fprintf() to pid file '%s' failed", filename);
- 		(void)fclose(lockfile);
+ 		(void)fclose(fh);
 -		cleanup_pidfile();
 +		if (preopenpidfile == ISC_FALSE) cleanup_pidfile();
  		return;
  	}
- 	if (fflush(lockfile) == EOF) {
+ 	if (fflush(fh) == EOF) {
  		(*report)("fflush() to pid file '%s' failed", filename);
- 		(void)fclose(lockfile);
+ 		(void)fclose(fh);
 -		cleanup_pidfile();
 +		if (preopenpidfile == ISC_FALSE) cleanup_pidfile();
  		return;
  	}
- 	(void)fclose(lockfile);
+ 	(void)fclose(fh);
 +	if (preopenpidfile == ISC_TRUE) pidref = NULL;
  }
  
+ isc_boolean_t
+@@ -981,7 +1005,7 @@ ns_os_issingleton(const char *filename) {
  void
  ns_os_shutdown(void) {
  	closelog();
 -	cleanup_pidfile();
 +	if (preopenpidfile == ISC_FALSE) cleanup_pidfile();
+ 	cleanup_lockfile();
  }
  
- isc_result_t

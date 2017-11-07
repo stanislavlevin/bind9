@@ -23,19 +23,19 @@ diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
 index defaced..defaced 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -6458,6 +6458,7 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -7908,6 +7908,7 @@ load_configuration(const char *filename, ns_server_t *server,
  	 */
  	if (first_time) {
  		ns_os_changeuser();
 +		ns_os_dropprivs();
  	}
  
- 	/*
+ #ifdef HAVE_LMDB
 diff --git a/bind/bin/named/unix/include/named/os.h b/bind/bin/named/unix/include/named/os.h
 index defaced..defaced 100644
 --- a/bind/bin/named/unix/include/named/os.h
 +++ b/bind/bin/named/unix/include/named/os.h
-@@ -59,6 +59,9 @@ int
+@@ -55,6 +55,9 @@ int
  ns_os_open_randomdev(void);
  
  void
@@ -44,12 +44,12 @@ index defaced..defaced 100644
 +void
  ns_os_writepidfile(const char *filename, isc_boolean_t first_time);
  
- void
+ isc_boolean_t
 diff --git a/bind/bin/named/unix/os.c b/bind/bin/named/unix/os.c
 index defaced..defaced 100644
 --- a/bind/bin/named/unix/os.c
 +++ b/bind/bin/named/unix/os.c
-@@ -174,7 +174,7 @@ linux_setcaps(cap_t caps) {
+@@ -167,7 +167,7 @@ linux_setcaps(cap_t caps) {
  #endif
  	char strbuf[ISC_STRERRORSIZE];
  
@@ -58,7 +58,7 @@ index defaced..defaced 100644
  		return;
  #ifndef HAVE_LIBCAP
  	memset(&caphead, 0, sizeof(caphead));
-@@ -368,6 +368,32 @@ linux_keepcaps(void) {
+@@ -361,6 +361,32 @@ linux_keepcaps(void) {
  			non_root = ISC_TRUE;
  	}
  }
@@ -91,7 +91,7 @@ index defaced..defaced 100644
  #endif
  
  #endif	/* HAVE_LINUX_CAPABILITY_H */
-@@ -603,28 +629,53 @@ ns_os_changeuser(void) {
+@@ -596,27 +622,52 @@ ns_os_changeuser(void) {
  		ns_main_earlyfatal("setgid(): %s", strbuf);
  	}
  
@@ -123,7 +123,7 @@ index defaced..defaced 100644
  #endif
  }
  
- void
++void
 +ns_os_dropprivs(void) {
 +#ifdef HAVE_LINUXTHREADS
 +	char strbuf[ISC_STRERRORSIZE];
@@ -152,10 +152,9 @@ index defaced..defaced 100644
 +#endif /* HAVE_LINUXTHREADS || HAVE_LINUX_CAPABILITY_H */
 +}
 +
-+void
- ns_os_adjustnofile(void) {
- #ifdef HAVE_LINUXTHREADS
- 	isc_result_t result;
+ uid_t
+ ns_os_uid(void) {
+ 	if (runas_pw == NULL)
 @@ -648,12 +699,10 @@ ns_os_minprivs(void) {
  	linux_keepcaps();
  #endif
@@ -171,7 +170,7 @@ index defaced..defaced 100644
  #endif
  }
  
-@@ -696,18 +745,21 @@ static int
+@@ -717,18 +766,21 @@ static int
  mkdirpath(char *filename, void (*report)(const char *, ...)) {
  	char *slash = strrchr(filename, '/');
  	char strbuf[ISC_STRERRORSIZE];
@@ -194,7 +193,7 @@ index defaced..defaced 100644
  			}
  			if (mkdirpath(filename, report) == -1)
  				goto error;
-@@ -736,6 +788,7 @@ mkdirpath(char *filename, void (*report)(const char *, ...)) {
+@@ -757,6 +809,7 @@ mkdirpath(char *filename, void (*report)(const char *, ...)) {
  				(*report)("couldn't chown '%s': %s", filename,
  					  strbuf);
  			}
@@ -202,7 +201,7 @@ index defaced..defaced 100644
  		}
  		*slash = '/';
  	}
-@@ -746,6 +799,7 @@ mkdirpath(char *filename, void (*report)(const char *, ...)) {
+@@ -767,6 +820,7 @@ mkdirpath(char *filename, void (*report)(const char *, ...)) {
  	return (-1);
  }
  
@@ -210,7 +209,7 @@ index defaced..defaced 100644
  static void
  setperms(uid_t uid, gid_t gid) {
  	char strbuf[ISC_STRERRORSIZE];
-@@ -787,6 +841,7 @@ setperms(uid_t uid, gid_t gid) {
+@@ -808,6 +862,7 @@ setperms(uid_t uid, gid_t gid) {
  	}
  #endif
  }
@@ -218,7 +217,7 @@ index defaced..defaced 100644
  
  FILE *
  ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
-@@ -794,6 +849,9 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
+@@ -815,6 +870,9 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
  	FILE *fp;
  	int fd;
  
@@ -228,7 +227,7 @@ index defaced..defaced 100644
  	/*
  	 * Make the containing directory if it doesn't exist.
  	 */
-@@ -810,6 +868,7 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
+@@ -831,6 +889,7 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
  	}
  	free(f);
  
@@ -236,7 +235,7 @@ index defaced..defaced 100644
  	if (switch_user && runas_pw != NULL) {
  #ifndef HAVE_LINUXTHREADS
  		gid_t oldgid = getgid();
-@@ -846,7 +905,9 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
+@@ -867,7 +926,9 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
  					     "or reconfigure the filename.");
  #endif /* HAVE_LINUXTHREADS */
  		}

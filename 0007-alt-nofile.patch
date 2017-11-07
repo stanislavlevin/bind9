@@ -8,7 +8,7 @@ diff --git a/bind/lib/isc/unix/resource.c b/bind/lib/isc/unix/resource.c
 index defaced..defaced 100644
 --- a/bind/lib/isc/unix/resource.c
 +++ b/bind/lib/isc/unix/resource.c
-@@ -30,6 +30,21 @@
+@@ -21,6 +21,21 @@
  
  #ifdef __linux__
  #include <linux/fs.h>	/* To get the large NR_OPEN. */
@@ -30,7 +30,7 @@ index defaced..defaced 100644
  #endif
  
  #if defined(__hpux) && defined(HAVE_SYS_DYNTUNE_H)
-@@ -169,7 +184,7 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
+@@ -160,7 +175,7 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
  	 * possible value is the NR_OPEN defined in linux/fs.h.
  	 */
  	if (resource == isc_resource_openfiles && rlim_value == RLIM_INFINITY) {

@@ -8,7 +8,7 @@ diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
 index defaced..defaced 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -6414,8 +6414,12 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -7847,8 +7847,12 @@ load_configuration(const char *filename, ns_server_t *server,
  		} else {
  			const char *randomdev = cfg_obj_asstring(obj);
  			int level = ISC_LOG_ERROR;
@@ -22,7 +22,7 @@ index defaced..defaced 100644
  #ifdef PATH_RANDOMDEV
  			if (ns_g_fallbackentropy != NULL)
  				level = ISC_LOG_INFO;
-@@ -6452,16 +6456,8 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -7902,16 +7906,8 @@ load_configuration(const char *filename, ns_server_t *server,
  	/*
  	 * Relinquish root privileges.
  	 */
@@ -39,12 +39,12 @@ index defaced..defaced 100644
 -			      "the working directory is not writable");
  	}
  
- 	/*
+ #ifdef HAVE_LMDB
 diff --git a/bind/bin/named/unix/include/named/os.h b/bind/bin/named/unix/include/named/os.h
 index defaced..defaced 100644
 --- a/bind/bin/named/unix/include/named/os.h
 +++ b/bind/bin/named/unix/include/named/os.h
-@@ -55,6 +55,9 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user);
+@@ -51,6 +51,9 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user);
  void
  ns_os_preopenpidfile(const char *filename);
  
@@ -58,7 +58,7 @@ diff --git a/bind/bin/named/unix/os.c b/bind/bin/named/unix/os.c
 index defaced..defaced 100644
 --- a/bind/bin/named/unix/os.c
 +++ b/bind/bin/named/unix/os.c
-@@ -398,6 +398,19 @@ ns_os_init(const char *progname) {
+@@ -391,6 +391,19 @@ ns_os_init(const char *progname) {
  #endif
  }
  
@@ -78,7 +78,7 @@ index defaced..defaced 100644
  void
  ns_os_daemonize(void) {
  	pid_t pid;
-@@ -521,6 +534,7 @@ ns_os_chroot(const char *root) {
+@@ -514,6 +527,7 @@ ns_os_chroot(const char *root) {
  #endif
  	if (root != NULL) {
  #ifdef HAVE_CHROOT
@@ -90,7 +90,7 @@ diff --git a/bind/lib/isc/include/isc/entropy.h b/bind/lib/isc/include/isc/entro
 index defaced..defaced 100644
 --- a/bind/lib/isc/include/isc/entropy.h
 +++ b/bind/lib/isc/include/isc/entropy.h
-@@ -172,6 +172,9 @@ isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname);
+@@ -163,6 +163,9 @@ isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname);
   * The file will never be opened/read again once EOF is reached.
   */
  
@@ -104,7 +104,7 @@ diff --git a/bind/lib/isc/unix/entropy.c b/bind/lib/isc/unix/entropy.c
 index defaced..defaced 100644
 --- a/bind/lib/isc/unix/entropy.c
 +++ b/bind/lib/isc/unix/entropy.c
-@@ -485,22 +485,82 @@ make_nonblock(int fd) {
+@@ -476,22 +476,82 @@ make_nonblock(int fd) {
  }
  
  isc_result_t
@@ -194,7 +194,7 @@ index defaced..defaced 100644
  	}
  	/*
  	 * Solaris 2.5.1 does not have support for sockets (S_IFSOCK),
-@@ -523,14 +583,9 @@ isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname) {
+@@ -514,14 +574,9 @@ isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname) {
  		fd = open(fname, O_RDONLY | PORT_NONBLOCK, 0);
  
  	if (fd < 0) {
@@ -210,7 +210,7 @@ index defaced..defaced 100644
  	if (is_usocket) {
  		struct sockaddr_un sname;
  
-@@ -548,57 +603,12 @@ isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname) {
+@@ -539,57 +594,12 @@ isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname) {
  		if (connect(fd, (struct sockaddr *) &sname,
  			    sizeof(struct sockaddr_un)) < 0) {
  			if (errno != EINPROGRESS) {

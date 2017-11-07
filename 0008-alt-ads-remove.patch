@@ -8,15 +8,15 @@ diff --git a/bind/bin/named/main.c b/bind/bin/named/main.c
 index defaced..defaced 100644
 --- a/bind/bin/named/main.c
 +++ b/bind/bin/named/main.c
-@@ -1014,6 +1014,7 @@ setup(void) {
+@@ -1064,6 +1064,7 @@ setup(void) {
  		      *ns_g_description ? " " : "", ns_g_description,
- 		      ns_g_srcid, saved_command_line);
+ 		      ns_g_srcid);
  
 +#ifdef WANT_ISC_ADS
  	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
  		      ISC_LOG_NOTICE, "running on %s", ns_os_uname());
  
-@@ -1039,6 +1040,7 @@ setup(void) {
+@@ -1093,6 +1094,7 @@ setup(void) {
  		      ISC_LOG_NOTICE,
  		      "----------------------------------------------------");
  
