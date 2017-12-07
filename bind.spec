@@ -1,7 +1,7 @@
 Name: bind
 Version: 9.11.2
 %define src_version 9.11.2
-Release: alt1
+Release: alt2
 
 Summary: ISC BIND - DNS server
 License: BSD-style
@@ -434,6 +434,9 @@ fi
 %exclude %docdir/COPYRIGHT
 
 %changelog
+* Thu Dec 07 2017 Stanislav Levin <slev@altlinux.org> 9.11.2-alt2
+- Fix lack of rndc.key in non-chrooted bind (closes: #34292).
+
 * Fri Nov 03 2017 Stanislav Levin <slev@altlinux.org> 9.11.2-alt1
 - 9.10.6 -> 9.11.2.
 
