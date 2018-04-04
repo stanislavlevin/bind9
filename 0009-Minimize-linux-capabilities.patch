@@ -1,4 +1,4 @@
-From 0 Mon Sep 17 00:00:00 2001
+From dc76c989bbf34d509dc94e98428c2cccdc459f8c Mon Sep 17 00:00:00 2001
 From: "Dmitry V. Levin" <ldv@altlinux.org>
 Date: Wed, 11 Jan 2017 15:27:28 +0000
 Subject: [PATCH] Minimize linux capabilities
@@ -20,19 +20,19 @@ call in load_configuration.  This trick activates NPTL feature
 of forcing process credential changes over all threads.
 
 diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
-index defaced..defaced 100644
+index 0147eaf..9549942 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -7908,6 +7908,7 @@ load_configuration(const char *filename, ns_server_t *server,
+@@ -8133,6 +8133,7 @@ load_configuration(const char *filename, ns_server_t *server,
  	 */
  	if (first_time) {
  		ns_os_changeuser();
 +		ns_os_dropprivs();
  	}
  
- #ifdef HAVE_LMDB
+ 
 diff --git a/bind/bin/named/unix/include/named/os.h b/bind/bin/named/unix/include/named/os.h
-index defaced..defaced 100644
+index 62967f4..158c155 100644
 --- a/bind/bin/named/unix/include/named/os.h
 +++ b/bind/bin/named/unix/include/named/os.h
 @@ -55,6 +55,9 @@ int
@@ -46,10 +46,20 @@ index defaced..defaced 100644
  
  isc_boolean_t
 diff --git a/bind/bin/named/unix/os.c b/bind/bin/named/unix/os.c
-index defaced..defaced 100644
+index 7be91f0..64261b3 100644
 --- a/bind/bin/named/unix/os.c
 +++ b/bind/bin/named/unix/os.c
-@@ -167,7 +167,7 @@ linux_setcaps(cap_t caps) {
+@@ -38,6 +38,9 @@
+ #include <isc/result.h>
+ #include <isc/strerror.h>
+ #include <isc/string.h>
++#ifndef WANT_SETPERMS
++#include <isc/util.h>
++#endif /* WANT_SETPERMS */
+ 
+ #include <named/globals.h>
+ #include <named/main.h>
+@@ -167,7 +170,7 @@ linux_setcaps(cap_t caps) {
  #endif
  	char strbuf[ISC_STRERRORSIZE];
  
@@ -58,7 +68,7 @@ index defaced..defaced 100644
  		return;
  #ifndef HAVE_LIBCAP
  	memset(&caphead, 0, sizeof(caphead));
-@@ -361,6 +361,32 @@ linux_keepcaps(void) {
+@@ -361,6 +364,32 @@ linux_keepcaps(void) {
  			non_root = ISC_TRUE;
  	}
  }
@@ -91,7 +101,7 @@ index defaced..defaced 100644
  #endif
  
  #endif	/* HAVE_LINUX_CAPABILITY_H */
-@@ -596,27 +622,52 @@ ns_os_changeuser(void) {
+@@ -597,27 +626,53 @@ ns_os_changeuser(void) {
  		ns_main_earlyfatal("setgid(): %s", strbuf);
  	}
  
@@ -127,8 +137,9 @@ index defaced..defaced 100644
 +ns_os_dropprivs(void) {
 +#ifdef HAVE_LINUXTHREADS
 +	char strbuf[ISC_STRERRORSIZE];
-+	if (runas_pw == NULL)
++	if (runas_pw == NULL) {
 +		return;
++	}
 +	if (setresuid(runas_pw->pw_uid, runas_pw->pw_uid, runas_pw->pw_uid) < 0) {
 +		isc__strerror(errno, strbuf, sizeof(strbuf));
 +		ns_main_earlyfatal("setresuid(): %s", strbuf);
@@ -155,7 +166,7 @@ index defaced..defaced 100644
  uid_t
  ns_os_uid(void) {
  	if (runas_pw == NULL)
-@@ -648,12 +699,10 @@ ns_os_minprivs(void) {
+@@ -649,12 +704,10 @@ ns_os_minprivs(void) {
  	linux_keepcaps();
  #endif
  
@@ -170,7 +181,7 @@ index defaced..defaced 100644
  #endif
  }
  
-@@ -717,18 +766,21 @@ static int
+@@ -718,18 +771,21 @@ static int
  mkdirpath(char *filename, void (*report)(const char *, ...)) {
  	char *slash = strrchr(filename, '/');
  	char strbuf[ISC_STRERRORSIZE];
@@ -193,7 +204,7 @@ index defaced..defaced 100644
  			}
  			if (mkdirpath(filename, report) == -1)
  				goto error;
-@@ -757,6 +809,7 @@ mkdirpath(char *filename, void (*report)(const char *, ...)) {
+@@ -758,6 +814,7 @@ mkdirpath(char *filename, void (*report)(const char *, ...)) {
  				(*report)("couldn't chown '%s': %s", filename,
  					  strbuf);
  			}
@@ -201,7 +212,7 @@ index defaced..defaced 100644
  		}
  		*slash = '/';
  	}
-@@ -767,6 +820,7 @@ mkdirpath(char *filename, void (*report)(const char *, ...)) {
+@@ -768,6 +825,7 @@ mkdirpath(char *filename, void (*report)(const char *, ...)) {
  	return (-1);
  }
  
@@ -209,7 +220,7 @@ index defaced..defaced 100644
  static void
  setperms(uid_t uid, gid_t gid) {
  	char strbuf[ISC_STRERRORSIZE];
-@@ -808,6 +862,7 @@ setperms(uid_t uid, gid_t gid) {
+@@ -809,6 +867,7 @@ setperms(uid_t uid, gid_t gid) {
  	}
  #endif
  }
@@ -217,7 +228,7 @@ index defaced..defaced 100644
  
  FILE *
  ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
-@@ -815,6 +870,9 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
+@@ -816,6 +875,9 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
  	FILE *fp;
  	int fd;
  
@@ -227,7 +238,7 @@ index defaced..defaced 100644
  	/*
  	 * Make the containing directory if it doesn't exist.
  	 */
-@@ -831,6 +889,7 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
+@@ -832,6 +894,7 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
  	}
  	free(f);
  
@@ -235,7 +246,7 @@ index defaced..defaced 100644
  	if (switch_user && runas_pw != NULL) {
  #ifndef HAVE_LINUXTHREADS
  		gid_t oldgid = getgid();
-@@ -867,7 +926,9 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
+@@ -868,7 +931,9 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
  					     "or reconfigure the filename.");
  #endif /* HAVE_LINUXTHREADS */
  		}
@@ -246,3 +257,6 @@ index defaced..defaced 100644
  		fd = safe_open(filename, mode, ISC_FALSE);
  	}
  
+-- 
+2.10.5
+

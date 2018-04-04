@@ -1,11 +1,11 @@
-From 0 Mon Sep 17 00:00:00 2001
+From 05548cc4f3bd1c0d977394df34329ea9244f12f5 Mon Sep 17 00:00:00 2001
 From: "Dmitry V. Levin" <ldv@altlinux.org>
 Date: Thu, 12 Jan 2017 16:41:01 +0000
 Subject: [PATCH] Link libirs with libdns, libisc, and libisccfg
 
 
 diff --git a/bind/lib/irs/Makefile.in b/bind/lib/irs/Makefile.in
-index defaced..defaced 100644
+index 411fdd3..8b5aaca 100644
 --- a/bind/lib/irs/Makefile.in
 +++ b/bind/lib/irs/Makefile.in
 @@ -35,6 +35,9 @@ SRCS =		context.c \
@@ -27,3 +27,6 @@ index defaced..defaced 100644
  
  timestamp: libirs.@A@
  	touch timestamp
+-- 
+2.10.5
+

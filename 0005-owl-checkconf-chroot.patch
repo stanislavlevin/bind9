@@ -1,11 +1,11 @@
-From 0 Mon Sep 17 00:00:00 2001
+From 65f22166b7bcb26b9c6f52143fea0442d102fccf Mon Sep 17 00:00:00 2001
 From: - <->
 Date: Mon, 15 Oct 2012 15:44:28 +0400
 Subject: [PATCH] owl-checkconf-chroot
 
 
 diff --git a/bind/bin/check/named-checkconf.8 b/bind/bin/check/named-checkconf.8
-index defaced..defaced 100644
+index 68755b3..48d3c1c 100644
 --- a/bind/bin/check/named-checkconf.8
 +++ b/bind/bin/check/named-checkconf.8
 @@ -89,6 +89,7 @@ Chroot to
@@ -17,7 +17,7 @@ index defaced..defaced 100644
  .PP
  \-v
 diff --git a/bind/bin/check/named-checkconf.c b/bind/bin/check/named-checkconf.c
-index defaced..defaced 100644
+index 43694a7..52a29c7 100644
 --- a/bind/bin/check/named-checkconf.c
 +++ b/bind/bin/check/named-checkconf.c
 @@ -516,6 +516,7 @@ main(int argc, char **argv) {
@@ -63,3 +63,6 @@ index defaced..defaced 100644
  	if (argv[isc_commandline_index] != NULL)
  		conffile = argv[isc_commandline_index];
  	if (conffile == NULL || conffile[0] == '\0')
+-- 
+2.10.5
+

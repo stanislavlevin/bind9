@@ -1,11 +1,11 @@
-From 0 Mon Sep 17 00:00:00 2001
+From 87ea7e19e9ffbb6d221ee85f306ff5ebb535e937 Mon Sep 17 00:00:00 2001
 From: - <->
 Date: Mon, 15 Oct 2012 15:44:28 +0400
 Subject: [PATCH] alt-nofile
 
 
 diff --git a/bind/lib/isc/unix/resource.c b/bind/lib/isc/unix/resource.c
-index defaced..defaced 100644
+index e783747..7289543 100644
 --- a/bind/lib/isc/unix/resource.c
 +++ b/bind/lib/isc/unix/resource.c
 @@ -21,6 +21,21 @@
@@ -39,3 +39,6 @@ index defaced..defaced 100644
  		unixresult = setrlimit(unixresource, &rl);
  		if (unixresult == 0)
  			return (ISC_R_SUCCESS);
+-- 
+2.10.5
+

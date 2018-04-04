@@ -1,14 +1,14 @@
-From 0 Mon Sep 17 00:00:00 2001
+From e53ea14579fb7ec6c639751085de4922ee74df75 Mon Sep 17 00:00:00 2001
 From: - <->
 Date: Mon, 15 Oct 2012 15:44:28 +0400
 Subject: [PATCH] alt-ads-remove
 
 
 diff --git a/bind/bin/named/main.c b/bind/bin/named/main.c
-index defaced..defaced 100644
+index 43ca99e..7402ab2 100644
 --- a/bind/bin/named/main.c
 +++ b/bind/bin/named/main.c
-@@ -1064,6 +1064,7 @@ setup(void) {
+@@ -1073,6 +1073,7 @@ setup(void) {
  		      *ns_g_description ? " " : "", ns_g_description,
  		      ns_g_srcid);
  
@@ -16,7 +16,7 @@ index defaced..defaced 100644
  	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
  		      ISC_LOG_NOTICE, "running on %s", ns_os_uname());
  
-@@ -1093,6 +1094,7 @@ setup(void) {
+@@ -1102,6 +1103,7 @@ setup(void) {
  		      ISC_LOG_NOTICE,
  		      "----------------------------------------------------");
  
@@ -24,3 +24,6 @@ index defaced..defaced 100644
  	dump_symboltable();
  
  	/*
+-- 
+2.10.5
+

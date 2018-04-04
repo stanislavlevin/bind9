@@ -1,11 +1,11 @@
-From 0 Mon Sep 17 00:00:00 2001
+From 6f03c868a7dd873fe25de062e794e83b0e22768d Mon Sep 17 00:00:00 2001
 From: - <->
 Date: Mon, 15 Oct 2012 15:44:28 +0400
 Subject: [PATCH] owl-warnings
 
 
 diff --git a/bind/lib/isc/Makefile.in b/bind/lib/isc/Makefile.in
-index defaced..defaced 100644
+index bd8b109..877246d 100644
 --- a/bind/lib/isc/Makefile.in
 +++ b/bind/lib/isc/Makefile.in
 @@ -58,7 +58,7 @@ OBJS =		@ISC_EXTRA_OBJS@ @ISC_PK11_O@ @ISC_PK11_RESULT_O@ \
@@ -27,7 +27,7 @@ index defaced..defaced 100644
  
  LIBS =		@ISC_OPENSSL_LIBS@ @LIBS@
 diff --git a/bind/lib/lwres/Makefile.in b/bind/lib/lwres/Makefile.in
-index defaced..defaced 100644
+index fe39b36..985f771 100644
 --- a/bind/lib/lwres/Makefile.in
 +++ b/bind/lib/lwres/Makefile.in
 @@ -27,14 +27,14 @@ OBJS =		compat.@O@ context.@O@ \
@@ -47,3 +47,6 @@ index defaced..defaced 100644
  
  LIBS =		@LIBS@
  
+-- 
+2.10.5
+
