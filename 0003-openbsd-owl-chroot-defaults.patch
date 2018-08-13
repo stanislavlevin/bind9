@@ -122,12 +122,12 @@ index 3f0096a..8ca7c1c 100644
  		particular the discussion of the
  		<command>update-policy</command> statement's
 @@ -12427,7 +12427,7 @@ example.com. NS ns2.example.net.
- 	      place it in a file. That key will then be allowed to update
- 	      the zone, if the update request is sent from localhost.
+ 	      be used by local clients to update the zone while
+ 	      <command>named</command> is running.
  	      By default, the session key is stored in the file
--	      <filename>/var/run/named/session.key</filename>; the key name
-+	      <filename>/var/lib/bind/session/session.key</filename>; the key name
- 	      is "local-ddns" and the key algorithm is HMAC-SHA256.
+-	      <filename>/var/run/named/session.key</filename>, the key name
++	      <filename>/var/lib/bind/session/session.key</filename>, the key name
+ 	      is "local-ddns", and the key algorithm is HMAC-SHA256.
  	      These values are configurable with the
  	      <command>session-keyfile</command>,
 -- 
