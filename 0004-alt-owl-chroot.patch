@@ -18,7 +18,7 @@ index e50a2d6..0147eaf 100644
  							      randomdev);
 +			} else {
 +				result = isc_entropy_createfilefd(ns_g_entropy,
-+							      ns_os_open_randomdev(), ISC_FALSE, ISC_FALSE);
++							      ns_os_open_randomdev(), false, false);
 +			}
  #ifdef PATH_RANDOMDEV
  			if (ns_g_fallbackentropy != NULL) {
@@ -50,7 +50,7 @@ index 37be0c4..62967f4 100644
 +ns_os_open_randomdev(void);
 +
  void
- ns_os_writepidfile(const char *filename, isc_boolean_t first_time);
+ ns_os_writepidfile(const char *filename, bool first_time);
  
 diff --git a/bind/bin/named/unix/os.c b/bind/bin/named/unix/os.c
 index 1d925e6..7be91f0 100644
@@ -94,7 +94,7 @@ index 1870742..85674b6 100644
   */
  
 +isc_result_t
-+isc_entropy_createfilefd(isc_entropy_t *ent, int fd, isc_boolean_t is_usocket, isc_boolean_t is_connected);
++isc_entropy_createfilefd(isc_entropy_t *ent, int fd, bool is_usocket, bool is_connected);
 +
  void
  isc_entropy_destroysource(isc_entropysource_t **sourcep);
@@ -107,7 +107,7 @@ index 5942031..be7bfc1 100644
  }
  
  isc_result_t
-+isc_entropy_createfilefd(isc_entropy_t *ent, int fd, isc_boolean_t is_usocket, isc_boolean_t is_connected) {
++isc_entropy_createfilefd(isc_entropy_t *ent, int fd, bool is_usocket, bool is_connected) {
 +	isc_result_t ret;
 +	isc_entropysource_t *source;
 +
@@ -133,7 +133,7 @@ index 5942031..be7bfc1 100644
 +	source->magic = SOURCE_MAGIC;
 +	source->ent = ent;
 +	source->total = 0;
-+	source->bad = ISC_FALSE;
++	source->bad = false;
 +	memset(source->name, 0, sizeof(source->name));
 +	ISC_LINK_INIT(source, link);
 +	if (is_usocket) {
@@ -177,8 +177,8 @@ index 5942031..be7bfc1 100644
  isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname) {
 -	int fd;
  	struct stat _stat;
- 	isc_boolean_t is_usocket = ISC_FALSE;
- 	isc_boolean_t is_connected = ISC_FALSE;
+ 	bool is_usocket = false;
+ 	bool is_connected = false;
 -	isc_result_t ret;
 -	isc_entropysource_t *source;
 +	int fd;
@@ -221,7 +221,7 @@ index 5942031..be7bfc1 100644
 +				return isc__errno2result(errno);
  			}
  		} else
- 			is_connected = ISC_TRUE;
+ 			is_connected = true;
  	}
  
 -	source = isc_mem_get(ent->mctx, sizeof(isc_entropysource_t));
@@ -236,7 +236,7 @@ index 5942031..be7bfc1 100644
 -	source->magic = SOURCE_MAGIC;
 -	source->ent = ent;
 -	source->total = 0;
--	source->bad = ISC_FALSE;
+-	source->bad = false;
 -	memset(source->name, 0, sizeof(source->name));
 -	ISC_LINK_INIT(source, link);
 -	if (is_usocket) {

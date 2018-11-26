@@ -42,9 +42,9 @@ index 62967f4..158c155 100644
 +ns_os_dropprivs(void);
 +
 +void
- ns_os_writepidfile(const char *filename, isc_boolean_t first_time);
+ ns_os_writepidfile(const char *filename, bool first_time);
  
- isc_boolean_t
+ bool
 diff --git a/bind/bin/named/unix/os.c b/bind/bin/named/unix/os.c
 index 7be91f0..64261b3 100644
 --- a/bind/bin/named/unix/os.c
@@ -69,7 +69,7 @@ index 7be91f0..64261b3 100644
  #ifndef HAVE_LIBCAP
  	memset(&caphead, 0, sizeof(caphead));
 @@ -361,6 +364,32 @@ linux_keepcaps(void) {
- 			non_root = ISC_TRUE;
+ 			non_root = true;
  	}
  }
 +
@@ -229,8 +229,8 @@ index 7be91f0..64261b3 100644
 +#endif /* WANT_SETPERMS */
  
  FILE *
- ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
-@@ -816,6 +875,9 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
+ ns_os_openfile(const char *filename, mode_t mode, bool switch_user) {
+@@ -816,6 +875,9 @@ ns_os_openfile(const char *filename, mode_t mode, bool switch_user) {
  	FILE *fp;
  	int fd;
  
@@ -240,7 +240,7 @@ index 7be91f0..64261b3 100644
  	/*
  	 * Make the containing directory if it doesn't exist.
  	 */
-@@ -832,6 +894,7 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
+@@ -832,6 +894,7 @@ ns_os_openfile(const char *filename, mode_t mode, bool switch_user) {
  	}
  	free(f);
  
@@ -248,7 +248,7 @@ index 7be91f0..64261b3 100644
  	if (switch_user && runas_pw != NULL) {
  #ifndef HAVE_LINUXTHREADS
  		gid_t oldgid = getgid();
-@@ -868,7 +931,9 @@ ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user) {
+@@ -868,7 +931,9 @@ ns_os_openfile(const char *filename, mode_t mode, bool switch_user) {
  					     "or reconfigure the filename.");
  #endif /* HAVE_LINUXTHREADS */
  		}
@@ -256,7 +256,7 @@ index 7be91f0..64261b3 100644
 +	} else
 +#endif /* WANT_SETPERMS */
 +	{
- 		fd = safe_open(filename, mode, ISC_FALSE);
+ 		fd = safe_open(filename, mode, false);
  	}
  
 -- 

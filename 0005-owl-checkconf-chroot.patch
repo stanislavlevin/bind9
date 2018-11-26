@@ -23,9 +23,9 @@ index 43694a7..52a29c7 100644
 @@ -516,6 +516,7 @@ main(int argc, char **argv) {
  	int exit_status = 0;
  	isc_entropy_t *ectx = NULL;
- 	isc_boolean_t load_zones = ISC_FALSE;
+ 	bool load_zones = false;
 +	const char *chroot_dir = "@ROOT@";
- 	isc_boolean_t print = ISC_FALSE;
+ 	bool print = false;
  	unsigned int flags = 0;
  
 @@ -561,12 +562,7 @@ main(int argc, char **argv) {
