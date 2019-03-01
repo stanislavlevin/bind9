@@ -61,6 +61,7 @@ Patch0010: 0010-Link-libirs-with-libdns-libisc-and-libisccfg.patch
 %def_enable ipv6
 %def_with openssl
 %def_with libjson
+%def_without python
 
 Provides: bind-chroot(%_chrootdir)
 Obsoletes: bind-chroot, bind-debug, bind-slave, caching-nameserver
@@ -215,6 +216,7 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.ac
 	--disable-seccomp \
 	 %{subst_with openssl} \
 	 %{subst_with libjson} \
+	 %{subst_with python} \
 	 %{subst_enable ipv6} \
 	 %{subst_enable static} \
 	--includedir=%{_includedir}/bind9 \
