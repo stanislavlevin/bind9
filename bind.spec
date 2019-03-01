@@ -67,9 +67,7 @@ Provides: bind-chroot(%_chrootdir)
 Obsoletes: bind-chroot, bind-debug, bind-slave, caching-nameserver
 # Because of /etc/syslog.d/ feature.
 Conflicts: syslogd < 1.4.1-alt11
-PreReq: bind-control >= 1.2
-PreReq: chrooted syslogd-daemon
-PreReq: libbind = %EVR
+Requires(pre): bind-control >= 1.2
 
 # due to %_chrootdir/dev/log
 BuildPreReq: coreutils
@@ -120,7 +118,6 @@ Prefix: %prefix
 %package -n lwresd
 Summary: Lightweight resolver daemon
 Group: System/Servers
-PreReq: /var/resolv, chkconfig, shadow-utils
 Requires: libbind = %EVR
 
 %description
