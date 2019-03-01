@@ -201,7 +201,7 @@ s,@DOCDIR@,%docdir,g;
 s,@SBINDIR@,%_sbindir,g;
 ' --
 
-sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.in
+sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.ac
 
 %build
 %autoreconf
