@@ -1,7 +1,7 @@
 Name: bind
 Version: 9.11.6
 %define src_version 9.11.6
-Release: alt1
+Release: alt2
 
 Summary: ISC BIND - DNS server
 License: MPLv2.0
@@ -439,6 +439,9 @@ fi
 %exclude %docdir/COPYRIGHT
 
 %changelog
+* Wed Mar 27 2019 Stanislav Levin <slev@altlinux.org> 9.11.6-alt2
+- Fixed support for GSSAPI (closes: #36429).
+
 * Fri Mar 01 2019 Stanislav Levin <slev@altlinux.org> 9.11.6-alt1
 - 9.11.5.P4 -> 9.11.6.
 
