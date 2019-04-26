@@ -47,6 +47,7 @@ Patch0008: 0008-alt-ads-remove.patch
 Patch0009: 0009-Minimize-linux-capabilities.patch
 Patch0010: 0010-Link-libirs-with-libdns-libisc-and-libisccfg.patch
 Patch0011: 0011-Make-build-configured-against-with-gssapi-fail-on-mi.patch
+Patch0012: 0012-Replace-atomic-operations-in-bin-named-client.c-with.patch
 
 # root directory for chrooted environment.
 %define _chrootdir %_localstatedir/bind
@@ -179,6 +180,7 @@ rather than the DNS protocol.
 %patch0009 -p2
 %patch0010 -p2
 %patch0011 -p2
+%patch0012 -p1
 
 install -D -pm644 %_sourcedir/rfc1912.txt doc/rfc/rfc1912.txt
 install -pm644 %_sourcedir/bind.README.bind-devel README.bind-devel
