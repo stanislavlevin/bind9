@@ -11,12 +11,12 @@ index f90ddab..2eedde3 100644
 @@ -118,15 +118,13 @@ EXTERN isc_resourcevalue_t	ns_g_initopenfiles	INIT(0);
   * Misc.
   */
- EXTERN bool		ns_g_coreok		INIT(true);
+ EXTERN bool			ns_g_coreok		INIT(true);
 -EXTERN const char *		ns_g_chrootdir		INIT(NULL);
 +EXTERN const char *		ns_g_chrootdir		INIT("@ROOT@");
- EXTERN bool		ns_g_foreground		INIT(false);
- EXTERN bool		ns_g_logstderr		INIT(false);
- EXTERN bool		ns_g_nosyslog		INIT(false);
+ EXTERN bool			ns_g_foreground		INIT(false);
+ EXTERN bool			ns_g_logstderr		INIT(false);
+ EXTERN bool			ns_g_nosyslog		INIT(false);
  EXTERN const char *		ns_g_logfile		INIT(NULL);
  
 -EXTERN const char *		ns_g_defaultsessionkeyfile
