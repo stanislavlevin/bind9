@@ -56,7 +56,7 @@ index d035eeb..f6fac57 100644
 --- a/bind/bin/dnssec/dnssec-keygen.8
 +++ b/bind/bin/dnssec/dnssec-keygen.8
 @@ -340,8 +340,9 @@ and
- Kexample\&.com\&.+003+26160\&.private\&.
+ \fBdnssec\-keygen \-a DSA \-b 768 \-n ZONE \-f KSK example\&.com\fR
  .SH "SEE ALSO"
  .PP
 -\fBdnssec-signzone\fR(8),
