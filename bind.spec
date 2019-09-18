@@ -248,7 +248,7 @@ install -pD -m755 addon/lwresd.init %buildroot%_initdir/lwresd
 install -pD -m644 addon/bind.service %buildroot%_unitdir/bind.service
 
 # Install configurations files
-install -pm600 addon/rndc.conf %buildroot%_sysconfdir/
+install -pm640 addon/rndc.conf %buildroot%_sysconfdir/
 install -pD -m644 addon/bind.sysconfig %buildroot%_sysconfdir/sysconfig/bind
 
 # Create a chrooted environment...
@@ -375,7 +375,7 @@ fi
 %_sysconfdir/named.conf
 %config %_initdir/bind
 %config %_sysconfdir/sysconfig/bind
-%config(noreplace) %_sysconfdir/rndc.conf
+%config(noreplace) %attr(640,root,named) %_sysconfdir/rndc.conf
 %_unitdir/bind.service
 
 %_man1dir/named-rrchecker.1*
