@@ -209,7 +209,6 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.ac
 	--with-randomdev=/dev/random \
 	--enable-threads \
 	--enable-linux-caps \
-	--enable-fetchlimit \
 	--enable-fixed-rrset \
 	--disable-seccomp \
 	 %{subst_with openssl} \
@@ -218,7 +217,6 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.ac
 	 %{subst_enable ipv6} \
 	 %{subst_enable static} \
 	--includedir=%{_includedir}/bind9 \
-	--disable-openssl-version-check \
 	--with-libtool \
 	--with-gssapi=yes \
 	--disable-isc-spnego \
