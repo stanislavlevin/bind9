@@ -265,7 +265,7 @@ for n in localhost localdomain 127.in-addr.arpa empty; do
 done
 
 install -pm640 addon/rndc.key bind.keys %buildroot%_chrootdir%_sysconfdir/
-ln -snfr %buildroot%_sysconfdir/bind/{named.conf,bind.keys,rndc.key} \
+ln -snfr %buildroot%_sysconfdir/bind/{named.conf,bind.keys} \
 	%buildroot%_sysconfdir/
 
 # Create symlinks for unchrooted bind.
@@ -373,7 +373,6 @@ fi
 %_sysconfdir/bind
 %_sysconfdir/bind.keys
 %_sysconfdir/named.conf
-%_sysconfdir/rndc.key
 %config %_initdir/bind
 %config %_sysconfdir/sysconfig/bind
 %config(noreplace) %_sysconfdir/rndc.conf
