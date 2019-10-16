@@ -175,7 +175,7 @@ rather than the DNS protocol.
 %patch0006 -p2
 %patch0007 -p2
 %patch0008 -p2
-%patch0009 -p2
+#%%patch0009 -p2
 %patch0010 -p2
 
 install -D -pm644 %_sourcedir/rfc1912.txt doc/rfc/rfc1912.txt

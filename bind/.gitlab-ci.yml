@@ -11,16 +11,29 @@ variables:
   # VirtualBox driver needs to set build_dir to "/builds" in gitlab-runner.toml
   KYUA_RESULT: "$CI_PROJECT_DIR/kyua.results"
 
+  GIT_DEPTH: 1
   BUILD_PARALLEL_JOBS: 6
   TEST_PARALLEL_JOBS: 6
+
+  MAKE: make
 
 stages:
   - precheck
   - build
-  - test
+  - unit
+  - system
+  - docs
   - push
+  - postcheck
 
 ### Runner Tag Templates
+
+# Note: FreeBSD runners extract the FreeBSD version to use from job name
+
+.freebsd-amd64: &freebsd_amd64
+  tags:
+    - freebsd
+    - amd64
 
 .linux-amd64: &linux_amd64
   tags:
@@ -113,15 +126,45 @@ stages:
   <<: *debian_sid_amd64_image
   stage: precheck
 
+.autoconf: &autoconf_job
+  <<: *default_triggering_rules
+  <<: *debian_sid_amd64_image
+  stage: precheck
+  script:
+    - autoreconf -fi
+  artifacts:
+    untracked: true
+    expire_in: "1 hour"
+
+.configure: &configure |
+    ./configure \
+    --disable-maintainer-mode \
+    --enable-developer \
+    --with-randomdev=/dev/urandom \
+    --with-libtool \
+    --with-geoip2=auto \
+    --disable-static \
+    --with-cmocka \
+    --with-libxml2 \
+    --with-json \
+    --prefix=$HOME/.local \
+    --without-make-clean \
+    $EXTRA_CONFIGURE \
+    || cat config.log
+
 .build: &build_job
   <<: *default_triggering_rules
   stage: build
   before_script:
     - test -w "${CCACHE_DIR}" && export PATH="/usr/lib/ccache:${PATH}"
   script:
-    - ./configure --enable-developer --with-randomdev=/dev/urandom --with-libtool --with-geoip2=auto --disable-static --with-cmocka --prefix=$HOME/.local --without-make-clean ${EXTRA_CONFIGURE} || cat config.log
-    - make -j${BUILD_PARALLEL_JOBS:-1} -k all V=1
+    - *configure
+    - ${MAKE} -j${BUILD_PARALLEL_JOBS:-1} -k all V=1
     - test -z "${RUN_MAKE_INSTALL}" || make install
+  dependencies:
+    - autoreconf:sid:amd64
+  needs:
+    - autoreconf:sid:amd64
   artifacts:
     untracked: true
     expire_in: "1 hour"
@@ -138,7 +181,7 @@ stages:
 
 .system_test: &system_test_job
   <<: *default_triggering_rules
-  stage: test
+  stage: system
   retry: 2
   before_script:
     - *setup_interfaces
@@ -152,7 +195,7 @@ stages:
     when: on_failure
 
 .kyua_report: &kyua_report_html |
-  kyua report-html \
+  kyua --logfile /dev/null report-html \
        --force \
        --results-file "$KYUA_RESULT" \
        --results-filter "" \
@@ -160,7 +203,7 @@ stages:
 
 .unit_test: &unit_test_job
   <<: *default_triggering_rules
-  stage: test
+  stage: unit
   before_script:
     - *setup_softhsm
   script:
@@ -175,9 +218,46 @@ stages:
     expire_in: "1 week"
     when: on_failure
 
+.cppcheck_args: &run_cppcheck |
+  cppcheck --enable=warning,performance,portability,information,missingInclude \
+           --include=config.h \
+           --quiet \
+           --std=c11 \
+           --language=c \
+           --project=compile_commands.json \
+           --error-exitcode=2 \
+           -j ${TEST_PARALLEL_JOBS:-1} \
+           --xml \
+           --output-file=cppcheck.results \
+           --inline-suppr
+
+.cppcheck_report: &cppcheck_report_html |
+  cppcheck-htmlreport --title="BIND 9 ($CI_COMMIT_SHORT_SHA) Cppcheck Report" \
+                      --file=cppcheck.results \
+                      --report-dir=cppcheck_html/
+
+.cppcheck: &cppcheck_job
+  <<: *default_triggering_rules
+  stage: postcheck
+  script:
+    - *run_cppcheck
+  after_script:
+    - *cppcheck_report_html
+  artifacts:
+    paths:
+      - compile_commands.json
+      - cppcheck.results
+      - cppcheck_html/
+    expire_in: "1 week"
+    when: on_failure
+  allow_failure: true
+
 ### Job Definitions
 
 # Jobs in the precheck stage
+
+autoreconf:sid:amd64:
+  <<: *autoconf_job
 
 misc:sid:amd64:
   <<: *precheck_job
@@ -205,17 +285,23 @@ misc:sid:amd64:
 
 🐞:sid:amd64:
   <<: *precheck_job
-  script: util/check-cocci
+  script:
+    - util/check-cocci
+    - if test "$(git status --porcelain | grep -Ev '\?\?' | wc -l)" -gt "0"; then git status --short; exit 1; fi
 
 # Jobs for doc builds on Debian Sid (amd64)
 
 docs:sid:amd64:
   <<: *debian_sid_amd64_image
-  stage: build
+  stage: docs
   script:
     - ./configure || cat config.log
     - make -C doc/misc docbook
     - make -C doc/arm Bv9ARM.html
+  dependencies:
+    - autoreconf:sid:amd64
+  needs:
+    - autoreconf:sid:amd64
   artifacts:
     paths:
       - doc/arm/
@@ -252,12 +338,14 @@ system:gcc:alpine3.10:amd64:
   <<: *system_test_job
   dependencies:
     - gcc:alpine3.10:amd64
+  needs: ["gcc:alpine3.10:amd64"]
 
 unit:gcc:alpine3.10:amd64:
   <<: *alpine_3_10_amd64_image
   <<: *unit_test_job
   dependencies:
     - gcc:alpine3.10:amd64
+  needs: ["gcc:alpine3.10:amd64"]
 
 # Jobs for regular GCC builds on CentOS 6 (amd64)
 
@@ -274,12 +362,14 @@ system:gcc:centos6:amd64:
   <<: *system_test_job
   dependencies:
     - gcc:centos6:amd64
+  needs: ["gcc:centos6:amd64"]
 
 unit:gcc:centos6:amd64:
   <<: *centos_centos6_amd64_image
   <<: *unit_test_job
   dependencies:
     - gcc:centos6:amd64
+  needs: ["gcc:centos6:amd64"]
 
 # Jobs for regular GCC builds on CentOS 7 (amd64)
 
@@ -296,12 +386,14 @@ system:gcc:centos7:amd64:
   <<: *system_test_job
   dependencies:
     - gcc:centos7:amd64
+  needs: ["gcc:centos7:amd64"]
 
 unit:gcc:centos7:amd64:
   <<: *centos_centos7_amd64_image
   <<: *unit_test_job
   dependencies:
     - gcc:centos7:amd64
+  needs: ["gcc:centos7:amd64"]
 
 # Jobs for regular GCC builds on Debian 8 Jessie (amd64)
 
@@ -309,7 +401,7 @@ gcc:jessie:amd64:
   variables:
     CC: gcc
     CFLAGS: "-Wall -Wextra -O2 -g"
-    EXTRA_CONFIGURE: "--without-cmocka --with-python"
+    EXTRA_CONFIGURE: "--without-cmocka --with-python --disable-geoip"
   <<: *debian_jessie_amd64_image
   <<: *build_job
 
@@ -318,12 +410,14 @@ system:gcc:jessie:amd64:
   <<: *system_test_job
   dependencies:
     - gcc:jessie:amd64
+  needs: ["gcc:jessie:amd64"]
 
 unit:gcc:jessie:amd64:
   <<: *debian_jessie_amd64_image
   <<: *unit_test_job
   dependencies:
     - gcc:jessie:amd64
+  needs: ["gcc:jessie:amd64"]
 
 # Jobs for regular GCC builds on Debian 9 Stretch (amd64)
 
@@ -339,12 +433,14 @@ system:gcc:stretch:amd64:
   <<: *system_test_job
   dependencies:
     - gcc:stretch:amd64
+  needs: ["gcc:stretch:amd64"]
 
 unit:gcc:stretch:amd64:
   <<: *debian_stretch_amd64_image
   <<: *unit_test_job
   dependencies:
     - gcc:stretch:amd64
+  needs: ["gcc:stretch:amd64"]
 
 # Jobs for regular GCC builds on Debian 10 Buster (amd64)
 
@@ -360,12 +456,14 @@ system:gcc:buster:amd64:
   <<: *system_test_job
   dependencies:
     - gcc:buster:amd64
+  needs: ["gcc:buster:amd64"]
 
 unit:gcc:buster:amd64:
   <<: *debian_buster_amd64_image
   <<: *unit_test_job
   dependencies:
     - gcc:buster:amd64
+  needs: ["gcc:buster:amd64"]
 
 # Jobs for regular GCC builds on Debian Sid (amd64)
 
@@ -375,6 +473,7 @@ gcc:sid:amd64:
     CFLAGS: "-Wall -Wextra -O3 -g"
     EXTRA_CONFIGURE: "--enable-dnstap --with-libidn2"
     RUN_MAKE_INSTALL: 1
+    MAKE: bear make
   <<: *debian_sid_amd64_image
   <<: *build_job
 
@@ -383,12 +482,21 @@ system:gcc:sid:amd64:
   <<: *system_test_job
   dependencies:
     - gcc:sid:amd64
+  needs: ["gcc:sid:amd64"]
 
 unit:gcc:sid:amd64:
   <<: *debian_sid_amd64_image
   <<: *unit_test_job
   dependencies:
     - gcc:sid:amd64
+  needs: ["gcc:sid:amd64"]
+
+cppcheck:gcc:sid:amd64:
+  <<: *debian_sid_amd64_image
+  <<: *cppcheck_job
+  dependencies:
+    - gcc:sid:amd64
+  needs: ["gcc:sid:amd64"]
 
 # Jobs for regular GCC builds on Debian Sid (i386)
 
@@ -405,12 +513,14 @@ system:gcc:sid:i386:
   <<: *system_test_job
   dependencies:
     - gcc:sid:i386
+  needs: ["gcc:sid:i386"]
 
 unit:gcc:sid:i386:
   <<: *debian_sid_i386_image
   <<: *unit_test_job
   dependencies:
     - gcc:sid:i386
+  needs: ["gcc:sid:i386"]
 
 # Jobs for regular GCC builds on Fedora 30 (amd64)
 
@@ -427,12 +537,14 @@ system:gcc:fedora30:amd64:
   <<: *system_test_job
   dependencies:
     - gcc:fedora30:amd64
+  needs: ["gcc:fedora30:amd64"]
 
 unit:gcc:fedora30:amd64:
   <<: *fedora_30_amd64_image
   <<: *unit_test_job
   dependencies:
     - gcc:fedora30:amd64
+  needs: ["gcc:fedora30:amd64"]
 
 # Jobs for regular GCC builds on Ubuntu 16.04 Xenial Xerus (amd64)
 
@@ -440,6 +552,7 @@ gcc:xenial:amd64:
   variables:
     CC: gcc
     CFLAGS: "-Wall -Wextra -O2 -g"
+    EXTRA_CONFIGURE: "--disable-geoip"
   <<: *ubuntu_xenial_amd64_image
   <<: *build_job
 
@@ -448,12 +561,14 @@ system:gcc:xenial:amd64:
   <<: *system_test_job
   dependencies:
     - gcc:xenial:amd64
+  needs: ["gcc:xenial:amd64"]
 
 unit:gcc:xenial:amd64:
   <<: *ubuntu_xenial_amd64_image
   <<: *unit_test_job
   dependencies:
     - gcc:xenial:amd64
+  needs: ["gcc:xenial:amd64"]
 
 # Jobs for regular GCC builds on Ubuntu 18.04 Bionic Beaver (amd64)
 
@@ -470,12 +585,14 @@ system:gcc:bionic:amd64:
   <<: *system_test_job
   dependencies:
     - gcc:bionic:amd64
+  needs: ["gcc:bionic:amd64"]
 
 unit:gcc:bionic:amd64:
   <<: *ubuntu_bionic_amd64_image
   <<: *unit_test_job
   dependencies:
     - gcc:bionic:amd64
+  needs: ["gcc:bionic:amd64"]
 
 # Jobs for GCC builds with ASAN enabled on Debian Sid (amd64)
 
@@ -493,12 +610,14 @@ system:asan:sid:amd64:
   <<: *system_test_job
   dependencies:
     - asan:sid:amd64
+  needs: ["asan:sid:amd64"]
 
 unit:asan:sid:amd64:
   <<: *debian_sid_amd64_image
   <<: *unit_test_job
   dependencies:
     - asan:sid:amd64
+  needs: ["asan:sid:amd64"]
 
 # Jobs for Clang builds on Debian Stretch (amd64)
 
@@ -515,6 +634,7 @@ unit:clang:stretch:amd64:
   <<: *unit_test_job
   dependencies:
     - clang:stretch:amd64
+  needs: ["clang:stretch:amd64"]
 
 # Jobs for Clang builds on Debian Stretch (i386)
 
@@ -563,31 +683,139 @@ system:pkcs11:sid:amd64:
   <<: *system_test_job
   dependencies:
     - pkcs11:sid:amd64
+  needs: ["pkcs11:sid:amd64"]
 
 unit:pkcs11:sid:amd64:
   <<: *debian_sid_amd64_image
   <<: *unit_test_job
   dependencies:
     - pkcs11:sid:amd64
+  needs: ["pkcs11:sid:amd64"]
 
-# Jobs for GCC builds with assertions compiled away on Debian Sid (amd64)
+# Jobs for Clang builds on FreeBSD 11.3 (amd64)
 
-noassert:sid:amd64:
+clang:freebsd11.3:amd64:
+  variables:
+    CFLAGS: "-Wall -Wextra -O2 -g"
+  <<: *freebsd_amd64
+  <<: *build_job
+
+system:clang:freebsd11.3:amd64:
+  <<: *freebsd_amd64
+  <<: *system_test_job
+  dependencies:
+    - clang:freebsd11.3:amd64
+  needs: ["clang:freebsd11.3:amd64"]
+
+unit:clang:freebsd11.3:amd64:
+  <<: *freebsd_amd64
+  <<: *unit_test_job
+  dependencies:
+    - clang:freebsd11.3:amd64
+  needs: ["clang:freebsd11.3:amd64"]
+
+# Jobs for Clang builds on FreeBSD 12.0 (amd64)
+
+clang:freebsd12.0:amd64:
+  variables:
+    CFLAGS: "-Wall -Wextra -O2 -g"
+    EXTRA_CONFIGURE: "--enable-dnstap"
+  <<: *freebsd_amd64
+  <<: *build_job
+
+system:clang:freebsd12.0:amd64:
+  <<: *freebsd_amd64
+  <<: *system_test_job
+  dependencies:
+    - clang:freebsd12.0:amd64
+  needs: ["clang:freebsd12.0:amd64"]
+
+unit:clang:freebsd12.0:amd64:
+  <<: *freebsd_amd64
+  <<: *unit_test_job
+  dependencies:
+    - clang:freebsd12.0:amd64
+  needs: ["clang:freebsd12.0:amd64"]
+
+# Jobs with libtool disabled
+
+nolibtool:sid:amd64:
   variables:
     CC: gcc
-    CFLAGS: "-Wall -Wextra -O2 -g -DISC_CHECK_NONE=1"
-    EXTRA_CONFIGURE: "--with-libidn2"
+    CFLAGS: "-Wall -Wextra -Og -g"
+    EXTRA_CONFIGURE: "--with-libidn2 --without-libtool --with-dlopen"
   <<: *debian_sid_amd64_image
   <<: *build_job
 
-system:noassert:sid:amd64:
+system:nolibtool:sid:amd64:
   <<: *debian_sid_amd64_image
   <<: *system_test_job
   dependencies:
-    - noassert:sid:amd64
+    - nolibtool:sid:amd64
+  needs: ["nolibtool:sid:amd64"]
 
-unit:noassert:sid:amd64:
+unit:nolibtool:sid:amd64:
   <<: *debian_sid_amd64_image
   <<: *unit_test_job
   dependencies:
-    - noassert:sid:amd64
+    - nolibtool:sid:amd64
+  needs: ["nolibtool:sid:amd64"]
+
+# Jobs for Visual Studio 2017 builds on Windows (amd64)
+
+msvc:windows:amd64:
+  <<: *default_triggering_rules
+  stage: build
+  tags:
+    - windows
+    - amd64
+  variables:
+    VSCONF: Release
+  script:
+    - 'Push-Location "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build"'
+    - '& cmd.exe /C "vcvarsall.bat x64 & set" | Foreach-Object { if ($_ -match "(.*?)=(.*)") { Set-Item -force -path "Env:\$($matches[1])" -value "$($matches[2])" } }'
+    - 'Pop-Location'
+    - 'Set-Location win32utils'
+    - '& "C:/Strawberry/perl/bin/perl.exe" Configure
+         "with-tools-version=15.0"
+         "with-platform-toolset=v141"
+         "with-platform-version=10.0.17763.0"
+         "with-vcredist=C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Redist/MSVC/14.16.27012/vcredist_x64.exe"
+         "with-openssl=C:/OpenSSL"
+         "with-libxml2=C:/libxml2"
+         "without-python"
+         "with-system-tests"
+         x64'
+    - 'Set-Item -path "Env:CL" -value "/MP$([Math]::Truncate($BUILD_PARALLEL_JOBS/2))"'
+    - '& msbuild.exe /maxCpuCount:2 /t:Build /p:Configuration=$VSCONF bind9.sln'
+  artifacts:
+    untracked: true
+    expire_in: "1 hour"
+
+system:msvc:windows:amd64:
+  stage: system
+  tags:
+    - windows
+    - amd64
+  variables:
+    VSCONF: Release
+  script:
+    - 'Push-Location bin/tests/system'
+    - '$ifIndex = Get-NetIPInterface -AddressFamily IPv4 -InterfaceMetric 75 | Select-Object -ExpandProperty ifIndex'
+    - '& C:/tools/cygwin/bin/sed.exe -i "s/^exit.*/netsh interface ipv4 set dnsservers $ifIndex dhcp/; s/\(name\|interface\)=Loopback/$ifIndex/;" ifconfig.bat'
+    - '& C:/tools/cygwin/bin/sed.exe -i "s/kill -f/kill -W/;" conf.sh stop.pl'
+    - '& cmd.exe /C ifconfig.bat up; ""'
+    - 'Start-Sleep 2'
+    - '$Env:Path = "C:/tools/cygwin/bin;$Env:Path"'
+    - '& sh.exe runall.sh $TEST_PARALLEL_JOBS'
+    - 'If (Test-Path C:/CrashDumps/*) { dir C:/CrashDumps; Throw }'
+  dependencies:
+    - msvc:windows:amd64
+  needs: ["msvc:windows:amd64"]
+  artifacts:
+    untracked: true
+    expire_in: "1 week"
+    when: on_failure
+  only:
+    - tags
+    - web

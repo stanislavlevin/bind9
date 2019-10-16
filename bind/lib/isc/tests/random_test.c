@@ -352,6 +352,7 @@ random_test(pvalue_func_t *func) {
 	histogram[10] = 0;
 
 	/* Pre-requisite that at least 55 sequences are processed. */
+	/* cppcheck-suppress constArgument */
 	assert_true(m >= 55);
 
 	if (verbose) {
@@ -517,6 +518,7 @@ blockfrequency(isc_mem_t *mctx, uint16_t *values, size_t length) {
 
 	/* Preconditions (section 2.2.7 in NIST SP 800-22) */
 	assert_true(numbits >= 100);
+	/* cppcheck-suppress constArgument */
 	assert_true(mbits >= 20);
 	assert_true((double) mbits > (0.01 * numbits));
 	assert_true(numblocks < 100);

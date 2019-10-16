@@ -134,6 +134,7 @@ default_memalloc(void *arg, size_t size) {
 	UNUSED(arg);
 	if (size == 0U)
 		size = 1;
+	/* cppcheck-suppress leakNoVarFunctionCall */
 	return (malloc(size));
 }
 
@@ -510,7 +511,7 @@ dst_key_tofile(const dst_key_t *key, int type, const char *directory) {
 	    (key->key_flags & DNS_KEYFLAG_TYPEMASK) != DNS_KEYTYPE_NOKEY)
 		return (key->func->tofile(key, directory));
 	else
-		return (ISC_R_SUCCESS);
+		return (ret);
 }
 
 void
@@ -1864,7 +1865,7 @@ buildfilename(dns_name_t *name, dns_keytag_t id,
 		return (ISC_R_NOSPACE);
 	snprintf((char *) isc_buffer_used(out),
 		 (int)isc_buffer_availablelength(out),
-		 "+%03d+%05d%s", alg, id, suffix);
+		 "+%03u+%05d%s", alg, id, suffix);
 	isc_buffer_add(out, len);
 
 	return (ISC_R_SUCCESS);

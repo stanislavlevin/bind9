@@ -4385,6 +4385,7 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
 		 * "allow-recursion-on" and "allow-query-cache" ACLs from
 		 * the global config.
 		 */
+		/* cppcheck-suppress duplicateCondition */
 		if (view->recursionacl == NULL) {
 			/* global default only */
 			CHECK(configure_view_acl(NULL, NULL, ns_g_config,
@@ -4392,6 +4393,7 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
 						 actx, ns_g_mctx,
 						 &view->recursionacl));
 		}
+		/* cppcheck-suppress duplicateCondition */
 		if (view->recursiononacl == NULL) {
 			/* global default only */
 			CHECK(configure_view_acl(NULL, NULL, ns_g_config,
@@ -8245,29 +8247,25 @@ load_configuration(const char *filename, ns_server_t *server,
 			}
 #endif
 		}
-	}
 
 #ifdef HAVE_LMDB
-	/*
-	 * If we're using LMDB, we may have created newzones databases
-	 * as root, making it impossible to reopen them later after
-	 * switching to a new userid. We close them now, and reopen
-	 * after relinquishing privileges them.
-	 */
-	if (first_time) {
+		/*
+		 * If we're using LMDB, we may have created newzones
+		 * databases as root, making it impossible to reopen
+		 * them later after switching to a new userid. We
+		 * close them now, and reopen after relinquishing
+		 * privileges them.
+		 */
 		for (view = ISC_LIST_HEAD(server->viewlist);
-		     view != NULL;
-		     view = ISC_LIST_NEXT(view, link))
+		     view != NULL; view = ISC_LIST_NEXT(view, link))
 		{
 			nzd_env_close(view);
 		}
-	}
 #endif /* HAVE_LMDB */
 
-	/*
-	 * Relinquish root privileges.
-	 */
-	if (first_time) {
+		/*
+		 * Relinquish root privileges.
+		 */
 		ns_os_changeuser();
 	}
 
@@ -10045,17 +10043,21 @@ dumpdone(void *arg, isc_result_t result) {
 	char buf[1024+32];
 	const dns_master_style_t *style;
 
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
-	if (dctx->mdctx != NULL)
+	}
+	if (dctx->mdctx != NULL) {
 		dns_dumpctx_detach(&dctx->mdctx);
+	}
 	if (dctx->view == NULL) {
 		dctx->view = ISC_LIST_HEAD(dctx->viewlist);
-		if (dctx->view == NULL)
+		if (dctx->view == NULL) {
 			goto done;
+		}
 		INSIST(dctx->zone == NULL);
-	} else
+	} else {
 		goto resume;
+	}
  nextview:
 	fprintf(dctx->fp, ";\n; Start view %s\n;\n", dctx->view->view->name);
  resume:
@@ -10069,8 +10071,9 @@ dumpdone(void *arg, isc_result_t result) {
 	{
 		style = &dns_master_style_cache;
 		/* start cache dump */
-		if (dctx->view->view->cachedb != NULL)
+		if (dctx->view->view->cachedb != NULL) {
 			dns_db_attach(dctx->view->view->cachedb, &dctx->cache);
+		}
 		if (dctx->cache != NULL) {
 			fprintf(dctx->fp,
 				";\n; Cache dump of view '%s' (cache %s)\n;\n",
@@ -10082,43 +10085,52 @@ dumpdone(void *arg, isc_result_t result) {
 							    dctx->task,
 							    dumpdone, dctx,
 							    &dctx->mdctx);
-			if (result == DNS_R_CONTINUE)
+			if (result == DNS_R_CONTINUE) {
 				return;
-			if (result == ISC_R_NOTIMPLEMENTED)
+			}
+			if (result == ISC_R_NOTIMPLEMENTED) {
 				fprintf(dctx->fp, "; %s\n",
 					dns_result_totext(result));
-			else if (result != ISC_R_SUCCESS)
+			} else if (result != ISC_R_SUCCESS) {
 				goto cleanup;
+			}
 		}
 	}
 
 	if ((dctx->dumpadb || dctx->dumpbad || dctx->dumpfail) &&
-	    dctx->cache == NULL && dctx->view->view->cachedb != NULL)
+	    dctx->cache == NULL && dctx->view->view->cachedb != NULL) {
 		dns_db_attach(dctx->view->view->cachedb, &dctx->cache);
+	}
 
 	if (dctx->cache != NULL) {
-		if (dctx->dumpadb)
+		if (dctx->dumpadb) {
 			dns_adb_dump(dctx->view->view->adb, dctx->fp);
-		if (dctx->dumpbad)
+		}
+		if (dctx->dumpbad) {
 			dns_resolver_printbadcache(dctx->view->view->resolver,
 						   dctx->fp);
-		if (dctx->dumpfail)
+		}
+		if (dctx->dumpfail) {
 			dns_badcache_print(dctx->view->view->failcache,
 					   "SERVFAIL cache", dctx->fp);
+		}
 		dns_db_detach(&dctx->cache);
 	}
 	if (dctx->dumpzones) {
 		style = &dns_master_style_full;
  nextzone:
-		if (dctx->version != NULL)
+		if (dctx->version != NULL) {
 			dns_db_closeversion(dctx->db, &dctx->version,
 					    false);
-		if (dctx->db != NULL)
+		}
+		if (dctx->db != NULL) {
 			dns_db_detach(&dctx->db);
-		if (dctx->zone == NULL)
+		}
+		if (dctx->zone == NULL) {
 			dctx->zone = ISC_LIST_HEAD(dctx->view->zonelist);
-		else
+		} else {
 			dctx->zone = ISC_LIST_NEXT(dctx->zone, link);
+		}
 		if (dctx->zone != NULL) {
 			/* start zone dump */
 			dns_zone_name(dctx->zone->zone, buf, sizeof(buf));
@@ -10137,8 +10149,9 @@ dumpdone(void *arg, isc_result_t result) {
 							    dctx->task,
 							    dumpdone, dctx,
 							    &dctx->mdctx);
-			if (result == DNS_R_CONTINUE)
+			if (result == DNS_R_CONTINUE) {
 				return;
+			}
 			if (result == ISC_R_NOTIMPLEMENTED) {
 				fprintf(dctx->fp, "; %s\n",
 					dns_result_totext(result));
@@ -10146,26 +10159,31 @@ dumpdone(void *arg, isc_result_t result) {
 				POST(result);
 				goto nextzone;
 			}
-			if (result != ISC_R_SUCCESS)
+			if (result != ISC_R_SUCCESS) {
 				goto cleanup;
+			}
 		}
 	}
-	if (dctx->view != NULL)
+	if (dctx->view != NULL) {
 		dctx->view = ISC_LIST_NEXT(dctx->view, link);
-	if (dctx->view != NULL)
-		goto nextview;
+		if (dctx->view != NULL) {
+			goto nextview;
+		}
+	}
  done:
 	fprintf(dctx->fp, "; Dump complete\n");
 	result = isc_stdio_flush(dctx->fp);
-	if (result == ISC_R_SUCCESS)
+	if (result == ISC_R_SUCCESS) {
 		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
 			      NS_LOGMODULE_SERVER, ISC_LOG_INFO,
 			      "dumpdb complete");
+	}
  cleanup:
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
 			      NS_LOGMODULE_SERVER, ISC_LOG_ERROR,
 			      "dumpdb failed: %s", dns_result_totext(result));
+	}
 	dumpcontext_destroy(dctx);
 }
 
