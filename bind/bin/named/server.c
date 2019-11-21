@@ -2083,15 +2083,17 @@ configure_rpz(dns_view_t *view, const cfg_obj_t *rpz_obj,
 	} else {
 		old = NULL;
 	}
-	if (old == NULL)
+	if (old == NULL) {
 		*old_rpz_okp = false;
-	else
+	} else {
 		*old_rpz_okp = true;
+	}
 
 	for (i = 0;
 	     zone_element != NULL;
-	     ++i, zone_element = cfg_list_next(zone_element)) {
-		INSIST(old != NULL || !*old_rpz_okp);
+	     ++i, zone_element = cfg_list_next(zone_element))
+	{
+		INSIST(!*old_rpz_okp || old != NULL);
 		if (*old_rpz_okp && i < old->p.num_zones) {
 			old_zone = old->zones[i];
 		} else {
@@ -2126,8 +2128,9 @@ configure_rpz(dns_view_t *view, const cfg_obj_t *rpz_obj,
 			    view->rpzs->rpz_ver);
 	}
 
-	if (pview != NULL)
+	if (pview != NULL) {
 		dns_view_detach(&pview);
+	}
 
 	return (ISC_R_SUCCESS);
 }
@@ -3047,7 +3050,7 @@ configure_dnstap(const cfg_obj_t **maps, dns_view_t *view) {
 	isc_result_t result;
 	const cfg_obj_t *obj, *obj2;
 	const cfg_listelt_t *element;
-	const char *dpath = ns_g_defaultdnstap;
+	const char *dpath;
 	const cfg_obj_t *dlist = NULL;
 	dns_dtmsgtype_t dttypes = 0;
 	dns_dtmode_t dmode;
@@ -5891,7 +5894,7 @@ static isc_result_t
 scan_interfaces(ns_server_t *server, bool verbose) {
 	isc_result_t result;
 	bool match_mapped = server->aclenv.match_mapped;
-#ifdef HAVE_GEOIP
+#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
 	bool use_ecs = server->aclenv.geoip_use_ecs;
 #endif
 
@@ -5904,7 +5907,7 @@ scan_interfaces(ns_server_t *server, bool verbose) {
 			ns_interfacemgr_getaclenv(server->interfacemgr));
 
 	server->aclenv.match_mapped = match_mapped;
-#ifdef HAVE_GEOIP
+#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
 	server->aclenv.geoip_use_ecs = use_ecs;
 #endif
 
@@ -6229,7 +6232,7 @@ dotat(dns_keytable_t *keytable, dns_keynode_t *keynode, void *arg) {
 
 	REQUIRE(keytable != NULL);
 	REQUIRE(keynode != NULL);
-	REQUIRE(arg != NULL);
+	REQUIRE(dotat_arg != NULL);
 
 	view = dotat_arg->view;
 	task = dotat_arg->task;
@@ -7552,6 +7555,7 @@ load_configuration(const char *filename, ns_server_t *server,
 	INSIST(result == ISC_R_SUCCESS);
 	CHECKM(setstring(server, &server->bindkeysfile,
 	       cfg_obj_asstring(obj)), "strdup");
+	INSIST(server->bindkeysfile != NULL);
 
 	if (access(server->bindkeysfile, R_OK) == 0) {
 		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
@@ -10874,6 +10878,11 @@ ns_server_status(ns_server_t *server, isc_buffer_t **text) {
 
 	snprintf(line, sizeof(line), "tcp clients: %d/%d\n",
 		     server->tcpquota.used, server->tcpquota.max);
+	CHECK(putstr(text, line));
+
+	snprintf(line, sizeof(line), "TCP high-water: %" PRIu64 "\n",
+		 isc_stats_get_counter(ns_g_server->nsstats,
+				       dns_nsstatscounter_tcphighwater));
 	CHECK(putstr(text, line));
 
 	CHECK(putstr(text, "server is up and running"));

@@ -16,6 +16,8 @@ variables:
   TEST_PARALLEL_JOBS: 6
 
   MAKE: make
+  CONFIGURE: ./configure
+  SCAN_BUILD: scan-build-9
 
 stages:
   - precheck
@@ -28,7 +30,7 @@ stages:
 
 ### Runner Tag Templates
 
-# Note: FreeBSD runners extract the FreeBSD version to use from job name
+# Note: BSD runners extract the operating system version to use from job name
 
 .freebsd-amd64: &freebsd_amd64
   tags:
@@ -44,6 +46,11 @@ stages:
   tags:
     - linux
     - i386
+
+.openbsd-amd64: &openbsd_amd64
+  tags:
+    - openbsd
+    - amd64
 
 ### Docker Image Templates
 
@@ -63,6 +70,10 @@ stages:
   image: "$CI_REGISTRY_IMAGE:centos-centos7-amd64"
   <<: *linux_amd64
 
+.centos-centos8-amd64: &centos_centos8_amd64_image
+  image: "$CI_REGISTRY_IMAGE:centos-centos8-amd64"
+  <<: *linux_amd64
+
 # Debian
 
 .debian-jessie-amd64: &debian_jessie_amd64_image
@@ -79,7 +90,7 @@ stages:
 
 .debian-buster-amd64: &debian_buster_amd64_image
   image: "$CI_REGISTRY_IMAGE:debian-buster-amd64"
-  <<: *linux_i386
+  <<: *linux_amd64
 
 .debian-sid-amd64: &debian_sid_amd64_image
   image: "$CI_REGISTRY_IMAGE:debian-sid-amd64"
@@ -121,23 +132,35 @@ stages:
     - tags
     - web
 
+.release-branch-triggering-rules: &release_branch_triggering_rules
+  only:
+    - merge_requests
+    - tags
+    - web
+    - master@isc-projects/bind9
+    - /^v9_[1-9][0-9]$/@isc-projects/bind9
+
 .precheck: &precheck_job
   <<: *default_triggering_rules
   <<: *debian_sid_amd64_image
   stage: precheck
 
 .autoconf: &autoconf_job
-  <<: *default_triggering_rules
+  <<: *release_branch_triggering_rules
   <<: *debian_sid_amd64_image
   stage: precheck
   script:
     - autoreconf -fi
   artifacts:
-    untracked: true
-    expire_in: "1 hour"
+    paths:
+      - aclocal.m4
+      - configure
+      - ltmain.sh
+      - m4/libtool.m4
+    expire_in: "1 week"
 
 .configure: &configure |
-    ./configure \
+    ${CONFIGURE} \
     --disable-maintainer-mode \
     --enable-developer \
     --with-randomdev=/dev/urandom \
@@ -167,7 +190,7 @@ stages:
     - autoreconf:sid:amd64
   artifacts:
     untracked: true
-    expire_in: "1 hour"
+    expire_in: "1 week"
 
 .setup_interfaces: &setup_interfaces |
     if [ "$(id -u)" -eq "0" ]; then
@@ -187,7 +210,7 @@ stages:
     - *setup_interfaces
     - *setup_softhsm
   script:
-    - ( cd bin/tests && make -j${TEST_PARALLEL_JOBS:-1} -k test V=1 )
+    - ( cd bin/tests/system && make -j${TEST_PARALLEL_JOBS:-1} -k test V=1 )
     - test -s bin/tests/system/systests.output
   artifacts:
     untracked: true
@@ -229,7 +252,9 @@ stages:
            -j ${TEST_PARALLEL_JOBS:-1} \
            --xml \
            --output-file=cppcheck.results \
-           --inline-suppr
+           --relative-paths="$CI_PROJECT_DIR" \
+           --inline-suppr \
+           --suppressions-list=util/suppressions.txt
 
 .cppcheck_report: &cppcheck_report_html |
   cppcheck-htmlreport --title="BIND 9 ($CI_COMMIT_SHORT_SHA) Cppcheck Report" \
@@ -250,7 +275,6 @@ stages:
       - cppcheck_html/
     expire_in: "1 week"
     when: on_failure
-  allow_failure: true
 
 ### Job Definitions
 
@@ -292,6 +316,7 @@ misc:sid:amd64:
 # Jobs for doc builds on Debian Sid (amd64)
 
 docs:sid:amd64:
+  <<: *release_branch_triggering_rules
   <<: *debian_sid_amd64_image
   stage: docs
   script:
@@ -306,12 +331,6 @@ docs:sid:amd64:
     paths:
       - doc/arm/
     expire_in: "1 month"
-  only:
-    - merge_requests
-    - tags
-    - web
-    - master@isc-projects/bind9
-    - /^v9_[1-9][0-9]$/@isc-projects/bind9
 
 push:docs:sid:amd64:
   <<: *debian_sid_amd64_image
@@ -395,6 +414,30 @@ unit:gcc:centos7:amd64:
     - gcc:centos7:amd64
   needs: ["gcc:centos7:amd64"]
 
+# Jobs for regular GCC builds on CentOS 8 (amd64)
+
+gcc:centos8:amd64:
+  variables:
+    CC: gcc
+    CFLAGS: "-Wall -Wextra -O2 -g"
+    EXTRA_CONFIGURE: "--with-libidn2"
+  <<: *centos_centos8_amd64_image
+  <<: *build_job
+
+system:gcc:centos8:amd64:
+  <<: *centos_centos8_amd64_image
+  <<: *system_test_job
+  dependencies:
+    - gcc:centos8:amd64
+  needs: ["gcc:centos8:amd64"]
+
+unit:gcc:centos8:amd64:
+  <<: *centos_centos8_amd64_image
+  <<: *unit_test_job
+  dependencies:
+    - gcc:centos8:amd64
+  needs: ["gcc:centos8:amd64"]
+
 # Jobs for regular GCC builds on Debian 8 Jessie (amd64)
 
 gcc:jessie:amd64:
@@ -464,6 +507,38 @@ unit:gcc:buster:amd64:
   dependencies:
     - gcc:buster:amd64
   needs: ["gcc:buster:amd64"]
+
+# Jobs for scan-build builds on Debian Buster (amd64)
+
+.scan_build: &scan_build |
+  ${SCAN_BUILD} --html-title="BIND 9 ($CI_COMMIT_SHORT_SHA)" \
+                --keep-cc \
+                --status-bugs \
+                --keep-going \
+                -o scan-build.reports \
+                make -j${BUILD_PARALLEL_JOBS:-1} all V=1
+
+scan-build:buster:amd64:
+  <<: *default_triggering_rules
+  <<: *debian_buster_amd64_image
+  stage: postcheck
+  variables:
+    CC: clang-9
+    CFLAGS: "-Wall -Wextra -O2 -g"
+    CONFIGURE: "${SCAN_BUILD} ./configure"
+    EXTRA_CONFIGURE: "--enable-dnstap --with-libidn2"
+  script:
+    - *configure
+    - *scan_build
+  dependencies:
+    - autoreconf:sid:amd64
+  needs:
+    - autoreconf:sid:amd64
+  artifacts:
+    paths:
+      - scan-build.reports/
+    expire_in: "1 week"
+    when: on_failure
 
 # Jobs for regular GCC builds on Debian Sid (amd64)
 
@@ -737,6 +812,24 @@ unit:clang:freebsd12.0:amd64:
     - clang:freebsd12.0:amd64
   needs: ["clang:freebsd12.0:amd64"]
 
+# Jobs for Clang builds on OpenBSD 6.5 (amd64)
+
+clang:openbsd6.5:amd64:
+  variables:
+    CC: clang
+  <<: *openbsd_amd64
+  <<: *build_job
+
+system:clang:openbsd6.5:amd64:
+  <<: *openbsd_amd64
+  <<: *system_test_job
+  dependencies:
+    - clang:openbsd6.5:amd64
+  needs: ["clang:openbsd6.5:amd64"]
+  only:
+    - tags
+    - web
+
 # Jobs with libtool disabled
 
 nolibtool:sid:amd64:
@@ -788,9 +881,12 @@ msvc:windows:amd64:
          x64'
     - 'Set-Item -path "Env:CL" -value "/MP$([Math]::Truncate($BUILD_PARALLEL_JOBS/2))"'
     - '& msbuild.exe /maxCpuCount:2 /t:Build /p:Configuration=$VSCONF bind9.sln'
+  dependencies: []
+  needs:
+    - autoreconf:sid:amd64
   artifacts:
     untracked: true
-    expire_in: "1 hour"
+    expire_in: "1 week"
 
 system:msvc:windows:amd64:
   stage: system

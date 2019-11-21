@@ -55,7 +55,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking Country database by code using IPv6 ($n)"
@@ -94,7 +94,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking Country database with nested ACLs using IPv6 ($n)"
@@ -133,7 +133,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking Country database by name using IPv6 ($n)"
@@ -173,7 +173,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking Country database by continent code using IPv6 ($n)"
@@ -214,7 +214,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking City database by region code using IPv6 ($n)"
@@ -255,7 +255,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking City database by city name using IPv6 ($n)"
@@ -294,7 +294,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking ISP database using IPv6 ($n)"
@@ -333,7 +333,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking ASN database by org name using IPv6 ($n)"
@@ -372,7 +372,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking ASN database, ASNNNN only, using IPv6 ($n)"
@@ -411,7 +411,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking ASN database, NNNN only, using IPv6 ($n)"
@@ -450,7 +450,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking Domain database using IPv6 ($n)"
@@ -489,7 +489,7 @@ $RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
 sleep 3
 
 n=`expr $n + 1`
-echo_i "checking geoip-use-ecs ($n)"
+echo_i "checking 'geoip-use-ecs no;' ($n)"
 ret=0
 lret=0
 for i in 1 2 3 4 5 6 7; do
@@ -501,6 +501,30 @@ for i in 1 2 3 4 5 6 7; do
     $DIG $DIGOPTS txt example -b 127.0.0.1 +subnet="10.53.0.$i/32" > dig.out.ns2.test$n.ecs.$i || lret=1
     j=`cat dig.out.ns2.test$n.ecs.$i | tr -d '"'`
     [ "$j" = "bogus" ] || lret=1
+    [ $lret -eq 1 ] && break
+done
+[ $lret -eq 1 ] && ret=1
+[ $ret -eq 0 ] || echo_i "failed"
+status=`expr $status + $ret`
+
+echo_i "reloading server"
+copy_setports ns2/named14.conf.in ns2/named.conf
+$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+sleep 3
+
+n=`expr $n + 1`
+echo_i "checking 'geoip-use-ecs yes;' ($n)"
+ret=0
+lret=0
+for i in 1 2 3 4 5 6 7; do
+    $DIG $DIGOPTS txt example -b 10.53.0.$i > dig.out.ns2.test$n.$i || lret=1
+    j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
+    [ "$i" = "$j" ] || lret=1
+    [ $lret -eq 1 ] && break
+
+    $DIG $DIGOPTS txt example -b 127.0.0.1 +subnet="10.53.0.$i/32" > dig.out.ns2.test$n.ecs.$i || lret=1
+    j=`cat dig.out.ns2.test$n.ecs.$i | tr -d '"'`
+    [ "$i" = "$j" ] || lret=1
     [ $lret -eq 1 ] && break
 done
 [ $lret -eq 1 ] && ret=1
