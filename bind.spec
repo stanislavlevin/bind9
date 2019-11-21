@@ -292,7 +292,7 @@ cp -a CHANGES COPYRIGHT README* \
 install -pm644 contrib/queryperf/README %buildroot%docdir/README.queryperf
 
 xz -9 %buildroot%docdir/{*/*.txt,CHANGES}
-rm -fv %buildroot%docdir/*/{Makefile*,README-SGML,*.dsl*,*.sh*,*.xml}
+rm -v %buildroot%docdir/*/{Makefile*,README-SGML,*.xml}
 
 %define _unpackaged_files_terminate_build 1
 
