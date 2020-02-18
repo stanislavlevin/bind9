@@ -328,8 +328,8 @@ skip:
 	 * Slow sweep to clean out stale records.
 	 */
 	i = atomic_fetch_add(&bc->sweep, 1) % bc->size;
-	bad = bc->table[i];
 	if (isc_mutex_trylock(&bc->tlocks[i]) == ISC_R_SUCCESS) {
+		bad = bc->table[i];
 		if (bad != NULL && isc_time_compare(&bad->expire, now) < 0) {
 			bc->table[i] = bad->next;
 			isc_mem_put(bc->mctx, bad,
