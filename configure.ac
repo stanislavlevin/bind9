@@ -719,9 +719,9 @@ AC_SUBST(INSTALL_LIBRARY)
 # Do we want to use pthread rwlock? (useful for ThreadSanitizer)
 #
 AC_ARG_ENABLE([pthread_rwlock],
-	      [AS_HELP_STRING([--enable-pthread-rwlock],
-			      [use pthread rwlock instead of internal rwlock implementation (EXPERIMENTAL)])],
-	      [], [enable_pthread_rwlock=no])
+	      [AS_HELP_STRING([--disable-pthread-rwlock],
+			      [use internal rwlock implementation instead of pthread])],
+	      [], [enable_pthread_rwlock=yes])
 
 AS_IF([test "$enable_pthread_rwlock" = "yes"],
       [AC_CHECK_FUNCS([pthread_rwlock_rdlock], [],
