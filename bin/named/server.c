@@ -145,7 +145,7 @@
 #endif /* ifndef SIZE_AS_PERCENT */
 
 #ifdef TUNE_LARGE
-#define RESOLVER_NTASKS_PERCPU 32
+#define RESOLVER_NTASKS_PERCPU 64
 #define UDPBUFFERS	       32768
 #define EXCLBUFFERS	       32768
 #else
