@@ -78,6 +78,13 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			}
 			break;
 		}
+		if ((uintptr_t)rwl == __rbtdb_treelock) {
+			if (__my_tid == -1) {
+				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
+			}
+			INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
+			atomic_store(&__ltable[__my_tid], 10);
+		}
 		break;
 	default:
 		INSIST(0);
@@ -92,7 +99,7 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 	switch (type) {
 	case isc_rwlocktype_read:
 		ret = pthread_rwlock_tryrdlock(&rwl->rwlock);
-		if (ret == 0) {
+		if (ret == 0 &&  (uintptr_t)rwl == __rbtdb_treelock) {
 			if (__my_tid == -1) {
 				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
 			}
@@ -106,6 +113,13 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			isc_rwlock_unlock(rwl, type);
 			return (ISC_R_LOCKBUSY);
 		}
+		if (ret == 0 &&  (uintptr_t)rwl == __rbtdb_treelock) {
+			if (__my_tid == -1) {
+				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
+			}
+			INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
+			atomic_store(&__ltable[__my_tid], 11);
+		}			
 		break;
 	default:
 		INSIST(0);
@@ -128,7 +142,7 @@ isc_result_t
 isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 	UNUSED(type);
 	REQUIRE(pthread_rwlock_unlock(&rwl->rwlock) == 0);
-	if (type == isc_rwlocktype_read && (uintptr_t)rwl == __rbtdb_treelock ) {
+	if ((uintptr_t)rwl == __rbtdb_treelock ) {
 		INSIST(atomic_load_relaxed(&__ltable[__my_tid]) > 0);
 		atomic_store(&__ltable[__my_tid], 0);
 	}
