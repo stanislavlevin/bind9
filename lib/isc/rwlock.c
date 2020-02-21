@@ -146,10 +146,7 @@ isc_rwlock_downgrade(isc_rwlock_t *rwl) {
 	atomic_store_explicit(&rwl->downgrade, true, memory_order_seq_cst);
 	isc_rwlock_unlock(rwl, isc_rwlocktype_write);
 	isc_rwlock_lock(rwl, isc_rwlocktype_read);
-	if (__my_tid == -1) {
-		__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
-	}
-	INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
+	INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 1);
 	atomic_store(&__ltable[__my_tid], 3);
 	atomic_store_explicit(&rwl->downgrade, false, memory_order_seq_cst);
 }
