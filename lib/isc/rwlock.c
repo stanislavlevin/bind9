@@ -149,7 +149,7 @@ isc_rwlock_downgrade(isc_rwlock_t *rwl) {
 	if (__my_tid == -1) {
 		__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
 	}
-	INSIST(atomic_load_relaxed(&__ltable[__my_tid]) > 0);
+	INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
 	atomic_store(&__ltable[__my_tid], 3);
 	atomic_store_explicit(&rwl->downgrade, false, memory_order_seq_cst);
 }
