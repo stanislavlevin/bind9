@@ -24,6 +24,7 @@
 #include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/rwlock.h>
+#include <isc/thread.h>
 #include <isc/util.h>
 
 #if USE_PTHREAD_RWLOCK
@@ -31,11 +32,69 @@
 #include <errno.h>
 #include <pthread.h>
 
+static  atomic_uintptr_t __rbtdb_treelock;
+typedef enum {
+		WRLOCK,
+		RDLOCK,
+		WRTRYLOCK,
+		WRTRYFAIL,
+		RDTRYLOCK,
+		RDTRYFAIL,
+		UNLOCK
+	} rtype;
+
+typedef struct lock_entry_s {
+	unsigned long long ts;
+	unsigned long long seq;
+	int tid;
+	bool phase;
+	rtype type;
+	char __pad[32]; // up to 64b
+} lock_entry_t;
+
+static volatile lock_entry_t __locks[32][65536];
+
+ISC_THREAD_LOCAL volatile int __lt_pos; 
+
+ISC_THREAD_LOCAL volatile int __my_tid = -1;
+
+static atomic_int_fast64_t __seq = 0;
+
+static atomic_int_fast32_t __gtid = 0;
+
+static __inline__ unsigned long long rdtsc(void)
+{
+    unsigned hi, lo;
+    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+    return ( (unsigned long long)lo)|( ((unsigned long long)hi)<<32 );
+}
+
+static inline void
+__log(isc_rwlock_t *rwl, bool phase, rtype type) {
+	if ((uintptr_t)rwl == __rbtdb_treelock) {
+		if (__my_tid == -1) {
+			__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
+			
+		}
+		__lt_pos++;
+		__lt_pos %= 65536;
+		unsigned long long seq = atomic_fetch_add_relaxed(&__seq, 1);
+		__locks[__my_tid][__lt_pos].ts = rdtsc();
+		__locks[__my_tid][__lt_pos].seq = rdtsc();
+		__locks[__my_tid][__lt_pos].phase = phase;
+		__locks[__my_tid][__lt_pos].tid = __my_tid;
+		__locks[__my_tid][__lt_pos].type = type;
+	}
+}
+
 isc_result_t
 isc_rwlock_init(isc_rwlock_t *rwl, unsigned int read_quota,
 		unsigned int write_quota) {
 	UNUSED(read_quota);
 	UNUSED(write_quota);
+	if (write_quota == 1231123) {
+		__rbtdb_treelock = (uintptr_t) rwl;
+	}
 	REQUIRE(pthread_rwlock_init(&rwl->rwlock, NULL) == 0);
 	atomic_init(&rwl->downgrade, false);
 	return (ISC_R_SUCCESS);
@@ -45,9 +104,12 @@ isc_result_t
 isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 	switch (type) {
 	case isc_rwlocktype_read:
+		__log(rwl, false, RDLOCK);
 		REQUIRE(pthread_rwlock_rdlock(&rwl->rwlock) == 0);
+		__log(rwl, true, RDLOCK);
 		break;
 	case isc_rwlocktype_write:
+		__log(rwl, false, WRLOCK);
 		while (true) {
 			REQUIRE(pthread_rwlock_wrlock(&rwl->rwlock) == 0);
 			/* Unlock if in middle of downgrade operation */
@@ -60,6 +122,7 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			}
 			break;
 		}
+		__log(rwl, true, WRLOCK);
 		break;
 	default:
 		INSIST(0);
@@ -73,14 +136,19 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 	int ret = 0;
 	switch (type) {
 	case isc_rwlocktype_read:
+		__log(rwl, false, RDTRYLOCK);
 		ret = pthread_rwlock_tryrdlock(&rwl->rwlock);
+		__log(rwl, true, ret == 0 ? RDTRYLOCK : RDTRYFAIL);
 		break;
 	case isc_rwlocktype_write:
+		__log(rwl, false, WRTRYLOCK);
 		ret = pthread_rwlock_trywrlock(&rwl->rwlock);
 		if ((ret == 0) && atomic_load_explicit(&rwl->downgrade, memory_order_seq_cst)) {
 			isc_rwlock_unlock(rwl, type);
+			__log(rwl, true, WRTRYFAIL);
 			return (ISC_R_LOCKBUSY);
 		}
+		__log(rwl, true, ret == 0 ? WRTRYLOCK : WRTRYFAIL);
 		break;
 	default:
 		INSIST(0);
@@ -102,7 +170,9 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 isc_result_t
 isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 	UNUSED(type);
+	__log(rwl, false, UNLOCK);
 	REQUIRE(pthread_rwlock_unlock(&rwl->rwlock) == 0);
+	__log(rwl, true, UNLOCK);
 	return (ISC_R_SUCCESS);
 }
 
