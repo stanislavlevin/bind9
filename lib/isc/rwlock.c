@@ -24,6 +24,7 @@
 #include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/rwlock.h>
+#include <isc/thread.h>
 #include <isc/util.h>
 
 #if USE_PTHREAD_RWLOCK
@@ -31,11 +32,21 @@
 #include <errno.h>
 #include <pthread.h>
 
+static atomic_bool __ltable[256];
+
+static  atomic_uintptr_t __rbtdb_treelock;
+ 
+ISC_THREAD_LOCAL int __my_tid = -1;
+static atomic_int_fast32_t __gtid = 0;
+
 isc_result_t
 isc_rwlock_init(isc_rwlock_t *rwl, unsigned int read_quota,
 		unsigned int write_quota) {
 	UNUSED(read_quota);
 	UNUSED(write_quota);
+	if (write_quota == 1231123) {
+		__rbtdb_treelock = (uintptr_t) rwl;
+	}
 	REQUIRE(pthread_rwlock_init(&rwl->rwlock, NULL) == 0);
 	atomic_init(&rwl->downgrade, false);
 	return (ISC_R_SUCCESS);
@@ -46,6 +57,13 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 	switch (type) {
 	case isc_rwlocktype_read:
 		REQUIRE(pthread_rwlock_rdlock(&rwl->rwlock) == 0);
+		if ((uintptr_t)rwl == __rbtdb_treelock) {
+			if (__my_tid == -1) {
+				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
+			}
+			INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
+			atomic_store(&__ltable[__my_tid], 1);
+		}
 		break;
 	case isc_rwlocktype_write:
 		while (true) {
@@ -102,6 +120,10 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 isc_result_t
 isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 	UNUSED(type);
+	if (type == isc_rwlocktype_read && (uintptr_t)rwl == __rbtdb_treelock ) {
+		INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 1);
+		atomic_store(&__ltable[__my_tid], 0);
+	}
 	REQUIRE(pthread_rwlock_unlock(&rwl->rwlock) == 0);
 	return (ISC_R_SUCCESS);
 }
