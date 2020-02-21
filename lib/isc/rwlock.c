@@ -32,7 +32,7 @@
 #include <errno.h>
 #include <pthread.h>
 
-static atomic_bool __ltable[256];
+static atomic_uint_fast32_t __ltable[256];
 
 static  atomic_uintptr_t __rbtdb_treelock;
  
@@ -92,6 +92,13 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 	switch (type) {
 	case isc_rwlocktype_read:
 		ret = pthread_rwlock_tryrdlock(&rwl->rwlock);
+		if (ret == 0) {
+			if (__my_tid == -1) {
+				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
+			}
+			INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
+			atomic_store(&__ltable[__my_tid], 2);
+		}			
 		break;
 	case isc_rwlocktype_write:
 		ret = pthread_rwlock_trywrlock(&rwl->rwlock);
@@ -120,11 +127,11 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 isc_result_t
 isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 	UNUSED(type);
+	REQUIRE(pthread_rwlock_unlock(&rwl->rwlock) == 0);
 	if (type == isc_rwlocktype_read && (uintptr_t)rwl == __rbtdb_treelock ) {
-		INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 1);
+		INSIST(atomic_load_relaxed(&__ltable[__my_tid]) > 0);
 		atomic_store(&__ltable[__my_tid], 0);
 	}
-	REQUIRE(pthread_rwlock_unlock(&rwl->rwlock) == 0);
 	return (ISC_R_SUCCESS);
 }
 
@@ -139,6 +146,11 @@ isc_rwlock_downgrade(isc_rwlock_t *rwl) {
 	atomic_store_explicit(&rwl->downgrade, true, memory_order_seq_cst);
 	isc_rwlock_unlock(rwl, isc_rwlocktype_write);
 	isc_rwlock_lock(rwl, isc_rwlocktype_read);
+	if (__my_tid == -1) {
+		__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
+	}
+	INSIST(atomic_load_relaxed(&__ltable[__my_tid]) > 0);
+	atomic_store(&__ltable[__my_tid], 3);
 	atomic_store_explicit(&rwl->downgrade, false, memory_order_seq_cst);
 }
 
