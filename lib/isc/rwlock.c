@@ -78,7 +78,7 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
 				
 			}
-			unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1);
+			unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 65536;
 			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
 			__locks[i].tid = __my_tid;
 			__locks[i].type = RDLOCK;
