@@ -32,8 +32,6 @@
 #include <errno.h>
 #include <pthread.h>
 
-static atomic_uint_fast32_t __ltable[256];
-
 static  atomic_uintptr_t __rbtdb_treelock;
 
 typedef struct lock_entry_s {
@@ -80,8 +78,6 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
 				
 			}
-			INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
-			atomic_store(&__ltable[__my_tid], 1);
 			unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1);
 			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
 			__locks[i].tid = __my_tid;
@@ -105,8 +101,6 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			if (__my_tid == -1) {
 				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
 			}
-			INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
-			atomic_store(&__ltable[__my_tid], 10);
 			unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 65536;
 			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
 			__locks[i].tid = __my_tid;
@@ -130,8 +124,6 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			if (__my_tid == -1) {
 				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
 			}
-			INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
-			atomic_store(&__ltable[__my_tid], 2);
 			unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 65536;
 			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
 			__locks[i].tid = __my_tid;
@@ -148,8 +140,6 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			if (__my_tid == -1) {
 				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
 			}
-			INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
-			atomic_store(&__ltable[__my_tid], 11);
 			unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 65536;
 			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
 			__locks[i].tid = __my_tid;
@@ -178,12 +168,10 @@ isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 	UNUSED(type);
 	REQUIRE(pthread_rwlock_unlock(&rwl->rwlock) == 0);
 	if ((uintptr_t)rwl == __rbtdb_treelock ) {
-		INSIST(atomic_load_relaxed(&__ltable[__my_tid]) > 0);
-		atomic_store(&__ltable[__my_tid], 0);
-			unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 65536;
-			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
-			__locks[i].tid = __my_tid;
-			__locks[i].type = UNLOCK;
+		unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 65536;
+		//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
+		__locks[i].tid = __my_tid;
+		__locks[i].type = UNLOCK;
 	}
 	return (ISC_R_SUCCESS);
 }
@@ -199,10 +187,6 @@ isc_rwlock_downgrade(isc_rwlock_t *rwl) {
 	atomic_store_explicit(&rwl->downgrade, true, memory_order_seq_cst);
 	isc_rwlock_unlock(rwl, isc_rwlocktype_write);
 	isc_rwlock_lock(rwl, isc_rwlocktype_read);
-	if ((uintptr_t)rwl == __rbtdb_treelock) {
-		INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 1);
-		atomic_store(&__ltable[__my_tid], 3);
-	}
 	atomic_store_explicit(&rwl->downgrade, false, memory_order_seq_cst);
 }
 
