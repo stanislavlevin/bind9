@@ -35,9 +35,26 @@
 static atomic_uint_fast32_t __ltable[256];
 
 static  atomic_uintptr_t __rbtdb_treelock;
+
+typedef struct lock_entry_s {
+	struct timespec ts;
+	int tid;
+	enum {
+		WRLOCK,
+		RDLOCK,
+		WRTRYLOCK,
+		RDTRYLOCK,
+		UNLOCK
+	} type;
+} lock_entry_t;
+
+lock_entry_t locks[16384];
+
+static atomic_int_fast32_t __lt_pos; 
  
 ISC_THREAD_LOCAL int __my_tid = -1;
-ISC_THREAD_LOCAL FILE* __of;
+
+
 static atomic_int_fast32_t __gtid = 0;
 
 isc_result_t
@@ -61,18 +78,14 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 		if ((uintptr_t)rwl == __rbtdb_treelock) {
 			if (__my_tid == -1) {
 				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
-				char path[256];
-				sprintf(path, "/tmp/LOG-%d", __my_tid);
-				__of = fopen(path, "w");
 				
 			}
 			INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
 			atomic_store(&__ltable[__my_tid], 1);
-			char rec[256];
-			struct timespec ts;
-			clock_gettime(CLOCK_MONOTONIC, &ts);
-			sprintf(rec, "%09lu.%06lu %d LR\n", ts.tv_sec, ts.tv_nsec, __my_tid);
-			fwrite(rec, strlen(rec), 1, __of);
+			int i = atomic_fetch_add_relaxed(&__lt_pos, 1);
+			clock_gettime(CLOCK_MONOTONIC_COARSE, &locks[i].ts);
+			locks[i].tid = __my_tid;
+			locks[i].type = RDLOCK;
 		}
 		break;
 	case isc_rwlocktype_write:
@@ -91,17 +104,13 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 		if ((uintptr_t)rwl == __rbtdb_treelock) {
 			if (__my_tid == -1) {
 				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
-				char path[256];
-				sprintf(path, "/tmp/LOG%d", __my_tid);
-				__of = fopen(path, "w");
 			}
 			INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
 			atomic_store(&__ltable[__my_tid], 10);
-			char rec[256];
-			struct timespec ts;
-			clock_gettime(CLOCK_MONOTONIC, &ts);
-			sprintf(rec, "%09lu.%06lu %d LW\n", ts.tv_sec, ts.tv_nsec, __my_tid);
-			fwrite(rec, strlen(rec), 1, __of);
+			int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 16384;
+			clock_gettime(CLOCK_MONOTONIC_COARSE, &locks[i].ts);
+			locks[i].tid = __my_tid;
+			locks[i].type = WRLOCK;
 		}
 		break;
 	default:
@@ -120,17 +129,13 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 		if (ret == 0 &&  (uintptr_t)rwl == __rbtdb_treelock) {
 			if (__my_tid == -1) {
 				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
-				char path[256];
-				sprintf(path, "/tmp/LOG%d", __my_tid);
-				__of = fopen(path, "w");
 			}
 			INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
 			atomic_store(&__ltable[__my_tid], 2);
-			char rec[256];
-			struct timespec ts;
-			clock_gettime(CLOCK_MONOTONIC, &ts);
-			sprintf(rec, "%09lu.%06lu %d TR\n", ts.tv_sec, ts.tv_nsec, __my_tid);
-			fwrite(rec, strlen(rec), 1, __of);
+			int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 16384;
+			clock_gettime(CLOCK_MONOTONIC_COARSE, &locks[i].ts);
+			locks[i].tid = __my_tid;
+			locks[i].type = WRTRYLOCK;
 		}			
 		break;
 	case isc_rwlocktype_write:
@@ -142,17 +147,13 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 		if (ret == 0 &&  (uintptr_t)rwl == __rbtdb_treelock) {
 			if (__my_tid == -1) {
 				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
-				char path[256];
-				sprintf(path, "/tmp/LOG%d", __my_tid);
-				__of = fopen(path, "w");
 			}
 			INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
 			atomic_store(&__ltable[__my_tid], 11);
-			char rec[256];
-			struct timespec ts;
-			clock_gettime(CLOCK_MONOTONIC, &ts);
-			sprintf(rec, "%09lu.%06lu %d TW\n", ts.tv_sec, ts.tv_nsec, __my_tid);
-			fwrite(rec, strlen(rec), 1, __of);
+			int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 16384;
+			clock_gettime(CLOCK_MONOTONIC_COARSE, &locks[i].ts);
+			locks[i].tid = __my_tid;
+			locks[i].type = RDTRYLOCK;
 		}			
 		break;
 	default:
@@ -179,11 +180,10 @@ isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 	if ((uintptr_t)rwl == __rbtdb_treelock ) {
 		INSIST(atomic_load_relaxed(&__ltable[__my_tid]) > 0);
 		atomic_store(&__ltable[__my_tid], 0);
-			char rec[256];
-			struct timespec ts;
-			clock_gettime(CLOCK_MONOTONIC, &ts);
-			sprintf(rec, "%09lu.%06lu %d U\n", ts.tv_sec, ts.tv_nsec, __my_tid);
-			fwrite(rec, strlen(rec), 1, __of);
+			int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 16384;
+			clock_gettime(CLOCK_MONOTONIC_COARSE, &locks[i].ts);
+			locks[i].tid = __my_tid;
+			locks[i].type = UNLOCK;
 	}
 	return (ISC_R_SUCCESS);
 }
