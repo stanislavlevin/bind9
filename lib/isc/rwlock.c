@@ -48,11 +48,11 @@ typedef struct lock_entry_s {
 	} type;
 } lock_entry_t;
 
-static lock_entry_t __locks[65536];
+static volatile lock_entry_t __locks[65536];
 
-static atomic_uint_fast32_t __lt_pos; 
+static volatile atomic_uint_fast32_t __lt_pos; 
  
-ISC_THREAD_LOCAL int __my_tid = -1;
+ISC_THREAD_LOCAL volatile int __my_tid = -1;
 
 
 static atomic_int_fast32_t __gtid = 0;
