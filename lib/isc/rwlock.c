@@ -62,7 +62,7 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			if (__my_tid == -1) {
 				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
 				char path[256];
-				sprintf(path, "/tmp/LOG%d", __my_tid);
+				sprintf(path, "/tmp/LOG-%d", __my_tid);
 				__of = fopen(path, "w");
 				
 			}
@@ -71,7 +71,7 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			char rec[256];
 			struct timespec ts;
 			clock_gettime(CLOCK_MONOTONIC, &ts);
-			sprintf(rec, "%09lu.%06lu %d LR", ts.tv_sec, ts.tv_nsec, __my_tid);
+			sprintf(rec, "%09lu.%06lu %d LR\n", ts.tv_sec, ts.tv_nsec, __my_tid);
 			fwrite(rec, strlen(rec), 1, __of);
 		}
 		break;
@@ -100,7 +100,7 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			char rec[256];
 			struct timespec ts;
 			clock_gettime(CLOCK_MONOTONIC, &ts);
-			sprintf(rec, "%09lu.%06lu %d LW", ts.tv_sec, ts.tv_nsec, __my_tid);
+			sprintf(rec, "%09lu.%06lu %d LW\n", ts.tv_sec, ts.tv_nsec, __my_tid);
 			fwrite(rec, strlen(rec), 1, __of);
 		}
 		break;
@@ -129,7 +129,7 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			char rec[256];
 			struct timespec ts;
 			clock_gettime(CLOCK_MONOTONIC, &ts);
-			sprintf(rec, "%09lu.%06lu %d TR", ts.tv_sec, ts.tv_nsec, __my_tid);
+			sprintf(rec, "%09lu.%06lu %d TR\n", ts.tv_sec, ts.tv_nsec, __my_tid);
 			fwrite(rec, strlen(rec), 1, __of);
 		}			
 		break;
@@ -151,7 +151,7 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			char rec[256];
 			struct timespec ts;
 			clock_gettime(CLOCK_MONOTONIC, &ts);
-			sprintf(rec, "%09lu.%06lu %d TW", ts.tv_sec, ts.tv_nsec, __my_tid);
+			sprintf(rec, "%09lu.%06lu %d TW\n", ts.tv_sec, ts.tv_nsec, __my_tid);
 			fwrite(rec, strlen(rec), 1, __of);
 		}			
 		break;
@@ -182,7 +182,7 @@ isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			char rec[256];
 			struct timespec ts;
 			clock_gettime(CLOCK_MONOTONIC, &ts);
-			sprintf(rec, "%09lu.%06lu %d u", ts.tv_sec, ts.tv_nsec, __my_tid);
+			sprintf(rec, "%09lu.%06lu %d U\n", ts.tv_sec, ts.tv_nsec, __my_tid);
 			fwrite(rec, strlen(rec), 1, __of);
 	}
 	return (ISC_R_SUCCESS);
