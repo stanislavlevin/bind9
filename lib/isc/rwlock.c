@@ -33,17 +33,21 @@
 #include <pthread.h>
 
 static  atomic_uintptr_t __rbtdb_treelock;
-
-typedef struct lock_entry_s {
-	struct timespec ts;
-	int tid;
-	enum {
+typedef enum {
 		WRLOCK,
 		RDLOCK,
 		WRTRYLOCK,
+		WRTRYFAIL,
 		RDTRYLOCK,
+		RDTRYFAIL,
 		UNLOCK
-	} type;
+	} rtype;
+
+typedef struct lock_entry_s {
+	unsigned long long ts;
+	int tid;
+	bool phase;
+	rtype type;
 } lock_entry_t;
 
 static volatile lock_entry_t __locks[16][65536];
@@ -55,6 +59,22 @@ ISC_THREAD_LOCAL volatile int __my_tid = -1;
 
 
 static atomic_int_fast32_t __gtid = 0;
+
+static inline void
+__log(isc_rwlock_t *rwl, bool phase, rtype type) {
+	if ((uintptr_t)rwl == __rbtdb_treelock) {
+		if (__my_tid == -1) {
+			__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
+			
+		}
+		__lt_pos++;
+		__lt_pos %= 65536;
+		__locks[__my_tid][__lt_pos].ts = __rdtsc();
+		__locks[__my_tid][__lt_pos].phase = phase;
+		__locks[__my_tid][__lt_pos].tid = __my_tid;
+		__locks[__my_tid][__lt_pos].type = type;
+	}
+}
 
 isc_result_t
 isc_rwlock_init(isc_rwlock_t *rwl, unsigned int read_quota,
@@ -73,20 +93,12 @@ isc_result_t
 isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 	switch (type) {
 	case isc_rwlocktype_read:
+		__log(rwl, false, RDLOCK);
 		REQUIRE(pthread_rwlock_rdlock(&rwl->rwlock) == 0);
-		if ((uintptr_t)rwl == __rbtdb_treelock) {
-			if (__my_tid == -1) {
-				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
-				
-			}
-			__lt_pos++;
-			__lt_pos %= 65536;
-			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[__my_tid][__lt_pos].ts);
-			__locks[__my_tid][__lt_pos].tid = __my_tid;
-			__locks[__my_tid][__lt_pos].type = RDLOCK;
-		}
+		__log(rwl, true, RDLOCK);
 		break;
 	case isc_rwlocktype_write:
+		__log(rwl, false, WRLOCK);
 		while (true) {
 			REQUIRE(pthread_rwlock_wrlock(&rwl->rwlock) == 0);
 			/* Unlock if in middle of downgrade operation */
@@ -99,16 +111,7 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			}
 			break;
 		}
-		if ((uintptr_t)rwl == __rbtdb_treelock) {
-			if (__my_tid == -1) {
-				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
-			}
-			__lt_pos++;
-			__lt_pos %= 65536;
-			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[__my_tid][__lt_pos].ts);
-			__locks[__my_tid][__lt_pos].tid = __my_tid;
-			__locks[__my_tid][__lt_pos].type = WRLOCK;
-		}
+		__log(rwl, true, WRLOCK);
 		break;
 	default:
 		INSIST(0);
@@ -122,34 +125,19 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 	int ret = 0;
 	switch (type) {
 	case isc_rwlocktype_read:
+		__log(rwl, false, RDTRYLOCK);
 		ret = pthread_rwlock_tryrdlock(&rwl->rwlock);
-		if (ret == 0 &&  (uintptr_t)rwl == __rbtdb_treelock) {
-			if (__my_tid == -1) {
-				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
-			}
-			__lt_pos++;
-			__lt_pos %= 65536;
-			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[__my_tid][__lt_pos].ts);
-			__locks[__my_tid][__lt_pos].tid = __my_tid;
-			__locks[__my_tid][__lt_pos].type = WRTRYLOCK;
-		}			
+		__log(rwl, true, ret == 0 ? RDTRYLOCK : RDTRYFAIL);
 		break;
 	case isc_rwlocktype_write:
+		__log(rwl, false, WRTRYLOCK);
 		ret = pthread_rwlock_trywrlock(&rwl->rwlock);
 		if ((ret == 0) && atomic_load_explicit(&rwl->downgrade, memory_order_seq_cst)) {
 			isc_rwlock_unlock(rwl, type);
+			__log(rwl, true, WRTRYFAIL);
 			return (ISC_R_LOCKBUSY);
 		}
-		if (ret == 0 &&  (uintptr_t)rwl == __rbtdb_treelock) {
-			if (__my_tid == -1) {
-				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
-			}
-			__lt_pos++;
-			__lt_pos %= 65536;
-			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[__my_tid][__lt_pos].ts);
-			__locks[__my_tid][__lt_pos].tid = __my_tid;
-			__locks[__my_tid][__lt_pos].type = RDTRYLOCK;
-		}			
+		__log(rwl, true, ret == 0 ? WRTRYLOCK : WRTRYFAIL);
 		break;
 	default:
 		INSIST(0);
@@ -171,14 +159,9 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 isc_result_t
 isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 	UNUSED(type);
+	__log(rwl, false, UNLOCK);
 	REQUIRE(pthread_rwlock_unlock(&rwl->rwlock) == 0);
-	if ((uintptr_t)rwl == __rbtdb_treelock ) {
-		__lt_pos++;
-		__lt_pos %= 65536;
-		//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[__my_tid][__lt_pos].ts);
-		__locks[__my_tid][__lt_pos].tid = __my_tid;
-		__locks[__my_tid][__lt_pos].type = UNLOCK;
-	}
+	__log(rwl, true, UNLOCK);
 	return (ISC_R_SUCCESS);
 }
 
