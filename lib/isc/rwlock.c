@@ -48,17 +48,24 @@ typedef struct lock_entry_s {
 	int tid;
 	bool phase;
 	rtype type;
+	char __pad[40]; // up to 64b
 } lock_entry_t;
 
-static volatile lock_entry_t __locks[16][65536];
+static volatile lock_entry_t __locks[65536];
 
-//static volatile atomic_uint_fast32_t __lt_pos; 
-ISC_THREAD_LOCAL volatile int __lt_pos;
+static volatile atomic_uint_fast32_t __lt_pos; 
 
 ISC_THREAD_LOCAL volatile int __my_tid = -1;
 
 
 static atomic_int_fast32_t __gtid = 0;
+
+static __inline__ unsigned long long rdtsc(void)
+{
+    unsigned hi, lo;
+    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+    return ( (unsigned long long)lo)|( ((unsigned long long)hi)<<32 );
+}
 
 static inline void
 __log(isc_rwlock_t *rwl, bool phase, rtype type) {
@@ -67,12 +74,12 @@ __log(isc_rwlock_t *rwl, bool phase, rtype type) {
 			__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
 			
 		}
-		__lt_pos++;
+		int i = atomic_fetch_add_relaxed(&__lt_pos, 1);
 		__lt_pos %= 65536;
-		__locks[__my_tid][__lt_pos].ts = __rdtsc();
-		__locks[__my_tid][__lt_pos].phase = phase;
-		__locks[__my_tid][__lt_pos].tid = __my_tid;
-		__locks[__my_tid][__lt_pos].type = type;
+		__locks[i].ts = rdtsc();
+		__locks[i].phase = phase;
+		__locks[i].tid = __my_tid;
+		__locks[i].type = type;
 	}
 }
 
