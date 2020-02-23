@@ -83,7 +83,7 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
 			atomic_store(&__ltable[__my_tid], 1);
 			unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1);
-			clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
+			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
 			__locks[i].tid = __my_tid;
 			__locks[i].type = RDLOCK;
 		}
@@ -108,7 +108,7 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
 			atomic_store(&__ltable[__my_tid], 10);
 			unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 65536;
-			clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
+			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
 			__locks[i].tid = __my_tid;
 			__locks[i].type = WRLOCK;
 		}
@@ -133,7 +133,7 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
 			atomic_store(&__ltable[__my_tid], 2);
 			unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 65536;
-			clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
+			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
 			__locks[i].tid = __my_tid;
 			__locks[i].type = WRTRYLOCK;
 		}			
@@ -151,7 +151,7 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			INSIST(atomic_load_relaxed(&__ltable[__my_tid]) == 0);
 			atomic_store(&__ltable[__my_tid], 11);
 			unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 65536;
-			clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
+			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
 			__locks[i].tid = __my_tid;
 			__locks[i].type = RDTRYLOCK;
 		}			
@@ -181,7 +181,7 @@ isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 		INSIST(atomic_load_relaxed(&__ltable[__my_tid]) > 0);
 		atomic_store(&__ltable[__my_tid], 0);
 			unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 65536;
-			clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
+			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
 			__locks[i].tid = __my_tid;
 			__locks[i].type = UNLOCK;
 	}
