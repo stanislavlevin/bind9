@@ -46,10 +46,11 @@ typedef struct lock_entry_s {
 	} type;
 } lock_entry_t;
 
-static volatile lock_entry_t __locks[65536];
+static volatile lock_entry_t __locks[16][65536];
 
-static volatile atomic_uint_fast32_t __lt_pos; 
- 
+//static volatile atomic_uint_fast32_t __lt_pos; 
+ISC_THREAD_LOCAL volatile int __lt_pos;
+
 ISC_THREAD_LOCAL volatile int __my_tid = -1;
 
 
@@ -78,10 +79,11 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
 				
 			}
-			unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 65536;
-			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
-			__locks[i].tid = __my_tid;
-			__locks[i].type = RDLOCK;
+			__lt_pos++;
+			__lt_pos %= 65536;
+			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[__my_tid][__lt_pos].ts);
+			__locks[__my_tid][__lt_pos].tid = __my_tid;
+			__locks[__my_tid][__lt_pos].type = RDLOCK;
 		}
 		break;
 	case isc_rwlocktype_write:
@@ -101,10 +103,11 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			if (__my_tid == -1) {
 				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
 			}
-			unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 65536;
-			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
-			__locks[i].tid = __my_tid;
-			__locks[i].type = WRLOCK;
+			__lt_pos++;
+			__lt_pos %= 65536;
+			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[__my_tid][__lt_pos].ts);
+			__locks[__my_tid][__lt_pos].tid = __my_tid;
+			__locks[__my_tid][__lt_pos].type = WRLOCK;
 		}
 		break;
 	default:
@@ -124,10 +127,11 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			if (__my_tid == -1) {
 				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
 			}
-			unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 65536;
-			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
-			__locks[i].tid = __my_tid;
-			__locks[i].type = WRTRYLOCK;
+			__lt_pos++;
+			__lt_pos %= 65536;
+			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[__my_tid][__lt_pos].ts);
+			__locks[__my_tid][__lt_pos].tid = __my_tid;
+			__locks[__my_tid][__lt_pos].type = WRTRYLOCK;
 		}			
 		break;
 	case isc_rwlocktype_write:
@@ -140,10 +144,11 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			if (__my_tid == -1) {
 				__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
 			}
-			unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 65536;
-			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
-			__locks[i].tid = __my_tid;
-			__locks[i].type = RDTRYLOCK;
+			__lt_pos++;
+			__lt_pos %= 65536;
+			//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[__my_tid][__lt_pos].ts);
+			__locks[__my_tid][__lt_pos].tid = __my_tid;
+			__locks[__my_tid][__lt_pos].type = RDTRYLOCK;
 		}			
 		break;
 	default:
@@ -168,10 +173,11 @@ isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 	UNUSED(type);
 	REQUIRE(pthread_rwlock_unlock(&rwl->rwlock) == 0);
 	if ((uintptr_t)rwl == __rbtdb_treelock ) {
-		unsigned int i = atomic_fetch_add_relaxed(&__lt_pos, 1) % 65536;
-		//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[i].ts);
-		__locks[i].tid = __my_tid;
-		__locks[i].type = UNLOCK;
+		__lt_pos++;
+		__lt_pos %= 65536;
+		//clock_gettime(CLOCK_MONOTONIC_COARSE, &__locks[__my_tid][__lt_pos].ts);
+		__locks[__my_tid][__lt_pos].tid = __my_tid;
+		__locks[__my_tid][__lt_pos].type = UNLOCK;
 	}
 	return (ISC_R_SUCCESS);
 }
