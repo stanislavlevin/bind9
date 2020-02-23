@@ -76,10 +76,10 @@ __log(isc_rwlock_t *rwl, bool phase, rtype type) {
 		}
 		int i = atomic_fetch_add_relaxed(&__lt_pos, 1);
 		__lt_pos %= 65536;
-		__locks[i].ts = rdtsc();
-		__locks[i].phase = phase;
-		__locks[i].tid = __my_tid;
-		__locks[i].type = type;
+		__locks[__lt_pos].ts = rdtsc();
+		__locks[__lt_pos].phase = phase;
+		__locks[__lt_pos].tid = __my_tid;
+		__locks[__lt_pos].type = type;
 	}
 }
 
