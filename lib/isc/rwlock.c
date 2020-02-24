@@ -51,7 +51,7 @@ typedef struct lock_entry_s {
 	char __pad[40]; // up to 64b
 } lock_entry_t;
 
-static volatile lock_entry_t __locks[65536];
+static volatile lock_entry_t __locks[32][65536];
 
 static volatile atomic_uint_fast32_t __lt_pos; 
 
@@ -74,12 +74,12 @@ __log(isc_rwlock_t *rwl, bool phase, rtype type) {
 			__my_tid = atomic_fetch_add_relaxed(&__gtid, 1);
 			
 		}
-		int i = atomic_fetch_add_relaxed(&__lt_pos, 1);
-		i %= 65536;
-		__locks[i].ts = rdtsc();
-		__locks[i].phase = phase;
-		__locks[i].tid = __my_tid;
-		__locks[i].type = type;
+		__lt_pos++;
+		__lt_pos %= 65536;
+		__locks[__my_tid][__lt_pos].ts = rdtsc();
+		__locks[__my_tid][__lt_pos].phase = phase;
+		__locks[__my_tid][__lt_pos].tid = __my_tid;
+		__locks[__my_tid][__lt_pos].type = type;
 	}
 }
 
