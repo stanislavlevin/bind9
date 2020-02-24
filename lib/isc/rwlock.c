@@ -36,10 +36,7 @@ isc_rwlock_init(isc_rwlock_t *rwl, unsigned int read_quota,
 		unsigned int write_quota) {
 	UNUSED(read_quota);
 	UNUSED(write_quota);
-	pthread_rwlockattr_t rwlockattr;
-	pthread_rwlockattr_init(&rwlockattr);
-	pthread_rwlockattr_setkind_np(&rwlockattr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-	REQUIRE(pthread_rwlock_init(&rwl->rwlock, &rwlockattr) == 0);
+	REQUIRE(pthread_rwlock_init(&rwl->rwlock, NULL) == 0);
 	atomic_init(&rwl->downgrade, false);
 	return (ISC_R_SUCCESS);
 }
