@@ -15,7 +15,6 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
-#include <unistd.h>
 
 #include <isc/atomic.h>
 #include <isc/crc64.h>
@@ -2810,7 +2809,6 @@ findnodeintree(dns_rbtdb_t *rbtdb, dns_rbt_t *tree, const dns_name_t *name,
 		 */
 		__sync_synchronize();
 		pthread_yield();
-		usleep(10000);
 		locktype = isc_rwlocktype_write;
 		RWLOCK(&rbtdb->tree_lock, locktype);
 		node = NULL;
