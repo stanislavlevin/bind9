@@ -2808,7 +2808,6 @@ findnodeintree(dns_rbtdb_t *rbtdb, dns_rbt_t *tree, const dns_name_t *name,
 		 * unlocking then relocking.
 		 */
 		__sync_synchronize();
-		pthread_yield();
 		locktype = isc_rwlocktype_write;
 		RWLOCK(&rbtdb->tree_lock, locktype);
 		node = NULL;
