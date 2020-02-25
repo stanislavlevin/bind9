@@ -5837,7 +5837,7 @@ ns_query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qname,
 					      isc_quota_getmax(
 						      client->recursionquota));
 			}
-			ns_client_killoldestquery(client);
+//			ns_client_killoldestquery(client);
 			result = ISC_R_SUCCESS;
 		} else if (result == ISC_R_QUOTA) {
 #ifdef ISC_MUTEX_ATOMICS
@@ -5860,7 +5860,7 @@ ns_query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qname,
 					isc_quota_getmax(&sctx->recursionquota),
 					isc_result_totext(result));
 			}
-			ns_client_killoldestquery(client);
+//			ns_client_killoldestquery(client);
 		}
 		if (result != ISC_R_SUCCESS) {
 			return (result);
