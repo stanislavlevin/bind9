@@ -240,7 +240,7 @@ ctxs_init(isc_mem_t **mctxp, isc_appctx_t **actxp, isc_taskmgr_t **taskmgrp,
 		goto fail;
 	}
 
-	result = isc_timermgr_createinctx(*mctxp, timermgrp);
+	result = isc_timermgr_createinctx(*mctxp, 1, timermgrp);
 	if (result != ISC_R_SUCCESS) {
 		goto fail;
 	}

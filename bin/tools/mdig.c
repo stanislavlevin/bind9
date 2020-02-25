@@ -2120,7 +2120,7 @@ main(int argc, char *argv[]) {
 	RUNCHECK(isc_task_create(taskmgr, 0, &task));
 	timermgr = NULL;
 
-	RUNCHECK(isc_timermgr_create(mctx, &timermgr));
+	RUNCHECK(isc_timermgr_create(mctx, 1, &timermgr));
 	socketmgr = NULL;
 	RUNCHECK(isc_socketmgr_create(mctx, &socketmgr));
 	dispatchmgr = NULL;

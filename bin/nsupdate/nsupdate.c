@@ -926,7 +926,7 @@ setup_system(void) {
 	result = isc_socketmgr_create(gmctx, &socketmgr);
 	check_result(result, "dns_socketmgr_create");
 
-	result = isc_timermgr_create(gmctx, &timermgr);
+	result = isc_timermgr_create(gmctx, 1, &timermgr);
 	check_result(result, "dns_timermgr_create");
 
 	result = isc_taskmgr_create(gmctx, 1, 0, NULL, &taskmgr);

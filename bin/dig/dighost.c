@@ -1408,7 +1408,7 @@ setup_libs(void) {
 	check_result(result, "isc_task_create");
 	isc_task_setname(global_task, "dig", NULL);
 
-	result = isc_timermgr_create(mctx, &timermgr);
+	result = isc_timermgr_create(mctx, 1, &timermgr);
 	check_result(result, "isc_timermgr_create");
 
 	result = isc_socketmgr_create(mctx, &socketmgr);

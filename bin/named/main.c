@@ -922,7 +922,7 @@ create_managers(void) {
 		return (ISC_R_UNEXPECTED);
 	}
 
-	result = isc_timermgr_create(named_g_mctx, &named_g_timermgr);
+	result = isc_timermgr_create(named_g_mctx, named_g_cpus, &named_g_timermgr);
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "isc_timermgr_create() failed: %s",

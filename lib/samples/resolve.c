@@ -379,7 +379,7 @@ main(int argc, char *argv[]) {
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
 	}
-	result = isc_timermgr_createinctx(mctx, &timermgr);
+	result = isc_timermgr_createinctx(mctx, 1, &timermgr);
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
 	}

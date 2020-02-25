@@ -91,7 +91,7 @@ create_managers(unsigned int workers) {
 	CHECK(isc_task_create(taskmgr, 0, &maintask));
 	isc_taskmgr_setexcltask(taskmgr, maintask);
 
-	CHECK(isc_timermgr_create(test_mctx, &timermgr));
+	CHECK(isc_timermgr_create(test_mctx, workers, &timermgr));
 	CHECK(isc_socketmgr_create(test_mctx, &socketmgr));
 	return (ISC_R_SUCCESS);
 

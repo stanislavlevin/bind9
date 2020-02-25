@@ -307,10 +307,10 @@ isc_timer_gettype(isc_timer_t *timer);
  */
 
 isc_result_t
-isc_timermgr_createinctx(isc_mem_t *mctx, isc_timermgr_t **managerp);
+isc_timermgr_createinctx(isc_mem_t *mctx, int nworkers, isc_timermgr_t **managerp);
 
 isc_result_t
-isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp);
+isc_timermgr_create(isc_mem_t *mctx, int nworkers, isc_timermgr_t **managerp);
 /*%<
  * Create a timer manager.  isc_timermgr_createinctx() also associates
  * the new manager with the specified application context.

@@ -440,7 +440,7 @@ dns_client_create(dns_client_t **clientp, unsigned int options) {
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
 	}
-	result = isc_timermgr_createinctx(mctx, &timermgr);
+	result = isc_timermgr_createinctx(mctx, 1, &timermgr);
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
 	}

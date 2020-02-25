@@ -222,7 +222,7 @@ create_managers(void) {
 	isc_taskmgr_setexcltask(taskmgr, maintask);
 	CHECK(isc_task_onshutdown(maintask, shutdown_managers, NULL));
 
-	CHECK(isc_timermgr_create(mctx, &timermgr));
+	CHECK(isc_timermgr_create(mctx, ncpus, &timermgr));
 
 	CHECK(isc_socketmgr_create(mctx, &socketmgr));
 

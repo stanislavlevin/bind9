@@ -1761,7 +1761,7 @@ main(int argc, char *argv[]) {
 	CHECK(isc_appctx_create(mctx, &actx));
 	CHECK(isc_taskmgr_createinctx(mctx, 1, 0, &taskmgr));
 	CHECK(isc_socketmgr_createinctx(mctx, &socketmgr));
-	CHECK(isc_timermgr_createinctx(mctx, &timermgr));
+	CHECK(isc_timermgr_createinctx(mctx, 1, &timermgr));
 
 	parse_args(argc, argv);
 
