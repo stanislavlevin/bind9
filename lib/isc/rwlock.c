@@ -49,7 +49,7 @@ typedef struct lock_entry_s {
 	int tid;
 	bool phase;
 	rtype type;
-	char __pad[32]; // up to 64b
+	pthread_rwlock_t rwl;
 } lock_entry_t;
 
 static volatile lock_entry_t __locks[32][65536];
@@ -84,6 +84,7 @@ __log(isc_rwlock_t *rwl, bool phase, rtype type) {
 		__locks[__my_tid][__lt_pos].phase = phase;
 		__locks[__my_tid][__lt_pos].tid = __my_tid;
 		__locks[__my_tid][__lt_pos].type = type;
+		__locks[__my_tid][__lt_pos].rwl = rwl->rwlock;
 	}
 }
 
