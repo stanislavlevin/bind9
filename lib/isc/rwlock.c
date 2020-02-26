@@ -80,7 +80,7 @@ __log(isc_rwlock_t *rwl, bool phase, rtype type) {
 		__lt_pos %= 65536;
 		unsigned long long seq = atomic_fetch_add_relaxed(&__seq, 1);
 		__locks[__my_tid][__lt_pos].ts = rdtsc();
-		__locks[__my_tid][__lt_pos].seq = rdtsc();
+		__locks[__my_tid][__lt_pos].seq = seq;
 		__locks[__my_tid][__lt_pos].phase = phase;
 		__locks[__my_tid][__lt_pos].tid = __my_tid;
 		__locks[__my_tid][__lt_pos].type = type;
