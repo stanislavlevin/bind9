@@ -4,7 +4,7 @@ Version: 9.11.13
 Release: alt1
 
 Summary: ISC BIND - DNS server
-License: MPLv2.0
+License: MPL-2.0
 Group: System/Servers
 Url: http://www.isc.org/products/BIND/
 
