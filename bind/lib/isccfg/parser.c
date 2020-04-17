@@ -3000,7 +3000,7 @@ parser_complain(cfg_parser_t *pctx, bool is_warning,
 		va_list args)
 {
 	char tokenbuf[MAX_LOG_TOKEN + 10];
-	static char where[ISC_DIR_PATHMAX + 100];
+	static char where[PATH_MAX + 100];
 	static char message[2048];
 	int level = ISC_LOG_ERROR;
 	const char *prep = "";
@@ -3017,10 +3017,10 @@ parser_complain(cfg_parser_t *pctx, bool is_warning,
 		snprintf(where, sizeof(where), "%s: ", pctx->buf_name);
 
 	len = vsnprintf(message, sizeof(message), format, args);
-#define ELIPSIS " ... "
+#define ELLIPSIS " ... "
 	if (len >= sizeof(message)) {
-		message[sizeof(message) - sizeof(ELIPSIS)] = 0;
-		strlcat(message, ELIPSIS, sizeof(message));
+		message[sizeof(message) - sizeof(ELLIPSIS)] = 0;
+		strlcat(message, ELLIPSIS, sizeof(message));
 	}
 
 	if ((flags & (CFG_LOG_NEAR|CFG_LOG_BEFORE|CFG_LOG_NOPREP)) != 0) {

@@ -927,6 +927,10 @@ allocate_udp_buffer(dns_dispatch_t *disp) {
 	void *temp;
 
 	LOCK(&disp->mgr->buffer_lock);
+	if (disp->mgr->buffers >= disp->mgr->maxbuffers) {
+		UNLOCK(&disp->mgr->buffer_lock);
+		return (NULL);
+	}
 	bpool = disp->mgr->bpool;
 	disp->mgr->buffers++;
 	UNLOCK(&disp->mgr->buffer_lock);
@@ -1058,9 +1062,11 @@ udp_recv(isc_event_t *ev_in, dns_dispatch_t *disp, dispsocket_t *dispsock) {
 	mgr = disp->mgr;
 	qid = mgr->qid;
 
+	LOCK(&disp->mgr->buffer_lock);
 	dispatch_log(disp, LVL(90),
 		     "got packet: requests %d, buffers %d, recvs %d",
 		     disp->requests, disp->mgr->buffers, disp->recv_pending);
+	UNLOCK(&disp->mgr->buffer_lock);
 
 	if (dispsock == NULL && ev->ev_type == ISC_SOCKEVENT_RECVDONE) {
 		/*
@@ -1347,18 +1353,18 @@ tcp_recv(isc_task_t *task, isc_event_t *ev_in) {
 
 	qid = disp->qid;
 
+	LOCK(&disp->lock);
+
 	dispatch_log(disp, LVL(90),
 		     "got TCP packet: requests %d, buffers %d, recvs %d",
 		     disp->requests, disp->tcpbuffers, disp->recv_pending);
-
-	LOCK(&disp->lock);
 
 	INSIST(disp->recv_pending != 0);
 	disp->recv_pending = 0;
 
 	if (disp->refcount == 0) {
 		/*
-		 * This dispatcher is shutting down.  Force cancelation.
+		 * This dispatcher is shutting down.  Force cancellation.
 		 */
 		tcpmsg->result = ISC_R_CANCELED;
 	}
@@ -1510,9 +1516,6 @@ startrecv(dns_dispatch_t *disp, dispsocket_t *dispsock) {
 
 	if (disp->recv_pending != 0 && dispsock == NULL)
 		return (ISC_R_SUCCESS);
-
-	if (disp->mgr->buffers >= disp->mgr->maxbuffers)
-		return (ISC_R_NOMEMORY);
 
 	if ((disp->attributes & DNS_DISPATCHATTR_EXCLUSIVE) != 0 &&
 	    dispsock == NULL)
@@ -2901,7 +2904,7 @@ get_udpsocket(dns_dispatchmgr_t *mgr, dns_dispatch_t *disp,
 			result = open_socket(sockmgr, &localaddr_bound,
 					     0, &sock, NULL);
 			/*
-			 * Continue if the port choosen is already in use
+			 * Continue if the port chosen is already in use
 			 * or the OS has reserved it.
 			 */
 			if (result == ISC_R_NOPERM ||
@@ -3590,7 +3593,7 @@ do_cancel(dns_dispatch_t *disp) {
 
 	/*
 	 * Search for the first response handler without packets outstanding
-	 * unless a specific hander is given.
+	 * unless a specific handler is given.
 	 */
 	LOCK(&qid->lock);
 	for (resp = linear_first(qid);

@@ -1374,7 +1374,7 @@ struct dns_update_state {
 	dns_diff_t work;
 	dst_key_t *zone_keys[DNS_MAXZONEKEYS];
 	unsigned int nkeys;
-	isc_stdtime_t inception, expire;
+	isc_stdtime_t inception, expire, soaexpire;
 	dns_ttl_t nsecttl;
 	bool check_ksk, keyset_kskonly, build_nsec3;
 	enum { sign_updates, remove_orphaned, build_chain, process_nsec,
@@ -1455,7 +1455,9 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 
 		isc_stdtime_get(&now);
 		state->inception = now - 3600; /* Allow for some clock skew. */
-		state->expire = now + dns__jitter_expire(zone, sigvalidityinterval);
+		state->expire = now +
+				dns__jitter_expire(zone, sigvalidityinterval);
+		state->soaexpire = now + sigvalidityinterval;
 
 		/*
 		 * Do we look at the KSK flag on the DNSKEY to determining which
@@ -1553,13 +1555,19 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 				CHECK(rrset_visible(db, newver, name, type,
 						   &flag));
 				if (flag) {
+					isc_stdtime_t exp;
+
+					if (type == dns_rdatatype_soa) {
+						exp = state->soaexpire;
+					} else {
+						exp = state->expire;
+					}
 					CHECK(add_sigs(log, zone, db, newver,
 						       name, type,
 						       &state->sig_diff,
 						       state->zone_keys,
 						       state->nkeys,
-						       state->inception,
-						       state->expire,
+						       state->inception, exp,
 						       state->check_ksk,
 						       state->keyset_kskonly));
 					sigs++;
@@ -2074,16 +2082,12 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 
 static isc_stdtime_t
 epoch_to_yyyymmdd(time_t when) {
-	struct tm *tm;
-
-#if defined(ISC_PLATFORM_USETHREADS) && !defined(WIN32)
-	struct tm tm0;
-	tm = localtime_r(&when, &tm0);
-#else
-	tm = localtime(&when);
-#endif
-	return (((tm->tm_year + 1900) * 10000) +
-		((tm->tm_mon + 1) * 100) + tm->tm_mday);
+	struct tm t, *tm = localtime_r(&when, &t);
+	if (tm == NULL) {
+		return (0);
+	}
+	return (((tm->tm_year + 1900) * 10000) + ((tm->tm_mon + 1) * 100) +
+		tm->tm_mday);
 }
 
 uint32_t

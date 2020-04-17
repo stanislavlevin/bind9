@@ -666,9 +666,9 @@ nibbles(char *numbuf, size_t length, unsigned int width, char mode, int value) {
 			width--;
 		count++;
 		/*
-		 * If width is non zero then we need to add a label seperator.
+		 * If width is non zero then we need to add a label separator.
 		 * If value is non zero then we need to add another label and
-		 * that requires a label seperator.
+		 * that requires a label separator.
 		 */
 		if (width > 0 || value != 0) {
 			if (length > 0U) {
@@ -3088,7 +3088,9 @@ resign_fromlist(dns_rdatalist_t *this, dns_loadctx_t *lctx) {
 	else
 		when = sig.timeexpire - lctx->resign;
 
+	/* cppcheck-suppress nullPointerRedundantCheck */
 	rdata = ISC_LIST_NEXT(rdata, link);
+	/* cppcheck-suppress nullPointerRedundantCheck */
 	while (rdata != NULL) {
 		(void)dns_rdata_tostruct(rdata, &sig, NULL);
 		if (isc_serial_gt(sig.timesigned, lctx->now))
@@ -3203,8 +3205,9 @@ load_quantum(isc_task_t *task, isc_event_t *event) {
 	dns_loadctx_t *lctx;
 
 	REQUIRE(event != NULL);
+	REQUIRE(DNS_LCTX_VALID(event->ev_arg));
+
 	lctx = event->ev_arg;
-	REQUIRE(DNS_LCTX_VALID(lctx));
 
 	if (lctx->canceled)
 		result = ISC_R_CANCELED;

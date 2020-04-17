@@ -476,7 +476,7 @@ key_collision(dst_key_t *dstkey, dns_name_t *name, const char *dir,
 	uint16_t id, oldid;
 	uint32_t rid, roldid;
 	dns_secalg_t alg;
-	char filename[ISC_DIR_NAMEMAX];
+	char filename[NAME_MAX];
 	isc_buffer_t fileb;
 
 	if (exact != NULL)
@@ -694,7 +694,7 @@ verifynsec(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 	result = dns_rdataset_next(&rdataset);
 	if (result != ISC_R_NOMORE) {
 		dns_name_format(name, namebuf, sizeof(namebuf));
-		fprintf(stderr, "Multipe NSEC records for %s\n", namebuf);
+		fprintf(stderr, "Multiple NSEC records for %s\n", namebuf);
 		goto failure;
 
 	}
@@ -1073,7 +1073,7 @@ verifynsec3(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *origin,
 	check_result(result, "dns_nsec3_hashname()");
 
 	/*
-	 * We don't use dns_db_find() here as it works with the choosen
+	 * We don't use dns_db_find() here as it works with the chosen
 	 * nsec3 chain and we may also be called with uncommitted data
 	 * from dnssec-signzone so the secure status of the zone may not
 	 * be up to date.
@@ -1234,7 +1234,7 @@ verifynode(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *origin,
 		 * If we are not at a delegation then everything should be
 		 * signed.  If we are at a delegation then only the DS set
 		 * is signed.  The NS set is not signed at a delegation but
-		 * its existance is recorded in the bit map.  Anything else
+		 * its existence is recorded in the bit map.  Anything else
 		 * other than NSEC and DS is not signed at a delegation.
 		 */
 		if (rdataset.type != dns_rdatatype_rrsig &&
@@ -1333,7 +1333,7 @@ free_element(isc_mem_t *mctx, struct nsec3_chain_fixed *e) {
 }
 
 static bool
-checknext(const struct nsec3_chain_fixed *first,
+_checknext(const struct nsec3_chain_fixed *first,
 	  const struct nsec3_chain_fixed *e)
 {
 	char buf[512];
@@ -1369,6 +1369,35 @@ checknext(const struct nsec3_chain_fixed *first,
 	fprintf(stderr, "Found: %.*s\n", (int) isc_buffer_usedlength(&b), buf);
 
 	return (false);
+}
+
+static inline bool
+checknext(isc_mem_t *mctx,
+	  const struct nsec3_chain_fixed *first,
+	  struct nsec3_chain_fixed *prev,
+	  const struct nsec3_chain_fixed *cur)
+{
+	bool result = _checknext(prev, cur);
+
+	if (prev != first) {
+		free_element(mctx, prev);
+	}
+
+	return (result);
+}
+
+static inline bool
+checklast(isc_mem_t *mctx,
+	  struct nsec3_chain_fixed *first,
+	  struct nsec3_chain_fixed *prev)
+{
+	bool result = _checknext(prev, first);
+	if (prev != first) {
+		free_element(mctx, prev);
+	}
+	free_element(mctx, first);
+
+	return (result);
 }
 
 #define EXPECTEDANDFOUND "Expected and found NSEC3 chains not equal\n"
@@ -1415,32 +1444,27 @@ verify_nsec3_chains(isc_mem_t *mctx) {
 			fprintf(stderr, EXPECTEDANDFOUND);
 			result = ISC_R_FAILURE;
 		}
-		if (first == NULL || newchain(first, e)) {
-			if (prev != NULL) {
-				if (!checknext(prev, first))
-					result = ISC_R_FAILURE;
-				if (prev != first)
-					free_element(mctx, prev);
-			}
-			if (first != NULL)
-				free_element(mctx, first);
+
+		if (first == NULL) {
 			prev = first = e;
-			continue;
+		} else if (newchain(first, e)) {
+			if (!checklast(mctx, first, prev)) {
+				result = ISC_R_FAILURE;
+			}
+
+			prev = first = e;
+		} else {
+			if (!checknext(mctx, first, prev, e)) {
+				result = ISC_R_FAILURE;
+			}
+
+			prev = e;
 		}
-		if (!checknext(prev, e))
-			result = ISC_R_FAILURE;
-		if (prev != first)
-			free_element(mctx, prev);
-		prev = e;
 	}
 	if (prev != NULL) {
-		if (!checknext(prev, first))
+		if (!checklast(mctx, first, prev))
 			result = ISC_R_FAILURE;
-		if (prev != first)
-			free_element(mctx, prev);
 	}
-	if (first != NULL)
-		free_element(mctx, first);
 	do {
 		if (f != NULL) {
 			if (result == ISC_R_SUCCESS) {
@@ -1904,7 +1928,7 @@ isoptarg(const char *arg, char **argv, void(*usage)(void)) {
 			usage();
 		}
 		isc_commandline_argument = argv[isc_commandline_index];
-		/* skip to next arguement */
+		/* skip to next argument */
 		isc_commandline_index++;
 		return (true);
 	}

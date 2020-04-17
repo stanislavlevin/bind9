@@ -286,8 +286,11 @@ ns_client_killoldestquery(ns_client_t *client) {
 		ISC_LIST_UNLINK(client->manager->recursing, oldest, rlink);
 		UNLOCK(&client->manager->reclock);
 		ns_query_cancel(oldest);
-	} else
+		isc_stats_increment(ns_g_server->nsstats,
+				    dns_nsstatscounter_reclimitdropped);
+	} else {
 		UNLOCK(&client->manager->reclock);
+	}
 }
 
 void
@@ -682,7 +685,7 @@ exit_check(ns_client_t *client) {
 		 * the "freed" state, it will be removed from the inactive
 		 * list shortly, and we need to keep the manager locked until
 		 * that has been done, lest the manager decide to reactivate
-		 * the dying client inbetween.
+		 * the dying client in between.
 		 */
 		client->state = NS_CLIENTSTATE_INACTIVE;
 		INSIST(client->recursionquota == NULL);

@@ -71,6 +71,7 @@
 #include <dns/events.h>
 #include <dns/forward.h>
 #include <dns/fixedname.h>
+#include <dns/geoip.h>
 #include <dns/journal.h>
 #include <dns/keytable.h>
 #include <dns/keyvalues.h>
@@ -136,10 +137,6 @@
 #define dumpzone dumpzone_file
 #endif /* HAVE_LMDB */
 
-#ifndef PATH_MAX
-#define PATH_MAX 1024
-#endif
-
 #ifndef SIZE_MAX
 #define SIZE_MAX ((size_t)-1)
 #endif
@@ -203,8 +200,8 @@
 
 #define CHECKFATAL(op, msg) \
 	do { result = (op);					  \
-	       if (result != ISC_R_SUCCESS)			  \
-			fatal(msg, result);			  \
+		if (result != ISC_R_SUCCESS)			  \
+			fatal(server, msg, result);		  \
 	} while (0)						  \
 
 /*%
@@ -433,7 +430,8 @@ const char *empty_zones[] = {
 };
 
 ISC_PLATFORM_NORETURN_PRE static void
-fatal(const char *msg, isc_result_t result) ISC_PLATFORM_NORETURN_POST;
+fatal(ns_server_t *server,const char *msg, isc_result_t result)
+ISC_PLATFORM_NORETURN_POST;
 
 static void
 ns_server_reload(isc_task_t *task, isc_event_t *event);
@@ -3750,7 +3748,7 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
 	 * When the view's configuration changes, the cached data may become
 	 * invalid because it reflects our old view of the world.  We check
 	 * some of the configuration parameters that could invalidate the cache
-	 * or otherwise make it unsharable, but there are other configuration
+	 * or otherwise make it unshareable, but there are other configuration
 	 * options that should be checked.  For example, if a view uses a
 	 * forwarder, changes in the forwarder configuration may invalidate
 	 * the cache.  At the moment, it's the administrator's responsibility to
@@ -7040,6 +7038,7 @@ data_to_cfg(dns_view_t *view, MDB_val *key, MDB_val *data,
 	const char *zone_config;
 	size_t zone_config_len;
 	cfg_obj_t *zoneconf = NULL;
+	char bufname[DNS_NAME_FORMATSIZE];
 
 	REQUIRE(view != NULL);
 	REQUIRE(key != NULL);
@@ -7064,20 +7063,20 @@ data_to_cfg(dns_view_t *view, MDB_val *key, MDB_val *data,
 	INSIST(zone_config != NULL && zone_config_len > 0);
 
 	/* zone zonename { config; }; */
-	result = isc_buffer_reserve(text, 5 + zone_name_len + 1 +
+	result = isc_buffer_reserve(text, 6 + zone_name_len + 2 +
 				    zone_config_len + 2);
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
 	}
 
-	CHECK(putstr(text, "zone "));
+	CHECK(putstr(text, "zone \""));
 	CHECK(putmem(text, (const void *) zone_name, zone_name_len));
-	CHECK(putstr(text, " "));
+	CHECK(putstr(text, "\" "));
 	CHECK(putmem(text, (const void *) zone_config, zone_config_len));
 	CHECK(putstr(text, ";\n"));
 
 	cfg_parser_reset(ns_g_addparser);
-	result = cfg_parse_buffer3(ns_g_addparser, *text, zone_name, 0,
+	result = cfg_parse_buffer3(ns_g_addparser, *text, bufname, 0,
 				   &cfg_type_addzoneconf, &zoneconf);
 	if (result != ISC_R_SUCCESS) {
 		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
@@ -7640,6 +7639,10 @@ load_configuration(const char *filename, ns_server_t *server,
 
 #if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
 	/*
+	 * Release any previously opened GeoIP2 databases.
+	 */
+	ns_geoip_shutdown();
+	/*
 	 * Initialize GeoIP databases from the configured location.
 	 * This should happen before configuring any ACLs, so that we
 	 * know what databases are available and can reject any GeoIP
@@ -7844,7 +7847,7 @@ load_configuration(const char *filename, ns_server_t *server,
 	}
 
 	/*
-	 * Determing the default DSCP code point.
+	 * Determining the default DSCP code point.
 	 */
 	CHECKM(ns_config_getdscp(config, &ns_g_dscp), "dscp");
 
@@ -8970,6 +8973,7 @@ shutdown_server(isc_task_t *task, isc_event_t *event) {
 #endif
 #if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
 	ns_geoip_shutdown();
+	dns_geoip_shutdown();
 #endif /* HAVE_GEOIP || HAVE_GEOIP2 */
 
 	dns_db_detach(&server->in_roothints);
@@ -8987,7 +8991,7 @@ ns_server_create(isc_mem_t *mctx, ns_server_t **serverp) {
 	ns_server_t *server = isc_mem_get(mctx, sizeof(*server));
 
 	if (server == NULL)
-		fatal("allocating server object", ISC_R_NOMEMORY);
+		fatal(server, "allocating server object", ISC_R_NOMEMORY);
 
 	server->mctx = mctx;
 	server->task = NULL;
@@ -9271,7 +9275,15 @@ ns_server_destroy(ns_server_t **serverp) {
 }
 
 static void
-fatal(const char *msg, isc_result_t result) {
+fatal(ns_server_t *server, const char *msg, isc_result_t result) {
+	if (server != NULL) {
+		/*
+		 * Prevent races between the OpenSSL on_exit registered
+		 * function and any other OpenSSL calls from other tasks
+		 * by requesting exclusive access to the task manager.
+		 */
+		(void)isc_task_beginexclusive(server->task);
+	}
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER,
 		      ISC_LOG_CRITICAL, "%s: %s", msg,
 		      isc_result_totext(result));
@@ -10317,17 +10329,20 @@ ns_server_dumpsecroots(ns_server_t *server, isc_lex_t *lex,
 	FILE *fp = NULL;
 	isc_time_t now;
 	char tbuf[64];
+	unsigned int used = isc_buffer_usedlength(*text);
+	bool first = true;
 
 	/* Skip the command name. */
 	ptr = next_token(lex, text);
-	if (ptr == NULL)
+	if (ptr == NULL) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 
 	/* "-" here means print the output instead of dumping to file */
 	ptr = next_token(lex, text);
-	if (ptr != NULL && strcmp(ptr, "-") == 0)
+	if (ptr != NULL && strcmp(ptr, "-") == 0) {
 		ptr = next_token(lex, text);
-	else {
+	} else {
 		result = isc_stdio_open(server->secrootsfile, "w", &fp);
 		if (result != ISC_R_SUCCESS) {
 			(void) putstr(text, "could not open ");
@@ -10342,66 +10357,85 @@ ns_server_dumpsecroots(ns_server_t *server, isc_lex_t *lex,
 	CHECK(putstr(text, "secure roots as of "));
 	CHECK(putstr(text, tbuf));
 	CHECK(putstr(text, ":\n"));
+	used = isc_buffer_usedlength(*text);
 
 	do {
 		for (view = ISC_LIST_HEAD(server->viewlist);
 		     view != NULL;
 		     view = ISC_LIST_NEXT(view, link))
 		{
-			if (ptr != NULL && strcmp(view->name, ptr) != 0)
+			if (ptr != NULL && strcmp(view->name, ptr) != 0) {
 				continue;
-			if (secroots != NULL)
+			}
+			if (secroots != NULL) {
 				dns_keytable_detach(&secroots);
+			}
 			result = dns_view_getsecroots(view, &secroots);
 			if (result == ISC_R_NOTFOUND) {
 				result = ISC_R_SUCCESS;
 				continue;
 			}
-			CHECK(putstr(text, "\n Start view "));
+			if (first || used != isc_buffer_usedlength(*text)) {
+				CHECK(putstr(text, "\n"));
+				first = false;
+			}
+			CHECK(putstr(text, " Start view "));
 			CHECK(putstr(text, view->name));
 			CHECK(putstr(text, "\n   Secure roots:\n\n"));
+			used = isc_buffer_usedlength(*text);
 			CHECK(dns_keytable_totext(secroots, text));
 
-			if (ntatable != NULL)
+			if (ntatable != NULL) {
 				dns_ntatable_detach(&ntatable);
+			}
 			result = dns_view_getntatable(view, &ntatable);
 			if (result == ISC_R_NOTFOUND) {
 				result = ISC_R_SUCCESS;
 				continue;
 			}
-			CHECK(putstr(text, "\n   Negative trust anchors:\n\n"));
+			if (used != isc_buffer_usedlength(*text)) {
+				CHECK(putstr(text, "\n"));
+			}
+			CHECK(putstr(text, "   Negative trust anchors:\n\n"));
+			used = isc_buffer_usedlength(*text);
 			CHECK(dns_ntatable_totext(ntatable, text));
 		}
-		if (ptr != NULL)
+
+		if (ptr != NULL) {
 			ptr = next_token(lex, text);
+		}
 	} while (ptr != NULL);
 
  cleanup:
-	if (isc_buffer_usedlength(*text) > 0) {
-		if (fp != NULL)
-			(void)putstr(text, "\n");
-		else
-			(void)putnull(text);
-	}
-	if (secroots != NULL)
+	if (secroots != NULL) {
 		dns_keytable_detach(&secroots);
-	if (ntatable != NULL)
+	}
+	if (ntatable != NULL) {
 		dns_ntatable_detach(&ntatable);
+	}
+
 	if (fp != NULL) {
+		if (used != isc_buffer_usedlength(*text)) {
+			(void)putstr(text, "\n");
+		}
 		fprintf(fp, "%.*s", (int) isc_buffer_usedlength(*text),
 			(char *) isc_buffer_base(*text));
 		isc_buffer_clear(*text);
 		(void)isc_stdio_close(fp);
+	} else if (isc_buffer_usedlength(*text) > 0) {
+		(void)putnull(text);
 	}
-	if (result == ISC_R_SUCCESS)
+
+	if (result == ISC_R_SUCCESS) {
 		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
 			      NS_LOGMODULE_SERVER, ISC_LOG_INFO,
 			      "dumpsecroots complete");
-	else
+	} else {
 		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
 			      NS_LOGMODULE_SERVER, ISC_LOG_ERROR,
 			      "dumpsecroots failed: %s",
 			      dns_result_totext(result));
+	}
 	return (result);
 }
 

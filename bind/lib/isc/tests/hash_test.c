@@ -56,7 +56,7 @@ unsigned char key[20];
  *
  * 'out' MUST point to an array of at least len * 2 + 1
  *
- * Return values: ISC_R_SUCCESS if the operation is sucessful
+ * Return values: ISC_R_SUCCESS if the operation is successful
  */
 static isc_result_t
 tohexstr(unsigned char *d, unsigned int len, char *out, size_t out_size) {
@@ -336,7 +336,7 @@ isc_sha224_test(void **state) {
 		isc_sha224_final(digest, &sha224);
 		/*
 		*API inconsistency BUG HERE
-		* in order to be consistant with the other isc_hash_final
+		* in order to be consistent with the other isc_hash_final
 		* functions the call should be
 		* isc_sha224_final(&sha224, digest);
 		 */
@@ -466,7 +466,7 @@ isc_sha256_test(void **state) {
 		isc_sha256_final(digest, &sha256);
 		/*
 		*API inconsistency BUG HERE
-		* in order to be consistant with the other isc_hash_final
+		* in order to be consistent with the other isc_hash_final
 		* functions the call should be
 		* isc_sha224_final(&sha224, digest);
 		 */
@@ -610,7 +610,7 @@ isc_sha384_test(void **state) {
 		isc_sha384_final(digest, &sha384);
 		/*
 		*API inconsistency BUG HERE
-		* in order to be consistant with the other isc_hash_final
+		* in order to be consistent with the other isc_hash_final
 		* functions the call should be
 		* isc_sha224_final(&sha224, digest);
 		 */
@@ -755,7 +755,7 @@ isc_sha512_test(void **state) {
 		isc_sha512_final(digest, &sha512);
 		/*
 		*API inconsistency BUG HERE
-		* in order to be consistant with the other isc_hash_final
+		* in order to be consistent with the other isc_hash_final
 		* functions the call should be
 		* isc_sha224_final(&sha224, digest);
 		 */

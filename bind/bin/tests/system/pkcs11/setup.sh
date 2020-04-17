@@ -12,7 +12,18 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-$SHELL clean.sh
+echo "I:(Native PKCS#11)" >&2
+ecxfail=0
+
+$SHELL ../testcrypto.sh -q eddsa || ecxfail=1
+
+rm -f supported
+touch supported
+echo rsa >> supported
+echo ecc >> supported
+if [ $ecxfail = 0 ]; then
+	echo ecx >> supported
+fi
 
 infile=ns1/example.db.in
 

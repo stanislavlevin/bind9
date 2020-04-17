@@ -257,7 +257,12 @@ except: exit(1)'
 testply='try: import ply
 except: exit(1)'
 
+testsetup='try: from distutils.core import setup
+except: exit(1)'
+
 default_with_python="python python3 python3.7 python3.6 python3.5 python3.4 python3.3 python3.2 python2 python2.7"
+
+AC_ARG_VAR([PYTHON], [path to python executable])
 
 AC_ARG_WITH([python],
 	    AS_HELP_STRING([--with-python=PATH],
@@ -273,6 +278,7 @@ AS_IF([test "$with_python" = "yes"],
 
 AS_IF([test "$with_python" = "no"],
       [AC_MSG_CHECKING([for Python support])
+       unset PYTHON
        AC_MSG_RESULT([disabled])],
       [for p in $with_python
        do
@@ -305,6 +311,13 @@ AS_IF([test "$with_python" = "no"],
 
 	 AC_MSG_CHECKING([Python module 'ply'])
 	 AS_IF(["$PYTHON" -c "$testply" 2>/dev/null],
+	       [AC_MSG_RESULT([yes])],
+	       [AC_MSG_RESULT([no])
+		unset PYTHON
+		continue])
+
+	 AC_MSG_CHECKING([Python module 'distutils.core setup'])
+	 AS_IF(["$PYTHON" -c "$testsetup" 2>/dev/null],
 	       [AC_MSG_RESULT([yes])],
 	       [AC_MSG_RESULT([no])
 		unset PYTHON
@@ -2380,58 +2393,38 @@ AC_SUBST(NZDTARGETS)
 #
 # was --with-libxml2 specified?
 #
-AC_MSG_CHECKING(for libxml2 library)
-AC_ARG_WITH(libxml2,
-	    AS_HELP_STRING([--with-libxml2[=PATH]],
-			   [build with libxml2 library [yes|no|path]]),
-	    use_libxml2="$withval", use_libxml2="auto")
+AC_ARG_WITH([libxml2],
+	    [AS_HELP_STRING([--with-libxml2[=PATH]],
+			   [build with libxml2 library (auto|yes|no|path) [default=auto]])],
+	    [:], [with_libxml2="auto"])
 
-case "$use_libxml2" in
-	no)
-		DST_LIBXML2_INC=""
-		;;
-	auto|yes)
-		case X`(xml2-config --version) 2>/dev/null` in
-		X2.[[6789]].*)
-			libxml2_libs=`xml2-config --libs`
-			libxml2_cflags=`xml2-config --cflags`
-			;;
-		*)
-			if test "yes" = "$use_libxml2" ; then
-				AC_MSG_RESULT(no)
-				AC_MSG_ERROR(required libxml2 version not available)
-			else
-				libxml2_libs=
-				libxml2_cflags=
-			fi
-			;;
-		esac
-		;;
-	*)
-		if test -f "$use_libxml2/bin/xml2-config" ; then
-			libxml2_libs=`$use_libxml2/bin/xml2-config --libs`
-			libxml2_cflags=`$use_libxml2/bin/xml2-config --cflags`
-		fi
-		;;
-esac
+LIBXML2_CFLAGS=
+LIBXML2_LIBS=
+AS_CASE([$with_libxml2],
+	[no],[:],
+	[auto],[PKG_CHECK_MODULES([LIBXML2], [libxml-2.0 >= 2.6.0], [:], [:])],
+	[yes],[PKG_CHECK_MODULES([LIBXML2], [libxml-2.0 >= 2.6.0])],
+	[AC_MSG_CHECKING([for libxml2 library in $with_libxml2])
+	 AS_IF([test -x "$with_libxml2/bin/xml2-config"],
+	       [AC_MSG_RESULT([yes])
+		LIBXML2_LIBS=`$with_libxml2/bin/xml2-config --libs`
+		LIBXML2_CFLAGS=`$with_libxml2/bin/xml2-config --cflags`],
+	       [AC_MSG_ERROR([not found])])])
 
-if test "X$libxml2_libs" != "X"
-then
-	CFLAGS="$CFLAGS $libxml2_cflags"
-	LIBS="$LIBS $libxml2_libs"
-	#
-	# Sanity check xml2-config output.
-	#
-	AC_TRY_LINK([#include <libxml/xmlwriter.h>],
-		    [return(xmlTextWriterStartElement(NULL, NULL));],
-		    AC_MSG_RESULT(yes),
-		    AC_MSG_ERROR(xml2-config returns badness))
-	AC_DEFINE(HAVE_LIBXML2, 1, [Define if libxml2 was found])
-	XMLSTATS=1
-else
-	AC_MSG_RESULT(no)
-fi
-AC_SUBST(XMLSTATS)
+AS_IF([test -n "$LIBXML2_LIBS"],
+      [AC_MSG_CHECKING([whether linking with libxml2 works])
+       CFLAGS="$CFLAGS $LIBXML2_CFLAGS"
+       LIBS="$LIBS $LIBXML2_LIBS"
+       #
+       # Sanity check xml2-config output.
+       #
+       AC_TRY_LINK([#include <libxml/xmlwriter.h>],
+		   [return(xmlTextWriterStartElement(NULL, NULL));],
+		   [AC_MSG_RESULT([yes])],
+		   [AC_MSG_ERROR([no])])
+       AC_DEFINE([HAVE_LIBXML2], [1], [Define if libxml2 was found])
+       XMLSTATS=1])
+AC_SUBST([XMLSTATS])
 
 #
 # was --with-libjson specified?
@@ -4130,7 +4123,7 @@ if test "yes" = "$use_atomic"; then
 	alpha*-*)
 		arch=alpha
 	;;
-	powerpc-*|powerpc64-*)
+	powerpc-*|powerpc64*-*|powerpc64el-*)
 		arch=powerpc
 	;;
 	mips-*|mipsel-*|mips64-*|mips64el-*)
@@ -5332,8 +5325,6 @@ AC_CONFIG_COMMANDS(
 #
 
 AC_CONFIG_FILES([
-  make/Makefile
-  make/mkdep
 	Makefile
 	bin/Makefile
 	bin/check/Makefile
@@ -5347,12 +5338,10 @@ AC_CONFIG_FILES([
 	bin/nsupdate/Makefile
 	bin/pkcs11/Makefile
 	bin/python/Makefile
-	bin/python/isc/Makefile
-	bin/python/isc/utils.py
-	bin/python/isc/tests/Makefile
 	bin/python/dnssec-checkds.py
 	bin/python/dnssec-coverage.py
 	bin/python/dnssec-keymgr.py
+	bin/python/isc/Makefile
 	bin/python/isc/__init__.py
 	bin/python/isc/checkds.py
 	bin/python/isc/coverage.py
@@ -5365,8 +5354,10 @@ AC_CONFIG_FILES([
 	bin/python/isc/keyzone.py
 	bin/python/isc/policy.py
 	bin/python/isc/rndc.py
+	bin/python/isc/tests/Makefile
 	bin/python/isc/tests/dnskey_test.py
 	bin/python/isc/tests/policy_test.py
+	bin/python/isc/utils.py
 	bin/rndc/Makefile
 	bin/tests/Makefile
 	bin/tests/headerdep_test.sh
@@ -5434,8 +5425,8 @@ AC_CONFIG_FILES([
 	lib/isc/include/isc/platform.h
 	lib/isc/include/pk11/Makefile
 	lib/isc/include/pkcs11/Makefile
-	lib/isc/tests/Makefile
 	lib/isc/nls/Makefile
+	lib/isc/tests/Makefile
 	lib/isc/unix/Makefile
 	lib/isc/unix/include/Makefile
 	lib/isc/unix/include/isc/Makefile
@@ -5460,7 +5451,10 @@ AC_CONFIG_FILES([
 	lib/lwres/unix/include/lwres/Makefile
 	lib/samples/Makefile
 	lib/samples/Makefile-postinstall
+	make/Makefile
+	make/mkdep
 	unit/unittest.sh
+	util/check-make-install
 ])
 
 #

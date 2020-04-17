@@ -51,7 +51,7 @@ static dns_dbversion_t *v1 = NULL, *v2 = NULL;
  * The code below enables us to trap assertion failures for testing
  * purposes. local_callback() is set as the callback function for
  * isc_assertion_failed(). It calls mock_assert() so that CMOCKA
- * will be able to see it, then returns to the calling functon via
+ * will be able to see it, then returns to the calling function via
  * longjmp() so that the abort() call in isc_assertion_failed() will
  * never be reached. Use check_assertion() to check for assertions
  * instead of expect_assert_failure().
@@ -196,9 +196,9 @@ find(void **state) {
 	}
 
 	dns_rdataset_init(&rdataset);
-	check_assertion(dns_db_find(db1, dns_rootname, v2,
-				    dns_rdatatype_soa, 0, 0, NULL,
-				    name, &rdataset, NULL));
+	check_assertion((void)dns_db_find(db1, dns_rootname, v2,
+					  dns_rdatatype_soa, 0, 0, NULL,
+					  name, &rdataset, NULL));
 }
 
 /*

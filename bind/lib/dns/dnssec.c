@@ -673,6 +673,7 @@ syncpublish(dst_key_t *key, isc_stdtime_t now) {
 	isc_result_t result;
 	isc_stdtime_t when;
 	int major, minor;
+	bool publish;
 
 	/*
 	 * Is this an old-style key?
@@ -686,16 +687,16 @@ syncpublish(dst_key_t *key, isc_stdtime_t now) {
 	if (major == 1 && minor <= 2)
 		return (false);
 
+	publish = false;
 	result = dst_key_gettime(key, DST_TIME_SYNCPUBLISH, &when);
-	if (result != ISC_R_SUCCESS)
-		return (false);
-
+	if (result == ISC_R_SUCCESS && when <= now) {
+		publish = true;
+	}
 	result = dst_key_gettime(key, DST_TIME_SYNCDELETE, &when);
-	if (result != ISC_R_SUCCESS)
-		return (true);
-	if (when <= now)
-		return (false);
-	return (true);
+	if (result == ISC_R_SUCCESS && when < now) {
+		publish = false;
+	}
+	return (publish);
 }
 
 /*%<
@@ -809,7 +810,7 @@ dns_dnssec_findzonekeys3(dns_db_t *db, dns_dbversion_t *ver,
 			isc_result_t result2;
 			isc_buffer_t buf;
 
-			isc_buffer_init(&buf, filename, ISC_DIR_NAMEMAX);
+			isc_buffer_init(&buf, filename, NAME_MAX);
 			result2 = dst_key_getfilename(dst_key_name(pubkey),
 						      dst_key_id(pubkey),
 						      dst_key_alg(pubkey),
@@ -1750,7 +1751,7 @@ dns_dnssec_keylistfromrdataset(dns_name_t *origin,
 			isc_result_t result2;
 			isc_buffer_t buf;
 
-			isc_buffer_init(&buf, filename, ISC_DIR_NAMEMAX);
+			isc_buffer_init(&buf, filename, NAME_MAX);
 			result2 = dst_key_getfilename(dst_key_name(pubkey),
 						      dst_key_id(pubkey),
 						      dst_key_alg(pubkey),
@@ -1897,7 +1898,7 @@ publish_key(dns_diff_t *diff, dns_dnsseckey_t *key, dns_name_t *origin,
 		isc_stdtime_t now;
 
 		dst_key_format(key->key, keystr, sizeof(keystr));
-		report("Key %s: Delaying activation to match the DNSKEY TTL.\n",
+		report("Key %s: Delaying activation to match the DNSKEY TTL.",
 		       keystr, ttl);
 
 		isc_stdtime_get(&now);
@@ -2040,7 +2041,7 @@ dns_dnssec_syncupdate(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *rmkeys,
 		return (ISC_R_SUCCESS);
 
 	/*
-	 * Unconditionaly remove CDS/DNSKEY records for removed keys.
+	 * Unconditionally remove CDS/DNSKEY records for removed keys.
 	 */
 	for (key = ISC_LIST_HEAD(*rmkeys);
 	     key != NULL;

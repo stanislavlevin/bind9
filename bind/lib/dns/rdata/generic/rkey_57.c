@@ -83,11 +83,13 @@ fromstruct_rkey(ARGS_FROMSTRUCT) {
 
 static inline isc_result_t
 tostruct_rkey(ARGS_TOSTRUCT) {
-	dns_rdata_rkey_t *rkey = target;
+	dns_rdata_rkey_t *rkey;
 
-	REQUIRE(rkey != NULL);
+	REQUIRE(((dns_rdata_rkey_t *)target) != NULL);
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_rkey);
+
+	rkey = target;
 
 	rkey->common.rdclass = rdata->rdclass;
 	rkey->common.rdtype = rdata->type;
@@ -98,10 +100,9 @@ tostruct_rkey(ARGS_TOSTRUCT) {
 
 static inline void
 freestruct_rkey(ARGS_FREESTRUCT) {
-	dns_rdata_rkey_t *rkey = (dns_rdata_rkey_t *) source;
-
-	REQUIRE(rkey != NULL);
-	REQUIRE(rkey->common.rdtype == dns_rdatatype_rkey);
+	REQUIRE(((dns_rdata_rkey_t *)source) != NULL);
+	REQUIRE(((dns_rdata_rkey_t *)source)->common.rdtype ==
+		dns_rdatatype_rkey);
 
 	generic_freestruct_key(source);
 }
@@ -160,7 +161,7 @@ static inline int
 casecompare_rkey(ARGS_COMPARE) {
 
 	/*
-	 * Treat ALG 253 (private DNS) subtype name case sensistively.
+	 * Treat ALG 253 (private DNS) subtype name case sensitively.
 	 */
 	return (compare_rkey(rdata1, rdata2));
 }

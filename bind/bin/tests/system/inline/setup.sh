@@ -10,8 +10,6 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-$SHELL clean.sh
-
 test -r $RANDFILE || $GENRANDOM $RANDOMSIZE $RANDFILE
 
 cp ns1/root.db.in ns1/root.db
@@ -48,7 +46,9 @@ copy_setports ns4/named.conf.in ns4/named.conf
 copy_setports ns5/named.conf.pre ns5/named.conf
 copy_setports ns6/named.conf.in ns6/named.conf
 copy_setports ns7/named.conf.in ns7/named.conf
+copy_setports ns8/named.conf.in ns8/named.conf
 
 (cd ns3; $SHELL -e sign.sh)
 (cd ns1; $SHELL -e sign.sh)
 (cd ns7; $SHELL -e sign.sh)
+(cd ns8; $SHELL -e sign.sh)

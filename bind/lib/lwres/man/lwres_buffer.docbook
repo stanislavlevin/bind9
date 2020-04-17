@@ -37,6 +37,7 @@
       <year>2016</year>
       <year>2018</year>
       <year>2019</year>
+      <year>2020</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -272,7 +273,7 @@ void
       initializes the
       <type>lwres_buffer_t</type>
       <parameter>*b</parameter>
-      and assocates it with the memory region of size
+      and associates it with the memory region of size
       <parameter>length</parameter>
       bytes starting at location
       <parameter>base.</parameter>

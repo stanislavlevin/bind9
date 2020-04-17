@@ -297,6 +297,9 @@ init_desc(void) {
 		"QryNXRedirRLookup");
 	SET_NSSTATDESC(badcookie, "sent badcookie response", "QryBADCOOKIE");
 	SET_NSSTATDESC(keytagopt, "Keytag option received", "KeyTagOpt");
+	SET_NSSTATDESC(reclimitdropped,
+		       "queries dropped due to recursive client limit",
+		       "RecLimitDropped");
 	INSIST(i == dns_nsstatscounter_max);
 
 	/* Initialize resolver statistics */
@@ -605,7 +608,7 @@ init_desc(void) {
 		dnstapstats_index[i++] = dns_dnstapcounter_ ## counterid; \
 	} while (0)
 	i = 0;
-	SET_DNSTAPSTATDESC(success, "dnstap messges written", "DNSTAPsuccess");
+	SET_DNSTAPSTATDESC(success, "dnstap messages written", "DNSTAPsuccess");
 	SET_DNSTAPSTATDESC(drop, "dnstap messages dropped", "DNSTAPdropped");
 	INSIST(i == dns_dnstapcounter_max);
 
@@ -3279,10 +3282,6 @@ ns_statschannels_configure(ns_server_t *server, const cfg_obj_t *config,
 
 	ISC_LIST_INIT(new_listeners);
 
-#ifdef HAVE_LIBXML2
-	xmlInitThreads();
-#endif /* HAVE_LIBXML2 */
-
 	/*
 	 * Get the list of named.conf 'statistics-channels' statements.
 	 */
@@ -3415,10 +3414,6 @@ ns_statschannels_shutdown(ns_server_t *server) {
 		ISC_LIST_UNLINK(server->statschannels, listener, link);
 		shutdown_listener(listener);
 	}
-
-#ifdef HAVE_LIBXML2
-	xmlCleanupThreads();
-#endif /* HAVE_LIBXML2 */
 }
 
 isc_result_t

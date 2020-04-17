@@ -27,15 +27,17 @@
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <errno.h>
 #include <limits.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <errno.h>
-#include <limits.h>
+
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
 
 #ifdef WIN32
 #include "gen-win32.h"
@@ -141,10 +143,6 @@ static const char copyright[] =
 #define TYPECLASSBUF (TYPECLASSLEN + 1)
 #define TYPECLASSFMT "%" STR(TYPECLASSLEN) "[-0-9a-z]_%d"
 #define ATTRIBUTESIZE 256
-
-#ifndef PATH_MAX
-#define PATH_MAX 1024
-#endif
 
 static struct cc {
 	struct cc *next;
@@ -691,7 +689,8 @@ main(int argc, char **argv) {
 	}
 
 	if (now != -1) {
-		struct tm *tm = gmtime(&now);
+		struct tm t, *tm = gmtime_r(&now, &t);
+
 		if (tm != NULL && tm->tm_year > 104) {
 			n = snprintf(year, sizeof(year), "-%d",
 				     tm->tm_year + 1900);

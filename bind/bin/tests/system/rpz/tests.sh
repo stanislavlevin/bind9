@@ -115,7 +115,7 @@ ck_soa() {
     done
 }
 
-# (re)load the reponse policy zones with the rules in the file $TEST_FILE
+# (re)load the response policy zones with the rules in the file $TEST_FILE
 load_db () {
     if test -n "$TEST_FILE"; then
         copy_setports $TEST_FILE tmp
@@ -363,12 +363,30 @@ EOF
   sleep 2
 }
 
+#
+# generate prototype NXDOMAIN response to compare against.
+#
+make_proto_nxdomain() {
+  digcmd nonexistent @$ns2 >proto.nxdomain || return 1
+  grep "status: NXDOMAIN" proto.nxdomain >/dev/null || return 1
+  return 0
+}
+
+#
+# generate prototype NODATA response to compare against.
+#
+make_proto_nodata() {
+  digcmd txt-only.tld2 @$ns2 >proto.nodata || return 1
+  grep "status: NOERROR" proto.nodata >/dev/null || return 1
+  return 0
+}
+
 # this for loop is not necessary; it's here to make it easier
 # to backport changes from later versions, where it is.
 for mode in native; do
   # make prototype files to check against rewritten results
-  digcmd nonexistent @$ns2 >proto.nxdomain
-  digcmd txt-only.tld2 @$ns2 >proto.nodata
+  retry_quiet 10 make_proto_nxdomain
+  retry_quiet 10 make_proto_nodata
 
   start_group "QNAME rewrites" test1
   nochange .					# 1 do not crash or rewrite root
@@ -469,7 +487,7 @@ EOF
 	sleep 1
   done
   nochange a7-1.tld2				# 19 PASSTHRU
-  # ensure that a clock tick has occured so that the reload takes effect
+  # ensure that a clock tick has occurred so that the reload takes effect
   sleep 1
   cp ns2/blv3.tld2.db.in ns2/bl.tld2.db
   goodsoa="rpz.tld2. hostmaster.ns.tld2. 3 3600 1200 604800 60"
@@ -708,7 +726,7 @@ EOF
   $DIG -p ${PORT} @$ns3 ns example.com > dig.out.delegation
   grep "status: SERVFAIL" dig.out.delegation > /dev/null || setret "I:failed"
 
-  # RPZ 'CNAME *.' (NODATA) trumps DNS64.  Test against various DNS64 senarios.
+  # RPZ 'CNAME *.' (NODATA) trumps DNS64.  Test against various DNS64 scenarios.
   for label in a-only no-a-no-aaaa a-plus-aaaa
   do
     for type in AAAA A

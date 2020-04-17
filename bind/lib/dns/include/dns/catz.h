@@ -46,7 +46,7 @@ ISC_LANG_BEGINDECLS
  */
 struct dns_catz_entry_options {
 	/*
-	 * Options that can be overriden in catalog zone
+	 * Options that can be overridden in catalog zone
 	 */
 	/* default-masters definition */
 	dns_ipkeylist_t masters;
@@ -322,13 +322,15 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *zone, dns_catz_entry_t *entry,
 /* Methods provided by named to dynamically modify the member zones */
 /* xxxwpk TODO config! */
 typedef isc_result_t (*dns_catz_zoneop_fn_t)(dns_catz_entry_t *entry,
-		dns_catz_zone_t *origin, dns_view_t *view,
-		isc_taskmgr_t *taskmgr, void *udata);
+					     dns_catz_zone_t *origin,
+					     dns_view_t *view,
+					     isc_taskmgr_t *taskmgr,
+					     void *udata);
 struct dns_catz_zonemodmethods {
 	dns_catz_zoneop_fn_t addzone;
 	dns_catz_zoneop_fn_t modzone;
 	dns_catz_zoneop_fn_t delzone;
-	void * udata;
+	void *udata;
 };
 
 

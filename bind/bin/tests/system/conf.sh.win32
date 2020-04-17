@@ -130,7 +130,7 @@ PARALLELDIRS="dnssec rpzrecurse \
 	ednscompliance emptyzones \
 	fetchlimit filter-aaaa formerr forward \
 	geoip geoip2 glue idna inline integrity ixfr \
-	legacy limits lwresd masterfile masterformat metadata mkeys \
+	legacy limits masterfile masterformat metadata mkeys \
 	names notify nslookup nsupdate nzd2nzf \
 	pending pipelined \
 	reclimit redirect resolver rndc rootkeysentinel rpz \
@@ -230,20 +230,32 @@ echoend () {
 SYSTESTDIR="`basename $PWD`"
 
 echo_i() {
-    echo "$@" | while read __LINE ; do
+    printf '%s\n' "$*" | while read -r __LINE ; do
        echoinfo "I:$SYSTESTDIR:$__LINE"
     done
 }
 
 echo_ic() {
-    echo "$@" | while read __LINE ; do
+    printf '%s\n' "$*" | while read -r __LINE ; do
        echoinfo "I:$SYSTESTDIR:  $__LINE"
     done
 }
 
+echo_d() {
+    echo "$@" | while read -r __LINE ; do
+       echoinfo "D:$SYSTESTDIR:$__LINE"
+    done
+}
+
 cat_i() {
-    while read __LINE ; do
+    while read -r __LINE ; do
        echoinfo "I:$SYSTESTDIR:$__LINE"
+    done
+}
+
+cat_d() {
+    while read -r __LINE ; do
+       echoinfo "D:$SYSTESTDIR:$__LINE"
     done
 }
 
@@ -264,12 +276,12 @@ digcomp() {
 # the error using the description of the tested variable provided in $3
 # and return 1.
 assert_int_equal() {
-	expected="$1"
-	found="$2"
+	found="$1"
+	expected="$2"
 	description="$3"
 
 	if [ "${expected}" -ne "${found}" ]; then
-		echo_i "incorrect ${description}: expected ${expected}, got ${found}"
+		echo_i "incorrect ${description}: got ${found}, expected ${expected}"
 		return 1
 	fi
 
@@ -320,13 +332,151 @@ keyfile_to_key_id() {
 	echo "$1" | sed "s/.*+0\{0,4\}//"
 }
 
-# nextpart: read everything that's been appended to a file since the
-# last time 'nextpart' was called.
-nextpart () {
-    [ -f $1.prev ] || echo "0" > $1.prev
+# nextpart*() - functions for reading files incrementally
+#
+# These functions aim to facilitate looking for (or waiting for)
+# messages which may be logged more than once throughout the lifetime of
+# a given named instance by outputting just the part of the file which
+# has been appended since the last time we read it.
+#
+# Calling some of these functions causes temporary *.prev files to be
+# created that need to be cleaned up manually (usually by a given system
+# test's clean.sh script).
+#
+# Note that unlike other nextpart*() functions, nextpartread() is not
+# meant to be directly used in system tests; its sole purpose is to
+# reduce code duplication below.
+#
+# A quick usage example:
+#
+#     $ echo line1 > named.log
+#     $ echo line2 >> named.log
+#     $ nextpart named.log
+#     line1
+#     line2
+#     $ echo line3 >> named.log
+#     $ nextpart named.log
+#     line3
+#     $ nextpart named.log
+#     $ echo line4 >> named.log
+#     $ nextpartpeek named.log
+#     line4
+#     $ nextpartpeek named.log
+#     line4
+#     $ nextpartreset named.log
+#     $ nextpartpeek named.log
+#     line1
+#     line2
+#     line3
+#     line4
+#     $ nextpart named.log
+#     line1
+#     line2
+#     line3
+#     line4
+#     $ nextpart named.log
+#     $
+
+# nextpartreset: reset the marker used by nextpart() and nextpartpeek()
+# so that it points to the start of the given file
+nextpartreset() {
+    echo "0" > $1.prev
+}
+
+# nextpartread: read everything that's been appended to a file since the
+# last time 'nextpart' was called and print it to stdout, print the
+# total number of lines read from that file so far to stderr
+nextpartread() {
+    [ -f $1.prev ] || nextpartreset $1
     prev=`cat $1.prev`
     awk "NR > $prev "'{ print }
-	 END          { print NR > "/dev/stderr" }' $1 2> $1.prev
+         END          { print NR > "/dev/stderr" }' $1
+}
+
+# nextpart: read everything that's been appended to a file since the
+# last time 'nextpart' was called
+nextpart() {
+	nextpartread $1 2> $1.prev.tmp
+	mv $1.prev.tmp $1.prev
+}
+
+# nextpartpeek: read everything that's been appended to a file since the
+# last time 'nextpart' was called
+nextpartpeek() {
+	nextpartread $1 2> /dev/null
+}
+
+# _search_log: look for message $1 in file $2 with nextpart().
+_search_log() (
+	msg="$1"
+	file="$2"
+	nextpart "$file" | grep -F "$msg" > /dev/null
+)
+
+# _search_log_peek: look for message $1 in file $2 with nextpartpeek().
+_search_log_peek() (
+	msg="$1"
+	file="$2"
+	nextpartpeek "$file" | grep -F "$msg" > /dev/null
+)
+
+# wait_for_log: wait until message $2 in file $3 appears.  Bail out after
+# $1 seconds.  This needs to be used in conjunction with a prior call to
+# nextpart() or nextpartreset() on the same file to guarantee the offset is
+# set correctly.  Tests using wait_for_log() are responsible for cleaning up
+# the created <file>.prev files.
+wait_for_log() (
+	timeout="$1"
+	msg="$2"
+	file="$3"
+	retry_quiet "$timeout" _search_log "$msg" "$file" && return 0
+	echo_i "exceeded time limit waiting for '$msg' in $file"
+        return 1
+)
+
+# wait_for_log_peek: similar to wait_for_log() but peeking, so the file offset
+# does not change.
+wait_for_log_peek() (
+	timeout="$1"
+	msg="$2"
+	file="$3"
+	retry_quiet "$timeout" _search_log_peek "$msg" "$file" && return 0
+	echo_i "exceeded time limit waiting for '$msg' in $file"
+        return 1
+)
+
+# _retry: keep running a command until it succeeds, up to $1 times, with
+# one-second intervals, optionally printing a message upon every attempt
+_retry() {
+	__retries="${1}"
+	shift
+
+	while :; do
+		if "$@"; then
+			return 0
+		fi
+		__retries=$((__retries-1))
+		if [ "${__retries}" -gt 0 ]; then
+			if [ "${__retry_quiet}" -ne 1 ]; then
+				echo_i "retrying"
+			fi
+			sleep 1
+		else
+			return 1
+		fi
+	done
+}
+
+# retry: call _retry() in verbose mode
+retry() {
+	__retry_quiet=0
+	_retry "$@"
+}
+
+# retry_quiet: call _retry() in silent mode
+retry_quiet() {
+	__retry_quiet=1
+	_retry "$@"
 }
 
 # rndc_dumpdb: call "rndc dumpdb [...]" and wait until it completes

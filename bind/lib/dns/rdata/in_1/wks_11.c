@@ -73,7 +73,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	isc_token_t token;
 	isc_region_t region;
 	struct in_addr addr;
-	char *e;
+	char *e = NULL;
 	long proto;
 	unsigned char bm[8*1024]; /* 64k bits */
 	long port;
@@ -115,10 +115,12 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 				      false));
 
 	isc_buffer_availableregion(target, &region);
-	if (getquad(DNS_AS_STR(token), &addr, lexer, callbacks) != 1)
+	if (getquad(DNS_AS_STR(token), &addr, lexer, callbacks) != 1) {
 		CHECKTOK(DNS_R_BADDOTTEDQUAD);
-	if (region.length < 4)
+	}
+	if (region.length < 4) {
 		return (ISC_R_NOSPACE);
+	}
 	memmove(region.base, &addr, 4);
 	isc_buffer_add(target, 4);
 
@@ -129,18 +131,19 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 				      false));
 
 	proto = strtol(DNS_AS_STR(token), &e, 10);
-	if (*e == 0)
-		;
-	else if (!mygetprotobyname(DNS_AS_STR(token), &proto))
+	if (*e != '\0' && !mygetprotobyname(DNS_AS_STR(token), &proto)) {
 		CHECKTOK(DNS_R_UNKNOWNPROTO);
+	}
 
-	if (proto < 0 || proto > 0xff)
+	if (proto < 0 || proto > 0xff) {
 		CHECKTOK(ISC_R_RANGE);
+	}
 
-	if (proto == IPPROTO_TCP)
+	if (proto == IPPROTO_TCP) {
 		ps = "tcp";
-	else if (proto == IPPROTO_UDP)
+	} else if (proto == IPPROTO_UDP) {
 		ps = "udp";
+	}
 
 	CHECK(uint8_tobuffer(proto, target));
 
@@ -148,8 +151,9 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	do {
 		CHECK(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_string, true));
-		if (token.type != isc_tokentype_string)
+		if (token.type != isc_tokentype_string) {
 			break;
+		}
 
 		/*
 		 * Lowercase the service string as some getservbyname() are
@@ -161,15 +165,18 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 				service[i] = tolower(service[i]&0xff);
 
 		port = strtol(DNS_AS_STR(token), &e, 10);
-		if (*e == 0)
-			;
-		else if (!mygetservbyname(service, ps, &port) &&
-			 !mygetservbyname(DNS_AS_STR(token), ps, &port))
+		if (*e != 0 && !mygetservbyname(service, ps, &port) &&
+		    !mygetservbyname(DNS_AS_STR(token), ps, &port))
+		{
 			CHECKTOK(DNS_R_UNKNOWNSERVICE);
-		if (port < 0 || port > 0xffff)
+		}
+
+		if (port < 0 || port > 0xffff) {
 			CHECKTOK(ISC_R_RANGE);
-		if (port > maxport)
+		}
+		if (port > maxport) {
 			maxport = port;
+		}
 		bm[port / 8] |= (0x80 >> (port % 8));
 	} while (1);
 
@@ -290,16 +297,19 @@ compare_in_wks(ARGS_COMPARE) {
 
 static inline isc_result_t
 fromstruct_in_wks(ARGS_FROMSTRUCT) {
-	dns_rdata_in_wks_t *wks = source;
+	dns_rdata_in_wks_t *wks;
 	uint32_t a;
 
 	REQUIRE(type == dns_rdatatype_wks);
 	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(wks != NULL);
-	REQUIRE(wks->common.rdtype == type);
-	REQUIRE(wks->common.rdclass == rdclass);
-	REQUIRE((wks->map != NULL && wks->map_len <= 8*1024) ||
-		 wks->map_len == 0);
+	REQUIRE(((dns_rdata_in_wks_t *)source) != NULL);
+	REQUIRE(((dns_rdata_in_wks_t *)source)->common.rdtype == type);
+	REQUIRE(((dns_rdata_in_wks_t *)source)->common.rdclass == rdclass);
+	REQUIRE((((dns_rdata_in_wks_t *)source)->map != NULL &&
+		 ((dns_rdata_in_wks_t *)source)->map_len <= 8*1024) ||
+		((dns_rdata_in_wks_t *)source)->map_len == 0);
+
+	wks = source;
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -312,14 +322,16 @@ fromstruct_in_wks(ARGS_FROMSTRUCT) {
 
 static inline isc_result_t
 tostruct_in_wks(ARGS_TOSTRUCT) {
-	dns_rdata_in_wks_t *wks = target;
+	dns_rdata_in_wks_t *wks;
 	uint32_t n;
 	isc_region_t region;
 
-	REQUIRE(wks != NULL);
+	REQUIRE(((dns_rdata_in_wks_t *)target) != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_wks);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 	REQUIRE(rdata->length != 0);
+
+	wks = target;
 
 	wks->common.rdclass = rdata->rdclass;
 	wks->common.rdtype = rdata->type;
@@ -341,11 +353,15 @@ tostruct_in_wks(ARGS_TOSTRUCT) {
 
 static inline void
 freestruct_in_wks(ARGS_FREESTRUCT) {
-	dns_rdata_in_wks_t *wks = source;
+	dns_rdata_in_wks_t *wks;
 
-	REQUIRE(wks != NULL);
-	REQUIRE(wks->common.rdtype == dns_rdatatype_wks);
-	REQUIRE(wks->common.rdclass == dns_rdataclass_in);
+	REQUIRE(((dns_rdata_in_wks_t *)source) != NULL);
+	REQUIRE(((dns_rdata_in_wks_t *)source)->common.rdtype ==
+		dns_rdatatype_wks);
+	REQUIRE(((dns_rdata_in_wks_t *)source)->common.rdclass ==
+		dns_rdataclass_in);
+
+	wks = source;
 
 	if (wks->mctx == NULL)
 		return;

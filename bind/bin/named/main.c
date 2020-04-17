@@ -57,6 +57,9 @@
 #include <gperftools/profiler.h>
 #endif
 
+#ifdef HAVE_GEOIP2
+#include <maxminddb.h>
+#endif
 
 /*
  * Defining NS_MAIN provides storage declarations (rather than extern)
@@ -115,8 +118,8 @@ LIBDNS_EXTERNAL_DATA extern unsigned int dns_zone_mkey_day;
 LIBDNS_EXTERNAL_DATA extern unsigned int dns_zone_mkey_month;
 
 static bool	want_stats = false;
-static char		program_name[ISC_DIR_NAMEMAX] = "named";
-static char		absolute_conffile[ISC_DIR_PATHMAX];
+static char		program_name[NAME_MAX] = "named";
+static char		absolute_conffile[PATH_MAX];
 static char		saved_command_line[512];
 static char		version[512];
 static unsigned int	maxsocks = 0;
@@ -492,6 +495,17 @@ printversion(bool verbose) {
 #if defined(HAVE_ZLIB) && defined(ZLIB_VERSION)
 	printf("compiled with zlib version: %s\n", ZLIB_VERSION);
 	printf("linked to zlib version: %s\n", zlibVersion());
+#endif
+#if defined(HAVE_GEOIP2)
+	/* Unfortunately, no version define on link time */
+	printf("linked to maxminddb version: %s\n",
+	       MMDB_lib_version());
+#endif
+#if defined(HAVE_DNSTAP)
+	printf("compiled with protobuf-c version: %s\n",
+	       PROTOBUF_C_VERSION);
+	printf("linked to protobuf-c version: %s\n",
+	       protobuf_c_version());
 #endif
 #ifdef ISC_PLATFORM_USETHREADS
 	printf("threads support is enabled\n");
@@ -1473,6 +1487,10 @@ main(int argc, char *argv[]) {
 	setvbuf(stderr, NULL, _IOFBF, BUFSIZ);
 #endif
 
+#ifdef HAVE_LIBXML2
+	xmlInitThreads();
+#endif /* HAVE_LIBXML2 */
+
 	/*
 	 * Record version in core image.
 	 * strings named.core | grep "named version:"
@@ -1599,6 +1617,10 @@ main(int argc, char *argv[]) {
 	ns_os_closedevnull();
 
 	ns_os_shutdown();
+
+#ifdef HAVE_LIBXML2
+	xmlCleanupThreads();
+#endif /* HAVE_LIBXML2 */
 
 #ifdef HAVE_GPERFTOOLS_PROFILER
 	ProfilerStop();

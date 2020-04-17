@@ -1,6 +1,96 @@
+	--- 9.11.18 released ---
+
+5380.	[contrib]	Fix building MySQL DLZ modules against MySQL 8
+			libraries. [GL #1678]
+
+5379.	[doc]		Clean up serve-stale related options that leaked into
+			the BIND 9.11 release. [GL !3265]
+
+5378.	[bug]		Receiving invalid DNS data was triggering an assertion
+			failure in nslookup. [GL #1652]
+
+5377.	[feature]	Detect atomic operations support on ppc64le. Thanks to
+			Petr Menšík. [GL !3295]
+
+5376.	[bug]		Fix ineffective DNS rebinding protection when BIND is
+			configured as a forwarding DNS server. Thanks to Tobias
+			Klein. [GL #1574]
+
+5368.	[bug]		Named failed to restart if 'rndc addzone' names
+			contained special characters (e.g. '/'). [GL #1655]
+
+	--- 9.11.17 released ---
+
+5358.	[bug]		Inline master zones whose master files were touched
+			but otherwise unchanged and were subsequently reloaded
+			may have stopped re-signing. [GL !3135]
+
+5357.	[bug]		Newly added RRSIG records with expiry times before
+			the previous earliest expiry times might not be
+			re-signed in time.  This was a side effect of 5315.
+			[GL !3137]
+
+	--- 9.11.16 released ---
+
+5353.	[doc]		Document port and dscp parameters in forwarders
+			configuration option. [GL #914]
+
+5352.	[bug]		Correctly handle catalog zone entries containing
+			characters that aren't legal in filenames. [GL #1592]
+
+5351.	[bug]		CDS / CDNSKEY consistency checks failed to handle
+			removal records. [GL #1554]
+
+5350.	[bug]		When a view was configured with class CHAOS,
+			dns_view_findzonecut() could incorrectly return
+			success for non-existent records. [GL #1540]
+
+5348.	[bug]		dnssec-settime -Psync was not being honoured.
+			[GL !2925]
+
+	--- 9.11.15 released ---
+
+5339.	[bug]		With some libmaxminddb versions, named could erroneously
+			match an IP address not belonging to any subnet defined
+			in a given GeoIP2 database to one of the existing
+			entries in that database. [GL #1552]
+
+5338.	[bug]		Fix line spacing in `rndc secroots`.
+			Thanks to Tony Finch. [GL !2478]
+
+5337.	[func]		'named -V' now reports maxminddb and protobuf-c
+			versions. [GL !2686]
+
+	--- 9.11.14 released ---
+
+5330.	[bug]		'configure --without-python' was ineffective if
+			PYTHON was set in the environment. [GL #1434]
+
+5329.	[bug]		Reconfiguring named caused memory to be leaked when any
+			GeoIP2 database was in use. [GL #1445]
+
+5328.	[bug]		rbtdb.c:rdataset_{get,set}ownercase failed to obtain
+			a node lock. [GL #1417]
+
+5327.	[func]		Added a statistics counter to track queries
+			dropped because the recursive-clients quota was
+			exceeded. [GL #1399]
+
+5326.	[bug]		Add Python dependency on 'distutils.core' to configure.
+			'distutils.core' is required for installation.
+			[GL #1397]
+
+5322.	[bug]		Conditional compilation of lock_callback was
+			inconsistent with conditional use of the function
+			when forcing BIND to build with older and unsupported
+			versions of OpenSSL. [GL #1386]
+
+5321.	[bug]		Obtain write lock before updating version->records
+			and version->bytes. [GL #1341]
+
 	--- 9.11.13 released ---
 
-5315.	[bug]		Apply the inital RRSIG expiration spread fixed
+5315.	[bug]		Apply the initial RRSIG expiration spread fixed
 			to all dynamically created records in the zone
 			including NSEC3. Also fix the signature clusters
 			when the server has been offline for prolonged
@@ -632,7 +722,7 @@
 4965.	[func]		Add support for marking options as deprecated.
 			[GL #322]
 
-4964.	[bug]		Reduce the probabilty of double signature when deleting
+4964.	[bug]		Reduce the probability of double signature when deleting
 			a DNSKEY by checking if the node is otherwise signed
 			by the algorithm of the key to be deleted. [GL #240]
 
@@ -933,7 +1023,7 @@
 			[RT #46725]
 
 4831.	[bug]		Convert the RRSIG expirytime to 64 bits for
-			comparisions in diff.c:resign. [RT #46710]
+			comparisons in diff.c:resign. [RT #46710]
 
 4830.	[bug]		Failure to configure ATF when requested did not cause
 			an error in top-level configure script. [RT #46655]
@@ -1074,7 +1164,7 @@
 			and defaulting to the working directory if not
 			specified) must be writable. [RT #46077]
 
-4766.	[cleanup]	Addresss Coverity warnings. [RT #46150]
+4766.	[cleanup]	Address Coverity warnings. [RT #46150]
 
 4763.	[contrib]	Improve compatibility when building MySQL DLZ
 			module by using mysql_config if available.
@@ -5146,7 +5236,7 @@
 
 3518.	[bug]		Increase the size of dns_rrl_key.s.rtype by one bit
 			so that all dns_rrl_rtype_t enum values fit regardless
-			of whether it is teated as signed or unsigned by
+			of whether it is treated as signed or unsigned by
 			the compiler. [RT #32792]
 
 3517.	[bug]		Reorder destruction to avoid shutdown race. [RT #32777]
@@ -6221,7 +6311,7 @@
 
 	--- 9.9.0b1 released ---
 
-3186.	[bug]		Version/db mis-match in rpz code. [RT #26180]
+3186.	[bug]		Version/db mismatch in rpz code. [RT #26180]
 
 3185.	[func]		New 'rndc signing' option for auto-dnssec zones:
 			 - 'rndc signing -list' displays the current
@@ -6886,7 +6976,7 @@
 2998.	[func]		Add isc_task_beginexclusive and isc_task_endexclusive
 			to the task api. [RT #22776]
 
-2997.	[func]		named -V now reports the OpenSSL and libxml2 verions
+2997.	[func]		named -V now reports the OpenSSL and libxml2 versions
 			it was compiled against. [RT #22687]
 
 2996.	[security]	Temporarily disable SO_ACCEPTFILTER support.
@@ -9869,7 +9959,7 @@
 2096.	[bug]		libbind: handle applications that fail to detect
 			res_init() failures better.
 
-2095.	[port]		libbind: alway prototype inet_cidr_ntop_ipv6() and
+2095.	[port]		libbind: always prototype inet_cidr_ntop_ipv6() and
 			net_cidr_ntop_ipv6(). [RT #16388]
 
 2094.	[contrib]	Update named-bootconf.  [RT #16404]
@@ -9925,7 +10015,7 @@
 2076.	[bug]		Several files were missing #include <config.h>
 			causing build failures on OSF. [RT #16341]
 
-2075.	[bug]		The spillat timer event hander could leak memory.
+2075.	[bug]		The spillat timer event handler could leak memory.
 			[RT #16357]
 
 2074.	[bug]		dns_request_createvia2(), dns_request_createvia3(),
@@ -10687,7 +10777,7 @@
 
 1831.	[doc]		Update named-checkzone documentation. [RT #13604]
 
-1830.	[bug]		adb lame cache has sence of test reversed. [RT #13600]
+1830.	[bug]		adb lame cache has sense of test reversed. [RT #13600]
 
 1829.	[bug]		win32: "pid-file none;" broken. [RT #13563]
 
@@ -10798,7 +10888,7 @@
 1796.	[func]		"rndc freeze/thaw" now freezes/thaws all zones.
 
 1795.	[bug]		"rndc dumpdb" was not fully documented.  Minor
-			formating issues with "rndc dumpdb -all".  [RT #13396]
+			formatting issues with "rndc dumpdb -all".  [RT #13396]
 
 1794.	[func]		Named and named-checkzone can now both check for
 			non-terminal wildcard records.
@@ -11975,7 +12065,7 @@
 			acl.
 
 1393.	[port]		Bind to individual IPv6 interfaces if IPV6_IPV6ONLY
-			is not available in the kernel to prevent accidently
+			is not available in the kernel to prevent accidentally
 			listening on IPv4 interfaces.
 
 1392.	[bug]		named-checkzone: update usage.
@@ -13703,7 +13793,7 @@
  839.	[func]		Dump packets for which there was no view or that the
 			class could not be determined to category "unmatched".
 
- 838.	[port]		UnixWare 7.x.x is now suported by
+ 838.	[port]		UnixWare 7.x.x is now supported by
 			bin/tests/system/ifconfig.sh.
 
  837.	[cleanup]	Multi-threading is now enabled by default only on

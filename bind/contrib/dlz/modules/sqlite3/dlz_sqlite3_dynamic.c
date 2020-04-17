@@ -69,7 +69,7 @@
 #define safeGet(in) in == NULL ? "" : in
 
 /*%
- * Structure to hold everthing needed by this "instance" of the SQLite3
+ * Structure to hold everything needed by this "instance" of the SQLite3
  * module remember, the module code is only loaded once, but may have
  * many separate instances.
  */
@@ -550,7 +550,7 @@ sqlite3_process_rs(sqlite3_instance_t *db, dns_sdlzlookup_t *lookup,
 			if (*endp != '\0' || ttl < 0) {
 				db->log(ISC_LOG_ERROR,
 					"SQLite3 module: TTL must be "
-					"a postive number");
+					"a positive number");
 				return (ISC_R_FAILURE);
 			}
 
@@ -589,7 +589,7 @@ sqlite3_process_rs(sqlite3_instance_t *db, dns_sdlzlookup_t *lookup,
 			if (*endp != '\0' || ttl < 0) {
 				db->log(ISC_LOG_ERROR,
 					"SQLite3 module: TTL must be "
-					"a postive number");
+					"a positive number");
 				free(tmpString);
 				return (ISC_R_FAILURE);
 			}
@@ -748,7 +748,7 @@ dlz_allnodes(const char *zone, void *dbdata, dns_sdlzallnodes_t *allnodes) {
 		if (*endp != '\0' || ttl < 0) {
 			db->log(ISC_LOG_ERROR,
 				"SQLite3 module: TTL must be "
-				"a postive number");
+				"a positive number");
 			result = ISC_R_FAILURE;
 			goto cleanup;
 		}
@@ -883,9 +883,6 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 	char *tmp = NULL;
 	char *endp;
 	const char *helper_name;
-#if SQLITE3_VERSION_ID >= 50000
-        my_bool auto_reconnect = 1;
-#endif
 #if PTHREADS
 	int dbcount;
 	int i, ret;
