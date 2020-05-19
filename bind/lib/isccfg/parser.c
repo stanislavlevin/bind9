@@ -1216,7 +1216,12 @@ cfg_print_ustring(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 static void
 print_qstring(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 	cfg_print_cstr(pctx, "\"");
-	cfg_print_ustring(pctx, obj);
+	for (size_t i = 0; i < obj->value.string.length; i++) {
+		if (obj->value.string.base[i] == '"') {
+			cfg_print_cstr(pctx, "\\");
+		}
+		cfg_print_chars(pctx, &obj->value.string.base[i], 1);
+	}
 	cfg_print_cstr(pctx, "\"");
 }
 
@@ -2147,6 +2152,9 @@ cfg_map_count(const cfg_obj_t *mapobj) {
 	return (isc_symtab_count(map->symtab));
 }
 
+#if _WIN32
+#pragma warning(disable : 4090)
+#endif
 const char *
 cfg_map_firstclause(const cfg_type_t *map, const void **clauses,
 		    unsigned int *idx)
@@ -2169,8 +2177,14 @@ cfg_map_firstclause(const cfg_type_t *map, const void **clauses,
 			return (NULL);
 	}
 	return ((*clauseset)[*idx].name);
+#if _WIN32
+#pragma warning(default : 4090)
+#endif
 }
 
+#if _WIN32
+#pragma warning(disable : 4090)
+#endif
 const char *
 cfg_map_nextclause(const cfg_type_t *map, const void **clauses,
 		   unsigned int *idx)
@@ -2194,6 +2208,9 @@ cfg_map_nextclause(const cfg_type_t *map, const void **clauses,
 			return (NULL);
 	}
 	return ((*clauseset)[*idx].name);
+#if _WIN32
+#pragma warning(default : 4090)
+#endif
 }
 
 /* Parse an arbitrary token, storing its raw text representation. */

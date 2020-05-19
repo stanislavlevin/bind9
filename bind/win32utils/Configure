@@ -816,8 +816,9 @@ getversion();
 
 sub appargs {
     my $arg = $_[0];
-    # escape backslashes, spaces and double quotes
-    $arg =~ s/([\\ "])/\\$1/g;
+    # escape backslashes and double quotes
+    $arg =~ s/([\\"])/\\$1/g;
+    $arg =~ s/([\s])/\\\\$1/g;
     if (defined($configdefh{"CONFIGARGS"})) {
         $configdefh{"CONFIGARGS"} .= " " . $arg;
     } else {
@@ -3387,6 +3388,13 @@ sub makesrcid {
           }
         }
         close SIN;
+    }
+
+    if ($srcid eq "unset_id" and -d "..\\.git") {
+        $data = `git rev-list --max-count=1 HEAD`;
+        if (length($data) > 0) {
+            $srcid = substr($data, 0, 7);
+        }
     }
 
     # Now set up the output version file

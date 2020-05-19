@@ -19,7 +19,7 @@ variables:
   CLANG: clang-10
   SCAN_BUILD: scan-build-10
   SYMBOLIZER: /usr/lib/llvm-10/bin/llvm-symbolizer
-  ASAN_SYMBOLIZER_PATH: "$SYMBOLIZER"
+  ASAN_SYMBOLIZER_PATH: /usr/lib/llvm-10/bin/llvm-symbolizer
   CLANG_FORMAT: clang-format-10
 
   CFLAGS_COMMON: -fno-omit-frame-pointer -fno-optimize-sibling-calls -O1 -g -Wall -Wextra 
@@ -199,6 +199,7 @@ stages:
     - test -n "${OOT_BUILD_WORKSPACE}" && mkdir "${OOT_BUILD_WORKSPACE}" && cd "${OOT_BUILD_WORKSPACE}"
   script:
     - *configure
+    - make depend | grep "error:" && exit 1
     - make -j${BUILD_PARALLEL_JOBS:-1} -k all V=1
     - test -z "${RUN_MAKE_INSTALL}" || make install
     - test -z "${RUN_MAKE_INSTALL}" || sh util/check-make-install
@@ -231,9 +232,7 @@ stages:
          x64'
     - 'Set-Item -path "Env:CL" -value "/MP$([Math]::Truncate($BUILD_PARALLEL_JOBS/2))"'
     - '& msbuild.exe /maxCpuCount:2 /t:Build /p:Configuration=$VSCONF bind9.sln'
-  needs:
-    - job: autoreconf
-      artifacts: false
+  needs: []
   artifacts:
     untracked: true
     expire_in: "1 day"
@@ -418,6 +417,37 @@ coccinelle:
   script:
     - util/check-cocci
     - if test "$(git status --porcelain | grep -Ev '\?\?' | wc -l)" -gt "0"; then git status --short; exit 1; fi
+
+flake8:
+  <<: *default_triggering_rules
+  <<: *base_image
+  stage: postcheck
+  needs:
+    - job: autoreconf
+      artifacts: true
+  before_script:
+    - pip3 install flake8
+  script:
+    - *configure
+    - flake8 --max-line-length=80 $(git ls-files '*.py' | grep -v 'ans\.py')
+  only:
+    - merge_requests
+
+pylint:
+  <<: *default_triggering_rules
+  <<: *base_image
+  stage: postcheck
+  needs:
+    - job: autoreconf
+      artifacts: true
+  before_script:
+    - pip3 install pylint
+    - PYTHONPATH="$PYTHONPATH:$CI_PROJECT_DIR/bin/python"
+  script:
+    - *configure
+    - pylint --rcfile $CI_PROJECT_DIR/.pylintrc $(git ls-files '*.py' | grep -v 'ans\.py' | grep -v 'contrib/queryperf/')
+  only:
+    - merge_requests
 
 tarball-create:
   stage: precheck
@@ -640,12 +670,13 @@ scan-build:
     when: on_failure
 
 # Jobs for regular GCC builds on Debian Sid (amd64)
+# Also tests configration option: --without-lmdb.
 
 gcc:sid:amd64:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -O3"
-    EXTRA_CONFIGURE: "--enable-dnstap --with-libidn2"
+    EXTRA_CONFIGURE: "--enable-dnstap --with-libidn2 --without-lmdb"
     RUN_MAKE_INSTALL: 1
   <<: *debian_sid_amd64_image
   <<: *build_job
@@ -669,13 +700,14 @@ cppcheck:
   <<: *cppcheck_job
 
 # Job for out-of-tree GCC build on Debian Sid (amd64)
+# Also tests configration option: --with-lmdb.
 
 gcc:out-of-tree:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -Og"
     CONFIGURE: ../configure
-    EXTRA_CONFIGURE: "--enable-dnstap --with-libidn2"
+    EXTRA_CONFIGURE: "--enable-dnstap --with-libidn2 --with-lmdb"
     RUN_MAKE_INSTALL: 1
     OOT_BUILD_WORKSPACE: workspace
   <<: *base_image
@@ -911,7 +943,7 @@ system:clang:asan:
   <<: *base_image
   <<: *system_test_job
   needs:
-    - job: gcc:asan
+    - job: clang:asan
       artifacts: true
 
 unit:clang:asan:
@@ -920,7 +952,7 @@ unit:clang:asan:
   <<: *base_image
   <<: *unit_test_job
   needs:
-    - job: gcc:asan
+    - job: clang:asan
       artifacts: true
 
 # Jobs for builds with TSAN enabled
@@ -1327,7 +1359,7 @@ abi-check:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -Og"
-    BIND_BASELINE_VERSION: v9_11_17
+    BIND_BASELINE_VERSION: v9_11_18
   script:
     - *configure
     - make -j${BUILD_PARALLEL_JOBS:-1} V=1
