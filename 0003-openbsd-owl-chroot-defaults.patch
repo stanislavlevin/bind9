@@ -27,8 +27,8 @@ index f90ddab..2eedde3 100644
  							     "/run/named/"
  							     "named.lock");
 @@ -156,7 +154,7 @@ EXTERN const char *		ns_g_defaultdnstap
- EXTERN const char *		ns_g_defaultdnstap	INIT(NULL);
- #endif /* HAVE_DNSTAP */
+ EXTERN const char *		ns_g_pidfile		INIT(NS_LOCALSTATEDIR
+ 							    "/run/named.pid");
  
 -EXTERN const char *		ns_g_username		INIT(NULL);
 +EXTERN const char *		ns_g_username		INIT("named");

@@ -15,9 +15,9 @@ index 445a7f3..f90ddab 100644
  #endif
 +EXTERN const char *		ns_g_pidfile		INIT(NS_LOCALSTATEDIR
 +							    "/run/named.pid");
+
+ EXTERN const char *		ns_g_username		INIT(NULL);
  
- #ifdef HAVE_DNSTAP
- EXTERN const char *		ns_g_defaultdnstap
 diff --git a/bind/bin/named/main.c b/bind/bin/named/main.c
 index 64ee3ce..43ca99e 100644
 --- a/bind/bin/named/main.c

@@ -24,8 +24,8 @@ index 0147eaf..9549942 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
 @@ -8133,6 +8133,7 @@ load_configuration(const char *filename, ns_server_t *server,
- 	 */
- 	if (first_time) {
+ 		 * Relinquish root privileges.
+ 		 */
  		ns_os_changeuser();
 +		ns_os_dropprivs();
  	}
@@ -49,12 +49,12 @@ diff --git a/bind/bin/named/unix/os.c b/bind/bin/named/unix/os.c
 index 7be91f0..64261b3 100644
 --- a/bind/bin/named/unix/os.c
 +++ b/bind/bin/named/unix/os.c
-@@ -38,6 +38,9 @@
+@@ -38,7 +38,9 @@
  #include <isc/result.h>
  #include <isc/strerror.h>
  #include <isc/string.h>
 +#ifndef WANT_SETPERMS
-+#include <isc/util.h>
+ #include <isc/util.h>
 +#endif /* WANT_SETPERMS */
  
  #include <named/globals.h>
@@ -212,20 +212,18 @@ index 7be91f0..64261b3 100644
  		}
  		*slash = '/';
  	}
-@@ -768,8 +825,9 @@ mkdirpath(char *filename, void (*report)(const char *, ...)) {
+@@ -768,6 +825,7 @@ mkdirpath(char *filename, void (*report)(const char *, ...)) {
  	return (-1);
  }
  
 +#ifdef WANT_SETPERMS
+ #ifndef HAVE_LINUXTHREADS
  static void
  setperms(uid_t uid, gid_t gid) {
- #if defined(HAVE_SETEGID) || defined(HAVE_SETRESGID)
- 	char strbuf[ISC_STRERRORSIZE];
- #endif
 @@ -809,6 +867,7 @@ setperms(uid_t uid, gid_t gid) {
- 	}
  #endif
  }
+ #endif /* !HAVE_LINUXTHREADS */
 +#endif /* WANT_SETPERMS */
  
  FILE *
@@ -246,7 +244,7 @@ index 7be91f0..64261b3 100644
  
 +#ifdef WANT_SETPERMS
  	if (switch_user && runas_pw != NULL) {
- #ifndef HAVE_LINUXTHREADS
+ 		uid_t olduid = getuid();
  		gid_t oldgid = getgid();
 @@ -868,7 +931,9 @@ ns_os_openfile(const char *filename, mode_t mode, bool switch_user) {
  					     "or reconfigure the filename.");
