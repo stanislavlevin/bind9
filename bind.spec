@@ -1,7 +1,7 @@
 Name: bind
 Version: 9.11.19
 %define src_version 9.11.19
-Release: alt2
+Release: alt3
 
 Summary: ISC BIND - DNS server
 License: MPL-2.0
@@ -427,6 +427,9 @@ fi
 %exclude %docdir/COPYRIGHT
 
 %changelog
+* Fri May 29 2020 Stanislav Levin <slev@altlinux.org> 9.11.19-alt3
+- Placed Linux capabilities dropping under control(1).
+
 * Fri May 29 2020 Stanislav Levin <slev@altlinux.org> 9.11.19-alt2
 - Re-applied the lost patch.
 
