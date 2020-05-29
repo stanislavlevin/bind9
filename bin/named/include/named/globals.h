@@ -109,6 +109,7 @@ EXTERN isc_resourcevalue_t named_g_initopenfiles INIT(0);
 /*
  * Misc.
  */
+EXTERN bool named_g_retain_caps     INIT(false);
 EXTERN bool named_g_coreok	     INIT(true);
 EXTERN const char *named_g_chrootdir INIT(NULL);
 EXTERN bool named_g_foreground	     INIT(false);

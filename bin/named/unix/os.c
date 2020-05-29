@@ -196,6 +196,28 @@ linux_initialprivs(void) {
 }
 
 static void
+linux_cap_drop_bounding_set(void) {
+	/*
+	 * actually, cap_drop_bound (PR_CAPBSET_DROP) requires CAP_SETPCAP
+	 * capability, but to simplify the logic drop bounding set only
+	 * for root assuming that a regular user is not granted with caps.
+	*/
+	if (getuid() != 0) {
+		return;
+	}
+	cap_value_t capval = 0;
+	char strbuf[ISC_STRERRORSIZE];
+	while (CAP_IS_SUPPORTED(capval)) {
+		if (cap_drop_bound(capval) != 0) {
+			strerror_r(errno, strbuf, sizeof(strbuf));
+			named_main_earlyfatal("cap_drop_bound failed: %s",
+					      strbuf);
+		}
+		capval++;
+	}
+}
+
+static void
 linux_minprivs(void) {
 	cap_t caps;
 	cap_t curcaps;
@@ -276,6 +298,7 @@ void
 named_os_init(const char *progname) {
 	setup_syslog(progname);
 #ifdef HAVE_SYS_CAPABILITY_H
+	linux_cap_drop_bounding_set();
 	linux_initialprivs();
 #endif /* ifdef HAVE_SYS_CAPABILITY_H */
 #ifdef SIGXFSZ
@@ -465,9 +488,16 @@ named_os_changeuser(void) {
 		named_main_earlyfatal("setgid(): %s", strbuf);
 	}
 
-	if (setresuid(runas_pw->pw_uid, runas_pw->pw_uid, -1) < 0) {
-		strerror_r(errno, strbuf, sizeof(strbuf));
-		named_main_earlyfatal("setuid(): %s", strbuf);
+	if (!named_g_retain_caps) {
+		if (setresuid(runas_pw->pw_uid, runas_pw->pw_uid, -1) < 0) {
+			strerror_r(errno, strbuf, sizeof(strbuf));
+			named_main_earlyfatal("setresuid(): %s", strbuf);
+		}
+	} else {
+		if (setuid(runas_pw->pw_uid) < 0) {
+			strerror_r(errno, strbuf, sizeof(strbuf));
+			named_main_earlyfatal("setuid(): %s", strbuf);
+		}
 	}
 
 #if defined(HAVE_SYS_CAPABILITY_H)

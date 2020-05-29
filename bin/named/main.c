@@ -344,7 +344,7 @@ usage(void) {
 	fprintf(stderr, "usage: named [-4|-6] [-c conffile] [-d debuglevel] "
 			"[-D comment] [-E engine]\n"
 			"             [-f|-g] [-L logfile] [-n number_of_cpus] "
-			"[-p port] [-s]\n"
+			"[-p port] [-r] [-s]\n"
 			"             [-S sockets] [-t chrootdir] [-u "
 			"username] [-U listeners]\n"
 			"             [-X lockfile] [-m "
@@ -815,6 +815,9 @@ parse_command_line(int argc, char *argv[]) {
 						      isc_commandline_argument);
 			}
 			named_g_port = port;
+			break;
+		case 'r':
+			named_g_retain_caps = true;
 			break;
 		case 's':
 			/* XXXRTH temporary syntax */
