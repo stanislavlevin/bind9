@@ -46,6 +46,7 @@ Patch0007: 0007-alt-nofile.patch
 Patch0008: 0008-alt-ads-remove.patch
 Patch0009: 0009-Minimize-linux-capabilities.patch
 Patch0010: 0010-Link-libirs-with-libdns-libisc-and-libisccfg.patch
+Patch0011: 0011-ALT-Make-it-possible-to-retain-Linux-capabilities-of.patch
 
 # root directory for chrooted environment.
 %define _chrootdir %_localstatedir/bind

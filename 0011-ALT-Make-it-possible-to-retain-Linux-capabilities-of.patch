@@ -1,0 +1,222 @@
+From f3109b1946f0470285161d007db5466be49c98f1 Mon Sep 17 00:00:00 2001
+From: Stanislav Levin <slev@altlinux.org>
+Date: Fri, 29 May 2020 15:31:08 +0300
+Subject: [PATCH] ALT: Make it possible to retain Linux capabilities of named
+
+Current behaviour of named is differ from upstream
+version. This leads to the failures under the certain
+conditions. One of the incompatibilities is the
+different employment of Linux capabilities(7).
+
+This is how the process of caps setup/dropping looks for now:
+___________________________________________________
+
+conditions:
+
+HAVE_LINUX_CAPABILITY_H && HAVE_LIBCAP && HAVE_LINUXTHREADS
+
+caps initial set: CAP_NET_BIND_SERVICE
+                  CAP_SYS_CHROOT
+                  CAP_SETUID
+                  CAP_SETGID
+                  CAP_DAC_READ_SEARCH
+                  CAP_SYS_RESOURCE
+                  CAP_CHOWN
+
+caps working set: CAP_NET_BIND_SERVICE
+                  CAP_SYS_RESOURCE
+
+___________________________________________________
+
+upstream version:
+
+ns_os_init:
+    linux_initialprivs : apply caps initial set
+ns_os_minprivs :
+    linux_keepcaps : keep caps after setuid
+    ns_os_changeuser : setgid; setuid;
+    linux_minprivs : apply caps working set
+
+___________________________________________________
+
+ALT specific:
+
+ns_os_init:
+    linux_initialprivs : apply caps initial set
+ns_os_minprivs :
+    linux_keepcaps : keep caps after setuid
+    ns_os_changeuser : setgid; setresuid (named, named, -1)
+        linux_minprivs : apply caps working set
+    linux_losecaps : don't keep caps after setuid
+
+=> configuration was loaded, threads run
+
+ns_os_dropprivs : setresuid all uids to non-zero
+                  (also clears all caps for all threads)
+
+___________________________________________________
+
+Simply put, we drop all the capabilities, while upstream retains
+CAP_NET_BIND_SERVICE and CAP_SYS_RESOURCE.
+
+Proposal is the implementation of another mode of operation on capabilities:
+
+ns_os_init
+    linux_cap_drop_bounding_set : clear cap bounding set
+    linux_initialprivs : sets initial caps
+ns_os_minprivs :
+    linux_keepcaps : keep caps after setuid
+    ns_os_changeuser : setgid; setuid
+        linux_minprivs : apply caps working set
+    linux_losecaps : don't keep caps after setuid
+
+In this mode named retains CAP_NET_BIND_SERVICE and CAP_SYS_RESOURCE,
+but drops caps bounding set as well as SECBIT_KEEP_CAPS.
+
+Fixes: https://bugzilla.altlinux.org/show_bug.cgi?id=33300
+---
+ bind/bin/named/include/named/globals.h |  1 +
+ bind/bin/named/include/named/main.h    |  2 +-
+ bind/bin/named/main.c                  |  7 ++++--
+ bind/bin/named/server.c                |  4 +++-
+ bind/bin/named/unix/os.c               | 33 ++++++++++++++++++++++++--
+ 5 files changed, 41 insertions(+), 6 deletions(-)
+
+diff --git a/bind/bin/named/include/named/globals.h b/bind/bin/named/include/named/globals.h
+index 3f09e6bc56..c80e41b4c3 100644
+--- a/bind/bin/named/include/named/globals.h
++++ b/bind/bin/named/include/named/globals.h
+@@ -121,6 +121,7 @@ EXTERN isc_resourcevalue_t	ns_g_initopenfiles	INIT(0);
+ /*
+  * Misc.
+  */
++EXTERN bool			ns_g_retain_caps	INIT(false);
+ EXTERN bool			ns_g_coreok		INIT(true);
+ EXTERN const char *		ns_g_chrootdir		INIT("@ROOT@");
+ EXTERN bool			ns_g_foreground		INIT(false);
+diff --git a/bind/bin/named/include/named/main.h b/bind/bin/named/include/named/main.h
+index 2860bc2ecf..603cce3d07 100644
+--- a/bind/bin/named/include/named/main.h
++++ b/bind/bin/named/include/named/main.h
+@@ -21,7 +21,7 @@
+ /*
+  * Commandline arguments for named; also referenced in win32/ntservice.c
+  */
+-#define NS_MAIN_ARGS "46A:c:C:d:D:E:fFgi:lL:M:m:n:N:p:P:sS:t:T:U:u:vVx:X:"
++#define NS_MAIN_ARGS "46A:c:C:d:D:E:fFgi:lL:M:m:n:N:p:P:rsS:t:T:U:u:vVx:X:"
+ 
+ ISC_PLATFORM_NORETURN_PRE void
+ ns_main_earlyfatal(const char *format, ...)
+diff --git a/bind/bin/named/main.c b/bind/bin/named/main.c
+index 3fd0206399..b951d5abd3 100644
+--- a/bind/bin/named/main.c
++++ b/bind/bin/named/main.c
+@@ -313,7 +313,7 @@ lwresd_usage(void) {
+ 		"usage: lwresd [-4|-6] [-c conffile | -C resolvconffile] "
+ 		"[-d debuglevel] [-f|-g]\n"
+ 		"              [-i pidfile] [-n number_of_cpus] "
+-		"[-p port] [-P listen-port]\n"
++		"[-p port] [-P listen-port] [-r]\n"
+ 		"              [-s] [-S sockets] [-t chrootdir] [-u username] "
+ 		"[-U listeners]\n"
+ 		"              [-m {usage|trace|record|size|mctx}]\n"
+@@ -330,7 +330,7 @@ usage(void) {
+ 		"usage: named [-4|-6] [-c conffile] [-d debuglevel] "
+ 		"[-E engine] [-f|-g]\n"
+ 		"             [-i pidfile]\n"
+-		"             [-n number_of_cpus] [-p port] [-s] "
++		"             [-n number_of_cpus] [-p port] [-r] [-s] "
+ 		"[-S sockets] [-t chrootdir]\n"
+ 		"             [-u username] [-U listeners] "
+ 		"[-m {usage|trace|record|size|mctx}]\n"
+@@ -778,6 +778,9 @@ parse_command_line(int argc, char *argv[]) {
+ 						   isc_commandline_argument);
+ 			lwresd_g_listenport = port;
+ 			break;
++		case 'r':
++			ns_g_retain_caps = true;
++			break;
+ 		case 's':
+ 			/* XXXRTH temporary syntax */
+ 			want_stats = true;
+diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
+index e157e5543a..bb20fcba24 100644
+--- a/bind/bin/named/server.c
++++ b/bind/bin/named/server.c
+@@ -8283,7 +8283,9 @@ load_configuration(const char *filename, ns_server_t *server,
+ 		 * Relinquish root privileges.
+ 		 */
+ 		ns_os_changeuser();
+-		ns_os_dropprivs();
++		if (!ns_g_retain_caps) {
++			ns_os_dropprivs();
++		}
+ 	}
+ 
+ 
+diff --git a/bind/bin/named/unix/os.c b/bind/bin/named/unix/os.c
+index 2e3c2d8fa5..3ba20cb68c 100644
+--- a/bind/bin/named/unix/os.c
++++ b/bind/bin/named/unix/os.c
+@@ -340,6 +340,21 @@ linux_initialprivs(void) {
+ #endif
+ }
+ 
++#ifdef HAVE_LIBCAP
++static void
++linux_cap_drop_bounding_set(void) {
++	cap_value_t capval = 0;
++	char strbuf[ISC_STRERRORSIZE];
++	while (CAP_IS_SUPPORTED(capval)) {
++		if (cap_drop_bound(capval) != 0) {
++			isc__strerror(errno, strbuf, sizeof(strbuf));
++			ns_main_earlyfatal("cap_drop_bound failed: %s", strbuf);
++		}
++		capval++;
++	}
++}
++#endif
++
+ static void
+ linux_minprivs(void) {
+ 	cap_t curcaps;
+@@ -444,6 +459,10 @@ setup_syslog(const char *progname) {
+ void
+ ns_os_init(const char *progname) {
+ 	setup_syslog(progname);
++#ifdef HAVE_LIBCAP
++	linux_cap_drop_bounding_set();
++#endif
++
+ #ifdef HAVE_LINUX_CAPABILITY_H
+ 	linux_initialprivs();
+ #endif
+@@ -662,13 +681,23 @@ ns_os_changeuser(void) {
+ 	}
+ 
+ #ifdef HAVE_LINUXTHREADS
+-	if (setresuid(runas_pw->pw_uid, runas_pw->pw_uid, -1) < 0) {
++	if (!ns_g_retain_caps) {
++		if (setresuid(runas_pw->pw_uid, runas_pw->pw_uid, -1) < 0) {
++			isc__strerror(errno, strbuf, sizeof(strbuf));
++			ns_main_earlyfatal("setresuid(): %s", strbuf);
++		}
++	} else {
++		if (setuid(runas_pw->pw_uid) < 0) {
++			isc__strerror(errno, strbuf, sizeof(strbuf));
++			ns_main_earlyfatal("setuid(): %s", strbuf);
++		}
++	}
+ #else
+ 	if (setuid(runas_pw->pw_uid) < 0) {
+-#endif
+ 		isc__strerror(errno, strbuf, sizeof(strbuf));
+ 		ns_main_earlyfatal("setuid(): %s", strbuf);
+ 	}
++#endif
+ 
+ #ifdef PR_SET_DUMPABLE
+ 	linux_set_dumpable();
+-- 
+2.25.4
+
