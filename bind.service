@@ -12,7 +12,7 @@ PIDFile=/var/run/named.pid
 
 ExecStartPre=/etc/init.d/bind rndc_keygen
 ExecStartPre=/usr/sbin/named-checkconf $CHROOT -z /etc/named.conf
-ExecStart=/usr/sbin/named $EXTRAOPTIONS $CHROOT
+ExecStart=/usr/sbin/named $EXTRAOPTIONS $CHROOT $RETAIN_CAPS
 
 ExecReload=/bin/sh -c '/usr/sbin/rndc reload > /dev/null 2>&1 || /bin/kill -HUP $MAINPID'
 

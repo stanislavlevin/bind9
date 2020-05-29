@@ -3,3 +3,5 @@
 EXTRAOPTIONS=""
 # Starting with bind 9.10, chrooted mode is under control(1).
 #CHROOT="-t /"
+# As of bind 9.11.19-alt3 the dropping of Linux capabilities is under control(1).
+#RETAIN_CAPS="-r"

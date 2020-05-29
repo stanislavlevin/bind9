@@ -46,7 +46,7 @@ start()
 	rndc_keygen || return 1
 	action 'Checking named configuration file syntax:' \
 		named-checkconf $CHROOT -z /etc/named.conf || return 1
-	start_daemon --lockfile "$LOCKFILE" --expect-user named -- named $EXTRAOPTIONS $CHROOT
+	start_daemon --lockfile "$LOCKFILE" --expect-user named -- named $EXTRAOPTIONS $CHROOT $RETAIN_CAPS
 	RETVAL=$?
 	return $RETVAL
 }
