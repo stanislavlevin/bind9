@@ -1,7 +1,7 @@
 Name: bind
 Version: 9.11.19
 %define src_version 9.11.19
-Release: alt1
+Release: alt2
 
 Summary: ISC BIND - DNS server
 License: MPL-2.0
@@ -425,6 +425,9 @@ fi
 %exclude %docdir/COPYRIGHT
 
 %changelog
+* Fri May 29 2020 Stanislav Levin <slev@altlinux.org> 9.11.19-alt2
+- Re-applied the lost patch.
+
 * Tue May 19 2020 Stanislav Levin <slev@altlinux.org> 9.11.19-alt1
 - 9.11.18 -> 9.11.19 (fixes: CVE-2020-8616, CVE-2020-8617).
 
