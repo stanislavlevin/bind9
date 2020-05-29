@@ -167,16 +167,7 @@ rather than the DNS protocol.
 %setup
 
 # NB: there must be at least one patch :)
-%patch0001 -p2
-%patch0002 -p2
-%patch0003 -p2
-%patch0004 -p2
-%patch0005 -p2
-%patch0006 -p2
-%patch0007 -p2
-%patch0008 -p2
-#%%patch0009 -p2
-%patch0010 -p2
+%autopatch -p2
 
 install -D -pm644 %_sourcedir/rfc1912.txt doc/rfc/rfc1912.txt
 install -pm644 %_sourcedir/bind.README.bind-devel README.bind-devel
