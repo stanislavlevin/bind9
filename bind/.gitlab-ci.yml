@@ -177,7 +177,6 @@ stages:
 
 .configure: &configure |
     ${CONFIGURE} \
-    --disable-maintainer-mode \
     --enable-developer \
     --with-randomdev=/dev/urandom \
     --with-libtool \
@@ -185,7 +184,7 @@ stages:
     --disable-static \
     --with-cmocka \
     --with-libxml2 \
-    --with-json \
+    --with-libjson \
     --prefix=$HOME/.local \
     --without-make-clean \
     $EXTRA_CONFIGURE \
@@ -352,11 +351,15 @@ stages:
   <<: *default_triggering_rules
   stage: postcheck
   script:
+    # Workaround for cppcheck 2.0 uninitvar false positives triggered by (&var)->field syntax
+    # (see: https://sourceforge.net/p/cppcheck/discussion/general/thread/122153e3c1/)
+    - sed -i '/^#define ISC__BUFFER.*\\$/{s|_b|__b|;N;s|do {|\0 isc_buffer_t *_b = (isc_buffer_t *)__b;|}; /^#define ISC__BUFFER.*REGION.*\\$/{s|_r|__r|;N;s|do {|\0 isc_region_t *_r = (isc_region_t *)__r;|; /USEDREGION/{s|isc_buffer_t|const \0|g}}' lib/isc/include/isc/buffer.h
     - *configure
     - (make -nwk all || true) | compiledb
-    - export GCC_VERSION=$(gcc --version | sed -n 's/.*\([0-9]\+\)\.[0-9]\+\.[0-9]\+.*/\1/p')
+    - export GCC_VERSION=$(gcc --version | sed -n 's/.* \([0-9]\+\)\.[0-9]\+\.[0-9]\+.*/\1/p')
     - sed -i "/gcc\",/a\"-DCPPCHECK\", \"-D__STDC__\", \"-D__GNUC__=${GCC_VERSION}\"," compile_commands.json
     - *run_cppcheck
+  after_script:
     - *cppcheck_report_html
   artifacts:
     paths:
@@ -396,6 +399,7 @@ misc:
     - xmllint --noout --nonet `git ls-files '*.xml' '*.docbook'`
     - xmllint --noout --nonet --html `git ls-files '*.html'`
     - sh util/check-win32util-configure
+    - sh util/check-categories.sh
   needs: []
   artifacts:
     paths:
@@ -418,6 +422,17 @@ coccinelle:
     - util/check-cocci
     - if test "$(git status --porcelain | grep -Ev '\?\?' | wc -l)" -gt "0"; then git status --short; exit 1; fi
 
+danger:
+  <<: *precheck_job
+  needs: []
+  script:
+    - danger-python ci -f
+  only:
+    refs:
+      - merge_requests
+    variables:
+      - $DANGER_GITLAB_API_TOKEN
+
 flake8:
   <<: *default_triggering_rules
   <<: *base_image
@@ -425,11 +440,9 @@ flake8:
   needs:
     - job: autoreconf
       artifacts: true
-  before_script:
-    - pip3 install flake8
   script:
     - *configure
-    - flake8 --max-line-length=80 $(git ls-files '*.py' | grep -v 'ans\.py')
+    - flake8 --max-line-length=80 $(git ls-files '*.py' | grep -vE '(ans\.py|dangerfile\.py)')
   only:
     - merge_requests
 
@@ -441,11 +454,10 @@ pylint:
     - job: autoreconf
       artifacts: true
   before_script:
-    - pip3 install pylint
-    - PYTHONPATH="$PYTHONPATH:$CI_PROJECT_DIR/bin/python"
   script:
     - *configure
-    - pylint --rcfile $CI_PROJECT_DIR/.pylintrc $(git ls-files '*.py' | grep -v 'ans\.py' | grep -v 'contrib/queryperf/')
+    - PYTHONPATH="$PYTHONPATH:$CI_PROJECT_DIR/bin/python"
+    - pylint --rcfile $CI_PROJECT_DIR/.pylintrc $(git ls-files '*.py' | grep -vE '(ans\.py|dangerfile\.py|contrib/queryperf/)')
   only:
     - merge_requests
 
@@ -1359,7 +1371,7 @@ abi-check:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -Og"
-    BIND_BASELINE_VERSION: v9_11_18
+    BIND_BASELINE_VERSION: v9_11_19
   script:
     - *configure
     - make -j${BUILD_PARALLEL_JOBS:-1} V=1
@@ -1371,7 +1383,8 @@ abi-check:
     - util/api-checker.sh . refbind
   artifacts:
     paths:
-      - "*.html"
+      - "*-lib*.html"
+      - "*-lib*.txt"
       - "abi-*.dump"
     expire_in: "1 week"
   only:

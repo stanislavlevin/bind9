@@ -2522,6 +2522,7 @@ parse_netaddr(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	CHECK(cfg_create_obj(pctx, type, &obj));
 	CHECK(cfg_parse_rawaddr(pctx, flags, &netaddr));
 	isc_sockaddr_fromnetaddr(&obj->value.sockaddr, &netaddr, 0);
+	obj->value.sockaddrdscp.dscp = -1;
 	*ret = obj;
 	return (ISC_R_SUCCESS);
  cleanup:
@@ -2632,15 +2633,6 @@ cfg_parse_netprefix(cfg_parser_t *pctx, const cfg_type_t *type,
 			cfg_parser_error(pctx, CFG_LOG_NOPREP,
 					 "invalid prefix length");
 			return (ISC_R_RANGE);
-		}
-		result = isc_netaddr_prefixok(&netaddr, prefixlen);
-		if (result != ISC_R_SUCCESS) {
-			char buf[ISC_NETADDR_FORMATSIZE + 1];
-			isc_netaddr_format(&netaddr, buf, sizeof(buf));
-			cfg_parser_error(pctx, CFG_LOG_NOPREP,
-					 "'%s/%u': address/prefix length "
-					 "mismatch", buf, prefixlen);
-			return (ISC_R_FAILURE);
 		}
 	} else {
 		if (expectprefix) {
