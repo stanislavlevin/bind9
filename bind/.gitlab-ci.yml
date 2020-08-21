@@ -18,7 +18,6 @@ variables:
   CONFIGURE: ./configure
   CLANG: clang-10
   SCAN_BUILD: scan-build-10
-  SYMBOLIZER: /usr/lib/llvm-10/bin/llvm-symbolizer
   ASAN_SYMBOLIZER_PATH: /usr/lib/llvm-10/bin/llvm-symbolizer
   CLANG_FORMAT: clang-format-10
 
@@ -26,7 +25,7 @@ variables:
 
   # Pass run-time flags to AddressSanitizer to get core dumps on error.
   ASAN_OPTIONS_COMMON: abort_on_error=1:disable_coredump=0:unmap_shadow_on_exit=1
-  TSAN_OPTIONS_COMMON: "second_deadlock_stack=1 history_size=7 log_exe_name=true log_path=tsan external_symbolizer_path=$SYMBOLIZER"
+  TSAN_OPTIONS_COMMON: "second_deadlock_stack=1 history_size=7 log_exe_name=true log_path=tsan external_symbolizer_path=/usr/lib/llvm-10/bin/llvm-symbolizer"
 
   TARBALL_COMPRESSOR: gzip
   TARBALL_EXTENSION: gz
@@ -43,9 +42,7 @@ stages:
 
 ### Runner Tag Templates
 
-# Note: BSD runners extract the operating system version to use from job name
-
-.freebsd-amd64: &freebsd_amd64
+.libvirt-amd64: &libvirt_amd64
   tags:
     - libvirt
     - amd64
@@ -55,27 +52,17 @@ stages:
     - linux
     - amd64
 
-.linux-arm64: &linux_arm64
-  tags:
-    - linux
-    - arm64
-
 .linux-i386: &linux_i386
   tags:
     - linux
     - i386
 
-.openbsd-amd64: &openbsd_amd64
-  tags:
-    - libvirt
-    - amd64
-
 ### Docker Image Templates
 
 # Alpine Linux
 
-.alpine-3.11-amd64: &alpine_3_11_amd64_image
-  image: "$CI_REGISTRY_IMAGE:alpine-3.11-amd64"
+.alpine-3.12-amd64: &alpine_3_12_amd64_image
+  image: "$CI_REGISTRY_IMAGE:alpine-3.12-amd64"
   <<: *linux_amd64
 
 # CentOS
@@ -106,10 +93,6 @@ stages:
   image: "$CI_REGISTRY_IMAGE:debian-sid-amd64"
   <<: *linux_amd64
 
-.debian-sid-arm64: &debian_sid_arm64_image
-  image: "$CI_REGISTRY_IMAGE:debian-sid-arm64"
-  <<: *linux_arm64
-
 .debian-sid-i386: &debian_sid_i386_image
   image: "$CI_REGISTRY_IMAGE:debian-sid-i386"
   <<: *linux_i386
@@ -122,8 +105,8 @@ stages:
 
 # Fedora
 
-.fedora-31-amd64: &fedora_31_amd64_image
-  image: "$CI_REGISTRY_IMAGE:fedora-31-amd64"
+.fedora-32-amd64: &fedora_32_amd64_image
+  image: "$CI_REGISTRY_IMAGE:fedora-32-amd64"
   <<: *linux_amd64
 
 # Ubuntu
@@ -132,8 +115,8 @@ stages:
   image: "$CI_REGISTRY_IMAGE:ubuntu-xenial-amd64"
   <<: *linux_amd64
 
-.ubuntu-bionic-amd64: &ubuntu_bionic_amd64_image
-  image: "$CI_REGISTRY_IMAGE:ubuntu-bionic-amd64"
+.ubuntu-focal-amd64: &ubuntu_focal_amd64_image
+  image: "$CI_REGISTRY_IMAGE:ubuntu-focal-amd64"
   <<: *linux_amd64
 
 # Base image
@@ -141,6 +124,20 @@ stages:
 
 .base: &base_image
   <<: *debian_buster_amd64_image
+
+### QCOW2 Image Templates
+
+.freebsd-11-amd64: &freebsd_11_amd64_image
+  image: "freebsd-11.4-x86_64"
+  <<: *libvirt_amd64
+
+.freebsd-12-amd64: &freebsd_12_amd64_image
+  image: "freebsd-12.1-x86_64"
+  <<: *libvirt_amd64
+
+.openbsd-amd64: &openbsd_amd64_image
+  image: "openbsd-6.7-x86_64"
+  <<: *libvirt_amd64
 
 ### Job Templates
 
@@ -157,7 +154,7 @@ stages:
     - tags
     - web
     - schedules
-    - master@isc-projects/bind9
+    - main@isc-projects/bind9
     - /^v9_[1-9][0-9]$/@isc-projects/bind9
 
 .precheck: &precheck_job
@@ -503,33 +500,33 @@ push:docs:
     - job: docs
       artifacts: false
   script:
-    - curl -X POST -F token=$GITLAB_PAGES_DOCS_TRIGGER_TOKEN -F ref=master $GITLAB_PAGES_DOCS_TRIGGER_URL
+    - curl -X POST -F token=$GITLAB_PAGES_DOCS_TRIGGER_TOKEN -F ref=main $GITLAB_PAGES_DOCS_TRIGGER_URL
   only:
-    - master@isc-projects/bind9
+    - main@isc-projects/bind9
     - /^v9_[1-9][0-9]$/@isc-projects/bind9
 
-# Jobs for regular GCC builds on Alpine Linux 3.11 (amd64)
+# Jobs for regular GCC builds on Alpine Linux 3.12 (amd64)
 
-gcc:alpine3.11:amd64:
+gcc:alpine3.12:amd64:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON}"
     EXTRA_CONFIGURE: "--enable-dnstap"
-  <<: *alpine_3_11_amd64_image
+  <<: *alpine_3_12_amd64_image
   <<: *build_job
 
-system:gcc:alpine3.11:amd64:
-  <<: *alpine_3_11_amd64_image
+system:gcc:alpine3.12:amd64:
+  <<: *alpine_3_12_amd64_image
   <<: *system_test_job
   needs:
-    - job: gcc:alpine3.11:amd64
+    - job: gcc:alpine3.12:amd64
       artifacts: true
 
-unit:gcc:alpine3.11:amd64:
-  <<: *alpine_3_11_amd64_image
+unit:gcc:alpine3.12:amd64:
+  <<: *alpine_3_12_amd64_image
   <<: *unit_test_job
   needs:
-    - job: gcc:alpine3.11:amd64
+    - job: gcc:alpine3.12:amd64
       artifacts: true
 
 # Jobs for regular GCC builds on CentOS 6 (amd64)
@@ -767,30 +764,6 @@ unit:gcc:tarball:
   only:
     - tags
 
-# Jobs for regular GCC builds on Debian Sid (arm64)
-
-gcc:sid:arm64:
-  variables:
-    CC: gcc
-    CFLAGS: "${CFLAGS_COMMON} -Og"
-    EXTRA_CONFIGURE: "--with-libidn2"
-  <<: *debian_sid_arm64_image
-  <<: *build_job
-
-system:gcc:sid:arm64:
-  <<: *debian_sid_arm64_image
-  <<: *system_test_job
-  needs:
-    - job: gcc:sid:arm64
-      artifacts: true
-
-unit:gcc:sid:arm64:
-  <<: *debian_sid_arm64_image
-  <<: *unit_test_job
-  needs:
-    - job: gcc:sid:arm64
-      artifacts: true
-
 # Jobs for regular GCC builds on Debian Sid (i386)
 
 gcc:sid:i386:
@@ -821,7 +794,7 @@ gcc:tumbleweed:amd64:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON}"
-    EXTRA_CONFIGURE: "--with-libidn2"
+    EXTRA_CONFIGURE: "--with-libidn2 --with-gssapi=/usr/lib/mit/bin/krb5-config"
   <<: *tumbleweed_latest_amd64_image
   <<: *build_job
 
@@ -839,28 +812,28 @@ unit:gcc:tumbleweed:amd64:
     - job: gcc:tumbleweed:amd64
       artifacts: true
 
-# Jobs for regular GCC builds on Fedora 31 (amd64)
+# Jobs for regular GCC builds on Fedora 32 (amd64)
 
-gcc:fedora31:amd64:
+gcc:fedora32:amd64:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -O1"
     EXTRA_CONFIGURE: "--with-libidn2"
-  <<: *fedora_31_amd64_image
+  <<: *fedora_32_amd64_image
   <<: *build_job
 
-system:gcc:fedora31:amd64:
-  <<: *fedora_31_amd64_image
+system:gcc:fedora32:amd64:
+  <<: *fedora_32_amd64_image
   <<: *system_test_job
   needs:
-    - job: gcc:fedora31:amd64
+    - job: gcc:fedora32:amd64
       artifacts: true
 
-unit:gcc:fedora31:amd64:
-  <<: *fedora_31_amd64_image
+unit:gcc:fedora32:amd64:
+  <<: *fedora_32_amd64_image
   <<: *unit_test_job
   needs:
-    - job: gcc:fedora31:amd64
+    - job: gcc:fedora32:amd64
       artifacts: true
 
 # Jobs for regular GCC builds on Ubuntu 16.04 Xenial Xerus (amd64)
@@ -887,28 +860,28 @@ unit:gcc:xenial:amd64:
     - job: gcc:xenial:amd64
       artifacts: true
 
-# Jobs for regular GCC builds on Ubuntu 18.04 Bionic Beaver (amd64)
+# Jobs for regular GCC builds on Ubuntu 20.04 Focal Fossa (amd64)
 
-gcc:bionic:amd64:
+gcc:focal:amd64:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -Og"
     EXTRA_CONFIGURE: "--with-libidn2"
-  <<: *ubuntu_bionic_amd64_image
+  <<: *ubuntu_focal_amd64_image
   <<: *build_job
 
-system:gcc:bionic:amd64:
-  <<: *ubuntu_bionic_amd64_image
+system:gcc:focal:amd64:
+  <<: *ubuntu_focal_amd64_image
   <<: *system_test_job
   needs:
-    - job: gcc:bionic:amd64
+    - job: gcc:focal:amd64
       artifacts: true
 
-unit:gcc:bionic:amd64:
-  <<: *ubuntu_bionic_amd64_image
+unit:gcc:focal:amd64:
+  <<: *ubuntu_focal_amd64_image
   <<: *unit_test_job
   needs:
-    - job: gcc:bionic:amd64
+    - job: gcc:focal:amd64
       artifacts: true
 
 # Jobs for builds with ASAN enabled
@@ -1094,75 +1067,75 @@ unit:gcc:pkcs11:
     - job: gcc:pkcs11
       artifacts: true
 
-# Jobs for Clang builds on FreeBSD 11.3 (amd64)
+# Jobs for Clang builds on FreeBSD 11 (amd64)
 
-clang:freebsd11.3:amd64:
+clang:freebsd11:amd64:
   variables:
     CFLAGS: "${CFLAGS_COMMON}"
     USER: gitlab-runner
-  <<: *freebsd_amd64
+  <<: *freebsd_11_amd64_image
   <<: *build_job
 
-system:clang:freebsd11.3:amd64:
-  <<: *freebsd_amd64
+system:clang:freebsd11:amd64:
+  <<: *freebsd_11_amd64_image
   <<: *system_test_job
   variables:
     USER: gitlab-runner
     TEST_PARALLEL_JOBS: 4
   needs:
-    - job: clang:freebsd11.3:amd64
+    - job: clang:freebsd11:amd64
       artifacts: true
 
-unit:clang:freebsd11.3:amd64:
-  <<: *freebsd_amd64
+unit:clang:freebsd11:amd64:
+  <<: *freebsd_11_amd64_image
   <<: *unit_test_job
   needs:
-    - job: clang:freebsd11.3:amd64
+    - job: clang:freebsd11:amd64
       artifacts: true
 
-# Jobs for Clang builds on FreeBSD 12.1 (amd64)
+# Jobs for Clang builds on FreeBSD 12 (amd64)
 
-clang:freebsd12.1:amd64:
+clang:freebsd12:amd64:
   variables:
     CFLAGS: "${CFLAGS_COMMON}"
     EXTRA_CONFIGURE: "--enable-dnstap"
     USER: gitlab-runner
-  <<: *freebsd_amd64
+  <<: *freebsd_12_amd64_image
   <<: *build_job
 
-system:clang:freebsd12.1:amd64:
-  <<: *freebsd_amd64
+system:clang:freebsd12:amd64:
+  <<: *freebsd_12_amd64_image
   <<: *system_test_job
   variables:
     USER: gitlab-runner
     TEST_PARALLEL_JOBS: 4
   needs:
-    - job: clang:freebsd12.1:amd64
+    - job: clang:freebsd12:amd64
       artifacts: true
 
-unit:clang:freebsd12.1:amd64:
-  <<: *freebsd_amd64
+unit:clang:freebsd12:amd64:
+  <<: *freebsd_12_amd64_image
   <<: *unit_test_job
   needs:
-    - job: clang:freebsd12.1:amd64
+    - job: clang:freebsd12:amd64
       artifacts: true
 
-# Jobs for Clang builds on OpenBSD 6.6 (amd64)
+# Jobs for Clang builds on OpenBSD (amd64)
 
-clang:openbsd6.6:amd64:
+clang:openbsd:amd64:
   variables:
     CC: clang
     USER: gitlab-runner
-  <<: *openbsd_amd64
+  <<: *openbsd_amd64_image
   <<: *build_job
 
-system:clang:openbsd6.6:amd64:
-  <<: *openbsd_amd64
+system:clang:openbsd:amd64:
+  <<: *openbsd_amd64_image
   <<: *system_test_job
   variables:
     USER: gitlab-runner
   needs:
-    - job: clang:openbsd6.6:amd64
+    - job: clang:openbsd:amd64
       artifacts: true
   only:
     - schedules
@@ -1371,7 +1344,7 @@ abi-check:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -Og"
-    BIND_BASELINE_VERSION: v9_11_19
+    BIND_BASELINE_VERSION: v9_11_21
   script:
     - *configure
     - make -j${BUILD_PARALLEL_JOBS:-1} V=1
@@ -1388,5 +1361,5 @@ abi-check:
       - "abi-*.dump"
     expire_in: "1 week"
   only:
-    - master@isc-projects/bind9
+    - main@isc-projects/bind9
     - /^v9_[1-9][0-9]$/@isc-projects/bind9
