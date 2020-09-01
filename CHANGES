@@ -1,3 +1,5 @@
+5500.	[bug]		Fake entry.
+
 5494.	[bug]		Silence the EPROTO syslog message on older systems.
 			[GL #1928]
 
