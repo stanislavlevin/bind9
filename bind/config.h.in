@@ -4,7 +4,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -530,6 +530,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* define if the compiler supports _Unwind_Backtrace() */
+#undef HAVE_UNWIND_BACKTRACE
 
 /* Define to 1 if you have the `usleep' function. */
 #undef HAVE_USLEEP

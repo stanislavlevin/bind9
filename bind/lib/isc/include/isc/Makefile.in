@@ -2,7 +2,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -19,7 +19,7 @@ VERSION=@BIND9_VERSION@
 # install target below.
 #
 HEADERS =	aes.h app.h assertions.h boolean.h backtrace.h base32.h base64.h \
-		bind9.h buffer.h bufferlist.h commandline.h \
+		bind9.h buffer.h bufferlist.h cmocka.h commandline.h \
 		counter.h crc64.h deprecated.h entropy.h errno.h \
 		endian.h error.h event.h eventclass.h file.h formatcheck.h \
 		fsaccess.h hash.h heap.h hex.h hmacmd5.h hmacsha.h \

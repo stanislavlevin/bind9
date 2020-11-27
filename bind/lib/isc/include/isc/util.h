@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -220,6 +220,17 @@
 #if __has_feature(address_sanitizer)
 #define __SANITIZE_ADDRESS__ 1
 #endif
+
+/* GCC defines __SANITIZE_THREAD__, so reuse the macro for clang */
+#if __has_feature(thread_sanitizer)
+#define __SANITIZE_THREAD__ 1
+#endif
+
+#if __SANITIZE_THREAD__
+#define ISC_NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
+#else /* if __SANITIZE_THREAD__ */
+#define ISC_NO_SANITIZE_THREAD
+#endif /* if __SANITIZE_THREAD__ */
 
 #ifdef UNIT_TESTING
 extern void mock_assert(const int result, const char* const expression,

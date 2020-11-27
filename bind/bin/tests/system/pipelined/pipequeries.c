@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -117,8 +117,8 @@ recvresponse(isc_task_t *task, isc_event_t *event) {
 	       (char *)isc_buffer_base(&outbuf));
 	fflush(stdout);
 
-	dns_message_destroy(&query);
-	dns_message_destroy(&response);
+	dns_message_detach(&query);
+	dns_message_detach(&response);
 	dns_request_destroy(&reqev->request);
 	isc_event_free(&event);
 

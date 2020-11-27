@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -1747,7 +1747,8 @@ inet_totext(int af, uint32_t flags, isc_region_t *src, isc_buffer_t *target) {
 			if (isc_buffer_availablelength(target) == 0) {
 				return (ISC_R_NOSPACE);
 			}
-			isc_buffer_putmem(target, "0", 1);
+			isc_buffer_putmem(target, (const unsigned char *)"0",
+					  1);
 		}
 	}
 

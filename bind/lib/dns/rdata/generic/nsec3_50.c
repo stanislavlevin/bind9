@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -203,8 +203,9 @@ fromwire_nsec3(ARGS_FROMWIRE) {
 	hashlen = sr.base[0];
 	isc_region_consume(&sr, 1);
 
-	if (sr.length < hashlen)
+	if (hashlen < 1 || sr.length < hashlen) {
 		RETERR(DNS_R_FORMERR);
+	}
 	isc_region_consume(&sr, hashlen);
 
 	RETERR(typemap_test(&sr, true));

@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -56,6 +56,7 @@ totext_x25(ARGS_TOTEXT) {
 static inline isc_result_t
 fromwire_x25(ARGS_FROMWIRE) {
 	isc_region_t sr;
+	unsigned int i;
 
 	REQUIRE(type == dns_rdatatype_x25);
 
@@ -65,8 +66,14 @@ fromwire_x25(ARGS_FROMWIRE) {
 	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
-	if (sr.length < 5)
+	if (sr.length < 5 || sr.base[0] != (sr.length - 1)) {
 		return (DNS_R_FORMERR);
+	}
+	for (i = 1; i < sr.length; i++) {
+		if (sr.base[i] < 0x30 || sr.base[i] > 0x39) {
+			return (DNS_R_FORMERR);
+		}
+	}
 	return (txt_fromwire(source, target));
 }
 

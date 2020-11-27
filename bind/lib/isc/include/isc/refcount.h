@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -123,7 +123,7 @@ typedef struct isc_refcount {
 
 #define isc_refcount_current(rp)					\
 	((unsigned int)(atomic_load_explicit(&(rp)->refs,		\
-					     memory_order_relaxed)))
+					     memory_order_acquire)))
 #define isc_refcount_destroy(rp) ISC_REQUIRE(isc_refcount_current(rp) == 0)
 
 #define isc_refcount_increment0(rp, tp)				\
@@ -152,7 +152,7 @@ typedef struct isc_refcount {
 		unsigned int *_tmp = (unsigned int *)(tp);	\
 		int32_t prev;				\
 		prev = atomic_fetch_sub_explicit		\
-			(&(rp)->refs, 1, memory_order_relaxed); \
+			(&(rp)->refs, 1, memory_order_acq_rel); \
 		ISC_REQUIRE(prev > 0);				\
 		if (_tmp != NULL)				\
 			*_tmp = prev - 1;			\

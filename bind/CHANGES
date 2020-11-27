@@ -1,3 +1,53 @@
+	--- 9.11.25 released ---
+
+5527.	[bug]		A NULL pointer dereference occurred when creating an NTA
+			recheck query failed. [GL #2244]
+
+5523.	[bug]		The initial lookup in a zone transitioning to/from a
+			signed state could fail if the DNSKEY RRset was not
+			found. [GL #2236]
+
+5518.	[bug]		Stub zones now work correctly with primary servers using
+			"minimal-responses yes". [GL #1736]
+
+	--- 9.11.24 released ---
+
+5516.	[func]		The default EDNS buffer size has been changed from 4096
+			to 1232 bytes. [GL #2183]
+
+5513.	[doc]		The ARM section describing the "rrset-order" statement
+			was rewritten to make it unambiguous and up-to-date with
+			the source code. [GL #2139]
+
+5510.	[bug]		Implement the attach/detach semantics for dns_message_t
+			to fix a data race in accessing an already-destroyed
+			fctx->rmessage. [GL #2124]
+
+5506.	[bug]		Properly handle failed sysconf() calls, so we don't
+			report invalid memory size. [GL #2166]
+
+	--- 9.11.23 released ---
+
+5497.	[bug]		'dig +bufsize=0' failed to disable EDNS. [GL #2054]
+
+5496.	[bug]		Address a TSAN report by ensuring each rate limiter
+			object holds a reference to its task. [GL #2081]
+
+5492.	[bug]		Tighten LOC parsing to reject a period (".") and/or "m"
+			as a value. Fix handling of negative altitudes which are
+			not whole meters. [GL #2074]
+
+5489.	[bug]		Named erroneously accepted certain invalid resource
+			records that were incorrectly processed after
+			subsequently being written to disk and loaded back, as
+			the wire format differed. Such records include: CERT,
+			IPSECKEY, NSEC3, NSEC3PARAM, NXT, SIG, TLSA, WKS, and
+			X25. [GL !3953]
+
+5488.	[bug]		NTA code needed to have a weak reference on its
+			associated view to prevent the latter from being deleted
+			while NTA tests were being performed. [GL #2067]
+
 	--- 9.11.22 released ---
 
 5481.	[security]	"update-policy" rules of type "subdomain" were

@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -77,9 +77,15 @@ isc_counter_increment(isc_counter_t *counter) {
 
 unsigned int
 isc_counter_used(isc_counter_t *counter) {
+	unsigned int used;
+
 	REQUIRE(VALID_COUNTER(counter));
 
-	return (counter->used);
+	LOCK(&counter->lock);
+	used = counter->used;
+	UNLOCK(&counter->lock);
+
+	return (used);
 }
 
 void

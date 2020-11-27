@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -18,6 +18,6 @@ if $KEYGEN -q -a RSAMD5 -b 512 -n zone -r $RANDFILE foo > /dev/null 2>&1
 then
     rm -f Kfoo*
 else
-    echo "I:This test requires that --with-openssl was used." >&2
+    echo_i "This test requires that --with-openssl was used." >&2
     exit 255
 fi

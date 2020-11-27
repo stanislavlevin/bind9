@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -24,7 +24,7 @@ do
 	echo 10.0.0.1 | $DIFF - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
-		echo "#$i failed"
+		echo_i "#$i failed"
 	fi
 	status=`expr $status + $ret`
 done
@@ -37,7 +37,7 @@ do
 	echo '"hello"' | $DIFF - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
-		echo "#$i failed"
+		echo_i "#$i failed"
 	fi
 	status=`expr $status + $ret`
 done
@@ -50,7 +50,7 @@ do
 	echo '\# 1 00' | $DIFF - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
-		echo "#$i failed"
+		echo_i "#$i failed"
 	fi
 	status=`expr $status + $ret`
 done
@@ -77,7 +77,7 @@ do
 	echo '\# 4 0A000001' | $DIFF - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
-		echo "#$i failed"
+		echo_i "#$i failed"
 	fi
 	status=`expr $status + $ret`
 done
@@ -90,7 +90,7 @@ do
 	echo '"hello"' | $DIFF - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
-		echo "#$i failed"
+		echo_i "#$i failed"
 	fi
 	status=`expr $status + $ret`
 done
@@ -103,7 +103,7 @@ do
 	echo '\# 1 00' | $DIFF - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
-		echo "#$i failed"
+		echo_i "#$i failed"
 	fi
 	status=`expr $status + $ret`
 done
@@ -116,7 +116,7 @@ do
 	grep "SERVFAIL" dig.out > /dev/null || ret=1
 	if [ $ret != 0 ]
 	then
-		echo "#$i failed"
+		echo_i "#$i failed"
 	fi
 	status=`expr $status + $ret`
 done

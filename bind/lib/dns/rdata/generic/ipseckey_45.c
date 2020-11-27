@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -217,18 +217,23 @@ fromwire_ipseckey(ARGS_FROMWIRE) {
 
 	switch (region.base[1]) {
 	case 0:
+		if (region.length < 4) {
+			return (ISC_R_UNEXPECTEDEND);
+		}
 		isc_buffer_forward(source, region.length);
 		return (mem_tobuffer(target, region.base, region.length));
 
 	case 1:
-		if (region.length < 7)
+		if (region.length < 8) {
 			return (ISC_R_UNEXPECTEDEND);
+		}
 		isc_buffer_forward(source, region.length);
 		return (mem_tobuffer(target, region.base, region.length));
 
 	case 2:
-		if (region.length < 19)
+		if (region.length < 20) {
 			return (ISC_R_UNEXPECTEDEND);
+		}
 		isc_buffer_forward(source, region.length);
 		return (mem_tobuffer(target, region.base, region.length));
 
@@ -238,7 +243,10 @@ fromwire_ipseckey(ARGS_FROMWIRE) {
 		RETERR(dns_name_fromwire(&name, source, dctx, options, target));
 		isc_buffer_activeregion(source, &region);
 		isc_buffer_forward(source, region.length);
-		return(mem_tobuffer(target, region.base, region.length));
+		if (region.length < 1) {
+			return (ISC_R_UNEXPECTEDEND);
+		}
+		return (mem_tobuffer(target, region.base, region.length));
 
 	default:
 		return (ISC_R_NOTIMPLEMENTED);

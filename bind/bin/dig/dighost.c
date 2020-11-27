@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -846,7 +846,7 @@ make_empty_lookup(void) {
 	looknew->rdclass_sigchaseset = false;
 #endif
 #endif
-	looknew->udpsize = 0;
+	looknew->udpsize = -1;
 	looknew->edns = -1;
 	looknew->recurse = true;
 	looknew->aaonly = false;
@@ -1907,7 +1907,7 @@ destroy_lookup(dig_lookup_t *lookup) {
 		isc_mem_free(mctx, ptr);
 	}
 	if (lookup->sendmsg != NULL)
-		dns_message_destroy(&lookup->sendmsg);
+		dns_message_detach(&lookup->sendmsg);
 	if (lookup->querysig != NULL) {
 		debug("freeing buffer %p", lookup->querysig);
 		isc_buffer_free(&lookup->querysig);
@@ -2641,10 +2641,12 @@ setup_lookup(dig_lookup_t *lookup) {
 		unsigned int flags;
 		unsigned int i = 0;
 
-		if (lookup->udpsize == 0)
-			lookup->udpsize = 4096;
-		if (lookup->edns < 0)
-			lookup->edns = 0;
+		if (lookup->udpsize < 0) {
+			lookup->udpsize = DEFAULT_EDNS_BUFSIZE;
+		}
+		if (lookup->edns < 0) {
+			lookup->edns = DEFAULT_EDNS_VERSION;
+		}
 
 		if (lookup->nsid) {
 			INSIST(i < MAXOPTS);
@@ -4011,7 +4013,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		printf(";; Got bad packet: %s\n", isc_result_totext(result));
 		hex_dump(b);
 		query->waiting_connect = false;
-		dns_message_destroy(&msg);
+		dns_message_detach(&msg);
 		isc_event_free(&event);
 		clear_query(query);
 		cancel_lookup(l);
@@ -4034,7 +4036,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		printf(";; Warning: Opcode mismatch: expected %s, got %s",
 		       expect, got);
 
-		dns_message_destroy(&msg);
+		dns_message_detach(&msg);
 		if (l->tcp_mode) {
 			isc_event_free(&event);
 			clear_query(query);
@@ -4081,7 +4083,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			}
 		}
 		if (!match) {
-			dns_message_destroy(&msg);
+			dns_message_detach(&msg);
 			if (l->tcp_mode) {
 				isc_event_free(&event);
 				clear_query(query);
@@ -4105,7 +4107,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		n = requeue_lookup(l, true);
 		if (l->trace && l->trace_root)
 			n->rdtype = l->qrdtype;
-		dns_message_destroy(&msg);
+		dns_message_detach(&msg);
 		isc_event_free(&event);
 		clear_query(query);
 		cancel_lookup(l);
@@ -4123,7 +4125,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		n->tcp_mode = true;
 		if (l->trace && l->trace_root)
 			n->rdtype = l->qrdtype;
-		dns_message_destroy(&msg);
+		dns_message_detach(&msg);
 		isc_event_free(&event);
 		clear_query(query);
 		cancel_lookup(l);
@@ -4144,7 +4146,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			n->seenbadcookie = true;
 			if (l->trace && l->trace_root)
 				n->rdtype = l->qrdtype;
-			dns_message_destroy(&msg);
+			dns_message_detach(&msg);
 			isc_event_free(&event);
 			clear_query(query);
 			cancel_lookup(l);
@@ -4183,7 +4185,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 				       query->servname);
 			clear_query(query);
 			check_next_lookup(l);
-			dns_message_destroy(&msg);
+			dns_message_detach(&msg);
 			isc_event_free(&event);
 			UNLOCK_LOOKUP;
 			return;
@@ -4358,7 +4360,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		debug("still pending.");
 	if (l->doing_xfr) {
 		if (query != l->xfr_q) {
-			dns_message_destroy(&msg);
+			dns_message_detach(&msg);
 			isc_event_free(&event);
 			query->waiting_connect = false;
 			UNLOCK_LOOKUP;
@@ -4367,7 +4369,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		if (!docancel)
 			docancel = check_for_more_data(query, msg, sevent);
 		if (docancel) {
-			dns_message_destroy(&msg);
+			dns_message_detach(&msg);
 			clear_query(query);
 			cancel_lookup(l);
 			check_next_lookup(l);
@@ -4389,7 +4391,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 #ifdef DIG_SIGCHASE
 			if (!do_sigchase)
 #endif
-				dns_message_destroy(&msg);
+				dns_message_detach(&msg);
 
 			cancel_lookup(l);
 		}
@@ -4402,7 +4404,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			msg = NULL;
 		else
 #endif
-			dns_message_destroy(&msg);
+			dns_message_detach(&msg);
 	}
 	isc_event_free(&event);
 	UNLOCK_LOOKUP;
@@ -4656,7 +4658,7 @@ destroy_libs(void) {
 
 	while (chase_msg != NULL) {
 		INSIST(chase_msg->msg != NULL);
-		dns_message_destroy(&(chase_msg->msg));
+		dns_message_detach(&(chase_msg->msg));
 		ptr = chase_msg;
 		chase_msg = ISC_LIST_NEXT(chase_msg, link);
 		isc_mem_free(mctx, ptr);
@@ -4666,7 +4668,7 @@ destroy_libs(void) {
 
 	while (chase_msg != NULL) {
 		INSIST(chase_msg->msg != NULL);
-		dns_message_destroy(&(chase_msg->msg));
+		dns_message_detach(&(chase_msg->msg));
 		ptr = chase_msg;
 		chase_msg = ISC_LIST_NEXT(chase_msg, link);
 		isc_mem_free(mctx, ptr);

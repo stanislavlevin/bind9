@@ -4,7 +4,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -681,6 +681,34 @@ $DIG $DIGOPTS +tcp @10.53.0.1 zonesub.example.nil TXT > dig.out.2.test$n || ret=
 grep "status: REFUSED" nsupdate.out2-$n > /dev/null && ret=1
 grep "ANSWER: 1," dig.out.2.test$n > /dev/null || ret=1
 grep "TXT.*everywhere" dig.out.2.test$n > /dev/null || ret=1
+[ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+n=`expr $n + 1`
+ret=0
+echo_i "check 'grant' in deny name + grant subdomain ($n)"
+$NSUPDATE << EOF > nsupdate.out-$n 2>&1 || ret=1
+key hmac-sha256:subkey 1234abcd8765
+server 10.53.0.9 ${PORT}
+zone denyname.example
+update add foo.denyname.example 3600 IN TXT added
+send
+EOF
+$DIG $DIGOPTS +tcp @10.53.0.9 foo.denyname.example TXT > dig.out.ns9.test$n
+grep "added" dig.out.ns9.test$n > /dev/null || ret=1
+[ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+n=`expr $n + 1`
+ret=0
+echo_i "check 'deny' in deny name + grant subdomain ($n)"
+$NSUPDATE << EOF > nsupdate.out-$n 2>&1 && ret=1
+key hmac-sha256:subkey 1234abcd8765
+server 10.53.0.9 ${PORT}
+zone denyname.example
+update add denyname.example 3600 IN TXT added
+send
+EOF
+$DIG $DIGOPTS +tcp @10.53.0.9 denyname.example TXT > dig.out.ns9.test$n
+grep "added" dig.out.ns9.test$n > /dev/null && ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
 
 n=`expr $n + 1`

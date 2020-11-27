@@ -30,11 +30,14 @@ variables:
   TARBALL_COMPRESSOR: gzip
   TARBALL_EXTENSION: gz
 
+  BIND_INSTALL_PATH: "${CI_PROJECT_DIR}/.local"
+
 stages:
   - precheck
   - build
   - unit
   - system
+  - performance
   - docs
   - push
   - postcheck
@@ -56,6 +59,32 @@ stages:
   tags:
     - linux
     - i386
+
+.linux-stress-amd64: &linux_stress_amd64
+  tags:
+    - amd64
+    - aws
+    - linux-stress
+    - stress
+
+.linux-stress-arm64: &linux_stress_arm64
+  tags:
+    - aarch64
+    - aws
+    - linux-stress
+    - stress
+
+.freebsd-stress-amd64: &freebsd_stress_amd64
+  tags:
+    - amd64
+    - aws
+    - bsd-stress
+    - stress
+
+.windows-amd64: &windows_amd64
+  tags:
+    - windows
+    - amd64
 
 ### Docker Image Templates
 
@@ -105,9 +134,13 @@ stages:
 
 # Fedora
 
-.fedora-32-amd64: &fedora_32_amd64_image
-  image: "$CI_REGISTRY_IMAGE:fedora-32-amd64"
+.fedora-33-amd64: &fedora_33_amd64_image
+  image: "$CI_REGISTRY_IMAGE:fedora-33-amd64"
   <<: *linux_amd64
+
+.fedora-33-arm64: &fedora_33_arm64_image
+  image: "$CI_REGISTRY_IMAGE:fedora-33-arm64"
+  <<: *linux_stress_arm64
 
 # Ubuntu
 
@@ -118,6 +151,12 @@ stages:
 .ubuntu-focal-amd64: &ubuntu_focal_amd64_image
   image: "$CI_REGISTRY_IMAGE:ubuntu-focal-amd64"
   <<: *linux_amd64
+
+# Windows
+
+.windows-server-2016-amd64: &windows_server_2016_amd64_image
+  image: "$CI_REGISTRY_IMAGE:windows-server-2016-amd64"
+  <<: *windows_amd64
 
 # Base image
 # This is a meta image that is used as a base for non-specific jobs
@@ -132,11 +171,11 @@ stages:
   <<: *libvirt_amd64
 
 .freebsd-12-amd64: &freebsd_12_amd64_image
-  image: "freebsd-12.1-x86_64"
+  image: "freebsd-12.2-x86_64"
   <<: *libvirt_amd64
 
 .openbsd-amd64: &openbsd_amd64_image
-  image: "openbsd-6.7-x86_64"
+  image: "openbsd-6.8-x86_64"
   <<: *libvirt_amd64
 
 ### Job Templates
@@ -182,7 +221,7 @@ stages:
     --with-cmocka \
     --with-libxml2 \
     --with-libjson \
-    --prefix=$HOME/.local \
+    --prefix="${BIND_INSTALL_PATH}" \
     --without-make-clean \
     $EXTRA_CONFIGURE \
     || cat config.log
@@ -195,7 +234,8 @@ stages:
     - test -n "${OOT_BUILD_WORKSPACE}" && mkdir "${OOT_BUILD_WORKSPACE}" && cd "${OOT_BUILD_WORKSPACE}"
   script:
     - *configure
-    - make depend | grep "error:" && exit 1
+    - test -n "${SKIP_MAKE_DEPEND}" || make -j${BUILD_PARALLEL_JOBS:-1} depend 2>&1 | tee make-depend.log
+    - test -n "${SKIP_MAKE_DEPEND}" || ( ! grep -F "error:" make-depend.log )
     - make -j${BUILD_PARALLEL_JOBS:-1} -k all V=1
     - test -z "${RUN_MAKE_INSTALL}" || make install
     - test -z "${RUN_MAKE_INSTALL}" || sh util/check-make-install
@@ -208,9 +248,6 @@ stages:
 
 .windows_build: &windows_build_job
   stage: build
-  tags:
-    - windows
-    - amd64
   script:
     - 'Push-Location "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build"'
     - '& cmd.exe /C "vcvarsall.bat x64 & set" | Foreach-Object { if ($_ -match "(.*?)=(.*)") { Set-Item -force -path "Env:\$($matches[1])" -value "$($matches[2])" } }'
@@ -261,6 +298,13 @@ stages:
     expire_in: "1 day"
     when: on_failure
 
+.system_test_gcov: &system_test_gcov_job
+  <<: *system_test_common
+  artifacts:
+    untracked: true
+    expire_in: "1 day"
+    when: always
+
 .system_test_tsan: &system_test_tsan_job
   <<: *system_test_common
   allow_failure: true
@@ -268,10 +312,7 @@ stages:
     - find bin -name 'tsan.*' -exec python3 util/parse_tsan.py {} \;
   artifacts:
     expire_in: "1 day"
-    paths:
-      - bin/tests/system/*/tsan.*
-      - bin/tests/system/*/*/tsan.*
-      - tsan/
+    untracked: true
     when: on_failure
 
 .kyua_report: &kyua_report_html |
@@ -283,9 +324,6 @@ stages:
 
 .windows_system_test: &windows_system_test_job
   stage: system
-  tags:
-    - windows
-    - amd64
   script:
     - 'Push-Location bin/tests/system'
     - '$ifIndex = Get-NetIPInterface -AddressFamily IPv4 -InterfaceMetric 75 | Select-Object -ExpandProperty ifIndex'
@@ -322,9 +360,15 @@ stages:
     expire_in: "1 day"
     when: on_failure
 
+.unit_test_gcov: &unit_test_gcov_job
+  <<: *unit_test_common
+  artifacts:
+    untracked: true
+    expire_in: "1 day"
+    when: always
+
 .unit_test_tsan: &unit_test_tsan_job
   <<: *unit_test_common
-  allow_failure: true
   after_script:
     - *kyua_report_html
     - find lib -name 'tsan.*' -exec python3 util/parse_tsan.py {} \;
@@ -473,6 +517,7 @@ tarball-create:
     paths:
       - bind-*.tar.${TARBALL_EXTENSION}
   only:
+    - schedules
     - tags
 
 # Jobs for doc builds on Debian Sid (amd64)
@@ -583,7 +628,7 @@ gcc:centos8:amd64:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON}"
-    EXTRA_CONFIGURE: "--with-libidn2"
+    EXTRA_CONFIGURE: "--enable-buffer-useinline --with-libidn2"
   <<: *centos_centos8_amd64_image
   <<: *build_job
 
@@ -629,20 +674,22 @@ unit:gcc:stretch:amd64:
 gcc:buster:amd64:
   variables:
     CC: gcc
-    CFLAGS: "${CFLAGS_COMMON}"
+    CFLAGS: "${CFLAGS_COMMON} --coverage -O0"
+    LDFLAGS: "--coverage"
+    EXTRA_CONFIGURE: "--enable-dnstap --with-libidn2"
   <<: *debian_buster_amd64_image
   <<: *build_job
 
 system:gcc:buster:amd64:
   <<: *debian_buster_amd64_image
-  <<: *system_test_job
+  <<: *system_test_gcov_job
   needs:
-    - job: gcc:buster:amd64
+    - job: unit:gcc:buster:amd64
       artifacts: true
 
 unit:gcc:buster:amd64:
   <<: *debian_buster_amd64_image
-  <<: *unit_test_job
+  <<: *unit_test_gcov_job
   needs:
     - job: gcc:buster:amd64
       artifacts: true
@@ -717,6 +764,7 @@ gcc:out-of-tree:
     CFLAGS: "${CFLAGS_COMMON} -Og"
     CONFIGURE: ../configure
     EXTRA_CONFIGURE: "--enable-dnstap --with-libidn2 --with-lmdb"
+    SKIP_MAKE_DEPEND: 1
     RUN_MAKE_INSTALL: 1
     OOT_BUILD_WORKSPACE: workspace
   <<: *base_image
@@ -739,6 +787,7 @@ gcc:tarball:
     - job: tarball-create
       artifacts: true
   only:
+    - schedules
     - tags
 
 system:gcc:tarball:
@@ -751,6 +800,7 @@ system:gcc:tarball:
     - job: gcc:tarball
       artifacts: true
   only:
+    - schedules
     - tags
 
 unit:gcc:tarball:
@@ -762,6 +812,7 @@ unit:gcc:tarball:
     - job: gcc:tarball
       artifacts: true
   only:
+    - schedules
     - tags
 
 # Jobs for regular GCC builds on Debian Sid (i386)
@@ -788,13 +839,13 @@ unit:gcc:sid:i386:
     - job: gcc:sid:i386
       artifacts: true
 
-# Jobs for regular GCC builds on openSUSE Tumbleweed (amd64)
+# Jobs for debug GCC builds on openSUSE Tumbleweed (amd64)
 
 gcc:tumbleweed:amd64:
   variables:
     CC: gcc
-    CFLAGS: "${CFLAGS_COMMON}"
-    EXTRA_CONFIGURE: "--with-libidn2 --with-gssapi=/usr/lib/mit/bin/krb5-config"
+    CFLAGS: "${CFLAGS_COMMON} -DDEBUG"
+    EXTRA_CONFIGURE: "--with-libidn2"
   <<: *tumbleweed_latest_amd64_image
   <<: *build_job
 
@@ -812,28 +863,28 @@ unit:gcc:tumbleweed:amd64:
     - job: gcc:tumbleweed:amd64
       artifacts: true
 
-# Jobs for regular GCC builds on Fedora 32 (amd64)
+# Jobs for regular GCC builds on Fedora 33 (amd64)
 
-gcc:fedora32:amd64:
+gcc:fedora33:amd64:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -O1"
     EXTRA_CONFIGURE: "--with-libidn2"
-  <<: *fedora_32_amd64_image
+  <<: *fedora_33_amd64_image
   <<: *build_job
 
-system:gcc:fedora32:amd64:
-  <<: *fedora_32_amd64_image
+system:gcc:fedora33:amd64:
+  <<: *fedora_33_amd64_image
   <<: *system_test_job
   needs:
-    - job: gcc:fedora32:amd64
+    - job: gcc:fedora33:amd64
       artifacts: true
 
-unit:gcc:fedora32:amd64:
-  <<: *fedora_32_amd64_image
+unit:gcc:fedora33:amd64:
+  <<: *fedora_33_amd64_image
   <<: *unit_test_job
   needs:
-    - job: gcc:fedora32:amd64
+    - job: gcc:fedora33:amd64
       artifacts: true
 
 # Jobs for regular GCC builds on Ubuntu 16.04 Xenial Xerus (amd64)
@@ -1019,6 +1070,29 @@ unit:gcc:mutexatomics:
     - job: gcc:mutexatomics
       artifacts: true
 
+# Jobs for builds without atomics
+
+gcc:noatomics:
+  variables:
+    CC: gcc
+    EXTRA_CONFIGURE: "--disable-atomic"
+  <<: *base_image
+  <<: *build_job
+
+system:gcc:noatomics:
+  <<: *base_image
+  <<: *system_test_job
+  needs:
+    - job: gcc:noatomics
+      artifacts: true
+
+unit:gcc:noatomics:
+  <<: *base_image
+  <<: *unit_test_job
+  needs:
+    - job: gcc:noatomics
+      artifacts: true
+
 # Jobs for Clang builds on Debian Buster (amd64)
 
 clang:buster:amd64:
@@ -1168,12 +1242,14 @@ unit:nolibtool:sid:amd64:
 # Jobs for Visual Studio 2017 builds on Windows (amd64)
 
 msvc:windows:amd64:
+  <<: *windows_server_2016_amd64_image
   <<: *windows_build_job
   <<: *default_triggering_rules
   variables:
     VSCONF: Release
 
 system:msvc:windows:amd64:
+  <<: *windows_server_2016_amd64_image
   <<: *windows_system_test_job
   variables:
     VSCONF: Release
@@ -1182,6 +1258,7 @@ system:msvc:windows:amd64:
       artifacts: true
 
 msvc-debug:windows:amd64:
+  <<: *windows_server_2016_amd64_image
   <<: *windows_build_job
   variables:
     VSCONF: Debug
@@ -1191,6 +1268,7 @@ msvc-debug:windows:amd64:
     - web
 
 system:msvc-debug:windows:amd64:
+  <<: *windows_server_2016_amd64_image
   <<: *windows_system_test_job
   variables:
     VSCONF: Debug
@@ -1309,7 +1387,7 @@ respdiff:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -Og"
-    BIND_BASELINE_VERSION: v9_11_3
+    BIND_BASELINE_VERSION: v9_11_24
   script:
     - ./configure --without-make-clean
     - make -j${BUILD_PARALLEL_JOBS:-1} V=1
@@ -1333,6 +1411,101 @@ respdiff:
     expire_in: "1 day"
     when: on_failure
 
+# "Stress" tests
+
+.stress: &stress_job
+  stage: performance
+  script:
+    - *configure
+    - *setup_interfaces
+    - *setup_softhsm
+    - make -j${BUILD_PARALLEL_JOBS:-1} -k all V=1
+    - make install
+    - git clone --depth 1 https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.isc.org/isc-private/bind-qa.git
+    - cd bind-qa/bind9/stress
+    - DIG="${BIND_INSTALL_PATH}/bin/dig" WORKSPACE="${CI_PROJECT_DIR}" bash stress.sh
+  needs:
+    - job: autoreconf
+      artifacts: true
+  only:
+    - schedules
+    - tags
+  artifacts:
+    untracked: true
+    expire_in: "1 day"
+    when: always
+  timeout: 2h
+
+stress:authoritative:fedora:33:amd64:
+  <<: *fedora_33_amd64_image
+  <<: *linux_stress_amd64
+  <<: *stress_job
+  variables:
+    CC: gcc
+    FLAME: /usr/bin/flame
+    MODE: authoritative
+    RATE: 10000
+    RUN_TIME: 1
+
+stress:recursive:fedora:33:amd64:
+  <<: *fedora_33_amd64_image
+  <<: *linux_stress_amd64
+  <<: *stress_job
+  variables:
+    CC: gcc
+    FLAME: /usr/bin/flame
+    MODE: recursive
+    RATE: 10000
+    RUN_TIME: 1
+
+stress:authoritative:fedora:33:arm64:
+  <<: *fedora_33_arm64_image
+  <<: *linux_stress_arm64
+  <<: *stress_job
+  variables:
+    CC: gcc
+    FLAME: /usr/bin/flame
+    MODE: authoritative
+    RATE: 10000
+    RUN_TIME: 1
+
+stress:recursive:fedora:33:arm64:
+  <<: *fedora_33_arm64_image
+  <<: *linux_stress_arm64
+  <<: *stress_job
+  variables:
+    CC: gcc
+    FLAME: /usr/bin/flame
+    MODE: recursive
+    RATE: 10000
+    RUN_TIME: 1
+
+stress:authoritative:freebsd12:
+  <<: *freebsd_12_amd64_image
+  <<: *freebsd_stress_amd64
+  <<: *stress_job
+  variables:
+    CC: clang
+    FLAME: /usr/local/bin/flame
+    MODE: authoritative
+    RATE: 10000
+    RUN_TIME: 1
+  # See: https://gitlab.isc.org/isc-projects/bind9/-/issues/1941
+  allow_failure: true
+
+stress:recursive:freebsd12:
+  <<: *freebsd_12_amd64_image
+  <<: *freebsd_stress_amd64
+  <<: *stress_job
+  variables:
+    CC: clang
+    FLAME: /usr/local/bin/flame
+    MODE: recursive
+    RATE: 10000
+    RUN_TIME: 1
+  # See: https://gitlab.isc.org/isc-projects/bind9/-/issues/1941
+  allow_failure: true
+
 # ABI check
 
 abi-check:
@@ -1344,7 +1517,8 @@ abi-check:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -Og"
-    BIND_BASELINE_VERSION: v9_11_21
+    EXTRA_CONFIGURE: "--enable-dnstap --with-libidn2"
+    BIND_BASELINE_VERSION: v9_11_24
   script:
     - *configure
     - make -j${BUILD_PARALLEL_JOBS:-1} V=1
@@ -1363,3 +1537,59 @@ abi-check:
   only:
     - main@isc-projects/bind9
     - /^v9_[1-9][0-9]$/@isc-projects/bind9
+
+gcov:
+  <<: *base_image
+  <<: *default_triggering_rules
+  stage: postcheck
+  needs:
+    - job: system:gcc:buster:amd64
+      artifacts: true
+  script:
+    # *.gcno and *.gcda files generated for shared library objects are created
+    # in directories in which gcovr is unable to process them properly
+    # (.../.libs/...).  Move such *.gcno and *.gcda files one level higher.
+    - find . -regex ".*/\.libs/.*\.\(gcda\|gcno\)" -execdir mv "{}" .. \;
+    # Help gcovr process the nasty tricks in lib/dns/code.h, where we include C
+    # source files from lib/dns/rdata/*/, using an even nastier trick.
+    - find lib/dns/rdata/* -name "*.c" -execdir cp -f "{}" ../../ \;
+    # These drivers are built into bin/named/named in a way which trips up
+    # gcovr.  Copy them to where gcovr expects them.
+    - cp contrib/dlz/drivers/dlz_drivers.c contrib/dlz/drivers/dlz_filesystem_driver.c contrib/dlz/drivers/sdlz_helper.c bin/named/
+    # The same reasoning applies for some libisc source files.
+    - cp lib/isc/app_api.c lib/isc/socket_api.c lib/isc/unix/
+    - cp lib/isc/x86_64/include/isc/atomic.h lib/dns/
+    # Generate XML file in the Cobertura XML format suitable for use by GitLab
+    # for the purpose of displaying code coverage information in the diff view
+    # of a given merge request.
+    - gcovr --root . --exclude-directories bin/tests --exclude-directories doc --exclude-directories libltdl --exclude-directories lib/samples --exclude 'lib/.*/tests/.*' --xml -o coverage.xml
+    - gcovr --root . --exclude-directories bin/tests --exclude-directories doc --exclude-directories libltdl --exclude-directories lib/samples --exclude 'lib/.*/tests/.*' --html-details -o coverage.html
+    - gcovr --root . --exclude-directories bin/tests --exclude-directories doc --exclude-directories libltdl --exclude-directories lib/samples --exclude 'lib/.*/tests/.*' -o coverage.txt
+    - tail -n 3 coverage.txt
+  artifacts:
+    paths:
+      - coverage*.html
+      - coverage.txt
+      - coverage.xml
+    reports:
+      cobertura: coverage.xml
+
+# Pairwise testing of ./configure options
+
+pairwise:
+  <<: *base_image
+  stage: build
+  needs:
+    - job: autoreconf
+      artifacts: true
+  script:
+      - util/pairwise-testing.sh
+  artifacts:
+    paths:
+      - pairwise-commands.txt
+      - pairwise-model.txt
+      - pairwise-output.*.txt
+    when: on_failure
+  only:
+    variables:
+      - $PAIRWISE_TESTING

@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -122,8 +122,10 @@ generic_fromwire_tlsa(ARGS_FROMWIRE) {
 
 	isc_buffer_activeregion(source, &sr);
 
-	if (sr.length < 3)
+	/* Usage(1), Selector(1), Type(1), Data(1+) */
+	if (sr.length < 4) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));

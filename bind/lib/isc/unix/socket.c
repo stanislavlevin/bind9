@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -957,8 +957,10 @@ watch_fd(isc__socketmgr_t *manager, int fd, int msg) {
 	uint32_t oldevents;
 	int ret;
 	int op;
+	int lockid = FDLOCK_ID(fd);
 
 	oldevents = manager->epoll_events[fd];
+	LOCK(&manager->fdlock[lockid]);
 	if (msg == SELECT_POKE_READ)
 		manager->epoll_events[fd] |= EPOLLIN;
 	else
@@ -969,7 +971,14 @@ watch_fd(isc__socketmgr_t *manager, int fd, int msg) {
 	event.data.fd = fd;
 
 	op = (oldevents == 0U) ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
+	if (manager->fds[fd] != NULL) {
+		LOCK(&manager->fds[fd]->lock);
+	}
 	ret = epoll_ctl(manager->epoll_fd, op, fd, &event);
+	if (manager->fds[fd] != NULL) {
+		UNLOCK(&manager->fds[fd]->lock);
+	}
+	UNLOCK(&manager->fdlock[lockid]);
 	if (ret == -1) {
 		if (errno == EEXIST)
 			UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -1036,13 +1045,15 @@ unwatch_fd(isc__socketmgr_t *manager, int fd, int msg) {
 	struct epoll_event event;
 	int ret;
 	int op;
+	int lockid = FDLOCK_ID(fd);
 
+	LOCK(&manager->fdlock[lockid]);
 	if (msg == SELECT_POKE_READ)
 		manager->epoll_events[fd] &= ~(EPOLLIN);
 	else
 		manager->epoll_events[fd] &= ~(EPOLLOUT);
-
 	event.events = manager->epoll_events[fd];
+	UNLOCK(&manager->fdlock[lockid]);
 	memset(&event.data, 0, sizeof(event.data));
 	event.data.fd = fd;
 
@@ -1121,9 +1132,10 @@ wakeup_socket(isc__socketmgr_t *manager, int fd, int msg) {
 	INSIST(fd >= 0 && fd < (int)manager->maxsocks);
 
 	if (msg == SELECT_POKE_CLOSE) {
-		/* No one should be updating fdstate, so no need to lock it */
+		LOCK(&manager->fdlock[lockid]);
 		INSIST(manager->fdstate[fd] == CLOSE_PENDING);
 		manager->fdstate[fd] = CLOSED;
+		UNLOCK(&manager->fdlock[lockid]);
 		(void)unwatch_fd(manager, fd, SELECT_POKE_READ);
 		(void)unwatch_fd(manager, fd, SELECT_POKE_WRITE);
 		(void)close(fd);
@@ -4960,12 +4972,10 @@ isc__socketmgr_destroy(isc_socketmgr_t **managerp) {
 	if (manager->stats != NULL)
 		isc_stats_detach(&manager->stats);
 
-	if (manager->fdlock != NULL) {
-		for (i = 0; i < FDLOCK_COUNT; i++)
-			DESTROYLOCK(&manager->fdlock[i]);
-		isc_mem_put(manager->mctx, manager->fdlock,
-			    FDLOCK_COUNT * sizeof(isc_mutex_t));
-	}
+	for (i = 0; i < FDLOCK_COUNT; i++)
+		DESTROYLOCK(&manager->fdlock[i]);
+	isc_mem_put(manager->mctx, manager->fdlock,
+		    FDLOCK_COUNT * sizeof(isc_mutex_t));
 	DESTROYLOCK(&manager->lock);
 	manager->common.magic = 0;
 	manager->common.impmagic = 0;
@@ -5169,7 +5179,6 @@ socket_send(isc__socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 	    unsigned int flags)
 {
 	int io_state;
-	bool have_lock = false;
 	isc_task_t *ntask = NULL;
 	isc_result_t result = ISC_R_SUCCESS;
 
@@ -5195,12 +5204,10 @@ socket_send(isc__socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 		}
 	}
 
-	if (sock->type == isc_sockettype_udp)
+	LOCK(&sock->lock);
+	if (sock->type == isc_sockettype_udp) {
 		io_state = doio_send(sock, dev);
-	else {
-		LOCK(&sock->lock);
-		have_lock = true;
-
+	} else {
 		if (ISC_LIST_EMPTY(sock->send_list))
 			io_state = doio_send(sock, dev);
 		else
@@ -5216,11 +5223,6 @@ socket_send(isc__socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 		if ((flags & ISC_SOCKFLAG_NORETRY) == 0) {
 			isc_task_attach(task, &ntask);
 			dev->attributes |= ISC_SOCKEVENTATTR_ATTACHED;
-
-			if (!have_lock) {
-				LOCK(&sock->lock);
-				have_lock = true;
-			}
 
 			/*
 			 * Enqueue the request.  If the socket was previously
@@ -5251,8 +5253,7 @@ socket_send(isc__socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 		break;
 	}
 
-	if (have_lock)
-		UNLOCK(&sock->lock);
+	UNLOCK(&sock->lock);
 
 	return (result);
 }
@@ -5285,7 +5286,9 @@ isc__socket_sendto(isc_socket_t *sock0, isc_region_t *region,
 	manager = sock->manager;
 	REQUIRE(VALID_MANAGER(manager));
 
+	LOCK(&sock->lock);
 	INSIST(sock->bound);
+	UNLOCK(&sock->lock);
 
 	dev = allocate_socketevent(manager->mctx, sock,
 				   ISC_SOCKEVENT_SENDDONE, action, arg);

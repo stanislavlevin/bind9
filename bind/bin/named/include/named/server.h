@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -34,6 +34,7 @@
 #define NS_EVENT_RELOAD		(NS_EVENTCLASS + 0)
 #define NS_EVENT_CLIENTCONTROL	(NS_EVENTCLASS + 1)
 #define NS_EVENT_DELZONE	(NS_EVENTCLASS + 2)
+#define NS_EVENT_TATSEND	(NS_EVENTCLASS + 3)
 
 /*%
  * Name server state.  Better here than in lots of separate global variables.

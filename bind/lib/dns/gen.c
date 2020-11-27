@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -769,7 +769,6 @@ main(int argc, char **argv) {
 		 * Add in reserved/special types.  This will let us
 		 * sort them without special cases.
 		 */
-		insert_into_typenames(0, "reserved0", RESERVED);
 		insert_into_typenames(100, "uinfo", RESERVEDNAME);
 		insert_into_typenames(101, "uid", RESERVEDNAME);
 		insert_into_typenames(102, "gid", RESERVEDNAME);

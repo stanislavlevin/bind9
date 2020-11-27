@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -132,7 +132,10 @@ isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target) {
 		if (plen >= isc_buffer_availablelength(target))
 			return (ISC_R_NOSPACE);
 
-		isc_buffer_putmem(target, sockaddr->type.sunix.sun_path, plen);
+		isc_buffer_putmem(
+			target,
+			(const unsigned char *)sockaddr->type.sunix.sun_path,
+			plen);
 
 		/*
 		 * Null terminate after used region.

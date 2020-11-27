@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -324,7 +324,9 @@ dispatch_getnext(void **state) {
 	result = isc_app_run();
 	assert_int_equal(result, ISC_R_SUCCESS);
 
+	LOCK(&lock);
 	assert_int_equal(responses, 2);
+	UNLOCK(&lock);
 
 	/*
 	 * Shutdown nameserver.
@@ -338,6 +340,12 @@ dispatch_getnext(void **state) {
 	 */
 	dns_dispatch_detach(&dispatch);
 	dns_dispatchmgr_destroy(&dispatchmgr);
+
+	/*
+	 * Destroy the mutex.
+	 */
+	result = isc_mutex_destroy(&lock);
+	assert_int_equal(result, ISC_R_SUCCESS);
 }
 
 int

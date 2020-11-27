@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -418,17 +418,24 @@ fetch_callback_validator(isc_task_t *task, isc_event_t *event) {
 	val->fetch = NULL;
 	if (CANCELED(val)) {
 		validator_done(val, ISC_R_CANCELED);
-	} else if (eresult == ISC_R_SUCCESS) {
-		validator_log(val, ISC_LOG_DEBUG(3),
-			      "keyset with trust %s",
+	} else if (eresult == ISC_R_SUCCESS || eresult == DNS_R_NCACHENXRRSET) {
+		/*
+		 * We have an answer to our DNSKEY query.  Either the DNSKEY
+		 * RRset or a NODATA response.
+		 */
+		validator_log(val, ISC_LOG_DEBUG(3), "%s with trust %s",
+			      eresult == ISC_R_SUCCESS ? "keyset"
+						       : "NCACHENXRRSET",
 			      dns_trust_totext(rdataset->trust));
 		/*
-		 * Only extract the dst key if the keyset is secure.
+		 * Only extract the dst key if the keyset exists and is secure.
 		 */
-		if (rdataset->trust >= dns_trust_secure) {
+		if (eresult == ISC_R_SUCCESS &&
+		    rdataset->trust >= dns_trust_secure) {
 			result = get_dst_key(val, val->siginfo, rdataset);
-			if (result == ISC_R_SUCCESS)
+			if (result == ISC_R_SUCCESS) {
 				val->keyset = &val->frdataset;
+			}
 		}
 		result = validate(val, true);
 		if (result == DNS_R_NOVALIDSIG &&
@@ -3907,6 +3914,7 @@ dns_validator_destroy(dns_validator_t **validatorp) {
 
 	REQUIRE(validatorp != NULL);
 	val = *validatorp;
+	*validatorp = NULL;
 	REQUIRE(VALID_VALIDATOR(val));
 
 	LOCK(&val->lock);
@@ -3920,8 +3928,6 @@ dns_validator_destroy(dns_validator_t **validatorp) {
 
 	if (want_destroy)
 		destroy(val);
-
-	*validatorp = NULL;
 }
 
 static void

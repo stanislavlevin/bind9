@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -23,6 +23,7 @@
 #include <isc/buffer.h>
 #include <isc/mem.h>
 #include <isc/print.h>
+#include <isc/refcount.h>
 #include <isc/string.h> /* Required for HP/UX (and others?) */
 #include <isc/utf8.h>
 #include <isc/util.h>
@@ -454,6 +455,8 @@ msginit(dns_message_t *m) {
 	m->tkey = 0;
 	m->rdclass_set = 0;
 	m->querytsig = NULL;
+	m->indent.string = dns_master_indentstr;
+	m->indent.count = dns_master_indent;
 }
 
 static inline void
@@ -552,7 +555,7 @@ msgresetsigs(dns_message_t *msg, bool replying) {
 
 /*
  * Free all but one (or everything) for this message.  This is used by
- * both dns_message_reset() and dns_message_destroy().
+ * both dns_message_reset() and dns__message_destroy().
  */
 static void
 msgreset(dns_message_t *msg, bool everything) {
@@ -792,6 +795,8 @@ dns_message_create(isc_mem_t *mctx, unsigned int intent, dns_message_t **msgp)
 
 	m->cctx = NULL;
 
+	isc_refcount_init(&m->refcount, 1);
+
 	*msgp = m;
 	return (ISC_R_SUCCESS);
 
@@ -824,21 +829,38 @@ dns_message_reset(dns_message_t *msg, unsigned int intent) {
 	msg->from_to_wire = intent;
 }
 
-void
-dns_message_destroy(dns_message_t **msgp) {
-	dns_message_t *msg;
-
-	REQUIRE(msgp != NULL);
-	REQUIRE(DNS_MESSAGE_VALID(*msgp));
-
-	msg = *msgp;
-	*msgp = NULL;
+static void
+dns__message_destroy(dns_message_t *msg) {
+	REQUIRE(msg != NULL);
+	REQUIRE(DNS_MESSAGE_VALID(msg));
 
 	msgreset(msg, true);
 	isc_mempool_destroy(&msg->namepool);
 	isc_mempool_destroy(&msg->rdspool);
+	isc_refcount_destroy(&msg->refcount);
 	msg->magic = 0;
 	isc_mem_putanddetach(&msg->mctx, msg, sizeof(dns_message_t));
+}
+
+void
+dns_message_attach(dns_message_t *source, dns_message_t **target) {
+	REQUIRE(DNS_MESSAGE_VALID(source));
+
+	isc_refcount_increment(&source->refcount, NULL);
+	*target = source;
+}
+
+void
+dns_message_detach(dns_message_t **messagep) {
+	REQUIRE(messagep != NULL && DNS_MESSAGE_VALID(*messagep));
+	dns_message_t *msg = *messagep;
+	*messagep = NULL;
+	int32_t refs;
+
+	isc_refcount_decrement(&msg->refcount, &refs);
+	if (refs == 0) {
+		dns__message_destroy(msg);
+	}
 }
 
 static isc_result_t
@@ -2318,10 +2340,11 @@ dns_message_renderend(dns_message_t *msg) {
 		dns_message_renderrelease(msg, msg->opt_reserved);
 		msg->opt_reserved = 0;
 		/*
-		 * Set the extended rcode.
+		 * Set the extended rcode.  Cast msg->rcode to dns_ttl_t
+		 * so that we do a unsigned shift.
 		 */
 		msg->opt->ttl &= ~DNS_MESSAGE_EDNSRCODE_MASK;
-		msg->opt->ttl |= ((msg->rcode << 20) &
+		msg->opt->ttl |= (((dns_ttl_t)(msg->rcode) << 20) &
 				  DNS_MESSAGE_EDNSRCODE_MASK);
 		/*
 		 * Render.
@@ -3297,8 +3320,8 @@ dns_message_checksig(dns_message_t *msg, dns_view_t *view) {
 		if ((__flags & DNS_STYLEFLAG_INDENT) == 0ULL && \
 		    (__flags & DNS_STYLEFLAG_YAML) == 0ULL) \
 			break; \
-		for (__i = 0; __i < dns_master_indent; __i++) { \
-			ADD_STRING(target, dns_master_indentstr); \
+		for (__i = 0; __i < msg->indent.count; __i++) { \
+			ADD_STRING(target, msg->indent.string); \
 		} \
 	} while (0)
 
@@ -3318,7 +3341,7 @@ dns_message_sectiontotext(dns_message_t *msg, dns_section_t section,
 	REQUIRE(target != NULL);
 	REQUIRE(VALID_SECTION(section));
 
-	saveindent = dns_master_indent;
+	saveindent = msg->indent.count;
 	sflags = dns_master_styleflags(style);
 	if (ISC_LIST_EMPTY(msg->sections[section]))
 		goto cleanup;
@@ -3348,7 +3371,7 @@ dns_message_sectiontotext(dns_message_t *msg, dns_section_t section,
 		goto cleanup;
 	}
 	if ((sflags & DNS_STYLEFLAG_YAML) != 0) {
-		dns_master_indent++;
+		msg->indent.count++;
 	}
 	do {
 		name = NULL;
@@ -3388,7 +3411,7 @@ dns_message_sectiontotext(dns_message_t *msg, dns_section_t section,
 		result = dns_message_nextname(msg, section);
 	} while (result == ISC_R_SUCCESS);
 	if ((sflags & DNS_STYLEFLAG_YAML) != 0) {
-		dns_master_indent--;
+		msg->indent.count--;
 	}
 	if ((flags & DNS_MESSAGETEXTFLAG_NOHEADERS) == 0 &&
 	    (flags & DNS_MESSAGETEXTFLAG_NOCOMMENTS) == 0 &&
@@ -3401,7 +3424,7 @@ dns_message_sectiontotext(dns_message_t *msg, dns_section_t section,
 		result = ISC_R_SUCCESS;
 
  cleanup:
-	dns_master_indent = saveindent;
+	msg->indent.count = saveindent;
 	return (result);
 }
 
@@ -3518,7 +3541,7 @@ dns_message_pseudosectiontoyaml(dns_message_t *msg,
 	isc_buffer_t optbuf;
 	uint16_t optcode, optlen;
 	unsigned char *optdata;
-	unsigned int saveindent = dns_master_indent;
+	unsigned int saveindent = msg->indent.count;
 	unsigned int optindent;
 
 	REQUIRE(DNS_MESSAGE_VALID(msg));
@@ -3534,11 +3557,11 @@ dns_message_pseudosectiontoyaml(dns_message_t *msg,
 
 		INDENT(style);
 		ADD_STRING(target, "OPT_PSEUDOSECTION:\n");
-		dns_master_indent++;
+		msg->indent.count++;
 
 		INDENT(style);
 		ADD_STRING(target, "EDNS:\n");
-		dns_master_indent++;
+		msg->indent.count++;
 
 		INDENT(style);
 		ADD_STRING(target, "version: ");
@@ -3582,10 +3605,10 @@ dns_message_pseudosectiontoyaml(dns_message_t *msg,
 
 		isc_buffer_init(&optbuf, rdata.data, rdata.length);
 		isc_buffer_add(&optbuf, rdata.length);
-		optindent = dns_master_indent;
+		optindent = msg->indent.count;
 		while (isc_buffer_remaininglength(&optbuf) != 0) {
 			bool extra_text = false;
-			dns_master_indent = optindent;
+			msg->indent.count = optindent;
 			INSIST(isc_buffer_remaininglength(&optbuf) >= 4U);
 			optcode = isc_buffer_getuint16(&optbuf);
 			optlen = isc_buffer_getuint16(&optbuf);
@@ -3671,7 +3694,7 @@ dns_message_pseudosectiontoyaml(dns_message_t *msg,
 				if (optlen >= 2U) {
 					uint16_t ede;
 					ADD_STRING(target, ":\n");
-					dns_master_indent++;
+					msg->indent.count++;
 					INDENT(style);
 					ADD_STRING(target, "INFO-CODE:");
 					ede = isc_buffer_getuint16(&optbuf);
@@ -3815,7 +3838,7 @@ dns_message_pseudosectiontoyaml(dns_message_t *msg,
 			}
 			ADD_STRING(target, "\n");
 		}
-		dns_master_indent = optindent;
+		msg->indent.count = optindent;
 		result = ISC_R_SUCCESS;
 		goto cleanup;
 	case DNS_PSEUDOSECTION_TSIG:
@@ -3847,7 +3870,7 @@ dns_message_pseudosectiontoyaml(dns_message_t *msg,
 	result = ISC_R_UNEXPECTED;
 
  cleanup:
-	dns_master_indent = saveindent;
+	msg->indent.count = saveindent;
 	return (result);
 }
 

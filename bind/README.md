@@ -3,7 +3,7 @@
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at https://mozilla.org/MPL/2.0/.
  -
  - See the COPYRIGHT file distributed with this work for additional
  - information regarding copyright ownership.
@@ -364,6 +364,18 @@ BIND 9.11.21 is a maintenance release.
 BIND 9.11.22 is a maintenance release, and also addresses the security
 vulnerabilities disclosed in CVE-2020-8622, CVE-2020-8623, and
 CVE-2020-8624.
+
+#### BIND 9.11.23
+
+BIND 9.11.23 is a maintenance release.
+
+#### BIND 9.11.24
+
+BIND 9.11.24 is a maintenance release.
+
+#### BIND 9.11.25
+
+BIND 9.11.25 is a maintenance release.
 
 ### <a name="build"/> Building BIND
 

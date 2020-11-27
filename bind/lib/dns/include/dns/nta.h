@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -52,6 +52,7 @@ struct dns_ntatable {
 	/* Locked by rwlock. */
 	uint32_t		references;
 	dns_rbt_t		*table;
+	bool	   		shuttingdown;
 };
 
 #define NTATABLE_MAGIC		ISC_MAGIC('N', 'T', 'A', 't')
@@ -199,6 +200,13 @@ dns_ntatable_save(dns_ntatable_t *ntatable, FILE *fp);
 /*%<
  * Save the NTA table to the file opened as 'fp', for later loading.
  */
+
+void
+dns_ntatable_shutdown(dns_ntatable_t *ntatable);
+/*%<
+ * Cancel future checks to see if NTAs can be removed.
+ */
+
 ISC_LANG_ENDDECLS
 
 #endif /* DNS_NTA_H */

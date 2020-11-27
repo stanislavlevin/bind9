@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -261,7 +261,7 @@ render(isc_buffer_t *buf, unsigned flags, dns_tsigkey_t *key,
 	}
 
 	dns_compress_invalidate(&cctx);
-	dns_message_destroy(&msg);
+	dns_message_detach(&msg);
 }
 
 /*
@@ -354,7 +354,7 @@ tsig_tcp_test(void **state) {
 	tsigctx = msg->tsigctx;
 	msg->tsigctx = NULL;
 	isc_buffer_free(&buf);
-	dns_message_destroy(&msg);
+	dns_message_detach(&msg);
 
 	result = dst_context_create3(key->key, mctx, DNS_LOGCATEGORY_DNSSEC,
 				     false, &outctx);
@@ -412,7 +412,7 @@ tsig_tcp_test(void **state) {
 	tsigctx = msg->tsigctx;
 	msg->tsigctx = NULL;
 	isc_buffer_free(&buf);
-	dns_message_destroy(&msg);
+	dns_message_detach(&msg);
 
 	/*
 	 * Create response message 3.
@@ -464,7 +464,7 @@ tsig_tcp_test(void **state) {
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_buffer_free(&buf);
-	dns_message_destroy(&msg);
+	dns_message_detach(&msg);
 
 	if (outctx != NULL) {
 		dst_context_destroy(&outctx);

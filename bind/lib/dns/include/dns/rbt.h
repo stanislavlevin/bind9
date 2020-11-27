@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -159,10 +159,10 @@ struct dns_rbtnode {
 	 * separate region of memory.
 	 */
 	void *data;
+	unsigned int locknum;
 	unsigned int :0;                /* start of bitfields c/o node lock */
 	unsigned int dirty:1;
 	unsigned int wild:1;
-	unsigned int locknum:DNS_RBT_LOCKLENGTH;
 #ifndef DNS_RBT_USEISCREFCOUNT
 	unsigned int references:DNS_RBT_REFLENGTH;
 #endif

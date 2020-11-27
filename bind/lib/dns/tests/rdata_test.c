@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -24,8 +24,9 @@
 #include <unistd.h>
 
 #define UNIT_TESTING
-#include <cmocka.h>
 
+#include <isc/cmocka.h>
+#include <isc/commandline.h>
 #include <isc/hex.h>
 #include <isc/lex.h>
 #include <isc/print.h>
@@ -2073,6 +2074,70 @@ key(void **state) {
 }
 
 /*
+ * LOC tests.
+ */
+static void
+loc(void **state) {
+	text_ok_t text_ok[] = {
+		TEXT_VALID_CHANGED("0 N 0 E 0", "0 0 0.000 N 0 0 0.000 E 0.00m "
+						"1m 10000m 10m"),
+		TEXT_VALID_CHANGED("0 S 0 W 0", "0 0 0.000 N 0 0 0.000 E 0.00m "
+						"1m 10000m 10m"),
+		TEXT_VALID_CHANGED("0 0 N 0 0 E 0", "0 0 0.000 N 0 0 0.000 E "
+						    "0.00m 1m 10000m 10m"),
+		TEXT_VALID_CHANGED("0 0 0 N 0 0 0 E 0",
+				   "0 0 0.000 N 0 0 0.000 E 0.00m 1m 10000m "
+				   "10m"),
+		TEXT_VALID_CHANGED("0 0 0 N 0 0 0 E 0",
+				   "0 0 0.000 N 0 0 0.000 E 0.00m 1m 10000m "
+				   "10m"),
+		TEXT_VALID_CHANGED("0 0 0. N 0 0 0. E 0",
+				   "0 0 0.000 N 0 0 0.000 E 0.00m 1m 10000m "
+				   "10m"),
+		TEXT_VALID_CHANGED("0 0 .0 N 0 0 .0 E 0",
+				   "0 0 0.000 N 0 0 0.000 E 0.00m 1m 10000m "
+				   "10m"),
+		TEXT_INVALID("0 North 0 East 0"),
+		TEXT_INVALID("0 South 0 West 0"),
+		TEXT_INVALID("0 0 . N 0 0 0. E 0"),
+		TEXT_INVALID("0 0 0. N 0 0 . E 0"),
+		TEXT_INVALID("0 0 0. N 0 0 0. E m"),
+		TEXT_INVALID("0 0 0. N 0 0 0. E 0 ."),
+		TEXT_INVALID("0 0 0. N 0 0 0. E 0 m"),
+		TEXT_INVALID("0 0 0. N 0 0 0. E 0 0 ."),
+		TEXT_INVALID("0 0 0. N 0 0 0. E 0 0 m"),
+		TEXT_INVALID("0 0 0. N 0 0 0. E 0 0 0 ."),
+		TEXT_INVALID("0 0 0. N 0 0 0. E 0 0 0 m"),
+		TEXT_VALID_CHANGED("90 N 180 E 0", "90 0 0.000 N 180 0 0.000 E "
+						   "0.00m 1m 10000m 10m"),
+		TEXT_INVALID("90 1 N 180 E 0"),
+		TEXT_INVALID("90 0 1 N 180 E 0"),
+		TEXT_INVALID("90 N 180 1 E 0"),
+		TEXT_INVALID("90 N 180 0 1 E 0"),
+		TEXT_VALID_CHANGED("90 S 180 W 0", "90 0 0.000 S 180 0 0.000 W "
+						   "0.00m 1m 10000m 10m"),
+		TEXT_INVALID("90 1 S 180 W 0"),
+		TEXT_INVALID("90 0 1 S 180 W 0"),
+		TEXT_INVALID("90 S 180 1 W 0"),
+		TEXT_INVALID("90 S 180 0 1 W 0"),
+		TEXT_VALID("0 0 0.000 N 0 0 0.000 E -0.95m 1m 10000m 10m"),
+		TEXT_VALID("0 0 0.000 N 0 0 0.000 E -0.05m 1m 10000m 10m"),
+		TEXT_VALID("0 0 0.000 N 0 0 0.000 E -100000.00m 1m 10000m 10m"),
+		TEXT_VALID("0 0 0.000 N 0 0 0.000 E 42849672.95m 1m 10000m "
+			   "10m"),
+		/*
+		 * Sentinel.
+		 */
+		TEXT_SENTINEL()
+	};
+
+	UNUSED(state);
+
+	check_rdata(text_ok, 0, NULL, false, dns_rdataclass_in,
+		    dns_rdatatype_loc, sizeof(dns_rdata_loc_t));
+}
+
+/*
  * http://ana-3.lcs.mit.edu/~jnc/nimrod/dns.txt
  *
  * The RDATA portion of both the NIMLOC and EID records contains
@@ -2680,6 +2745,7 @@ main(int argc, char **argv) {
 		cmocka_unit_test_setup_teardown(hip, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(isdn, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(key, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(loc, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(nimloc, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(nsec, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(nsec3, _setup, _teardown),
@@ -2692,14 +2758,46 @@ main(int argc, char **argv) {
 		cmocka_unit_test_setup_teardown(atparent, NULL, NULL),
 		cmocka_unit_test_setup_teardown(iszonecutauth, NULL, NULL),
 	};
+	struct CMUnitTest selected[sizeof(tests) / sizeof(tests[0])];
+	size_t i;
+	int c;
 
-	UNUSED(argv);
+	memset(selected, 0, sizeof(selected));
 
-	if (argc > 1) {
-		debug = true;
+	while ((c = isc_commandline_parse(argc, argv, "dlt:")) != -1) {
+		switch (c) {
+		case 'd':
+			debug = true;
+			break;
+		case 'l':
+			for (i = 0; i < (sizeof(tests) / sizeof(tests[0])); i++)
+			{
+				if (tests[i].name != NULL) {
+					fprintf(stdout, "%s\n", tests[i].name);
+				}
+			}
+			return (0);
+		case 't':
+			if (!cmocka_add_test_byname(
+				    tests, isc_commandline_argument, selected))
+			{
+				fprintf(stderr, "unknown test '%s'\n",
+					isc_commandline_argument);
+				exit(1);
+			}
+			break;
+		default:
+			break;
+		}
 	}
 
-	return (cmocka_run_group_tests(tests, dns_test_init, dns_test_final));
+	if (selected[0].name != NULL) {
+		return (cmocka_run_group_tests(tests, dns_test_init,
+					       dns_test_final));
+	} else {
+		return (cmocka_run_group_tests(tests, dns_test_init,
+					       dns_test_final));
+	}
 }
 
 #else /* HAVE_CMOCKA */

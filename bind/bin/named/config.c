@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -65,7 +65,7 @@ options {\n\
 #	deallocate-on-exit <obsolete>;\n\
 #	directory <none>\n\
 	dump-file \"named_dump.db\";\n\
-	edns-udp-size 4096;\n\
+	edns-udp-size 1232;\n\
 #	fake-iquery <obsolete>;\n"
 #ifndef WIN32
 "	files unlimited;\n"
@@ -86,11 +86,11 @@ options {\n\
 #	lock-file \"" NS_LOCALSTATEDIR "/run/named/named.lock\";\n\
 	match-mapped-addresses no;\n\
 	max-rsa-exponent-size 0; /* no limit */\n\
-	max-udp-size 4096;\n\
+	max-udp-size 1232;\n\
 	memstatistics-file \"named.memstats\";\n\
 #	multiple-cnames <obsolete>;\n\
 #	named-xfer <obsolete>;\n\
-	nocookie-udp-size 4096;\n\
+	nocookie-udp-size 1232;\n\
 	notify-rate 20;\n\
 	nta-lifetime 3600;\n\
 	nta-recheck 300;\n\

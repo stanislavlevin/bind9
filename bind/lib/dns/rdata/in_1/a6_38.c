@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -173,7 +173,9 @@ fromwire_in_a6(ARGS_FROMWIRE) {
 		if (sr.length < octets)
 			return (ISC_R_UNEXPECTEDEND);
 		mask = 0xff >> (prefixlen % 8);
-		sr.base[0] &= mask;	/* Ensure pad bits are zero. */
+		if ((sr.base[0] & ~mask) != 0) {
+			return (DNS_R_FORMERR);
+		}
 		RETERR(mem_tobuffer(target, sr.base, octets));
 		isc_buffer_forward(source, octets);
 	}

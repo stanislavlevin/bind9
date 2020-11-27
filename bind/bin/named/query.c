@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -18,6 +18,7 @@
 
 #include <isc/hex.h>
 #include <isc/mem.h>
+#include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/rwlock.h>
 #include <isc/serial.h>
@@ -60,6 +61,29 @@
 #include <named/server.h>
 #include <named/sortlist.h>
 #include <named/xfrout.h>
+
+#if defined(ISC_PLATFORM_HAVESTDATOMIC)
+#if defined(__cplusplus)
+#include <isc/stdatomic.h>
+#else
+#include <stdatomic.h>
+#endif
+#define last_load(x) atomic_load((x))
+#define	last_cmpxchg(x, e, r) atomic_compare_exchange_strong((x), (e), r)
+#elif defined(ISC_PLATFORM_HAVEXADD) && defined(ISC_PLATFORM_HAVECMPXCHG)
+#define last_load(x) (isc_stdtime_t)isc_atomic_xadd((int32_t*)(x), 0)
+#define last_cmpxchg(x, e, r) isc_atomic_cmpxchg((int32_t*)x, (*(int32_t*)(e)), (int32_t)(r))
+#else
+#define last_load(x) (*(x))
+static inline bool
+last_cmpxchg(isc_stdtime_t *x, isc_stdtime_t *e, isc_stdtime_t r) {
+	if (*x == *e) {
+		*x = r;
+		return (true);
+	}
+	return (false);
+}
+#endif
 
 #if 0
 /*
@@ -4253,6 +4277,33 @@ query_prefetch(ns_client_t *client, dns_name_t *qname,
 	dns_rdataset_clearprefetch(rdataset);
 }
 
+
+#if defined(ISC_PLATFORM_HAVESTDATOMIC)
+static void
+log_quota(ns_client_t *client, _Atomic(isc_stdtime_t) *last, isc_stdtime_t now,
+	  const char *fmt, const char *tail)
+#else
+static void
+log_quota(ns_client_t *client, isc_stdtime_t *last, isc_stdtime_t now,
+	  const char *fmt, const char *tail)
+#endif
+{
+	isc_stdtime_t old = last_load(last);
+	if (now > old || (old + 1) > now) {
+		if (last_cmpxchg(last, &old, now)) {
+			LOCK(&ns_g_server->recursionquota.lock);
+			ns_client_log(client, NS_LOGCATEGORY_CLIENT,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_WARNING, fmt,
+					      ns_g_server->recursionquota.used,
+					      ns_g_server->recursionquota.soft,
+					      ns_g_server->recursionquota.max,
+					      tail);
+			UNLOCK(&ns_g_server->recursionquota.lock);
+		}
+	}
+}
+
 static isc_result_t
 query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qname,
 	      dns_name_t *qdomain, dns_rdataset_t *nameservers,
@@ -4285,39 +4336,29 @@ query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qname,
 		}
 
 		if  (result == ISC_R_SOFTQUOTA) {
+#ifdef ISC_PLATFORM_HAVESTDATOMIC
+			static _Atomic(isc_stdtime_t) last = 0;
+#else
 			static isc_stdtime_t last = 0;
+#endif
 			isc_stdtime_t now;
 			isc_stdtime_get(&now);
-			if (now != last) {
-				last = now;
-				ns_client_log(client, NS_LOGCATEGORY_CLIENT,
-					      NS_LOGMODULE_QUERY,
-					      ISC_LOG_WARNING,
-					      "recursive-clients soft limit "
-					      "exceeded (%d/%d/%d), "
-					      "aborting oldest query",
-					      client->recursionquota->used,
-					      client->recursionquota->soft,
-					      client->recursionquota->max);
-			}
+			log_quota(client, &last, now,
+				  "recursive-clients soft limit exceeded "
+				  "(%d/%d/%d) %s", "aborting oldest query");
 			ns_client_killoldestquery(client);
 			result = ISC_R_SUCCESS;
 		} else if (result == ISC_R_QUOTA) {
+#ifdef ISC_PLATFORM_HAVESTDATOMIC
+			static _Atomic(isc_stdtime_t) last = 0;
+#else
 			static isc_stdtime_t last = 0;
+#endif
 			isc_stdtime_t now;
 			isc_stdtime_get(&now);
-			if (now != last) {
-				last = now;
-				ns_client_log(client, NS_LOGCATEGORY_CLIENT,
-					      NS_LOGMODULE_QUERY,
-					      ISC_LOG_WARNING,
-					      "no more recursive clients "
-					      "(%d/%d/%d): %s",
-					      ns_g_server->recursionquota.used,
-					      ns_g_server->recursionquota.soft,
-					      ns_g_server->recursionquota.max,
-					      isc_result_totext(result));
-			}
+			log_quota(client, &last, now,
+				  "no more recursive clients (%d/%d/%d): %s",
+				  isc_result_totext(result));
 			ns_client_killoldestquery(client);
 		}
 		if (result == ISC_R_SUCCESS && !client->mortal &&
@@ -9596,6 +9637,12 @@ ns_query_start(ns_client_t *client) {
 	{
 		client->query.attributes |= (NS_QUERYATTR_NOAUTHORITY |
 					     NS_QUERYATTR_NOADDITIONAL);
+	} else if (qtype == dns_rdatatype_ns) {
+		/*
+		 * Always turn on additional records for NS queries.
+		 */
+		client->query.attributes &= ~(NS_QUERYATTR_NOAUTHORITY |
+					      NS_QUERYATTR_NOADDITIONAL);
 	}
 
 	/*

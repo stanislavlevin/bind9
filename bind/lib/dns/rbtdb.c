@@ -3,7 +3,7 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -399,6 +399,23 @@ typedef isc_mutex_t nodelock_t;
 #define NODE_WEAKDOWNGRADE(l)   ((void)0)
 #endif
 
+#if defined(ISC_PLATFORM_HAVESTDATOMIC)
+#if defined(__cplusplus)
+#include <isc/stdatomic.h>
+#else
+#include <stdatomic.h>
+#endif
+#define DNS_RBTDB_STDATOMIC 1
+#define DNS_RBTDB_INC(x) atomic_fetch_add(&(x), (1))
+#define DNS_RBTDB_LOAD(x) atomic_load(&(x))
+#elif defined(ISC_PLATFORM_HAVEXADD)
+#define DNS_RBTDB_INC(x) isc_atomic_xadd((int *)&(x), 1);
+#define DNS_RBTDB_LOAD(x) isc_atomic_xadd((int *)&(x), 0);
+#else
+#define DNS_RBTDB_INC(x) ((x)++)
+#define DNS_RBTDB_LOAD(x) (x)
+#endif
+
 /*%
  * Whether to rate-limit updating the LRU to avoid possible thread contention.
  * Our performance measurement has shown the cost is marginal, so it's defined
@@ -457,7 +474,11 @@ typedef struct rdatasetheader {
 	 * this rdataset.
 	 */
 
-	uint32_t                    count;
+#ifdef DNS_RBTDB_STDATOMIC
+	_Atomic(uint32_t)                count;
+#else
+	uint32_t                         count;
+#endif
 	/*%<
 	 * Monotonously increased every time this rdataset is bound so that
 	 * it is used as the base of the starting point in DNS responses
@@ -952,7 +973,11 @@ static char FILE_VERSION[32] = "\0";
  *      that indicates that the database does not implement cyclic
  *      processing.
  */
+#ifdef DNS_RBTDB_STDATOMIC
+static _Atomic(unsigned int) init_count;
+#else
 static unsigned int init_count;
+#endif
 
 /*
  * Locking
@@ -3322,7 +3347,7 @@ bind_rdataset(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node, rdatasetheader_t *header,
 	rdataset->private2 = node;
 	raw = (unsigned char *)header + sizeof(*header);
 	rdataset->private3 = raw;
-	rdataset->count = header->count++;
+	rdataset->count = DNS_RBTDB_INC(header->count);
 	if (rdataset->count == UINT32_MAX)
 		rdataset->count = 0;
 
@@ -3862,11 +3887,9 @@ previous_closest_nsec(dns_rdatatype_t type, rbtdb_search_t *search,
 			if (result != ISC_R_SUCCESS)
 				return (result);
 			nsecnode = NULL;
-			result = dns_rbt_findnode(search->rbtdb->nsec,
-						  target, NULL,
-						  &nsecnode, nsecchain,
-						  DNS_RBTFIND_NOOPTIONS,
-						  NULL, NULL);
+			result = dns_rbt_findnode(
+				search->rbtdb->nsec, target, NULL, &nsecnode,
+				nsecchain, DNS_RBTFIND_EMPTYDATA, NULL, NULL);
 			if (result == ISC_R_SUCCESS) {
 				/*
 				 * Since this was the first loop, finding the
@@ -3911,9 +3934,10 @@ previous_closest_nsec(dns_rdatatype_t type, rbtdb_search_t *search,
 		*nodep = NULL;
 		result = dns_rbt_findnode(search->rbtdb->tree, target, NULL,
 					  nodep, &search->chain,
-					  DNS_RBTFIND_NOOPTIONS, NULL, NULL);
-		if (result == ISC_R_SUCCESS)
+					  DNS_RBTFIND_EMPTYDATA, NULL, NULL);
+		if (result == ISC_R_SUCCESS) {
 			return (result);
+		}
 
 		/*
 		 * There should always be a node in the main tree with the
@@ -5924,10 +5948,10 @@ cache_findrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 		}
 	}
 
-	NODE_UNLOCK(lock, locktype);
-
-	if (found == NULL)
+	if (found == NULL) {
+		NODE_UNLOCK(lock, locktype);
 		return (ISC_R_NOTFOUND);
+	}
 
 	if (NEGATIVE(found)) {
 		/*
@@ -5938,6 +5962,8 @@ cache_findrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 		else
 			result = DNS_R_NCACHENXRRSET;
 	}
+
+	NODE_UNLOCK(lock, locktype);
 
 	update_cachestats(rbtdb, result);
 
@@ -6839,7 +6865,7 @@ addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 		newheader->attributes |= RDATASET_ATTR_ZEROTTL;
 	newheader->noqname = NULL;
 	newheader->closest = NULL;
-	newheader->count = init_count++;
+	newheader->count = DNS_RBTDB_INC(init_count);
 	newheader->trust = rdataset->trust;
 	newheader->additional_auth = NULL;
 	newheader->additional_glue = NULL;
@@ -7035,7 +7061,7 @@ subtractrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	newheader->trust = 0;
 	newheader->noqname = NULL;
 	newheader->closest = NULL;
-	newheader->count = init_count++;
+	newheader->count = DNS_RBTDB_INC(init_count);
 	newheader->additional_auth = NULL;
 	newheader->additional_glue = NULL;
 	newheader->last_used = 0;
@@ -7481,7 +7507,7 @@ loading_addrdataset(void *arg, dns_name_t *name, dns_rdataset_t *rdataset) {
 	newheader->serial = 1;
 	newheader->noqname = NULL;
 	newheader->closest = NULL;
-	newheader->count = init_count++;
+	newheader->count = DNS_RBTDB_INC(init_count);
 	newheader->additional_auth = NULL;
 	newheader->additional_glue = NULL;
 	newheader->last_used = 0;
