@@ -617,7 +617,7 @@ fi
 * Wed Oct 17 2012 Fr. Br. George <george@altlinux.ru> 9.9.2-alt1
 - Version up to 9.9.2 (CVE 5166 included)
 
-* Wed Oct 15 2012 Fr. Br. George <george@altlinux.ru> 9.9.1-alt1
+* Mon Oct 15 2012 Fr. Br. George <george@altlinux.ru> 9.9.1-alt1
 - Version up to 9.9.1-P3 (6 middle versions jump!)
 - Drop outdated patches (including CVE 5166, this is insecure build)
 - Adapt actual patches
