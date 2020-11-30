@@ -57,8 +57,8 @@ index d035eeb..f6fac57 100644
 +++ b/bind/bin/dnssec/dnssec-keygen.8
 @@ -340,8 +340,9 @@ and
  \fBdnssec\-keygen \-a DSA \-b 768 \-n ZONE \-f KSK example\&.com\fR
-   .SH "SEE ALSO"
-     .PP
+ .SH "SEE ALSO"
+ .PP
 -\fBdnssec-signzone\fR(8),
 -BIND 9 Administrator Reference Manual,
 +\fBdnssec\-signzone\fR(8),
@@ -73,8 +73,8 @@ index f0807de..936e01b 100644
 +++ b/bind/bin/dnssec/dnssec-signzone.8
 @@ -467,8 +467,9 @@ db\&.example\&.com\&.signed
  .\}
-   .SH "SEE ALSO"
-     .PP
+ .SH "SEE ALSO"
+ .PP
 -\fBdnssec-keygen\fR(8),
 -BIND 9 Administrator Reference Manual,
 +\fBdnssec\-keygen\fR(8),
@@ -91,20 +91,20 @@ index 00adfd8..84bec6a 100644
  should be set explicitly in the script used to start the
  \fBnamed\fR
  process\&.
-+      .PP
++.PP
 +By default, \fBnamed\fR is configured to run in readonly chroot jail
 +\fI@ROOT@\fR with no extra privileges.
-+      .PP
++.PP
 +To configure \fBnamed\fR as master or caching-only DNS, you don't need
 +to create files and/or directories writable by \fBnamed\fR.
-+      .PP
++.PP
 +To configure \fBnamed\fR as slave DNS in chroot jail,
 +use \fBcontrol\fR(8) for the \fBbind\-slave\fR facility.
-+      .PP
++.PP
 +To debug \fBnamed\fR with \fBrndc\fR(8),
 +use \fBcontrol\fR(8) for the \fBbind\-debug\fR facility.
-   .SH "FILES"
-       .PP
+ .SH "FILES"
+ .PP
  /etc/named\&.conf
 @@ -371,7 +383,8 @@ RFC 1035,
  \fBrndc\fR(8),
@@ -137,12 +137,12 @@ index 38d23df..cd42636 100644
 @@ -143,6 +143,9 @@ can be seen by running
  \fBrndc\fR
  without arguments\&.
-     .PP
+ .PP
 +To debug \fBnamed\fR with \fBrndc\fR(8),
 +use \fBcontrol\fR(8) for the \fBbind\-debug\fR facility.
-+    .PP
++.PP
  Currently supported commands are:
-       .PP
+ .PP
  \fBaddzone \fR\fB\fIzone\fR\fR\fB \fR\fB[\fIclass\fR [\fIview\fR]]\fR\fB \fR\fB\fIconfiguration\fR\fR\fB \fR
 @@ -614,7 +617,8 @@ Several error messages could be clearer\&.
  \fBnamed\fR(8),
