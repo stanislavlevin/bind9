@@ -801,7 +801,7 @@ AS_CASE([$with_geoip2],
 			   [AC_DEFINE([HAVE_GEOIP2], [1], [Build with GeoIP2 support])
 			    GEOIP2LINKSRCS='${GEOIP2LINKSRCS}'
 			    GEOIP2LINKOBJS='${GEOIP2LINKOBJS}'
-			    MAXMINDDB_LIBS="$MAXMINDDB_LIBS $ac_cv_search_mmdb_open"
+			    MAXMINDDB_LIBS="$MAXMINDDB_LIBS $ac_cv_search_MMDB_open"
 			    AC_MSG_NOTICE([GeoIP2 default database path set to $with_geoip2/share/GeoIP])
 			    AS_VAR_COPY([MAXMINDDB_PREFIX], [$with_geoip2])
 			   ],
@@ -5176,7 +5176,8 @@ AS_IF([test "$pic_mode" = "no"],
 
 AS_CASE([$with_dlopen],
 	[auto|yes],[
-	  AC_SEARCH_LIBS([dlopen],[dl])
+	  # -fsanitize=thread hijacks dlopen and dlclose so use dlsym.
+	  AC_SEARCH_LIBS([dlsym],[dl])
 	  AC_CHECK_FUNCS([dlopen dlclose dlsym],
 			 [with_dlopen="yes"],
 			 [with_dlopen="no"])

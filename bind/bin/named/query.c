@@ -75,7 +75,7 @@
 #define last_cmpxchg(x, e, r) isc_atomic_cmpxchg((int32_t*)x, (*(int32_t*)(e)), (int32_t)(r))
 #else
 #define last_load(x) (*(x))
-static inline bool
+ISC_NO_SANITIZE_THREAD static ISC_NO_SANITIZE_INLINE bool
 last_cmpxchg(isc_stdtime_t *x, isc_stdtime_t *e, isc_stdtime_t r) {
 	if (*x == *e) {
 		*x = r;
@@ -8651,13 +8651,21 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
 		/*
-		 * Switch to the new qname and restart.
+		 * If the original query was not for a CNAME or ANY then
+		 * follow the CNAME.
 		 */
-		ns_client_qnamereplace(client, fname);
-		fname = NULL;
-		want_restart = true;
-		if (!WANTRECURSION(client))
-			options |= DNS_GETDB_NOLOG;
+		if (qtype != dns_rdatatype_cname &&
+		    qtype != dns_rdatatype_any)
+		{
+			/*
+			 * Switch to the new qname and restart.
+			 */
+			ns_client_qnamereplace(client, fname);
+			fname = NULL;
+			want_restart = true;
+			if (!WANTRECURSION(client))
+				options |= DNS_GETDB_NOLOG;
+		}
 		goto addauth;
 	default:
 		/*

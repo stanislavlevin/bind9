@@ -10,7 +10,7 @@
 -->
 
 <!-- Converted by db4-upgrade version 1.0 -->
-<book xmlns:db="http://docbook.org/ns/docbook" version="5.0">
+<book xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info>
     <title>BIND 9 Administrator Reference Manual</title>
     <!-- insert copyright start -->
@@ -36,6 +36,7 @@
       <year>2018</year>
       <year>2019</year>
       <year>2020</year>
+      <year>2021</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <!-- insert copyright end -->
@@ -6211,8 +6212,9 @@ options {
 		  This sets the maximum size of UDP responses that are
 		  sent to queries without a valid server COOKIE. A value
 		  below 128 is silently raised to 128. The default
-		  value is 1232, but the <command>max-udp-size</command>
-		  option may further limit the response size.
+		  value is 4096, but the <command>max-udp-size</command>
+		  option may further limit the response size as the default
+		  for <command>max-udp-size</command> is 1232.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -9299,7 +9301,7 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  This sets the maximum number of iterative queries that
 		  may be sent while servicing a recursive query.
 		  If more queries are sent, the recursive query
-		  is terminated and returns SERVFAIL.  The default is 75.
+		  is terminated and returns SERVFAIL.  The default is 100.
 		</para>
 	      </listitem>
 	    </varlistentry>
