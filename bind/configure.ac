@@ -921,8 +921,8 @@ case "$use_gssapi" in
     else
 	KRB5_CONFIG="$use_gssapi"
     fi
-    gssapi_cflags=`$KRB5_CONFIG --cflags gssapi`
-    gssapi_libs=`$KRB5_CONFIG --libs gssapi`
+    gssapi_cflags=`$KRB5_CONFIG --cflags gssapi krb5`
+    gssapi_libs=`$KRB5_CONFIG --libs gssapi krb5`
     saved_cppflags="$CPPFLAGS"
     CPPFLAGS="$gssapi_cflags $CPPFLAGS"
     AC_CHECK_HEADERS(gssapi.h gssapi/gssapi.h,
@@ -1806,6 +1806,10 @@ int main() {
 	ec384 = EC_KEY_new_by_curve_name(NID_secp384r1);
 	if (ec256 == NULL || ec384 == NULL)
 		return (2);
+	if (ec256 != NULL)
+		EC_KEY_free(ec256);
+	if (ec384 != NULL)
+		EC_KEY_free(ec384);
 	return (0);
 }
 ],
@@ -1918,8 +1922,10 @@ int main() {
 	EVP_PKEY_CTX *ctx;
 
 	ctx = EVP_PKEY_CTX_new_id(NID_ED25519, NULL);
-	if (ctx == NULL)
+	if (ctx == NULL) {
 		return (2);
+	}
+	EVP_PKEY_CTX_free(ctx);
 	return (0);
 }
 ],
@@ -1959,8 +1965,10 @@ int main() {
 	EVP_PKEY_CTX *ctx;
 
 	ctx = EVP_PKEY_CTX_new_id(NID_ED448, NULL);
-	if (ctx == NULL)
+	if (ctx == NULL) {
 		return (2);
+	}
+	EVP_PKEY_CTX_free(ctx);
 	return (0);
 }
 ],
@@ -3789,30 +3797,6 @@ AC_SUBST(ISC_EXTRA_OBJS)
 AC_SUBST(ISC_EXTRA_SRCS)
 
 AC_CHECK_FUNC(strerror, AC_DEFINE(HAVE_STRERROR))
-#
-# Use our own SPNEGO implementation?
-#
-# [pairwise: --enable-isc-spnego, --disable-isc-spnego]
-AC_ARG_ENABLE(isc-spnego,
-	      AS_HELP_STRING([--disable-isc-spnego],
-			     [use SPNEGO from GSSAPI library]))
-
-if test -n "$USE_GSSAPI"
-then
-	case "$enable_isc_spnego" in
-		yes|'')
-			USE_ISC_SPNEGO='-DUSE_ISC_SPNEGO'
-			DST_EXTRA_OBJS="$DST_EXTRA_OBJS spnego.$O"
-			DST_EXTRA_SRCS="$DST_EXTRA_SRCS spnego.c"
-			AC_MSG_RESULT(using SPNEGO from lib/dns)
-			;;
-		no)
-			AC_MSG_RESULT(using SPNEGO from GSSAPI library)
-			;;
-	esac
-fi
-
-AC_SUBST(USE_ISC_SPNEGO)
 
 AC_SUBST(DST_EXTRA_OBJS)
 AC_SUBST(DST_EXTRA_SRCS)

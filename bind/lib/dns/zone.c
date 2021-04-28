@@ -10062,12 +10062,19 @@ zone_refreshkeys(dns_zone_t *zone) {
 			goto failure;
 		}
 
+		kname = dns_fixedname_initname(&kfetch->name);
+		result = dns_name_dup(name, zone->mctx, kname);
+		if (result != ISC_R_SUCCESS) {
+			isc_mem_put(zone->mctx, kfetch, sizeof(dns_keyfetch_t));
+			fetch_err = true;
+			goto failure;
+		}
+
 		zone->refreshkeycount++;
 		kfetch->zone = zone;
 		zone->irefs++;
 		INSIST(zone->irefs != 0);
-		kname = dns_fixedname_initname(&kfetch->name);
-		dns_name_dup(name, zone->mctx, kname);
+
 		dns_rdataset_init(&kfetch->dnskeyset);
 		dns_rdataset_init(&kfetch->dnskeysigset);
 		dns_rdataset_init(&kfetch->keydataset);
@@ -10180,6 +10187,7 @@ zone_maintenance(dns_zone_t *zone) {
 	isc_time_t now;
 	isc_result_t result;
 	bool dumping, load_pending, viewok, start_refresh;
+	bool need_notify;
 
 	REQUIRE(DNS_ZONE_VALID(zone));
 	ENTER;
@@ -10261,11 +10269,16 @@ zone_maintenance(dns_zone_t *zone) {
 	/*
 	 * Slaves send notifies before backing up to disk, masters after.
 	 */
-	if (zone->type == dns_zone_slave &&
-	    (DNS_ZONE_FLAG(zone, DNS_ZONEFLG_NEEDNOTIFY) ||
-	     DNS_ZONE_FLAG(zone, DNS_ZONEFLG_NEEDSTARTUPNOTIFY)) &&
-	    isc_time_compare(&now, &zone->notifytime) >= 0)
+	LOCK_ZONE(zone);
+	need_notify = zone->type == dns_zone_slave &&
+		      (DNS_ZONE_FLAG(zone, DNS_ZONEFLG_NEEDNOTIFY) ||
+		       DNS_ZONE_FLAG(zone, DNS_ZONEFLG_NEEDSTARTUPNOTIFY)) &&
+		      (isc_time_compare(&now, &zone->notifytime) >= 0);
+	UNLOCK_ZONE(zone);
+
+	if (need_notify) {
 		zone_notify(zone, &now);
+	}
 
 	/*
 	 * Do we need to consolidate the backing store?
@@ -11659,7 +11672,10 @@ create_query(dns_zone_t *zone, dns_rdatatype_t rdtype, dns_name_t *name,
 	dns_rdataset_t *qrdataset = NULL;
 	isc_result_t result;
 
-	dns_message_create(zone->mctx, DNS_MESSAGE_INTENTRENDER, &message);
+	result = dns_message_create(zone->mctx, DNS_MESSAGE_INTENTRENDER, &message);
+	if (result != ISC_R_SUCCESS) {
+		return (result);
+	}
 
 	message->opcode = dns_opcode_query;
 	message->rdclass = zone->rdclass;
@@ -11833,7 +11849,14 @@ stub_glue_response_cb(isc_task_t *task, isc_event_t *event) {
 		goto cleanup;
 	}
 
-	dns_message_create(zone->mctx, DNS_MESSAGE_INTENTPARSE, &msg);
+	result = dns_message_create(zone->mctx, DNS_MESSAGE_INTENTPARSE, &msg);
+	if (result != ISC_R_SUCCESS) {
+		dns_zone_log(zone, ISC_LOG_INFO,
+			     "refreshing stub: unable to create message: (%s)",
+			     isc_result_totext(result));
+		goto cleanup;
+	}
+
 	result = dns_request_getresponse(revent->request, msg, 0);
 	if (result != ISC_R_SUCCESS) {
 		dns_zone_log(zone, ISC_LOG_INFO,
@@ -11989,15 +12012,29 @@ stub_request_nameserver_address(struct stub_cb_args *args, bool ipv4,
 
 	zone = args->stub->zone;
 	request = isc_mem_get(zone->mctx, sizeof(*request));
+	if (request == NULL) {
+		return (ISC_R_NOMEMORY);
+	}
 	request->request = NULL;
 	request->args = args;
 	request->name = (dns_name_t)DNS_NAME_INITEMPTY;
 	request->ipv4 = ipv4;
-	dns_name_dup(name, zone->mctx, &request->name);
 
+	result = dns_name_dup(name, zone->mctx, &request->name);
+	if (result != ISC_R_SUCCESS) {
+		zone_debuglog(zone, "stub_send_query", 1,
+			      "dns_name_dup() failed: %s",
+			      dns_result_totext(result));
+			goto fail;
+	}
 	result = create_query(zone, ipv4 ? dns_rdatatype_a : dns_rdatatype_aaaa,
 			      &request->name, &message);
-	INSIST(result == ISC_R_SUCCESS);
+	if (result != ISC_R_SUCCESS) {
+		zone_debuglog(zone, "stub_send_query", 1,
+			      "create_query() failed: %s",
+			      dns_result_totext(result));
+			goto fail;
+	}
 
 	if (!DNS_ZONE_FLAG(zone, DNS_ZONEFLG_NOEDNS)) {
 		result = add_opt(message, args->udpsize, args->reqnsid, false);
@@ -12018,7 +12055,8 @@ stub_request_nameserver_address(struct stub_cb_args *args, bool ipv4,
 		stub_glue_response_cb, request, &request->request);
 
 	if (result != ISC_R_SUCCESS) {
-		isc_refcount_decrement(&args->stub->pending_requests, &pending_requests);
+		isc_refcount_decrement(&args->stub->pending_requests,
+				       &pending_requests);
 		INSIST(pending_requests > 0);
 		zone_debuglog(zone, "stub_send_query", 1,
 			      "dns_request_createvia() failed: %s",
@@ -12031,7 +12069,9 @@ stub_request_nameserver_address(struct stub_cb_args *args, bool ipv4,
 	return (ISC_R_SUCCESS);
 
 fail:
-	dns_name_free(&request->name, zone->mctx);
+	if (dns_name_dynamic(&request->name)) {
+		dns_name_free(&request->name, zone->mctx);
+	}
 	isc_mem_put(zone->mctx, request, sizeof(*request));
 
 	if (message != NULL) {
@@ -12138,8 +12178,16 @@ save_nsrrset(dns_message_t *message, dns_name_t *name,
 			dns_name_t *tmp_name;
 			tmp_name = isc_mem_get(cb_args->stub->mctx,
 					       sizeof(*tmp_name));
+			if (tmp_name == NULL) {
+				result = ISC_R_NOMEMORY;
+				goto done;
+			}
 			dns_name_init(tmp_name, NULL);
-			dns_name_dup(&ns.name, cb_args->stub->mctx, tmp_name);
+			result = dns_name_dup(&ns.name, cb_args->stub->mctx,
+					      tmp_name);
+			if (result != ISC_R_SUCCESS) {
+				goto done;
+			}
 			ISC_LIST_APPEND(ns_list, tmp_name, link);
 		}
 	}
@@ -15939,11 +15987,20 @@ zone_xfrdone(dns_zone_t *zone, isc_result_t result) {
 					  &retry, &expire, &minimum, NULL);
 		ZONEDB_UNLOCK(&zone->dblock, isc_rwlocktype_read);
 		if (result == ISC_R_SUCCESS) {
-			if (soacount != 1)
+			if (soacount != 1) {
 				dns_zone_log(zone, ISC_LOG_ERROR,
 					     "transferred zone "
-					     "has %d SOA record%s", soacount,
-					     (soacount != 0) ? "s" : "");
+					     "has %d SOA records",
+					     soacount);
+				if (DNS_ZONE_FLAG(zone,
+						  DNS_ZONEFLG_HAVETIMERS)) {
+					zone->refresh = DNS_ZONE_DEFAULTREFRESH;
+					zone->retry = DNS_ZONE_DEFAULTRETRY;
+				}
+				DNS_ZONE_CLRFLAG(zone, DNS_ZONEFLG_HAVETIMERS);
+				zone_unload(zone);
+				goto next_master;
+			}
 			if (nscount == 0) {
 				dns_zone_log(zone, ISC_LOG_ERROR,
 					     "transferred zone "
