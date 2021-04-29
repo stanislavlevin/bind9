@@ -211,7 +211,6 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.ac
 	--includedir=%{_includedir}/bind9 \
 	--with-libtool \
 	--with-gssapi=yes \
-	--disable-isc-spnego \
 	#
 
 %make_build
