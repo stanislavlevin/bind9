@@ -1334,7 +1334,7 @@ echo_i "basic dnssec-signzone checks:"
 echo_ic "two DNSKEYs ($n)"
 ret=0
 (
-cd signer/general
+cd signer/general || exit 1
 rm -f signed.zone
 $SIGNER -f signed.zone -o example.com. test1.zone > signer.out.$n 2>&1
 test -f signed.zone
@@ -1346,7 +1346,7 @@ status=`expr $status + $ret`
 echo_ic "one non-KSK DNSKEY ($n)"
 ret=0
 (
-cd signer/general
+cd signer/general || exit 0
 rm -f signed.zone
 $SIGNER -f signed.zone -o example.com. test2.zone > signer.out.$n 2>&1
 test -f signed.zone
@@ -1358,7 +1358,7 @@ status=`expr $status + $ret`
 echo_ic "one KSK DNSKEY ($n)"
 ret=0
 (
-cd signer/general
+cd signer/general || exit 0
 rm -f signed.zone
 $SIGNER -f signed.zone -o example.com. test3.zone > signer.out.$n 2>&1
 test -f signed.zone
@@ -1370,7 +1370,7 @@ status=`expr $status + $ret`
 echo_ic "three DNSKEY ($n)"
 ret=0
 (
-cd signer/general
+cd signer/general || exit 1
 rm -f signed.zone
 $SIGNER -f signed.zone -o example.com. test4.zone > signer.out.$n 2>&1
 test -f signed.zone
@@ -1382,7 +1382,7 @@ status=`expr $status + $ret`
 echo_ic "three DNSKEY, one private key missing ($n)"
 ret=0
 (
-cd signer/general
+cd signer/general || exit 1
 rm -f signed.zone
 $SIGNER -f signed.zone -o example.com. test5.zone > signer.out.$n 2>&1
 test -f signed.zone
@@ -1394,7 +1394,7 @@ status=`expr $status + $ret`
 echo_ic "four DNSKEY ($n)"
 ret=0
 (
-cd signer/general
+cd signer/general || exit 1
 rm -f signed.zone
 $SIGNER -f signed.zone -o example.com. test6.zone > signer.out.$n 2>&1
 test -f signed.zone
@@ -1406,7 +1406,7 @@ status=`expr $status + $ret`
 echo_ic "two DNSKEY, both private keys missing ($n)"
 ret=0
 (
-cd signer/general
+cd signer/general || exit 0
 rm -f signed.zone
 $SIGNER -f signed.zone -o example.com. test7.zone > signer.out.$n 2>&1
 test -f signed.zone
@@ -1418,7 +1418,7 @@ status=`expr $status + $ret`
 echo_ic "two DNSKEY, one private key missing ($n)"
 ret=0
 (
-cd signer/general
+cd signer/general || exit 0
 rm -f signed.zone
 $SIGNER -f signed.zone -o example.com. test8.zone > signer.out.$n 2>&1
 test -f signed.zone
@@ -1441,6 +1441,30 @@ get_rsasha1_key_ids_from_sigs() {
 	' | \
 	sort -u
 }
+
+echo_ic "check that dnssec-signzone rejects excessive NSEC3 iterations ($n)"
+ret=0
+(
+cd signer/general || exit 0
+rm -f signed.zone
+$SIGNER -f signed.zone -3 - -H 151 -o example.com. test9.zone > signer.out.$n
+test -f signed.zone
+) && ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_ic "check that dnssec-signzone accepts maximum NSEC3 iterations ($n)"
+ret=0
+(
+cd signer/general || exit 1
+rm -f signed.zone
+$SIGNER -f signed.zone -3 - -H 150 -o example.com. test9.zone > signer.out.$n
+test -f signed.zone
+) || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
 
 echo_i "checking that a key using an unsupported algorithm cannot be generated ($n)"
 ret=0
@@ -4033,6 +4057,65 @@ grep 'A.10\.53\.0\.10' dig.out.ns4.test$n >/dev/null || ret=1
 n=`expr $n + 1`
 test "$ret" -eq 0 || echo_i "failed"
 status=`expr $status + $ret`
+
+echo_i "checking excessive NSEC3 iteration warnings in named.run ($n)"
+ret=0
+grep "zone too-many-iterations/IN: excessive NSEC3PARAM iterations [0-9]* > 150" ns2/named.run >/dev/null 2>&1 || ret=1
+grep "zone too-many-iterations/IN: excessive NSEC3PARAM iterations [0-9]* > 150" ns3/named.run >/dev/null 2>&1 || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+# Check that the validating resolver will fallback to insecure if the answer
+# contains NSEC3 records with high iteration count.
+echo_i "checking fallback to insecure when NSEC3 iterations is too high (nxdomain) ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.2 does-not-exist.too-many-iterations > dig.out.ns2.test$n || ret=1
+$DIG $DIGOPTS @10.53.0.4 does-not-exist.too-many-iterations > dig.out.ns4.test$n || ret=1
+digcomp dig.out.ns2.test$n dig.out.ns4.test$n || ret=1
+grep "flags: qr rd ra;" dig.out.ns4.test$n >/dev/null || ret=1
+grep "status: NXDOMAIN" dig.out.ns4.test$n >/dev/null || ret=1
+grep "ANSWER: 0, AUTHORITY: 6" dig.out.ns4.test$n > /dev/null || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_i "checking fallback to insecure when NSEC3 iterations is too high (nodata) ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.2 a.too-many-iterations txt > dig.out.ns2.test$n || ret=1
+$DIG $DIGOPTS @10.53.0.4 a.too-many-iterations txt > dig.out.ns4.test$n || ret=1
+digcomp dig.out.ns2.test$n dig.out.ns4.test$n || ret=1
+grep "flags: qr rd ra;" dig.out.ns4.test$n >/dev/null || ret=1
+grep "status: NOERROR" dig.out.ns4.test$n >/dev/null || ret=1
+grep "ANSWER: 0, AUTHORITY: 4" dig.out.ns4.test$n > /dev/null || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_i "checking fallback to insecure when NSEC3 iterations is too high (wildcard) ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.2 wild.a.too-many-iterations > dig.out.ns2.test$n || ret=1
+$DIG $DIGOPTS @10.53.0.4 wild.a.too-many-iterations > dig.out.ns4.test$n || ret=1
+digcomp dig.out.ns2.test$n dig.out.ns4.test$n || ret=1
+grep "flags: qr rd ra;" dig.out.ns4.test$n >/dev/null || ret=1
+grep "status: NOERROR" dig.out.ns4.test$n >/dev/null || ret=1
+grep 'wild\.a\.too-many-iterations\..*A.10\.0\.0\.3' dig.out.ns4.test$n >/dev/null || ret=1
+grep "ANSWER: 2, AUTHORITY: 4" dig.out.ns4.test$n > /dev/null || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_i "checking fallback to insecure when NSEC3 iterations is too high (wildcard nodata) ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.2 type100 wild.a.too-many-iterations > dig.out.ns2.test$n || ret=1
+$DIG $DIGOPTS @10.53.0.4 type100 wild.a.too-many-iterations > dig.out.ns4.test$n || ret=1
+digcomp dig.out.ns2.test$n dig.out.ns4.test$n || ret=1
+grep "flags: qr rd ra;" dig.out.ns4.test$n >/dev/null || ret=1
+grep "status: NOERROR" dig.out.ns4.test$n >/dev/null || ret=1
+grep "ANSWER: 0, AUTHORITY: 8" dig.out.ns4.test$n > /dev/null || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1
