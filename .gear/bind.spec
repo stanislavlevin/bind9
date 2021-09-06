@@ -200,7 +200,6 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.ac
 	--localstatedir=/var \
 	--enable-linux-caps \
 	--enable-fixed-rrset \
-	--disable-seccomp \
 	 %{subst_with openssl} \
 	 %{subst_with libjson} \
 	 %{subst_with python} \
