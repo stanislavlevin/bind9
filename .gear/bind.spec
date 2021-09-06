@@ -39,7 +39,6 @@ Source50: bind.service
 Patch0001: 0001-owl-warnings.patch
 Patch0002: 0002-openbsd-owl-pidfile.patch
 Patch0003: 0003-openbsd-owl-chroot-defaults.patch
-Patch0004: 0004-alt-owl-chroot.patch
 Patch0005: 0005-owl-checkconf-chroot.patch
 Patch0006: 0006-alt-man.patch
 Patch0007: 0007-alt-nofile.patch
@@ -199,7 +198,6 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.ac
 %autoreconf
 %configure \
 	--localstatedir=/var \
-	--with-randomdev=/dev/random \
 	--enable-threads \
 	--enable-linux-caps \
 	--enable-fixed-rrset \
