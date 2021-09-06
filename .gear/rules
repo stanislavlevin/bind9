@@ -1,14 +1,17 @@
-copy: *.ALT
-copy: *.arpa
-copy: *.bind-devel
-copy: *.conf
-copy: *.empty
-copy: *.init
-copy: *.key
-copy: *.localdomain
-copy: *.localhost
-copy: *.patch
-copy: *.txt
-copy: *.sysconfig
-copy: *.service
-tar: bind
+spec: .gear/bind.spec
+tar: v9_16_20:.
+diff: v9_16_20:. . name=@name@-@version@-alt.patch exclude=.gear/
+copy: .gear/*.patch
+
+copy: alt/*.ALT
+copy: alt/*.arpa
+copy: alt/*.bind-devel
+copy: alt/*.conf
+copy: alt/*.empty
+copy: alt/*.init
+copy: alt/*.key
+copy: alt/*.localdomain
+copy: alt/*.localhost
+copy: alt/*.txt
+copy: alt/*.sysconfig
+copy: alt/*.service
