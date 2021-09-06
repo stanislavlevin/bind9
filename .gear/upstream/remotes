@@ -1,0 +1,3 @@
+[remote "upstream"]
+	url = https://gitlab.isc.org/isc-projects/bind9.git
+	fetch = +refs/heads/*:refs/remotes/upstream/*
