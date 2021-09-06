@@ -199,7 +199,6 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.ac
 %autoreconf
 %configure \
 	--localstatedir=/var \
-	--enable-threads \
 	--enable-linux-caps \
 	--enable-fixed-rrset \
 	--disable-seccomp \
