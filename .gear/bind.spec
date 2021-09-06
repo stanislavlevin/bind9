@@ -215,20 +215,12 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.ac
 	#
 
 %make_build
-# Build queryperf
-pushd contrib/queryperf
-	%configure
-	%make_build
-popd # contrib/queryperf
 
 %install
 %makeinstall_std
 
 # Install additional headers.
 install -pm644 lib/isc/unix/errno2result.h %buildroot%_includedir/bind9/isc/
-
-# Install queryperf.
-install -pm755 contrib/queryperf/queryperf %buildroot%_sbindir/
 
 # Install startup scripts.
 install -pD -m755 addon/bind.init %buildroot%_initdir/bind
@@ -281,7 +273,6 @@ mkdir -p %buildroot%docdir
 cp -a CHANGES COPYRIGHT README* \
 	doc/{arm,misc,rfc} \
 	%buildroot%docdir/
-install -pm644 contrib/queryperf/README %buildroot%docdir/README.queryperf
 
 xz -9 %buildroot%docdir/{*/*.txt,CHANGES}
 rm -v %buildroot%docdir/*/{Makefile*,README-SGML,*.xml}
