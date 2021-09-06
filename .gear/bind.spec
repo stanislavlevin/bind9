@@ -82,6 +82,7 @@ BuildPreReq: libcap-devel
 %{?_with_openssl:BuildPreReq: libssl-devel}
 %{?_with_libjson:BuildPreReq: libjson-c-devel}
 BuildPreReq: libkrb5-devel
+BuildRequires: libuv-devel
 
 %package utils
 Summary: Utilities provided by ISC BIND
