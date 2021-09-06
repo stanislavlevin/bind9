@@ -58,7 +58,6 @@ Patch0011: 0011-ALT-Make-it-possible-to-retain-Linux-capabilities-of.patch
 %endif
 
 %def_disable static
-%def_enable ipv6
 %def_with openssl
 %def_with libjson
 %def_without python
@@ -203,7 +202,6 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.ac
 	 %{subst_with openssl} \
 	 %{subst_with libjson} \
 	 %{subst_with python} \
-	 %{subst_enable ipv6} \
 	 %{subst_enable static} \
 	--includedir=%{_includedir}/bind9 \
 	--with-libtool \
