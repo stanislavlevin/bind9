@@ -36,7 +36,6 @@ Source44: bind.empty
 Source50: bind.service
 
 # NB: there must be at least one patch :)
-Patch0001: 0001-owl-warnings.patch
 Patch0002: 0002-openbsd-owl-pidfile.patch
 Patch0003: 0003-openbsd-owl-chroot-defaults.patch
 Patch0005: 0005-owl-checkconf-chroot.patch
