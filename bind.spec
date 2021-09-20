@@ -1,6 +1,7 @@
 %define _unpackaged_files_terminate_build 1
 
 # build rules
+%def_with docs
 %def_with openssl
 %def_with libjson
 %def_without python
@@ -27,9 +28,8 @@ VCS: https://gitlab.isc.org/isc-projects/bind9.git
 
 # ftp://ftp.isc.org/isc/bind9/%src_version/bind-%src_version.tar.gz
 Source0: %name-%version.tar
-Source2: rfc1912.txt
-Source3: bind.README.bind-devel
-Source4: bind.README.ALT
+Source3: README.bind-devel
+Source4: README.ALT
 
 Source11: bind.init
 
@@ -55,13 +55,15 @@ Source50: bind.service
 Patch0002: 0002-openbsd-owl-pidfile.patch
 Patch0003: 0003-openbsd-owl-chroot-defaults.patch
 Patch0005: 0005-owl-checkconf-chroot.patch
-Patch0006: 0006-alt-man.patch
 Patch0007: 0007-alt-nofile.patch
 Patch0008: 0008-alt-ads-remove.patch
 Patch0009: 0009-Minimize-linux-capabilities.patch
 Patch0010: 0010-Link-libirs-with-libdns-libisc-and-libisccfg.patch
 Patch0011: 0011-ALT-Make-it-possible-to-retain-Linux-capabilities-of.patch
 
+%if_with docs
+BuildRequires: python3(sphinx)
+BuildRequires: python3(sphinx_rtd_theme)
 %endif
 
 Provides: bind-chroot(%_chrootdir)
@@ -106,11 +108,13 @@ Requires: libbind = %EVR
 Provides: libisc-export-devel = %EVR
 Obsoletes: libisc-export-devel < %version
 
+%if_with docs
 %package doc
 Summary: Documentation for ISC BIND
 Group: Development/Other
 BuildArch: noarch
 Prefix: %prefix
+%endif
 
 %description
 The Berkeley Internet Name Domain (BIND) implements an Internet domain
@@ -136,19 +140,17 @@ only needed if you want to compile packages that need more BIND
 %src_version nameserver API than the resolver code provided by
 glibc.
 
+%if_with docs
 %description doc
 This package provides various documents that are useful for maintaining
 a working BIND %src_version installation.
+%endif
 
 %prep
 %setup
 
 # NB: there must be at least one patch :)
 %autopatch -p2
-
-install -D -pm644 %_sourcedir/rfc1912.txt doc/rfc/rfc1912.txt
-install -pm644 %_sourcedir/bind.README.bind-devel README.bind-devel
-install -pm644 %_sourcedir/bind.README.ALT README.ALT
 
 mkdir addon
 install -pm644 %_sourcedir/bind.init addon/
@@ -163,13 +165,17 @@ find -type f -print0 |
 	xargs -r0 sed -i \
 '
 s,@ROOT@,%_chrootdir,g;
-s,@DOCDIR@,%docdir,g;
 s,@SBINDIR@,%_sbindir,g;
 ' --
 
 sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.ac
 
 %build
+%if_with docs
+# see HTMLTARGET in configure.ac and doc/arm/Makefile.in
+export SPHINX_BUILD=/usr/bin/sphinx-build-3
+%endif
+
 %autoreconf
 %configure \
 	--localstatedir=/var \
@@ -185,6 +191,10 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.ac
 	#
 
 %make_build
+
+%if_with docs
+%make doc
+%endif
 
 %install
 %makeinstall_std
@@ -237,14 +247,14 @@ ln -s rndc.8 %buildroot%_man8dir/ndc.8
 # Create ghost files
 touch %buildroot/var/run/named.pid
 
-# Package documentation files
+# ALT docs
 mkdir -p %buildroot%docdir
-cp -a CHANGES COPYRIGHT README* \
-	doc/{arm,misc,rfc} \
-	%buildroot%docdir/
+cp -a README %SOURCE3 %SOURCE4 CHANGES %buildroot%docdir/
 
-xz -9 %buildroot%docdir/{*/*.txt,CHANGES}
-rm -v %buildroot%docdir/*/{Makefile*,README-SGML,*.xml}
+%if_with docs
+mkdir -p %buildroot%docdir/arm
+cp -a doc/arm/_build/html %buildroot%docdir/arm/
+%endif
 
 %pre
 /usr/sbin/groupadd -r -f named
@@ -285,10 +295,10 @@ fi
 %_libdir/libisccc-%version.so
 %_libdir/libisccfg-%version.so
 %_libdir/libns-%version.so
-%dir %docdir
-%docdir/COPYRIGHT
 
 %files devel
+%dir %docdir
+%docdir/README.bind-devel
 %_libdir/libbind9.so
 %_libdir/libdns.so
 %_libdir/libirs.so
@@ -297,10 +307,12 @@ fi
 %_libdir/libisccfg.so
 %_libdir/libns.so
 %_includedir/bind9
-%dir %docdir
-%docdir/README.bind-devel
 
 %files
+%dir %docdir
+%docdir/CHANGES
+%docdir/README
+%docdir/README.ALT
 %_bindir/arpaname
 %_bindir/named-rrchecker
 %_sbindir/*
@@ -316,11 +328,6 @@ fi
 %_man5dir/*
 %_man8dir/*
 %_man1dir/arpaname*
-
-%dir %docdir
-%docdir/README*
-%docdir/misc
-%exclude %docdir/README.bind-devel
 
 %ghost %attr(644,root,root) /var/run/named.pid
 
@@ -362,11 +369,11 @@ fi
 %_man1dir/nslookup.*
 %_man1dir/nsupdate.*
 
+%if_with docs
 %files doc
-%docdir
-%exclude %docdir/README*
-%exclude %docdir/misc
-%exclude %docdir/COPYRIGHT
+%dir %docdir
+%docdir/arm
+%endif
 
 %changelog
 * Thu Mar 17 2022 Stanislav Levin <slev@altlinux.org> 9.11.37-alt1

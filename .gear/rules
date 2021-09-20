@@ -8,7 +8,6 @@ copy: *.key
 copy: *.localdomain
 copy: *.localhost
 copy: *.patch
-copy: *.txt
 copy: *.sysconfig
 copy: *.service
 tar: bind
