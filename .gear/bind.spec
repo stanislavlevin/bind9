@@ -31,7 +31,6 @@ Source3: bind.README.bind-devel
 Source4: bind.README.ALT
 
 Source11: bind.init
-Source12: lwresd.init
 
 Source21: rndc.conf
 Source22: rndc.key
@@ -98,9 +97,8 @@ Provides: libdns = %EVR
 Provides: libisc = %EVR
 Provides: libisccc = %EVR
 Provides: libisccfg = %EVR
-Provides: liblwres = %EVR
 Obsoletes: libdns8, libdns9, libdns10, libdns11, libdns16
-Obsoletes: libisc4, libisc7, libisccc0, libisccfg0, liblwres1
+Obsoletes: libisc4, libisc7, libisccc0, libisccfg0
 
 %package devel
 Summary: ISC BIND development libraries and headers
@@ -119,11 +117,6 @@ Summary: Documentation for ISC BIND
 Group: Development/Other
 BuildArch: noarch
 Prefix: %prefix
-
-%package -n lwresd
-Summary: Lightweight resolver daemon
-Group: System/Servers
-Requires: libbind = %EVR
 
 %description
 The Berkeley Internet Name Domain (BIND) implements an Internet domain
@@ -144,14 +137,14 @@ daemons and clients.
 
 %description devel
 This package contains development libraries, header files, and API man
-pages for libdns, libisc, libisccc, libisccfg and liblwres. These are
+pages for libdns, libisc, libisccc, libisccfg. These are
 only needed if you want to compile packages that need more BIND
 %src_version nameserver API than the resolver code provided by
 glibc.
 
 %description devel-static
 This package contains development static libraries, header files, and
-API man pages for libdns, libisc, libisccc, libisccfg and liblwres.
+API man pages for libdns, libisc, libisccc, libisccfg.
 These are only needed if you want to compile statically linked packages
 that need more BIND %src_version nameserver API than the resolver
 code provided by glibc.
@@ -159,13 +152,6 @@ code provided by glibc.
 %description doc
 This package provides various documents that are useful for maintaining
 a working BIND %src_version installation.
-
-%description -n lwresd
-This package contains lwresd, the daemon providing name lookup services
-to clients that use the BIND %src_version lightweight resolver
-library. It is essentially a stripped-down, caching-only name server
-that answers queries using the BIND 9 lightweight resolver protocol
-rather than the DNS protocol.
 
 %prep
 %setup
@@ -178,7 +164,7 @@ install -pm644 %_sourcedir/bind.README.bind-devel README.bind-devel
 install -pm644 %_sourcedir/bind.README.ALT README.ALT
 
 mkdir addon
-install -pm644 %_sourcedir/{bind,lwresd}.init addon/
+install -pm644 %_sourcedir/bind.init addon/
 install -pm644 %_sourcedir/bind.{named,options,rndc,local,rfc1912,rfc1918}.conf \
 	addon/
 install -pm644 %_sourcedir/bind.{localhost,localdomain,127.in-addr.arpa,empty,sysconfig,service} \
@@ -190,7 +176,6 @@ find -type f -print0 |
 	xargs -r0 sed -i \
 '
 s,@ROOT@,%_chrootdir,g;
-s,@LWRESD_ROOT@,/var/resolv,g;
 s,@DOCDIR@,%docdir,g;
 s,@SBINDIR@,%_sbindir,g;
 ' --
@@ -222,7 +207,6 @@ install -pm644 lib/isc/unix/errno2result.h %buildroot%_includedir/bind9/isc/
 
 # Install startup scripts.
 install -pD -m755 addon/bind.init %buildroot%_initdir/bind
-install -pD -m755 addon/lwresd.init %buildroot%_initdir/lwresd
 
 # Install systemd service
 install -pD -m644 addon/bind.service %buildroot%_unitdir/bind.service
@@ -264,7 +248,7 @@ ln -s rndc %buildroot%_sbindir/ndc
 ln -s rndc.8 %buildroot%_man8dir/ndc.8
 
 # Create ghost files
-touch %buildroot/var/run/{named,lwresd}.pid
+touch %buildroot/var/run/named.pid
 
 # Package documentation files
 mkdir -p %buildroot%docdir
@@ -299,16 +283,6 @@ fi
 %post_control -s disabled bind-debug bind-slave bind-caps
 %post_service bind
 
-%pre -n lwresd
-/usr/sbin/groupadd -r -f lwresd
-/usr/sbin/useradd -r -g lwresd -d / -s /dev/null -n -c "Lightweight Resolver Daemon" lwresd >/dev/null 2>&1 ||:
-
-%post -n lwresd
-%post_service lwresd
-
-%preun -n lwresd
-%preun_service lwresd
-
 %triggerun -- bind < 9.11.19-alt3
 F=/etc/sysconfig/bind
 if [ $2 -gt 0 -a -f $F ]; then
@@ -321,19 +295,12 @@ fi
 %dir %docdir
 %docdir/COPYRIGHT
 
-%files -n lwresd
-%config %_initdir/lwresd
-%_sbindir/lwresd
-%_man8dir/lwresd.*
-%ghost %attr(644,root,root) /var/run/lwresd.pid
-
 %files devel
 %_libdir/*.so
 %_bindir/bind9-config
 %_bindir/isc-config.sh
 %_includedir/bind9
 %_man1dir/bind9-config.1*
-%_man3dir/*
 %dir %docdir
 %docdir/README.bind-devel
 
@@ -345,8 +312,6 @@ fi
 %files
 %_bindir/arpaname
 %_bindir/named-rrchecker
-%exclude %_sbindir/lwresd
-%exclude %_man8dir/lwresd*
 %_sbindir/*
 %_sysconfdir/bind
 %_sysconfdir/bind.keys
