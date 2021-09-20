@@ -291,12 +291,24 @@ if [ $2 -gt 0 -a -f $F ]; then
 fi
 
 %files -n libbind
-%_libdir/lib*.so.*
+%_libdir/libbind9-%version.so
+%_libdir/libdns-%version.so
+%_libdir/libirs-%version.so
+%_libdir/libisc-%version.so
+%_libdir/libisccc-%version.so
+%_libdir/libisccfg-%version.so
+%_libdir/libns-%version.so
 %dir %docdir
 %docdir/COPYRIGHT
 
 %files devel
-%_libdir/*.so
+%_libdir/libbind9.so
+%_libdir/libdns.so
+%_libdir/libirs.so
+%_libdir/libisc.so
+%_libdir/libisccc.so
+%_libdir/libisccfg.so
+%_libdir/libns.so
 %_includedir/bind9
 %dir %docdir
 %docdir/README.bind-devel
