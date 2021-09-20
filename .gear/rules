@@ -11,6 +11,5 @@ copy: alt/*.init
 copy: alt/*.key
 copy: alt/*.localdomain
 copy: alt/*.localhost
-copy: alt/*.txt
 copy: alt/*.sysconfig
 copy: alt/*.service
