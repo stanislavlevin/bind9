@@ -256,6 +256,9 @@ mkdir -p %buildroot%docdir/arm
 cp -a doc/arm/_build/html %buildroot%docdir/arm/
 %endif
 
+# legacy path for plugins (for example, bind-dyndb-ldap)
+mkdir -p %buildroot%_libdir/bind
+
 %pre
 /usr/sbin/groupadd -r -f named
 /usr/sbin/useradd -r -g named -d %_chrootdir -s /dev/null -n -c "Domain Name Server" named >/dev/null 2>&1 ||:
@@ -313,6 +316,12 @@ fi
 %docdir/CHANGES
 %docdir/README
 %docdir/README.ALT
+# plugins
+%dir %_libdir/named
+%_libdir/named/filter-aaaa.so
+# legacy path for plugins (for example, bind-dyndb-ldap)
+%dir %_libdir/bind
+
 %_bindir/arpaname
 %_bindir/named-rrchecker
 %_sbindir/*
