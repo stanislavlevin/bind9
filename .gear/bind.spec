@@ -269,6 +269,9 @@ mkdir -p %buildroot%docdir/arm
 cp -a doc/arm/_build/html %buildroot%docdir/arm/
 %endif
 
+# compat path for plugins, at least, bind-dyndb-ldap is packaged to libdir/bind
+ln -snr %buildroot%_libdir/{named,bind}
+
 %pre
 /usr/sbin/groupadd -r -f named
 /usr/sbin/useradd -r -g named -d %_chrootdir -s /dev/null -n -c "Domain Name Server" named >/dev/null 2>&1 ||:
@@ -332,6 +335,7 @@ fi
 %docdir/README
 %docdir/README.ALT
 # plugins
+%dir %_libdir/bind
 %dir %_libdir/named
 %_libdir/named/filter-aaaa.so
 
