@@ -331,6 +331,10 @@ fi
 %docdir/CHANGES
 %docdir/README
 %docdir/README.ALT
+# plugins
+%dir %_libdir/named
+%_libdir/named/filter-aaaa.so
+
 %_bindir/arpaname
 %_bindir/named-rrchecker
 %_sbindir/*
