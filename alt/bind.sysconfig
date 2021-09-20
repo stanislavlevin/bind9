@@ -1,7 +1,10 @@
 # ISC named startup options
-# Use -4 for ipv4 only behaviour. See named(8) for details.
+
+# EXTRAOPTIONS can be used to override any other options (the last passed wins)
 EXTRAOPTIONS=""
-# Starting with bind 9.10, chrooted mode is under control(1).
-#CHROOT="-t /"
-# As of bind 9.11.19-alt3 the dropping of Linux capabilities is under control(1).
+
+# chrooted mode is controlled by `control bind-chroot`
+CHROOT="-t @ROOT@"
+
+# dropping of Linux capabilities is controlled by `control bind-caps`
 #RETAIN_CAPS="-r"

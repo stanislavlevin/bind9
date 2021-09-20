@@ -59,8 +59,6 @@ Source50: bind.service
 Patch0: %name-%version-alt.patch
 
 Patch0002: 0002-openbsd-owl-pidfile.patch
-Patch0003: 0003-openbsd-owl-chroot-defaults.patch
-Patch0005: 0005-owl-checkconf-chroot.patch
 Patch0009: 0009-Minimize-linux-capabilities.patch
 Patch0011: 0011-ALT-Make-it-possible-to-retain-Linux-capabilities-of.patch
 
@@ -183,6 +181,8 @@ find -type f -print0 |
 s,@ROOT@,%_chrootdir,g;
 s,@ZONE_DIR@,%zone_dir/,g;
 s,@WORKING_DIR@,%working_dir,g;
+s,@NAMED_USER@,%named_user,g;
+s,@DISTRO_OPTIONS@,-u %named_user,g;
 ' --
 
 %build
