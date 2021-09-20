@@ -297,10 +297,7 @@ fi
 
 %files devel
 %_libdir/*.so
-%_bindir/bind9-config
-%_bindir/isc-config.sh
 %_includedir/bind9
-%_man1dir/bind9-config.1*
 %dir %docdir
 %docdir/README.bind-devel
 
@@ -370,7 +367,6 @@ fi
 %_man1dir/host.*
 %_man1dir/nslookup.*
 %_man1dir/nsupdate.*
-%_man1dir/isc-config.sh.*
 
 %files doc
 %docdir
