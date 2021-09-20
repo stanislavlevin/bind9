@@ -1,3 +1,19 @@
+%define _unpackaged_files_terminate_build 1
+
+# build rules
+%def_disable static
+%def_with openssl
+%def_with libjson
+%def_without python
+
+%define docdir %_docdir/bind-%version
+# root directory for chrooted environment.
+%define _chrootdir %_localstatedir/bind
+
+%ifndef timestamp
+%define timestamp %(TZ=UTC LC_TIME=C date +%%Y%%m%%d)
+%endif
+
 Name: bind
 Version: 9.11.32
 %define src_version 9.11.32
@@ -48,20 +64,7 @@ Patch0009: 0009-Minimize-linux-capabilities.patch
 Patch0010: 0010-Link-libirs-with-libdns-libisc-and-libisccfg.patch
 Patch0011: 0011-ALT-Make-it-possible-to-retain-Linux-capabilities-of.patch
 
-# root directory for chrooted environment.
-%define _chrootdir %_localstatedir/bind
-
-# common directory for documentation.
-%define docdir %_docdir/bind-%version
-
-%ifndef timestamp
-%define timestamp %(TZ=UTC LC_TIME=C date +%%Y%%m%%d)
 %endif
-
-%def_disable static
-%def_with openssl
-%def_with libjson
-%def_without python
 
 Provides: bind-chroot(%_chrootdir)
 Obsoletes: bind-chroot, bind-debug, bind-slave, caching-nameserver
@@ -271,8 +274,6 @@ cp -a CHANGES COPYRIGHT README* \
 
 xz -9 %buildroot%docdir/{*/*.txt,CHANGES}
 rm -v %buildroot%docdir/*/{Makefile*,README-SGML,*.xml}
-
-%define _unpackaged_files_terminate_build 1
 
 %pre
 /usr/sbin/groupadd -r -f named
