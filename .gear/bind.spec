@@ -178,7 +178,6 @@ find -type f -print0 |
 	xargs -r0 sed -i \
 '
 s,@ROOT@,%_chrootdir,g;
-s,@SBINDIR@,%_sbindir,g;
 ' --
 
 sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.ac
