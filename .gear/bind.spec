@@ -180,8 +180,6 @@ find -type f -print0 |
 s,@ROOT@,%_chrootdir,g;
 ' --
 
-sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.ac
-
 %build
 %if_with docs
 # see HTMLTARGET in configure.ac and doc/arm/Makefile.in
