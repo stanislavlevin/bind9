@@ -36,6 +36,8 @@ Source44: bind.empty
 Source50: bind.service
 
 # NB: there must be at least one patch :)
+Patch0: %name-%version-alt.patch
+
 Patch0002: 0002-openbsd-owl-pidfile.patch
 Patch0003: 0003-openbsd-owl-chroot-defaults.patch
 Patch0005: 0005-owl-checkconf-chroot.patch
@@ -166,7 +168,7 @@ rather than the DNS protocol.
 %setup
 
 # NB: there must be at least one patch :)
-%autopatch -p2
+%autopatch -p1
 
 install -D -pm644 %_sourcedir/rfc1912.txt doc/rfc/rfc1912.txt
 install -pm644 %_sourcedir/bind.README.bind-devel README.bind-devel

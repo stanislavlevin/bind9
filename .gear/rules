@@ -1,7 +1,6 @@
 spec: .gear/bind.spec
 tar: v9_16_20:.
-diff: v9_16_20:. . name=@name@-@version@-alt.patch exclude=.gear/
-copy: .gear/*.patch
+diff: v9_16_20:. . name=@name@-@version@-alt.patch exclude=.gear/ exclude=alt/
 
 copy: alt/*.ALT
 copy: alt/*.arpa
