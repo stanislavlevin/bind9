@@ -6,9 +6,9 @@ After=network.target
 
 [Service]
 Type=forking
+GuessMainPID=no
 EnvironmentFile=-/etc/sysconfig/bind
 #Environment=KRB5_KTNAME=/etc/named.keytab
-PIDFile=/var/run/named.pid
 
 ExecStartPre=/etc/init.d/bind rndc_keygen
 ExecStartPre=/usr/sbin/named-checkconf $CHROOT -z /etc/named.conf
