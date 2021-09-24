@@ -10,6 +10,7 @@
 %define docdir %_docdir/bind-%version
 # root directory for chrooted environment
 %define _chrootdir %_localstatedir/bind
+%define run_dir /run/named
 
 %define named_user named
 %define named_group named
@@ -53,10 +54,10 @@ Source43: bind.127.in-addr.arpa
 Source44: bind.empty
 
 Source50: bind.service
+Source51: bind.tmpfiles.conf
 
 # NB: there must be at least one patch :)
 Patch0001: 0001-ALT-defaults-Reintroduce-chrooted-named-by-default.patch
-Patch0002: 0002-openbsd-owl-pidfile.patch
 Patch0009: 0009-Minimize-linux-capabilities.patch
 Patch0011: 0011-ALT-Make-it-possible-to-retain-Linux-capabilities-of.patch
 
@@ -152,12 +153,24 @@ a working BIND %src_version installation.
 %autopatch -p2
 
 mkdir addon
-install -pm644 %_sourcedir/bind.init addon/
-install -pm644 %_sourcedir/bind.{named,options,rndc,local,rfc1912,rfc1918}.conf \
-	addon/
-install -pm644 %_sourcedir/bind.{localhost,localdomain,127.in-addr.arpa,empty,sysconfig,service} \
-	addon/
-install -pm644 %_sourcedir/rndc.{conf,key} addon/
+install -pm644 \
+    %_sourcedir/bind.init \
+    %_sourcedir/bind.named.conf \
+    %_sourcedir/bind.options.conf \
+    %_sourcedir/bind.rndc.conf \
+    %_sourcedir/bind.local.conf \
+    %_sourcedir/bind.rfc1912.conf \
+    %_sourcedir/bind.rfc1918.conf \
+    %_sourcedir/bind.localhost \
+    %_sourcedir/bind.localdomain \
+    %_sourcedir/bind.127.in-addr.arpa \
+    %_sourcedir/bind.empty \
+    %_sourcedir/bind.sysconfig \
+    %_sourcedir/bind.service \
+    %_sourcedir/bind.tmpfiles.conf \
+    %_sourcedir/rndc.conf \
+    %_sourcedir/rndc.key \
+    addon/
 
 find -type f -print0 |
 	xargs -r0 grep -lZ '@[A-Z_]\+@' -- |
@@ -165,6 +178,8 @@ find -type f -print0 |
 '
 s,@ROOT@,%_chrootdir,g;
 s,@DISTRO_OPTIONS@,-u %named_user,g;
+s,@RUN_DIR@,%run_dir,g;
+s,@NAMED_USER@,%named_user,g;
 ' --
 
 %build
@@ -204,10 +219,13 @@ install -pD -m755 addon/bind.init %buildroot%_initdir/bind
 
 # Install systemd service
 install -pD -m644 addon/bind.service %buildroot%_unitdir/bind.service
+install -pD -m644 addon/bind.tmpfiles.conf %buildroot%_tmpfilesdir/bind.conf
 
 # Install configurations files
 install -pm640 addon/rndc.conf %buildroot%_sysconfdir/
 install -pD -m644 addon/bind.sysconfig %buildroot%_sysconfdir/sysconfig/bind
+
+mkdir -p %buildroot%run_dir
 
 # Create a chrooted environment...
 mkdir -p %buildroot%_chrootdir/{dev,%_sysconfdir,var/{run,tmp},session,zone/slave}
@@ -240,9 +258,6 @@ ln -s %_chrootdir/dev/log %buildroot%_sysconfdir/syslog.d/bind
 # Create ndc compatibility symlinks.
 ln -s rndc %buildroot%_sbindir/ndc
 ln -s rndc.8 %buildroot%_man8dir/ndc.8
-
-# Create ghost files
-touch %buildroot/var/run/named.pid
 
 # ALT docs
 mkdir -p %buildroot%docdir
@@ -329,14 +344,14 @@ fi
 %config %_initdir/bind
 %config %_sysconfdir/sysconfig/bind
 %config(noreplace) %attr(640,root,%named_group) %_sysconfdir/rndc.conf
+%dir %attr(770,root,%named_group) %run_dir
 %_unitdir/bind.service
+%_tmpfilesdir/bind.conf
 
 %_man1dir/named-rrchecker.1*
 %_man5dir/*
 %_man8dir/*
 %_man1dir/arpaname*
-
-%ghost %attr(644,root,root) /var/run/named.pid
 
 #chroot
 %_sysconfdir/syslog.d/*
