@@ -11,6 +11,7 @@
 # root directory for chrooted environment
 %define _chrootdir %_localstatedir/bind
 %define run_dir /run/named
+%define log_dir %_logdir/named
 
 %define named_user named
 %define named_group named
@@ -180,6 +181,7 @@ s,@ROOT@,%_chrootdir,g;
 s,@DISTRO_OPTIONS@,-u %named_user,g;
 s,@RUN_DIR@,%run_dir,g;
 s,@NAMED_USER@,%named_user,g;
+s,@LOG_DIR@,%log_dir,g;
 ' --
 
 %build
@@ -226,6 +228,7 @@ install -pm640 addon/rndc.conf %buildroot%_sysconfdir/
 install -pD -m644 addon/bind.sysconfig %buildroot%_sysconfdir/sysconfig/bind
 
 mkdir -p %buildroot%run_dir
+mkdir -p %buildroot%log_dir
 
 # Create a chrooted environment...
 mkdir -p %buildroot%_chrootdir/{dev,%_sysconfdir,var/{run,tmp},session,zone/slave}
@@ -345,6 +348,7 @@ fi
 %config %_sysconfdir/sysconfig/bind
 %config(noreplace) %attr(640,root,%named_group) %_sysconfdir/rndc.conf
 %dir %attr(770,root,%named_group) %run_dir
+%dir %attr(770,root,%named_group) %log_dir
 %_unitdir/bind.service
 %_tmpfilesdir/bind.conf
 
