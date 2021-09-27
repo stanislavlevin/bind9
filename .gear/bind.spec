@@ -10,6 +10,8 @@
 %define docdir %_docdir/bind-%version
 # root directory for chrooted environment.
 %define _chrootdir %_localstatedir/bind
+%define working_dir %_localstatedir/bind/working_dir
+%define zone_dir %_sysconfdir/bind/zone
 
 %define named_user named
 %define named_group named
@@ -71,7 +73,8 @@ Provides: bind-chroot(%_chrootdir)
 Obsoletes: bind-chroot, bind-debug, bind-slave, caching-nameserver
 # Because of /etc/syslog.d/ feature.
 Conflicts: syslogd < 1.4.1-alt11
-Requires(pre): bind-control >= 1.3
+# removed debug facility
+Requires(pre): bind-control >= 1.4
 
 # due to %_chrootdir/dev/log
 BuildPreReq: coreutils
@@ -178,6 +181,8 @@ find -type f -print0 |
 	xargs -r0 sed -i \
 '
 s,@ROOT@,%_chrootdir,g;
+s,@ZONE_DIR@,%zone_dir/,g;
+s,@WORKING_DIR@,%working_dir,g;
 ' --
 
 %build
@@ -222,8 +227,17 @@ install -pD -m644 addon/bind.service %buildroot%_unitdir/bind.service
 install -pm640 addon/rndc.conf %buildroot%_sysconfdir/
 install -pD -m644 addon/bind.sysconfig %buildroot%_sysconfdir/sysconfig/bind
 
+mkdir -p %buildroot%working_dir
+
 # Create a chrooted environment...
-mkdir -p %buildroot%_chrootdir/{dev,%_sysconfdir,var/{run,tmp},session,zone/slave}
+mkdir -p %buildroot%_chrootdir/dev
+mkdir -p %buildroot%_chrootdir/%_sysconfdir
+mkdir -p %buildroot%_chrootdir/%_runtimedir
+mkdir -p %buildroot%_chrootdir/%_var/tmp
+mkdir -p %buildroot%_chrootdir/%_localstatedir
+mkdir -p %buildroot%_chrootdir/zone/slave
+mkdir -p %buildroot%_chrootdir/%working_dir
+
 for n in named options rndc local rfc1912 rfc1918; do
 	install -pm640 "addon/bind.$n.conf" \
 		"%buildroot%_chrootdir%_sysconfdir/$n.conf"
@@ -274,7 +288,7 @@ ln -snr %buildroot%_libdir/{named,bind}
 /usr/sbin/useradd -r -g %named_group -d %_chrootdir -s /dev/null -n \
     -c "Domain Name Server" %named_user >/dev/null 2>&1 ||:
 [ -f %_initdir/named -a ! -L %_initdir/named ] && /sbin/chkconfig --del named ||:
-%pre_control bind-chroot bind-debug bind-slave bind-caps
+%pre_control bind-chroot bind-slave bind-caps
 
 %preun
 %preun_service bind
@@ -291,7 +305,7 @@ if grep -qs '^SYSLOGD_OPTIONS=.*-a %_chrootdir/dev/log' "$SYSLOGD_CONFIG"; then
 fi
 
 %post_control -s enabled bind-chroot
-%post_control -s disabled bind-debug bind-slave bind-caps
+%post_control -s disabled bind-slave bind-caps
 %post_service bind
 
 %triggerun -- bind < 9.11.19-alt3
@@ -346,6 +360,7 @@ fi
 %config %_initdir/bind
 %config %_sysconfdir/sysconfig/bind
 %config(noreplace) %attr(640,root,%named_group) %_sysconfdir/rndc.conf
+%dir %attr(770,root,%named_group) %working_dir
 %_unitdir/bind.service
 
 %_man1dir/named-rrchecker.1*
@@ -363,10 +378,12 @@ fi
 %dir %_chrootdir%_sysconfdir
 %dir %_chrootdir/zone
 %dir %attr(700,root,%named_group) %verify(not mode) %_chrootdir/zone/slave
-%dir %attr(700,root,%named_group) %verify(not mode) %_chrootdir/var
+%dir %_chrootdir/%_var
+%dir %_chrootdir/%_localstatedir
+%dir %_chrootdir/%_localstatedir/bind
+%dir %attr(770,root,%named_group) %_chrootdir/%working_dir
 %dir %attr(1770,root,%named_group) %_chrootdir/var/run
 %dir %attr(1770,root,%named_group) %_chrootdir/var/tmp
-%dir %attr(700,root,%named_group) %_chrootdir/session
 %config(noreplace) %_chrootdir%_sysconfdir/*.conf
 %config(noreplace) %verify(not md5 mtime size) %_chrootdir%_sysconfdir/rndc.key
 %_chrootdir%_sysconfdir/bind.keys
