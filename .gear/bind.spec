@@ -13,6 +13,7 @@
 %define working_dir %_localstatedir/bind/working_dir
 %define zone_dir %_sysconfdir/bind/zone
 %define run_dir /run/named
+%define log_dir %_logdir/named
 
 %define named_user named
 %define named_group named
@@ -194,6 +195,7 @@ s,@WORKING_DIR@,%working_dir,g;
 s,@NAMED_USER@,%named_user,g;
 s,@DISTRO_OPTIONS@,-u %named_user,g;
 s,@RUN_DIR@,%run_dir,g;
+s,@LOG_DIR@,%log_dir,g;
 ' --
 
 %build
@@ -241,6 +243,7 @@ install -pD -m644 addon/bind.sysconfig %buildroot%_sysconfdir/sysconfig/bind
 
 mkdir -p %buildroot%working_dir
 mkdir -p %buildroot%run_dir
+mkdir -p %buildroot%log_dir
 
 # Create a chrooted environment...
 mkdir -p %buildroot%_chrootdir/dev
@@ -251,6 +254,7 @@ mkdir -p %buildroot%_chrootdir/%_var/tmp
 mkdir -p %buildroot%_chrootdir/%_localstatedir
 mkdir -p %buildroot%_chrootdir/zone/slave
 mkdir -p %buildroot%_chrootdir/%working_dir
+mkdir -p %buildroot%_chrootdir/%log_dir
 
 for n in named options rndc local rfc1912 rfc1918; do
 	install -pm640 "addon/bind.$n.conf" \
@@ -373,6 +377,7 @@ fi
 %config(noreplace) %attr(640,root,%named_group) %_sysconfdir/rndc.conf
 %dir %attr(770,root,%named_group) %working_dir
 %dir %attr(770,root,%named_group) %run_dir
+%dir %attr(770,root,%named_group) %log_dir
 %_unitdir/bind.service
 %_tmpfilesdir/bind.conf
 
@@ -396,6 +401,8 @@ fi
 %dir %_chrootdir/%_runtimedir
 %dir %attr(770,root,%named_group) %_chrootdir%_runtimedir/named
 %dir %attr(1770,root,%named_group) %_chrootdir/var/tmp
+%dir %_chrootdir%_logdir
+%dir %attr(770,root,%named_group) %_chrootdir/%log_dir
 %config(noreplace) %_chrootdir%_sysconfdir/*.conf
 %config(noreplace) %verify(not md5 mtime size) %_chrootdir%_sysconfdir/rndc.key
 %_chrootdir%_sysconfdir/bind.keys
