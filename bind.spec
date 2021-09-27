@@ -365,7 +365,7 @@ fi
 %dir %_chrootdir
 %dir %_chrootdir/dev
 %dir %_chrootdir%_sysconfdir
-%dir %_chrootdir/zone
+%dir %attr(1770,root,%named_group) %_chrootdir/zone
 %dir %attr(700,root,%named_group) %verify(not mode) %_chrootdir/zone/slave
 %dir %attr(700,root,%named_group) %verify(not mode) %_chrootdir/var
 %dir %attr(1770,root,%named_group) %_chrootdir/var/run
