@@ -1,0 +1,15 @@
+FROM stanislavlevin/freeipa-tests-altlinux:sisyphus
+ENV container=docker LANG=en_US.utf8 LANGUAGE=en_US.utf8 LC_ALL=en_US.utf8
+
+COPY dist /root/
+RUN \
+    apt-get update \
+    && apt-get install -y \
+        /root/rpms/bind-9*.rpm \
+        /root/rpms/bind-utils-9*.rpm \
+        /root/rpms/libbind-9*.rpm \
+    && apt-get clean \
+    && find /var/lib/apt/lists/ -type f -exec rm "{}" \; \
+    && rm -rf /var/cache/apt/*.bin
+VOLUME ["/bind"]
+ENTRYPOINT [ "/sbin/init" ]

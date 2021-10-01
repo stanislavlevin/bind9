@@ -1,0 +1,11 @@
+$TTL    1D
+@       IN      SOA     server root.server (
+                                1397051952      ; serial
+                                5               ; refresh
+                                5               ; retry
+                                1814400         ; expire
+                                3600            ; ncache
+                        )
+        IN      NS      server
+server          A       127.0.0.1
+server          AAAA    ::1

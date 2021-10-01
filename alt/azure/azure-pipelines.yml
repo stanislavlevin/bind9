@@ -1,0 +1,254 @@
+trigger:
+- sisyphus
+
+variables:
+  DOCKER_BUILD_IMAGE: 'stanislavlevin/freeipa-build-altlinux:sisyphus'
+  VM_IMAGE: 'ubuntu-20.04'
+  TESTS_CONTAINER: 'bind_test'
+  SHELL_CMD: '/bin/bash --noprofile --norc -eu'
+
+jobs:
+- job: Build
+  displayName: Build and run system tests
+  pool:
+    vmImage: $(VM_IMAGE)
+  container:
+    image: $(DOCKER_BUILD_IMAGE)
+    options: --security-opt seccomp=unconfined --privileged --env container=docker --sysctl net.ipv6.conf.all.disable_ipv6=0
+  steps:
+    - script: |
+        set -eu
+        sudo mkdir -p /etc/docker
+        echo '{ "ipv6": true, "fixed-cidr-v6": "fc00::/7" }' > daemon.json
+        sudo cp daemon.json /etc/docker/daemon.json
+        sudo chown root:root /etc/docker/daemon.json
+        # azure doesn't provide means to manage container(restart)
+        docker ps
+        sudo systemctl restart docker
+        last="$(docker ps -l --format='{{.ID}}@DELIMITER@{{.Image}}')"
+        last_image="$(echo $last | awk -F'@DELIMITER@' '{print $2}')"
+        [[ "$last_image" == "$(DOCKER_BUILD_IMAGE)" ]] || \
+            { echo "Wrong container: '$last'" ; exit 1 ; }
+        last_container="$(echo $last | awk -F'@DELIMITER@' '{print $1}')"
+        docker start "$last_container"
+      target: host
+      displayName: Configure IPv6 for Docker containers
+
+    - script: |
+        set -eu
+        for i in $(seq 35)
+            do
+               systemctl is-active --quiet default.target && exit 0
+               sleep 5
+            done
+        exit 1
+      displayName: Wait for systemd ready
+
+    - script: |
+        set -eu
+        # there is no way to disable Docker internals atm
+        for m in /etc/resolv.conf /etc/hosts /etc/hostname; do
+            sudo umount "$m"
+            sudo chmod a-x "$m"
+        done
+
+        echo 'nameserver 8.8.8.8' | sudo tee /etc/resolv.conf >/dev/null
+        echo -e '127.0.0.1 localhost\n::1 localhost' | \
+            sudo tee /etc/hosts >/dev/null
+        echo 'primary.bind.test' | sudo tee /etc/hostname >/dev/null
+      displayName: Override Docker defaults
+
+    - script: |
+        set -eu
+        set -o pipefail
+        sudo apt-get update
+        sudo apt-get install -y \
+            gear \
+            rpm-build \
+            moreutils \
+
+        gear-rpm -bs --nodeps \
+            --define '_allow_undefined_macros 1' \
+            --define "_srcrpmdir $(pwd)" \
+            --with "check" --with "system_tests" --without "smoke_tests" \
+            --without "docs" \
+          && rpm -qp bind-*.src.rpm --requires | \
+            grep -v '^rpmlib(' | \
+            tr -d [[:blank:]] | \
+            tr '\n' ' ' | \
+            xargs sudo apt-get install -y
+      displayName: Prepare build environment
+
+    - script: |
+        set -eu
+        set -o pipefail
+        gear-rpm -v -ba \
+            --define '_topdir $(Build.Repository.LocalPath)/rpmbuild' \
+            --with "check" --with "system_tests" --without "smoke_tests" \
+            --without "docs" \
+            | ts '[%Y-%m-%d %H:%M:%S]'
+        mkdir -p ${BUILD_REPOSITORY_LOCALPATH}/dist/{,s}rpms
+        cp -v \
+            ${BUILD_REPOSITORY_LOCALPATH}/rpmbuild/SRPMS/bind-*.src.rpm \
+            ${BUILD_REPOSITORY_LOCALPATH}/dist/srpms/
+        find ${BUILD_REPOSITORY_LOCALPATH}/rpmbuild/RPMS/ \
+            -type f \( -not -name "*-debuginfo-*" \
+            -a -name '*.rpm' \) \
+            -exec cp {} ${BUILD_REPOSITORY_LOCALPATH}/dist/rpms/ \;
+      displayName: Run check and build RPM packages
+
+    - task: PublishPipelineArtifact@1
+      inputs:
+        artifactName: packages-$(Build.BuildId)-$(System.JobAttempt)
+        targetPath: $(Build.Repository.LocalPath)/dist
+      displayName: Publish RPM packages
+
+    - script: |
+        set -eu
+        logs_dir="$(Build.Repository.LocalPath)/logs"
+        mkdir "$logs_dir"
+        pushd $(Build.Repository.LocalPath)/rpmbuild/BUILD/bind-*
+        pushd 'bin/tests/system'
+        source conf.sh
+        for testdir in $SUBDIRS; do
+            tar \
+                --ignore-failed-read \
+                --warning=no-failed-read  \
+                -czf "$logs_dir/$testdir.tar.gz" \
+                "$testdir" \
+                "test.output.$testdir"
+        done
+        chmod o+rX -R "$logs_dir"
+      condition: always()
+      displayName: Collect tests logs
+
+    - task: PublishPipelineArtifact@1
+      inputs:
+        artifactName: logs-$(Build.BuildId)-$(System.JobAttempt)
+        targetPath: $(Build.Repository.LocalPath)/logs
+      condition: always()
+      displayName: Publish tests logs
+
+    - script: |
+        set -eu
+        mkdir image
+        cp -a dist image/
+        cp $(Build.Repository.LocalPath)/alt/azure/Dockerfile.tests.altlinux \
+            image/Dockerfile
+        cd image
+        docker build -t bind-azure-builder .
+        docker save bind-azure-builder | \
+            gzip > '$(Build.Repository.LocalPath)/bind-azure-builder-image.tar.gz'
+      displayName: Create Docker image for integration tests
+
+    - task: PublishPipelineArtifact@1
+      inputs:
+        artifactName: image-$(Build.BuildId)-$(System.JobAttempt)
+        targetPath: $(Build.Repository.LocalPath)/bind-azure-builder-image.tar.gz
+      displayName: Publish Docker image for integration tests
+
+    - script: |
+        set -eu
+        sudo journalctl -b
+      condition: always()
+      target: host
+      displayName: Collect host journal
+
+- job: Integration_tests
+  displayName: Run integration tests
+  pool:
+    vmImage: $(VM_IMAGE)
+  dependsOn:
+    - Build
+
+  steps:
+  - script: |
+      set -eu
+      sudo apt-get update
+      sudo apt-get install -y \
+          moreutils \
+    displayName: Install hosts requirements
+
+  - script: |
+      set -eu
+      echo '{ "ipv6": true, "fixed-cidr-v6": "2001:db8::/64" }' > docker-daemon.json
+      sudo mkdir -p /etc/docker
+      sudo cp docker-daemon.json /etc/docker/daemon.json
+      sudo chown root:root /etc/docker/daemon.json
+      sudo systemctl restart docker
+    displayName: Configure Docker to allow IPv6
+
+  - task: DownloadPipelineArtifact@0
+    inputs:
+      artifactName: image-$(Build.BuildId)-$(System.JobAttempt)
+      targetPath: $(Build.Repository.LocalPath)
+    displayName: Download pre-built image for tests
+
+  - script: |
+      set -eu
+      docker load --input $(Build.Repository.LocalPath)/bind-azure-builder-image.tar.gz
+    displayName: Import pre-built image
+
+  - script: |
+      set -eu
+
+      docker create \
+        --privileged \
+        --name ${TESTS_CONTAINER} \
+        -v $(Build.Repository.LocalPath):/bind \
+        bind-azure-builder:latest
+
+      docker start ${TESTS_CONTAINER}
+
+      # wait for systemd ready
+      for i in $(seq 35)
+          do
+             docker exec ${TESTS_CONTAINER} systemctl is-active --quiet default.target && exit 0
+             sleep 5
+          done
+      exit 1
+    displayName: Start container
+
+  - script: |
+      set -eu
+      # there is no way to disable Docker internals atm
+      for m in /etc/resolv.conf /etc/hosts /etc/hostname; do
+          docker exec \
+            ${TESTS_CONTAINER} \
+            ${SHELL_CMD} \
+            -c "umount '$m' && chmod a-x '$m'"
+      done
+
+      docker exec \
+        ${TESTS_CONTAINER} \
+        ${SHELL_CMD} \
+        -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
+
+      docker exec \
+        ${TESTS_CONTAINER} \
+        ${SHELL_CMD} \
+        -c 'echo -e "127.0.0.1 localhost\n::1 localhost" > /etc/hosts'
+
+      docker exec \
+        ${TESTS_CONTAINER} \
+        ${SHELL_CMD} \
+        -c 'echo "primary.bind.test" > /etc/hostname'
+    displayName: Override Docker defaults
+
+  - script: |
+      set -eu
+      set -o pipefail
+      docker exec \
+        ${TESTS_CONTAINER} \
+        ${SHELL_CMD} \
+        -c "cd /bind/alt/azure/bind_integration_tests/ && ./runner.sh" | \
+        ts '[%Y-%m-%d %H:%M:%S]'
+    displayName: Run integration tests
+
+  - script: |
+      set -eu
+      docker exec \
+        ${TESTS_CONTAINER} \
+        journalctl -b
+    condition: always()
+    displayName: Collect container logs

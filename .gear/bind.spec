@@ -6,6 +6,9 @@
 %def_with openssl
 %def_with libjson
 %def_without python
+%def_with check
+%def_with smoke_tests
+%def_without system_tests
 
 %define docdir %_docdir/bind-%version
 # root directory for chrooted environment.
@@ -64,6 +67,18 @@ Patch0: %name-%version-alt.patch
 %if_with docs
 BuildRequires: python3(sphinx)
 BuildRequires: python3(sphinx_rtd_theme)
+%endif
+
+%if_with check
+%if_with smoke_tests
+BuildRequires: rpm-build-vm
+BuildRequires: /sbin/runuser
+BuildRequires: /dev/kvm
+%endif
+
+BuildRequires: iproute2
+BuildRequires: perl-Net-DNS
+BuildRequires: python3(pytest)
 %endif
 
 Provides: bind-chroot(%_chrootdir)
@@ -297,6 +312,52 @@ cp -a doc/arm/_build/html %buildroot%docdir/arm/
 
 # compat path for plugins, at least, bind-dyndb-ldap is packaged to libdir/bind
 ln -snr %buildroot%_libdir/{named,bind}
+
+%check
+%if_with smoke_tests
+# today's (2021) vm-run (underlying KVM) is relatively slow.
+# The complete tests suite takes ~1h on x86_64 and results are not stable atm.
+# I tried to filter out some expected heavy tests by roughly the number of
+# named instances they use (<=2). The expected acceptable tests time is ~10min
+# on x86_64.
+
+cat > run_smoke.sh <<_EOF
+perl bin/tests/system/testsock.pl || sh -x bin/tests/system/ifconfig.sh up
+ip a
+
+pushd bin/tests/system
+
+source ./conf.sh
+
+for testdir in \$SUBDIRS; do
+    subns=\$(find "\$testdir" -maxdepth 1 -type d -name "ns[0-9]" | wc -l)
+    if [ \$subns -le 2 ]; then
+        runuser -u '$(id -un)' -- sh run.sh "\$testdir"
+    fi
+done
+
+# teardown
+popd
+sh bin/tests/system/ifconfig.sh down
+_EOF
+time vm-run --kvm=cond --sbin -- /bin/bash --norc --noprofile -eu run_smoke.sh
+%endif
+
+%if_with system_tests
+# these tests are run in Azure Pipelines:
+# https://dev.azure.com/slev0400/slev/_build?definitionId=20
+
+# setup and teardown require root
+perl bin/tests/system/testsock.pl || sudo sh -x bin/tests/system/ifconfig.sh up
+
+# tests are run as current user
+pushd bin/tests/system
+SYSTEMTEST_NO_CLEAN=1 %make %_smp_mflags -k test V=1
+
+# teardown
+popd
+sudo sh bin/tests/system/ifconfig.sh down
+%endif
 
 %pre
 /usr/sbin/groupadd -r -f %named_group

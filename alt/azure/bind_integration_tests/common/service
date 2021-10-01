@@ -1,0 +1,28 @@
+SERVICE_MANAGER='systemctl'
+BIND_SERVICE_NAME='bind'
+
+function restart() {
+    # bind.service: Start request repeated too quickly
+    # bind.service: Failed with result 'start-limit-hit'
+    systemctl reset-failed "$BIND_SERVICE_NAME" >/dev/null 2>&1 ||:
+
+    $SERVICE_MANAGER restart "$BIND_SERVICE_NAME"
+}
+
+function start() {
+    $SERVICE_MANAGER start "$BIND_SERVICE_NAME"
+}
+
+function stop() {
+    $SERVICE_MANAGER stop "$BIND_SERVICE_NAME"
+}
+
+function enable_chroot() {
+    control bind-chroot enabled
+    restart
+}
+
+function disable_chroot() {
+    control bind-chroot disabled
+    restart
+}
