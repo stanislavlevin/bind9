@@ -11,6 +11,9 @@
 # root directory for chrooted environment.
 %define _chrootdir %_localstatedir/bind
 
+%define named_user named
+%define named_group named
+
 %ifndef timestamp
 %define timestamp %(TZ=UTC LC_TIME=C date +%%Y%%m%%d)
 %endif
@@ -270,8 +273,9 @@ cp -a doc/arm/_build/html %buildroot%docdir/arm/
 ln -snr %buildroot%_libdir/{named,bind}
 
 %pre
-/usr/sbin/groupadd -r -f named
-/usr/sbin/useradd -r -g named -d %_chrootdir -s /dev/null -n -c "Domain Name Server" named >/dev/null 2>&1 ||:
+/usr/sbin/groupadd -r -f %named_group
+/usr/sbin/useradd -r -g %named_group -d %_chrootdir -s /dev/null -n \
+    -c "Domain Name Server" %named_user >/dev/null 2>&1 ||:
 [ -f %_initdir/named -a ! -L %_initdir/named ] && /sbin/chkconfig --del named ||:
 %pre_control bind-chroot bind-debug bind-slave bind-caps
 
@@ -344,7 +348,7 @@ fi
 %_sysconfdir/named.conf
 %config %_initdir/bind
 %config %_sysconfdir/sysconfig/bind
-%config(noreplace) %attr(640,root,named) %_sysconfdir/rndc.conf
+%config(noreplace) %attr(640,root,%named_group) %_sysconfdir/rndc.conf
 %_unitdir/bind.service
 
 %_man1dir/named-rrchecker.1*
@@ -356,16 +360,16 @@ fi
 
 #chroot
 %_sysconfdir/syslog.d/*
-%defattr(640,root,named,710)
+%defattr(640,root,%named_group,710)
 %dir %_chrootdir
 %dir %_chrootdir/dev
 %dir %_chrootdir%_sysconfdir
 %dir %_chrootdir/zone
-%dir %attr(700,root,named) %verify(not mode) %_chrootdir/zone/slave
-%dir %attr(700,root,named) %verify(not mode) %_chrootdir/var
-%dir %attr(1770,root,named) %_chrootdir/var/run
-%dir %attr(1770,root,named) %_chrootdir/var/tmp
-%dir %attr(700,root,named) %_chrootdir/session
+%dir %attr(700,root,%named_group) %verify(not mode) %_chrootdir/zone/slave
+%dir %attr(700,root,%named_group) %verify(not mode) %_chrootdir/var
+%dir %attr(1770,root,%named_group) %_chrootdir/var/run
+%dir %attr(1770,root,%named_group) %_chrootdir/var/tmp
+%dir %attr(700,root,%named_group) %_chrootdir/session
 %config(noreplace) %_chrootdir%_sysconfdir/*.conf
 %config(noreplace) %verify(not md5 mtime size) %_chrootdir%_sysconfdir/rndc.key
 %_chrootdir%_sysconfdir/bind.keys
