@@ -265,7 +265,6 @@ mkdir -p %buildroot%_chrootdir/dev
 mkdir -p %buildroot%_chrootdir/%_sysconfdir
 mkdir -p %buildroot%_chrootdir/%_var
 mkdir -p %buildroot%_chrootdir/%_runtimedir/named
-mkdir -p %buildroot%_chrootdir/%_var/tmp
 mkdir -p %buildroot%_chrootdir/%_localstatedir
 mkdir -p %buildroot%_chrootdir/zone/slave
 mkdir -p %buildroot%_chrootdir/%working_dir
@@ -461,7 +460,6 @@ fi
 %dir %attr(770,root,%named_group) %_chrootdir/%working_dir
 %dir %_chrootdir/%_runtimedir
 %dir %attr(770,root,%named_group) %_chrootdir%_runtimedir/named
-%dir %attr(1770,root,%named_group) %_chrootdir/var/tmp
 %dir %_chrootdir%_logdir
 %dir %attr(770,root,%named_group) %_chrootdir/%log_dir
 %config(noreplace) %_chrootdir%_sysconfdir/*.conf
