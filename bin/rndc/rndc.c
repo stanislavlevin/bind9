@@ -719,6 +719,9 @@ parse_config(isc_mem_t *mctx, isc_log_t *log, const char *keyname,
 
 	if (strcasecmp(algorithmstr, "hmac-md5") == 0) {
 		algorithm = ISCCC_ALG_HMACMD5;
+		fprintf(stderr, "warning: use of hmac-md5 for RNDC keys "
+				"is deprecated; hmac-sha256 is now "
+				"recommended.\n");
 	} else if (strcasecmp(algorithmstr, "hmac-sha1") == 0) {
 		algorithm = ISCCC_ALG_HMACSHA1;
 	} else if (strcasecmp(algorithmstr, "hmac-sha224") == 0) {
