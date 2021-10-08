@@ -363,6 +363,8 @@ sudo sh bin/tests/system/ifconfig.sh down
 /usr/sbin/useradd -r -g %named_group -d %_chrootdir -s /dev/null -n \
     -c "Domain Name Server" %named_user >/dev/null 2>&1 ||:
 [ -f %_initdir/named -a ! -L %_initdir/named ] && /sbin/chkconfig --del named ||:
+
+# save control state on upgrade
 %pre_control bind-chroot bind-slave bind-caps
 
 %preun
@@ -379,16 +381,35 @@ if grep -qs '^SYSLOGD_OPTIONS=.*-a %_chrootdir/dev/log' "$SYSLOGD_CONFIG"; then
 	fi
 fi
 
+bind_sysconf=/etc/sysconfig/bind
+if [ "$1" -gt 1 -a -f "$bind_sysconf" ]; then
+    status="$(control bind-chroot status)"
+    if [ "unknown" = "$status" ]; then
+        # migration of old chroot option
+        # unchrooted
+        sed -i 's,^CHROOT="-t /"$,#CHROOT="-t %_chrootdir",' "$bind_sysconf"
+        # chrooted
+        sed -i 's,^#CHROOT="-t /"$,CHROOT="-t %_chrootdir",' "$bind_sysconf"
+
+        # distro default
+        status="$(control bind-chroot status)"
+        if [ "unknown" = "$status" ]; then
+            echo 'CHROOT="-t %_chrootdir"' >> "$bind_sysconf"
+        fi
+    fi
+
+    # distro default
+    status="$(control bind-caps status)"
+    if [ "unknown" = "$status" ]; then
+        echo '#RETAIN_CAPS="-r"' >> "$bind_sysconf"
+    fi
+fi
+
+# restore control state on upgrade or set a desired one on first installation
 %post_control -s enabled bind-chroot
 %post_control -s disabled bind-slave bind-caps
-%post_service bind
 
-%triggerun -- bind < 9.11.19-alt3
-F=/etc/sysconfig/bind
-if [ $2 -gt 0 -a -f $F ]; then
-	grep -q '^#\?CHROOT=' $F || echo '#CHROOT="-t /"' >> $F
-	grep -q '^#\?RETAIN_CAPS=' $F || echo '#RETAIN_CAPS="-r"' >> $F
-fi
+%post_service bind
 
 %files -n libbind
 %_libdir/libbind9-%version.so
