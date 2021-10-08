@@ -345,7 +345,7 @@ fi
 %_sysconfdir/bind.keys
 %_sysconfdir/named.conf
 %config %_initdir/bind
-%config %_sysconfdir/sysconfig/bind
+%config(noreplace) %_sysconfdir/sysconfig/bind
 %config(noreplace) %attr(640,root,%named_group) %_sysconfdir/rndc.conf
 %dir %attr(770,root,%named_group) %run_dir
 %dir %attr(770,root,%named_group) %log_dir
