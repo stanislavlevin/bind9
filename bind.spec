@@ -196,7 +196,9 @@ export SPHINX_BUILD=/usr/bin/sphinx-build-3
 	--enable-linux-caps \
 	--enable-fixed-rrset \
 	 %{subst_with openssl} \
-	 %{subst_with libjson} \
+%if_with libjson
+	--with-json-c=yes \
+%endif
 	 %{subst_with python} \
 	--disable-static \
 	--includedir=%{_includedir}/bind9 \
