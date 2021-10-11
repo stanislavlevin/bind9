@@ -59,7 +59,6 @@ Patch0: %name-%version-alt.patch
 Patch0002: 0002-openbsd-owl-pidfile.patch
 Patch0003: 0003-openbsd-owl-chroot-defaults.patch
 Patch0005: 0005-owl-checkconf-chroot.patch
-Patch0007: 0007-alt-nofile.patch
 Patch0009: 0009-Minimize-linux-capabilities.patch
 Patch0011: 0011-ALT-Make-it-possible-to-retain-Linux-capabilities-of.patch
 
