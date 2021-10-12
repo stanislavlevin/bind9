@@ -45,7 +45,11 @@ n=0
 while read -r alg; do
     zonefile=ns1/$alg.example.db
     echo_i "testing PKCS#11 key generation ($alg)"
-    count=$($PK11LIST | grep -c "pkcs11-$alg-ksk" || true)
+    if [ -n "$PKCS11_ENGINE" ]; then
+        count=$($PK11LIST_OPENSSL | grep -c "pkcs11-$alg-ksk" || true)
+    else
+        count=$($PK11LIST | grep -c "pkcs11-$alg-ksk" || true)
+    fi
     [ "$count" -eq 4 ] || ret=1
     test_done
 
@@ -97,37 +101,73 @@ EOF
 
     # Lookup all existing keys
     echo_i "looking up all existing keys ($alg)"
-    $PK11LIST > "pkcs11-list.out.id.$alg" || ret=1
+    if [ -n "$PKCS11_ENGINE" ]; then
+        $PK11LIST_OPENSSL > "pkcs11-list.out.id.$alg" || ret=1
+    else
+        $PK11LIST > "pkcs11-list.out.id.$alg" || ret=1
+    fi
     test_done
 
     echo_i "destroying key with 'pkcs11-$alg-ksk1' label ($alg)"
-    $PK11DEL -l "pkcs11-$alg-ksk1" > /dev/null 2>&1 || ret=1
+    if [ -n "$PKCS11_ENGINE" ]; then
+        $PK11DEL_OPENSSL --label "pkcs11-$alg-ksk1" --type privkey > /dev/null 2>&1 || ret=1
+        $PK11DEL_OPENSSL --label "pkcs11-$alg-ksk1" --type pubkey > /dev/null 2>&1 || ret=1
+    else
+        $PK11DEL -l "pkcs11-$alg-ksk1" > /dev/null 2>&1 || ret=1
+    fi
     test_done
 
     echo_i "destroying key with 'pkcs11-$alg-zsk1' label ($alg)"
-    $PK11DEL -l "pkcs11-$alg-zsk1" > /dev/null 2>&1 || ret=1
+    if [ -n "$PKCS11_ENGINE" ]; then
+        $PK11DEL_OPENSSL --label "pkcs11-$alg-zsk1" --type privkey > /dev/null 2>&1 || ret=1
+        $PK11DEL_OPENSSL --label "pkcs11-$alg-zsk1" --type pubkey > /dev/null 2>&1 || ret=1
+    else
+        $PK11DEL -l "pkcs11-$alg-ksk1" > /dev/null 2>&1 || ret=1
+    fi
     test_done
 
-    id=$(awk -v label="'pkcs11-$alg-ksk2'" '{ if ($7 == label) { print $9; exit; } }' < "pkcs11-list.out.id.$alg")
+    if [ -n "$PKCS11_ENGINE" ]; then
+        id=$(cat "pkcs11-list.out.id.$alg" | grep -oiPz "[[:space:]]*label:[[:space:]]*pkcs11-$alg-ksk2\n[[:space:]]*ID:[[:space:]]*.*\n" | head -z -n 1 | sed -n 's/^[[:space:]]*ID:[[:space:]]*\(.*\)$/\1/p')
+    else
+        id=$(awk -v label="'pkcs11-$alg-ksk2'" '{ if ($7 == label) { print $9; exit; } }' < "pkcs11-list.out.id.$alg")
+    fi
     echo_i "destroying key with $id id ($alg)"
     if [ -n "$id" ]; then
-	$PK11DEL -i "$id" > /dev/null 2>&1 || ret=1
+        if [ -n "$PKCS11_ENGINE" ]; then
+            $PK11DEL_OPENSSL --type privkey --id "$id" > /dev/null 2>&1 || ret=1
+            $PK11DEL_OPENSSL --type pubkey --id "$id" > /dev/null 2>&1 || ret=1
+        else
+            $PK11DEL -i "$id" > /dev/null 2>&1 || ret=1
+        fi
     else
 	ret=1
     fi
     test_done
 
-    id=$(awk -v label="'pkcs11-$alg-zsk2'" '{ if ($7 == label) { print $9; exit; } }' < "pkcs11-list.out.id.$alg")
+    if [ -n "$PKCS11_ENGINE" ]; then
+        id=$(cat "pkcs11-list.out.id.$alg" | grep -oiPz "[[:space:]]*label:[[:space:]]*pkcs11-$alg-zsk2\n[[:space:]]*ID:[[:space:]]*.*\n" | head -z -n 1 | sed -n 's/^[[:space:]]*ID:[[:space:]]*\(.*\)$/\1/p')
+    else
+        id=$(awk -v label="'pkcs11-$alg-zsk2'" '{ if ($7 == label) { print $9; exit; } }' < "pkcs11-list.out.id.$alg")
+    fi
     echo_i "destroying key with $id id ($alg)"
     if [ -n "$id" ]; then
-	$PK11DEL -i "$id" > /dev/null 2>&1 || ret=1
+        if [ -n "$PKCS11_ENGINE" ]; then
+            $PK11DEL_OPENSSL --type privkey --id "$id" > /dev/null 2>&1 || ret=1
+            $PK11DEL_OPENSSL --type pubkey --id "$id" > /dev/null 2>&1 || ret=1
+        else
+            $PK11DEL -i "$id" > /dev/null 2>&1 || ret=1
+        fi
     else
 	ret=1
     fi
     test_done
 
     echo_i "checking if all keys have been destroyed ($alg)"
-    $PK11LIST > "pkcs11-list.out.$alg" || ret=1
+    if [ -n "$PKCS11_ENGINE" ]; then
+        $PK11LIST_OPENSSL > "pkcs11-list.out.$alg" || ret=1
+    else
+        $PK11LIST > "pkcs11-list.out.$alg" || ret=1
+    fi
     count=$(grep -c "pkcs11-$alg-[kz]sk[0-9]*" "pkcs11-list.out.$alg" || true)
     [ "$count" -eq 0 ] || ret=1
     test_done

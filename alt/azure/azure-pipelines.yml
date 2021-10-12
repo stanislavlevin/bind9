@@ -110,7 +110,7 @@ jobs:
         pushd $(Build.Repository.LocalPath)/rpmbuild/BUILD/bind-*
         pushd 'bin/tests/system'
         source conf.sh
-        for testdir in $SUBDIRS; do
+        for testdir in $SUBDIRS pkcs11; do
             tar \
                 --ignore-failed-read \
                 --warning=no-failed-read  \

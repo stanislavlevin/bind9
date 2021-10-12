@@ -280,6 +280,10 @@ sub construct_ns_command {
 		$command .= "-c named.conf -d 99 -g -U 4 -T maxcachesize=2097152";
 	}
 
+	if ($ENV{'PKCS11_ENGINE'}) {
+		$command .= " -E $ENV{'PKCS11_ENGINE'}";
+	}
+
 	if (-e "$testdir/$server/named.notcp") {
 		$command .= " -T notcp"
 	}

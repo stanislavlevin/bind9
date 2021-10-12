@@ -176,7 +176,7 @@ fi
 
 # Check for PKCS#11 support
 if
-    test ! -f $systest/usepkcs11 || $SHELL cleanpkcs11.sh
+    test ! -f $systest/usepkcs11 -o -n "$PKCS11_ENGINE" || $SHELL cleanpkcs11.sh
 then
     : pkcs11 ok
 else

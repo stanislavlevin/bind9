@@ -11,6 +11,9 @@
 
 . "$SYSTEMTESTTOP/conf.sh"
 
-PK11DELBIN=$(echo "$PK11DEL" | awk '{ print $1 }')
-
-[ -x "$PK11DELBIN" ] && $PK11DEL -w0 > /dev/null 2>&1
+if [ -n "${PKCS11_ENGINE:-}" ]; then
+    softhsm2-util --delete-token --token softhsm2 >/dev/null ||:
+else
+    PK11DELBIN=$(echo "$PK11DEL" | awk '{ print $1 }')
+    [ -x "$PK11DELBIN" ] && $PK11DEL -w0 > /dev/null 2>&1
+fi

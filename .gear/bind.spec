@@ -76,6 +76,13 @@ BuildRequires: /sbin/runuser
 BuildRequires: /dev/kvm
 %endif
 
+%if_with system_tests
+# requires only for pkcs11 tests
+BuildRequires: softhsm
+BuildRequires: libp11
+BuildRequires: opensc
+%endif
+
 BuildRequires: iproute2
 BuildRequires: perl-Net-DNS
 BuildRequires: python3(pytest)
@@ -351,9 +358,20 @@ time vm-run --kvm=cond --sbin -- /bin/bash --norc --noprofile -eu run_smoke.sh
 # setup and teardown require root
 perl bin/tests/system/testsock.pl || sudo sh -x bin/tests/system/ifconfig.sh up
 
+# setup softhsm
+export SOFTHSM_MODULE_PATH=%_libdir/softhsm/libsofthsm2.so
+export SOFTHSM2_CONF=/tmp/softhsm2/softhsm2.conf
+export OPENSSL_CONF=/tmp/softhsm2/openssl.cnf
+export PKCS11_ENGINE=pkcs11
+export SLOT=$(sh -eu bin/tests/prepare-softhsm2.sh)
+
 # tests are run as current user
 pushd bin/tests/system
 SYSTEMTEST_NO_CLEAN=1 %make %_smp_mflags -k test V=1
+
+# depends on PKCS11_TEST, which is only defined if named is built with native
+# PKCS11
+SYSTEMTEST_NO_CLEAN=1 sh run.sh pkcs11
 
 # teardown
 popd
