@@ -66,6 +66,7 @@ Patch0002: 0002-ALT-Minimize-linux-capabilities.patch
 Patch0003: 0003-ALT-Make-it-possible-to-retain-Linux-capabilities-of.patch
 Patch0004: 0004-ALT-named-Allow-non-writable-working-directory.patch
 Patch0005: 0005-ALT-tests-Unchroot-named-for-tests.patch
+Patch0006: 0006-ALT-tests-Add-tests-for-signing-with-custom-OpenSSL.patch
 
 %if_with docs
 BuildRequires: python3(sphinx)
@@ -76,6 +77,10 @@ BuildRequires: python3(sphinx_rtd_theme)
 %if_with system_tests
 BuildRequires: python3(dns)
 BuildRequires: python3(hypothesis)
+# requires only for pkcs11 tests
+BuildRequires: softhsm
+BuildRequires: libp11
+BuildRequires: opensc
 %else
 BuildRequires: rpm-build-vm
 BuildRequires: /sbin/runuser
@@ -316,12 +321,23 @@ chmod 0755 %buildroot%_rpmlibdir/%name-restart.filetrigger
 # setup and teardown require root
 perl bin/tests/system/testsock.pl || sudo sh -x bin/tests/system/ifconfig.sh up
 
+# setup softhsm
+export SOFTHSM_MODULE_PATH=%_libdir/softhsm/libsofthsm2.so
+export SOFTHSM2_CONF=/tmp/softhsm2/softhsm2.conf
+export OPENSSL_CONF=/tmp/softhsm2/openssl.cnf
+export PKCS11_ENGINE=pkcs11
+export SLOT=$(sh -eu bin/tests/prepare-softhsm2.sh)
+
 # tests are run as current user
 # see .gitlab-ci.yml
 pushd bin/tests/system
 # named must be unchrooted for upstream tests
 export ALT_NAMED_OPTIONS=' -t / '
 SYSTEMTEST_NO_CLEAN=1 %make_build -k test V=1
+
+# depends on PKCS11_TEST, which is only defined if named is built with native
+# PKCS11
+SYSTEMTEST_NO_CLEAN=1 sh run.sh pkcs11
 
 # teardown
 popd
