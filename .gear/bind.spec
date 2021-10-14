@@ -17,6 +17,7 @@
 %define zone_dir %_sysconfdir/bind/zone
 %define run_dir /run/named
 %define log_dir %_logdir/named
+%define restart_flag /run/named/named.restart
 
 %define named_user named
 %define named_group named
@@ -321,6 +322,20 @@ cp -a doc/arm/_build/html %buildroot%docdir/arm/
 # compat path for plugins, at least, bind-dyndb-ldap is packaged to libdir/bind
 ln -snr %buildroot%_libdir/{named,bind}
 
+# filetrigger: restart named if its plugins were installed/upgraded as well
+# named itself
+mkdir -p %buildroot%_rpmlibdir
+cat > %buildroot%_rpmlibdir/%name.filetrigger <<'EOF'
+#!/bin/sh -u
+
+grep -qsE -- '^%_libdir/(named|bind)/' && [ -f '%restart_flag' ] || exit 0
+rm -f '%restart_flag'
+
+service bind start
+exit 0
+EOF
+chmod 0755 %buildroot%_rpmlibdir/%name.filetrigger
+
 %check
 %if_with smoke_tests
 # today's (2021) vm-run (underlying KVM) is relatively slow.
@@ -384,6 +399,22 @@ sudo sh bin/tests/system/ifconfig.sh down
     -c "Domain Name Server" %named_user >/dev/null 2>&1 ||:
 [ -f %_initdir/named -a ! -L %_initdir/named ] && /sbin/chkconfig --del named ||:
 
+# save running status and use it in post-transaction
+rm -f %restart_flag
+
+if [ "$1" -gt 1 ]; then
+    SYSTEMCTL=systemctl
+    if sd_booted && $SYSTEMCTL --version >/dev/null 2>&1; then
+        $SYSTEMCTL is-active bind.service >/dev/null 2>&1 &&
+        $SYSTEMCTL stop bind.service &&
+        touch %restart_flag ||:
+    else
+        %_initdir/bind status >/dev/null 2>&1 &&
+        %_initdir/bind stop &&
+        touch %restart_flag ||:
+    fi
+fi
+
 # save control state on upgrade
 %pre_control bind-chroot bind-slave bind-caps
 
@@ -429,7 +460,21 @@ fi
 %post_control -s enabled bind-chroot
 %post_control -s disabled bind-slave bind-caps
 
-%post_service bind
+# next section is the copy of post_service, but
+# it doesn't restart named since this is responsibility of filetrigger
+SYSTEMCTL=systemctl
+if sd_booted && "$SYSTEMCTL" --version >/dev/null 2>&1; then
+    "$SYSTEMCTL" daemon-reload
+    if [ "$1" -eq 1 ]; then
+        "$SYSTEMCTL" -q preset bind
+    fi
+else
+    if [ "$1" -eq 1 ]; then
+        chkconfig --add bind
+    else
+        chkconfig bind resetpriorities
+    fi
+fi
 
 %files -n libbind
 %_libdir/libbind9-%version.so
@@ -481,6 +526,8 @@ fi
 %dir %attr(770,root,%named_group) %log_dir
 %_unitdir/bind.service
 %_tmpfilesdir/bind.conf
+
+%_rpmlibdir/%name.filetrigger
 
 %_man1dir/named-rrchecker.1*
 %_man5dir/*
