@@ -2025,22 +2025,11 @@ addname:
 	fname = NULL;
 
 	/*
-	 * In a few cases, we want to add additional data for additional
-	 * data.  It's simpler to just deal with special cases here than
-	 * to try to create a general purpose mechanism and allow the
-	 * rdata implementations to do it themselves.
-	 *
-	 * This involves recursion, but the depth is limited.  The
-	 * most complex case is adding a SRV rdataset, which involves
-	 * recursing to add address records, which in turn can cause
-	 * recursion to add KEYs.
+	 * In some cases, a record that has been added as additional
+	 * data may *also* trigger the addition of additional data.
+	 * This cannot go more than MAX_RESTARTS levels deep.
 	 */
-	if (type == dns_rdatatype_srv && trdataset != NULL) {
-		/*
-		 * If we're adding SRV records to the additional data
-		 * section, it's helpful if we add the SRV additional data
-		 * as well.
-		 */
+	if (trdataset != NULL && dns_rdatatype_followadditional(type)) {
 		eresult = dns_rdataset_additionaldata(
 			trdataset, query_additional_cb, qctx);
 	}
@@ -7701,7 +7690,7 @@ query_getexpire(query_ctx_t *qctx) {
 	dns_zone_getraw(qctx->zone, &raw);
 	mayberaw = (raw != NULL) ? raw : qctx->zone;
 
-	if (dns_zone_gettype(mayberaw) == dns_zone_slave ||
+	if (dns_zone_gettype(mayberaw) == dns_zone_secondary ||
 	    dns_zone_gettype(mayberaw) == dns_zone_mirror)
 	{
 		isc_time_t expiretime;
@@ -7713,7 +7702,7 @@ query_getexpire(query_ctx_t *qctx) {
 			qctx->client->attributes |= NS_CLIENTATTR_HAVEEXPIRE;
 			qctx->client->expire = secs - qctx->client->now;
 		}
-	} else if (dns_zone_gettype(mayberaw) == dns_zone_master) {
+	} else if (dns_zone_gettype(mayberaw) == dns_zone_primary) {
 		isc_result_t result;
 		dns_rdata_t rdata = DNS_RDATA_INIT;
 		dns_rdata_soa_t soa;

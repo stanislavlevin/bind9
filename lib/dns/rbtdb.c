@@ -3537,7 +3537,9 @@ find_wildcard(rbtdb_search_t *search, dns_rbtnode_t **nodep,
 		for (header = node->data; header != NULL; header = header->next)
 		{
 			if (header->serial <= search->serial &&
-			    !IGNORE(header) && EXISTS(header)) {
+			    !IGNORE(header) && EXISTS(header) &&
+			    !ANCIENT(header))
+			{
 				break;
 			}
 		}
@@ -3596,7 +3598,9 @@ find_wildcard(rbtdb_search_t *search, dns_rbtnode_t **nodep,
 				for (header = wnode->data; header != NULL;
 				     header = header->next) {
 					if (header->serial <= search->serial &&
-					    !IGNORE(header) && EXISTS(header)) {
+					    !IGNORE(header) && EXISTS(header) &&
+					    !ANCIENT(header))
+					{
 						break;
 					}
 				}
@@ -4691,11 +4695,13 @@ cache_zonecut_callback(dns_rbtnode_t *node, dns_name_t *name, void *arg) {
 				       &header_prev)) {
 			/* Do nothing. */
 		} else if (header->type == dns_rdatatype_dname &&
-			   EXISTS(header)) {
+			   EXISTS(header) && !ANCIENT(header))
+		{
 			dname_header = header;
 			header_prev = header;
 		} else if (header->type == RBTDB_RDATATYPE_SIGDNAME &&
-			   EXISTS(header)) {
+			   EXISTS(header) && !ANCIENT(header))
+		{
 			sigdname_header = header;
 			header_prev = header;
 		} else {
@@ -4765,7 +4771,7 @@ find_deepest_zonecut(rbtdb_search_t *search, dns_rbtnode_t *node,
 			if (check_stale_header(node, header, &locktype, lock,
 					       search, &header_prev)) {
 				/* Do nothing. */
-			} else if (EXISTS(header)) {
+			} else if (EXISTS(header) && !ANCIENT(header)) {
 				/*
 				 * We've found an extant rdataset.  See if
 				 * we're interested in it.
@@ -5371,6 +5377,7 @@ cache_findzonecut(dns_db_t *db, const dns_name_t *name, unsigned int options,
 	} else if (!dcnull) {
 		dns_name_copynf(dcname, foundname);
 	}
+
 	/*
 	 * We now go looking for an NS rdataset at the node.
 	 */
@@ -5386,8 +5393,23 @@ cache_findzonecut(dns_db_t *db, const dns_name_t *name, unsigned int options,
 		header_next = header->next;
 		if (check_stale_header(node, header, &locktype, lock, &search,
 				       &header_prev)) {
-			/* Do nothing. */
-		} else if (EXISTS(header)) {
+			/*
+			 * The function dns_rbt_findnode found us the a matching
+			 * node for 'name' and stored the result in 'dcname'.
+			 * This is the deepest known zonecut in our database.
+			 * However, this node may be stale and if serve-stale
+			 * is not enabled (in other words 'stale-answer-enable'
+			 * is set to no), this node may not be used as a
+			 * zonecut we know about. If so, find the deepest
+			 * zonecut from this node up and return that instead.
+			 */
+			NODE_UNLOCK(lock, locktype);
+			result = find_deepest_zonecut(&search, node, nodep,
+						      foundname, rdataset,
+						      sigrdataset);
+			dns_name_copynf(foundname, dcname);
+			goto tree_exit;
+		} else if (EXISTS(header) && !ANCIENT(header)) {
 			/*
 			 * If we found a type we were looking for, remember
 			 * it.
@@ -7574,7 +7596,7 @@ rbt_datafixer(dns_rbtnode_t *rbtnode, void *base, size_t filesize, void *arg,
  * Load the RBT database from the image in 'f'
  */
 static isc_result_t
-deserialize32(void *arg, FILE *f, off_t offset) {
+deserialize(void *arg, FILE *f, off_t offset) {
 	isc_result_t result;
 	rbtdb_load_t *loadctx = arg;
 	dns_rbtdb_t *rbtdb = loadctx->rbtdb;
@@ -7719,7 +7741,7 @@ beginload(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
 
 	callbacks->add = loading_addrdataset;
 	callbacks->add_private = loadctx;
-	callbacks->deserialize = deserialize32;
+	callbacks->deserialize = deserialize;
 	callbacks->deserialize_private = loadctx;
 
 	return (ISC_R_SUCCESS);

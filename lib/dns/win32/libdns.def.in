@@ -339,6 +339,7 @@ dns_dnssec_verify
 dns_dnssec_verifymessage
 dns_dnsseckey_create
 dns_dnsseckey_destroy
+dns_dnssecsignstats_clear
 dns_dnssecsignstats_create
 dns_dnssecsignstats_dump
 dns_dnssecsignstats_increment
@@ -884,6 +885,7 @@ dns_rdataslab_subtract
 dns_rdatatype_atcname
 dns_rdatatype_atparent
 dns_rdatatype_attributes
+dns_rdatatype_followadditional
 dns_rdatatype_format
 dns_rdatatype_fromtext
 dns_rdatatype_isdnssec
