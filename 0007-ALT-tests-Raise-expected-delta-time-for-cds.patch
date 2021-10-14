@@ -1,0 +1,70 @@
+From 06da31b67c9137da671be58913b27a373249b591 Mon Sep 17 00:00:00 2001
+From: Stanislav Levin <slev@altlinux.org>
+Date: Thu, 14 Oct 2021 20:44:25 +0300
+Subject: [PATCH] ALT: tests: Raise expected delta time for cds
+
+cds test fails on girar with:
+```
+cmd: dnssec-cds -v3 -s -7200 -f sig.cds.1 -d DS.1 cds.test:
+[00:04:55] I:cds:unsigned CDS (12)
+[00:04:55] dnssec-cds: child records must not be signed before 20211014132813 (1634218093)
+[00:04:55] dnssec-cds: which child DNSKEY records match parent DS records?
+[00:04:55] dnssec-cds: no matching DS for DNSKEY 48264 8
+[00:04:55] dnssec-cds: found matching DS 38444 8 1
+[00:04:55] dnssec-cds: no matching DS for DNSKEY 48659 8
+[00:04:55] dnssec-cds: verify DNSKEY signature(s)
+[00:04:55] dnssec-cds: found RRSIG by key 38444
+[00:04:55] dnssec-cds: this is the oldest so far 20211014142816 (1634221696)
+[00:04:55] dnssec-cds: skip RRSIG by key 48264: no matching (C)DS
+[00:04:55] dnssec-cds: skip RRSIG by key 48659: no matching (C)DS
+[00:04:55] dnssec-cds: verify CDS signature(s)
+[00:04:55] dnssec-cds: found RRSIG by key 38444
+[00:04:55] dnssec-cds: skip RRSIG by key 48264: no matching (C)DS
+[00:04:55] dnssec-cds: skip RRSIG by key 48659: no matching (C)DS
+[00:04:55] dnssec-cds: child signature inception time 20211014142816 (1634221696)
+[00:04:55] dnssec-cds: from RRSIG DNSKEY by key 38444
+[00:04:55] dnssec-cds: which child DNSKEY records match new DS records?
+[00:04:55] dnssec-cds: no matching DS for DNSKEY 48264 8
+[00:04:55] dnssec-cds: found matching DS 38444 8 1
+[00:04:55] dnssec-cds: no matching DS for DNSKEY 48659 8
+[00:04:55] dnssec-cds: verify DNSKEY signature(s)
+[00:04:55] dnssec-cds: found RRSIG by key 38444
+[00:04:55] dnssec-cds: skip RRSIG by key 48264: no matching (C)DS
+[00:04:55] dnssec-cds: skip RRSIG by key 48659: no matching (C)DS
+[00:04:55] dnssec-cds: debug 1: calling free_rbtdb(cds.test)
+[00:04:55] dnssec-cds: debug 1: done free_rbtdb(cds.test)
+[00:04:55] dnssec-cds: debug 1: calling free_rbtdb(cds.test)
+[00:04:55] dnssec-cds: debug 1: done free_rbtdb(cds.test)
+[00:04:55] cds.test. IN DS 38444 8 1 75B67185CFC8B8DACE359C67A12CF3B6B22A03F7
+[00:04:55] cds.test. IN DS 38444 8 2 3E304DE7CE7B648089D8926A9AF8006779A190ED53CD6150138712574C4C9EF8
+[00:04:55] 1634225293
+[00:04:55] I:cds:correct signature inception time (13)
+[00:04:55] D:cds:stderr did not match ''
+[00:04:55] D:cds:bad inception time 3603 at checktime.pl line 25, <> line 28.
+```
+
+An inception time (in above example 3603) was calculated as
+1634221696(taken from oldest RRSIG RR:sig.cds.1) - 1634218093(mtime of
+DS.1(1634225293) - 7200(-s option)) and this must be less than 3600+3.
+
+So, effectively, the creation of DS.1 file and generation of sigs
+(sig.cds.1) should take less than 3sec. But for girar this takes 3sec.
+
+Note: upstream raised this timeout to 10sec, but it's not enough.
+---
+ bind/bin/tests/system/cds/checktime.pl | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/bind/bin/tests/system/cds/checktime.pl b/bind/bin/tests/system/cds/checktime.pl
+index d85fd9125c4..039a8c6159d 100644
+--- a/bind/bin/tests/system/cds/checktime.pl
++++ b/bind/bin/tests/system/cds/checktime.pl
+@@ -24,4 +24,4 @@ while (<>) {
+ die "missing notbefore time" unless $notbefore;
+ die "missing inception time" unless $inception;
+ my $delta = $inception - $notbefore;
+-die "bad inception time $delta" unless abs($delta - $target) <= 10;
++die "bad inception time $delta" unless abs($delta - $target) <= 15;
+-- 
+2.33.4
+
