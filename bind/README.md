@@ -408,12 +408,29 @@ CVE-2021-25216.
 
 BIND 9.11.32 is a maintenance release.
 
+#### BIND 9.11.33
+
+BIND 9.11.33 is a maintenance release.
+
+#### BIND 9.11.34
+
+BIND 9.11.34 is a maintenance release.
+
+#### BIND 9.11.35
+
+BIND 9.11.35 is a maintenance release.
+
+#### BIND 9.11.36
+
+BIND 9.11.36 is a maintenance release, and also addresses the security
+vulnerability disclosed in CVE-2021-25219.
+
 ### <a name="build"/> Building BIND
 
 Minimally, BIND requires a UNIX or Linux system with an ANSI C compiler,
 basic POSIX support, and a 64-bit integer type. Successful builds have been
-observed on many versions of Linux and UNIX, including RHEL/CentOS, Fedora,
-Debian, Ubuntu, SLES, openSUSE, Slackware, Alpine, FreeBSD, NetBSD,
+observed on many versions of Linux and UNIX, including RHEL/CentOS/Oracle Linux,
+Fedora, Debian, Ubuntu, SLES, openSUSE, Slackware, Alpine, FreeBSD, NetBSD,
 OpenBSD, macOS, Solaris, OpenIndiana, OmniOS CE, HP-UX, and OpenWRT.
 
 BIND is also available for Windows Server 2008 and higher.  See

@@ -1,3 +1,27 @@
+	--- 9.11.36 released ---
+
+5736.	[security]	The "lame-ttl" option is now forcibly set to 0. This
+			effectively disables the lame server cache, as it could
+			previously be abused by an attacker to significantly
+			degrade resolver performance. (CVE-2021-25219)
+			[GL #2899]
+
+5716.	[bug]		Multiple library names were mistakenly passed to the
+			krb5-config utility when ./configure was invoked with
+			the --with-gssapi=[/path/to/]krb5-config option. This
+			has been fixed by invoking krb5-config separately for
+			each required library. [GL #2866]
+
+	--- 9.11.35 released ---
+
+5685.	[bug]		named failed to check the opcode of responses when
+			performing zone refreshes, stub zone updates, and UPDATE
+			forwarding. This has been fixed. [GL #2762]
+
+	--- 9.11.34 released ---
+
+	--- 9.11.33 released ---
+
 	--- 9.11.32 released ---
 
 5631.	[protocol]	Update the implementation of the ZONEMD RR type to match
