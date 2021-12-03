@@ -141,11 +141,19 @@ jobs:
             gzip > '$(Build.Repository.LocalPath)/bind-azure-builder-image.tar.gz'
       displayName: Create Docker image for integration tests
 
+    - script: |
+        set -eu
+        ARTIFACT_NAME="image-$(Build.BuildId)-$(System.JobAttempt)"
+        echo "Artifact name: '${ARTIFACT_NAME}'"
+        echo "##vso[task.setvariable variable=image;isOutput=true]${ARTIFACT_NAME}"
+        name: artifacts_image
+      displayName: Generate unique artifact name for Docker image
+
     - task: PublishPipelineArtifact@1
       inputs:
-        artifactName: image-$(Build.BuildId)-$(System.JobAttempt)
+        artifactName: $(artifacts_image.image)
         targetPath: $(Build.Repository.LocalPath)/bind-azure-builder-image.tar.gz
-      displayName: Publish Docker image for integration tests
+      displayName: Publish Docker image '$(artifacts_image.image)' for integration tests
 
     - script: |
         set -eu
@@ -160,6 +168,8 @@ jobs:
     vmImage: $(VM_IMAGE)
   dependsOn:
     - Build
+  variables:
+    BIND_IMAGE_ARTIFACT: $[ dependencies.Build.outputs['artifacts_image.image'] ]
 
   steps:
   - script: |
@@ -180,9 +190,9 @@ jobs:
 
   - task: DownloadPipelineArtifact@0
     inputs:
-      artifactName: image-$(Build.BuildId)-$(System.JobAttempt)
+      artifactName: $(BIND_IMAGE_ARTIFACT)
       targetPath: $(Build.Repository.LocalPath)
-    displayName: Download pre-built image for tests
+    displayName: Download pre-built image '$(BIND_IMAGE_ARTIFACT)' for tests
 
   - script: |
       set -eu
