@@ -1,0 +1,91 @@
+From e9c3993ea680627c1f4441161585804021558b66 Mon Sep 17 00:00:00 2001
+From: Stanislav Levin <slev@altlinux.org>
+Date: Mon, 20 Dec 2021 19:58:39 +0300
+Subject: [PATCH] ALT: named: Allow non-writable working directory
+
+Upstream requires writable working directory for covering
+all of the supported configurations. But this requirement conflicts
+with one of the ALT policies (readonly chroot). So, to allow such
+distro policy the requirement is relaxed (error => log error).
+---
+ bind/bin/named/server.c                |  3 ---
+ bind/bin/tests/system/runtime/tests.sh | 22 +++++++++++++++++++---
+ 2 files changed, 19 insertions(+), 6 deletions(-)
+
+diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
+index b4cbd953a9f..dcd4f0e696d 100644
+--- a/bind/bin/named/server.c
++++ b/bind/bin/named/server.c
+@@ -6847,7 +6847,6 @@ directory_callback(const char *clausename, const cfg_obj_t *obj, void *arg) {
+ 		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+ 			      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
+ 			      "directory '%s' is not writable", directory);
+-		return (ISC_R_NOPERM);
+ 	}
+ 
+ 	result = isc_dir_chdir(directory);
+@@ -9204,8 +9203,6 @@ load_configuration(const char *filename, named_server_t *server,
+ 		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+ 			      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
+ 			      "the working directory is not writable");
+-		result = ISC_R_NOPERM;
+-		goto cleanup;
+ 	}
+ 
+ #ifdef HAVE_LMDB
+diff --git a/bind/bin/tests/system/runtime/tests.sh b/bind/bin/tests/system/runtime/tests.sh
+index 81184099b81..72a8e7f61f3 100644
+--- a/bind/bin/tests/system/runtime/tests.sh
++++ b/bind/bin/tests/system/runtime/tests.sh
+@@ -105,15 +105,26 @@ status=$((status+ret))
+ 
+ n=$((n+1))
+ echo_i "checking that named refuses to reconfigure if working directory is not writable ($n)"
++# ALT: the working directory can be not writable in some cases
+ ret=0
+ copy_setports ns2/named-alt4.conf.in ns2/named.conf
+-$RNDCCMD 10.53.0.2 reconfig > rndc.out.$n 2>&1 && ret=1
+-grep "failed: permission denied" rndc.out.$n > /dev/null 2>&1 || ret=1
++$RNDCCMD 10.53.0.2 reconfig > rndc.out.$n 2>&1 || ret=1
++grep "failed: permission denied" rndc.out.$n > /dev/null 2>&1 && ret=1
+ sleep 1
+ grep "[^-]directory './nope' is not writable" ns2/named.run > /dev/null 2>&1 || ret=1
+ if [ $ret -ne 0 ]; then echo_i "failed"; fi
+ status=$((status+ret))
+ 
++n=$((n+1))
++ret=0
++echo_i "restore back named.conf (working directory and rndc config) ($n)"
++kill_named ns2/named.pid || ret=1
++copy_setports ns2/named1.conf.in ns2/named.conf
++start_server --port ${PORT} runtime ns2
++[ -s ns2/named.pid ] || ret=1
++if [ $ret -ne 0 ]; then echo_i "failed"; fi
++status=$((status+ret))
++
+ n=$((n+1))
+ echo_i "checking that named refuses to reconfigure if managed-keys-directory is not writable ($n)"
+ ret=0
+@@ -148,13 +159,18 @@ status=$((status+ret))
+ 
+ n=$((n+1))
+ echo_i "checking that named refuses to start if working directory is not writable ($n)"
++# ALT: the working directory can be not writable in some cases
+ ret=0
+ testpid=$(run_named ns2 named$n.run -c named-alt4.conf -D runtime-ns2-extra-4)
+ test -n "$testpid" || ret=1
+-retry_quiet 10 check_named_log "exiting (due to fatal error)" ns2/named$n.run || ret=1
++retry_quiet 10 check_named_log "exiting (due to fatal error)" ns2/named$n.run && ret=1
+ grep "[^-]directory './nope' is not writable" ns2/named$n.run > /dev/null 2>&1 || ret=1
+ kill_named ns2/named.pid && ret=1
++
++echo $testpid > ns2/named_.pid
++kill_named ns2/named_.pid || ret=1
+ test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
++
+ if [ $ret -ne 0 ]; then echo_i "failed"; fi
+ status=$((status+ret))
+ 
+-- 
+2.33.4
+

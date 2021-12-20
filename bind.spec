@@ -61,6 +61,7 @@ Source51: bind.tmpfiles.conf
 Patch0001: 0001-ALT-defaults-Reintroduce-chrooted-named-by-default.patch
 Patch0002: 0002-ALT-Minimize-linux-capabilities.patch
 Patch0003: 0003-ALT-Make-it-possible-to-retain-Linux-capabilities-of.patch
+Patch0004: 0004-ALT-named-Allow-non-writable-working-directory.patch
 
 %if_with docs
 BuildRequires: python3(sphinx)
