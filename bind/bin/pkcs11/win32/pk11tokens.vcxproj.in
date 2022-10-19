@@ -68,6 +68,7 @@
       <ObjectFileName>.\$(Configuration)\</ObjectFileName>
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
       <BrowseInformation>true</BrowseInformation>
+      <ForcedIncludeFiles>..\..\..\config.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@..\..\..\lib\isc\win32\include;..\..\..\lib\isc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
@@ -76,7 +77,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\..\Build\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>$(Configuration);..\..\..\lib\isc\win32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libisc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>@OPENSSL_LIBCRYPTO@@OPENSSL_LIBSSL@libisc.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
@@ -96,6 +97,7 @@
       <AssemblerListingLocation>.\$(Configuration)\</AssemblerListingLocation>
       <ObjectFileName>.\$(Configuration)\</ObjectFileName>
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
+      <ForcedIncludeFiles>..\..\..\config.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@..\..\..\lib\isc\win32\include;..\..\..\lib\isc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
@@ -107,7 +109,7 @@
       <OutputFile>..\..\..\Build\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(Configuration);..\..\..\lib\isc\win32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libisc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>@OPENSSL_LIBCRYPTO@@OPENSSL_LIBSSL@libisc.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

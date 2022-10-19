@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -17,10 +19,10 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include <isc/types.h>
 #include <isc/result.h>
+#include <isc/types.h>
 
-typedef struct isc_ht isc_ht_t;
+typedef struct isc_ht	   isc_ht_t;
 typedef struct isc_ht_iter isc_ht_iter_t;
 
 /*%
@@ -31,11 +33,8 @@ typedef struct isc_ht_iter isc_ht_iter_t;
  *\li	'mctx' is a valid memory context.
  *\li	'bits' >=1 and 'bits' <=32
  *
- * Returns:
- *\li	#ISC_R_NOMEMORY		-- not enough memory to create pool
- *\li	#ISC_R_SUCCESS		-- all is well.
  */
-isc_result_t
+void
 isc_ht_init(isc_ht_t **htp, isc_mem_t *mctx, uint8_t bits);
 
 /*%
@@ -61,11 +60,13 @@ isc_ht_destroy(isc_ht_t **htp);
  */
 isc_result_t
 isc_ht_add(isc_ht_t *ht, const unsigned char *key, uint32_t keysize,
-		   void *value);
+	   void *value);
 
 /*%
  * Find a node matching 'key'/'keysize' in hashtable 'ht';
- * if found, set 'value' to its value
+ * if found, set '*valuep' to its value. (If 'valuep' is NULL,
+ * then simply return SUCCESS or NOTFOUND to indicate whether the
+ * key exists in the hashtable.)
  *
  * Requires:
  * \li	'ht' is a valid hashtable
@@ -75,8 +76,8 @@ isc_ht_add(isc_ht_t *ht, const unsigned char *key, uint32_t keysize,
  * \li	#ISC_R_NOTFOUND		-- key not found
  */
 isc_result_t
-isc_ht_find(const isc_ht_t *ht, const unsigned char *key,
-	    uint32_t keysize, void **valuep);
+isc_ht_find(const isc_ht_t *ht, const unsigned char *key, uint32_t keysize,
+	    void **valuep);
 
 /*%
  * Delete node from hashtable
@@ -98,7 +99,7 @@ isc_ht_delete(isc_ht_t *ht, const unsigned char *key, uint32_t keysize);
  *\li	'ht' is a valid hashtable
  *\li	'itp' is non NULL and '*itp' is NULL.
  */
-isc_result_t
+void
 isc_ht_iter_create(isc_ht_t *ht, isc_ht_iter_t **itp);
 
 /*%
@@ -117,7 +118,7 @@ isc_ht_iter_destroy(isc_ht_iter_t **itp);
  *\li	'it' is non NULL.
  *
  * Returns:
- * \li 	#ISC_R_SUCCESS	-- success
+ * \li	#ISC_R_SUCCESS	-- success
  * \li	#ISC_R_NOMORE	-- no data in the hashtable
  */
 isc_result_t
@@ -130,7 +131,7 @@ isc_ht_iter_first(isc_ht_iter_t *it);
  *\li	'it' is non NULL.
  *
  * Returns:
- * \li 	#ISC_R_SUCCESS	-- success
+ * \li	#ISC_R_SUCCESS	-- success
  * \li	#ISC_R_NOMORE	-- end of hashtable reached
  */
 isc_result_t
@@ -143,12 +144,11 @@ isc_ht_iter_next(isc_ht_iter_t *it);
  *\li	'it' is non NULL.
  *
  * Returns:
- * \li 	#ISC_R_SUCCESS	-- success
+ * \li	#ISC_R_SUCCESS	-- success
  * \li	#ISC_R_NOMORE	-- end of hashtable reached
  */
 isc_result_t
 isc_ht_iter_delcurrent_next(isc_ht_iter_t *it);
-
 
 /*%
  * Set 'value' to the current value under the iterator
@@ -180,4 +180,4 @@ isc_ht_iter_currentkey(isc_ht_iter_t *it, unsigned char **key, size_t *keysize);
  */
 unsigned int
 isc_ht_count(isc_ht_t *ht);
-#endif
+#endif /* ifndef ISC_HT_H */

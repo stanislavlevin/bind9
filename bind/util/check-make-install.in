@@ -2,6 +2,8 @@
 #
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -18,7 +20,6 @@ install_dir="${DESTDIR}@prefix@"
 headers_to_install() {
 	find "${abs_top_srcdir}/lib" -name "*.h" -or -name "*.h.in" |
 		grep -v -F /win32/ |
-		grep -v -F include/isc/ipv6.h |
 		sed -n \
 		    -e "s|\.h\.in$|\.h|" \
 		    -e "s|.*include/|${DESTDIR}${includedir}/|p" |
@@ -47,7 +48,7 @@ if [ ! -f "${named_man_page_path}" ]; then
 fi
 
 if [ -n "${DESTDIR}" ]; then
-	for expected_subdir in bin etc include lib sbin share var; do
+	for expected_subdir in bin etc include lib sbin share; do
 		echo "${install_dir}/${expected_subdir}" >> "${abs_builddir}/expected_dirs"
 	done
 	find "${install_dir}" -maxdepth 1 -mindepth 1 -type d | sort > "${abs_builddir}/existing_dirs"

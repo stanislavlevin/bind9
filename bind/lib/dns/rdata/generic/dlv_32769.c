@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 /* RFC3658 */
 
 #ifndef RDATA_GENERIC_DLV_32769_C
@@ -17,22 +18,16 @@
 
 #define RRTYPE_DLV_ATTRIBUTES 0
 
-#include <isc/sha1.h>
-#include <isc/sha2.h>
-
 #include <dns/ds.h>
 
-#include "dst_gost.h"
-
-static inline isc_result_t
+static isc_result_t
 fromtext_dlv(ARGS_FROMTEXT) {
-
 	REQUIRE(type == dns_rdatatype_dlv);
 
 	return (generic_fromtext_ds(CALL_FROMTEXT));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_dlv(ARGS_TOTEXT) {
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_dlv);
@@ -40,15 +35,14 @@ totext_dlv(ARGS_TOTEXT) {
 	return (generic_totext_ds(CALL_TOTEXT));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_dlv(ARGS_FROMWIRE) {
-
 	REQUIRE(type == dns_rdatatype_dlv);
 
 	return (generic_fromwire_ds(CALL_FROMWIRE));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_dlv(ARGS_TOWIRE) {
 	isc_region_t sr;
 
@@ -61,7 +55,7 @@ towire_dlv(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
+static int
 compare_dlv(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -77,22 +71,19 @@ compare_dlv(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_dlv(ARGS_FROMSTRUCT) {
-
 	REQUIRE(type == dns_rdatatype_dlv);
 
 	return (generic_fromstruct_ds(CALL_FROMSTRUCT));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_dlv(ARGS_TOSTRUCT) {
-	dns_rdata_dlv_t *dlv;
+	dns_rdata_dlv_t *dlv = target;
 
-	REQUIRE(((dns_rdata_dlv_t *)target) != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_dlv);
-
-	dlv = target;
+	REQUIRE(dlv != NULL);
 
 	dlv->common.rdclass = rdata->rdclass;
 	dlv->common.rdtype = rdata->type;
@@ -101,25 +92,24 @@ tostruct_dlv(ARGS_TOSTRUCT) {
 	return (generic_tostruct_ds(CALL_TOSTRUCT));
 }
 
-static inline void
+static void
 freestruct_dlv(ARGS_FREESTRUCT) {
-	dns_rdata_dlv_t *dlv;
+	dns_rdata_dlv_t *dlv = source;
 
-	REQUIRE(((dns_rdata_dlv_t *)source) != NULL);
-	REQUIRE(((dns_rdata_dlv_t *)source)->common.rdtype ==
-		dns_rdatatype_dlv);
+	REQUIRE(dlv != NULL);
+	REQUIRE(dlv->common.rdtype == dns_rdatatype_dlv);
 
-	dlv = source;
-
-	if (dlv->mctx == NULL)
+	if (dlv->mctx == NULL) {
 		return;
+	}
 
-	if (dlv->digest != NULL)
+	if (dlv->digest != NULL) {
 		isc_mem_free(dlv->mctx, dlv->digest);
+	}
 	dlv->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_dlv(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_dlv);
 
@@ -130,7 +120,7 @@ additionaldata_dlv(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_dlv(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -141,9 +131,8 @@ digest_dlv(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_dlv(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_dlv);
 
 	UNUSED(name);
@@ -154,9 +143,8 @@ checkowner_dlv(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_dlv(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_dlv);
 
 	UNUSED(rdata);
@@ -166,9 +154,9 @@ checknames_dlv(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_dlv(ARGS_COMPARE) {
 	return (compare_dlv(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_DLV_32769_C */
+#endif /* RDATA_GENERIC_DLV_32769_C */

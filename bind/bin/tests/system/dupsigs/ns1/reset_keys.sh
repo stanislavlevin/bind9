@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -22,20 +24,18 @@ timetodnssec() {
 }
 
 KEYDIR=keys/signing.test
-KEYGEN="$KEYGEN -r $RANDFILE"
+KSK=`$KEYGEN -a RSASHA256 -K $KEYDIR -q -f KSK $zone`
 
-KSK=`$KEYGEN -a RSASHA256 -b 1024 -K $KEYDIR -q -f KSK $zone`
-
-ZSK0=`$KEYGEN -a RSASHA256 -b 1024 -K $KEYDIR -q $zone`
-ZSK1=`$KEYGEN -a RSASHA256 -b 1024 -K $KEYDIR -q $zone`
-ZSK2=`$KEYGEN -a RSASHA256 -b 1024 -K $KEYDIR -q $zone`
-ZSK3=`$KEYGEN -a RSASHA256 -b 1024 -K $KEYDIR -q $zone`
-ZSK4=`$KEYGEN -a RSASHA256 -b 1024 -K $KEYDIR -q $zone`
-ZSK5=`$KEYGEN -a RSASHA256 -b 1024 -K $KEYDIR -q $zone`
-ZSK6=`$KEYGEN -a RSASHA256 -b 1024 -K $KEYDIR -q $zone`
-ZSK7=`$KEYGEN -a RSASHA256 -b 1024 -K $KEYDIR -q $zone`
-ZSK8=`$KEYGEN -a RSASHA256 -b 1024 -K $KEYDIR -q $zone`
-ZSK9=`$KEYGEN -a RSASHA256 -b 1024 -K $KEYDIR -q $zone`
+ZSK0=`$KEYGEN -a RSASHA256 -K $KEYDIR -q $zone`
+ZSK1=`$KEYGEN -a RSASHA256 -K $KEYDIR -q $zone`
+ZSK2=`$KEYGEN -a RSASHA256 -K $KEYDIR -q $zone`
+ZSK3=`$KEYGEN -a RSASHA256 -K $KEYDIR -q $zone`
+ZSK4=`$KEYGEN -a RSASHA256 -K $KEYDIR -q $zone`
+ZSK5=`$KEYGEN -a RSASHA256 -K $KEYDIR -q $zone`
+ZSK6=`$KEYGEN -a RSASHA256 -K $KEYDIR -q $zone`
+ZSK7=`$KEYGEN -a RSASHA256 -K $KEYDIR -q $zone`
+ZSK8=`$KEYGEN -a RSASHA256 -K $KEYDIR -q $zone`
+ZSK9=`$KEYGEN -a RSASHA256 -K $KEYDIR -q $zone`
 
 # clear all times on all keys
 for FILEN in keys/signing.test/*.key

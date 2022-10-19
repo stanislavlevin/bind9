@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -8,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef DNS_DNS64_H
 #define DNS_DNS64_H 1
@@ -24,25 +25,27 @@ ISC_LANG_BEGINDECLS
 /*
  * dns_dns64_create() flags.
  */
-#define DNS_DNS64_RECURSIVE_ONLY	0x01	/* If set then this record
-						 * only applies to recursive
-						 * queries.
-						 */
-#define DNS_DNS64_BREAK_DNSSEC		0x02	/* If set then still perform
-						 * DNSSEC synthesis even
-						 * though the result would
-						 * fail validation.
-						 */
+#define DNS_DNS64_RECURSIVE_ONLY          \
+	0x01 /* If set then this record   \
+	      * only applies to recursive \
+	      * queries.                  \
+	      */
+#define DNS_DNS64_BREAK_DNSSEC            \
+	0x02 /* If set then still perform \
+	      * DNSSEC synthesis even     \
+	      * though the result would   \
+	      * fail validation.          \
+	      */
 
 /*
  * dns_dns64_aaaaok() and dns_dns64_aaaafroma() flags.
  */
-#define DNS_DNS64_RECURSIVE		0x01	/* Recursive query. */
-#define DNS_DNS64_DNSSEC		0x02	/* DNSSEC sensitive query. */
+#define DNS_DNS64_RECURSIVE 0x01 /* Recursive query. */
+#define DNS_DNS64_DNSSEC    0x02 /* DNSSEC sensitive query. */
 
 isc_result_t
-dns_dns64_create(isc_mem_t *mctx, isc_netaddr_t *prefix,
-		 unsigned int prefixlen, isc_netaddr_t *suffix,
+dns_dns64_create(isc_mem_t *mctx, const isc_netaddr_t *prefix,
+		 unsigned int prefixlen, const isc_netaddr_t *suffix,
 		 dns_acl_t *client, dns_acl_t *mapped, dns_acl_t *excluded,
 		 unsigned int flags, dns_dns64_t **dns64);
 /*
@@ -146,8 +149,8 @@ dns_dns64_unlink(dns_dns64list_t *list, dns_dns64_t *dns64);
 bool
 dns_dns64_aaaaok(const dns_dns64_t *dns64, const isc_netaddr_t *reqaddr,
 		 const dns_name_t *reqsigner, const dns_aclenv_t *env,
-		 unsigned int flags, dns_rdataset_t *rdataset,
-		 bool *aaaaok, size_t aaaaoklen);
+		 unsigned int flags, dns_rdataset_t *rdataset, bool *aaaaok,
+		 size_t aaaaoklen);
 /*
  * Determine if there are any non-excluded AAAA records in from the
  * matching dns64 records in the list starting at 'dns64'.  If there

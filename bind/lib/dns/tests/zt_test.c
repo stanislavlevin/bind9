@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,16 +11,13 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-
 #include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
+#include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -27,8 +26,8 @@
 #include <cmocka.h>
 
 #include <isc/app.h>
+#include <isc/atomic.h>
 #include <isc/buffer.h>
-#include <isc/mutex.h>
 #include <isc/print.h>
 #include <isc/task.h>
 #include <isc/timer.h>
@@ -41,8 +40,6 @@
 #include <dns/zt.h>
 
 #include "dnstest.h"
-
-static isc_mutex_t done_lock;
 
 struct args {
 	void *arg1;
@@ -84,25 +81,21 @@ count_zone(dns_zone_t *zone, void *uap) {
 static isc_result_t
 load_done(dns_zt_t *zt, dns_zone_t *zone, isc_task_t *task) {
 	/* We treat zt as a pointer to a boolean for testing purposes */
-	bool *done = (bool *) zt;
+	atomic_bool *done = (atomic_bool *)zt;
 
 	UNUSED(zone);
 	UNUSED(task);
 
-	LOCK(&done_lock);
-	*done = true;
-	UNLOCK(&done_lock);
+	atomic_store(done, true);
 	isc_app_shutdown();
 	return (ISC_R_SUCCESS);
 }
 
 static isc_result_t
 all_done(void *arg) {
-	bool *done = (bool *) arg;
+	atomic_bool *done = (atomic_bool *)arg;
 
-	LOCK(&done_lock);
-	*done = true;
-	UNLOCK(&done_lock);
+	atomic_store(done, true);
 	isc_app_shutdown();
 	return (ISC_R_SUCCESS);
 }
@@ -113,7 +106,7 @@ start_zt_asyncload(isc_task_t *task, isc_event_t *event) {
 
 	UNUSED(task);
 
-	dns_zt_asyncload2(args->arg1, all_done, args->arg2, false);
+	dns_zt_asyncload(args->arg1, false, all_done, args->arg2);
 
 	isc_event_free(&event);
 }
@@ -124,7 +117,7 @@ start_zone_asyncload(isc_task_t *task, isc_event_t *event) {
 
 	UNUSED(task);
 
-	dns_zone_asyncload2(args->arg1, load_done, args->arg2, args->arg3);
+	dns_zone_asyncload(args->arg1, args->arg3, load_done, args->arg2);
 	isc_event_free(&event);
 }
 
@@ -145,7 +138,8 @@ apply(void **state) {
 	assert_non_null(view->zonetable);
 
 	assert_int_equal(nzones, 0);
-	result = dns_zt_apply(view->zonetable, false, count_zone, &nzones);
+	result = dns_zt_apply(view->zonetable, false, NULL, count_zone,
+			      &nzones);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_int_equal(nzones, 1);
 
@@ -170,16 +164,15 @@ asyncload_zone(void **state) {
 	dns_zone_t *zone = NULL;
 	dns_view_t *view = NULL;
 	dns_db_t *db = NULL;
-	FILE* zonefile, *origfile;
+	FILE *zonefile, *origfile;
 	char buf[4096];
-	bool done = false;
+	atomic_bool done;
 	int i = 0;
 	struct args args;
 
 	UNUSED(state);
 
-	result = isc_mutex_init(&done_lock);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	atomic_init(&done, false);
 
 	result = dns_test_makezone("foo", &zone, NULL, true);
 	assert_int_equal(result, ISC_R_SUCCESS);
@@ -193,9 +186,7 @@ asyncload_zone(void **state) {
 	assert_non_null(view->zonetable);
 
 	assert_false(dns__zone_loadpending(zone));
-	LOCK(&done_lock);
-	assert_false(done);
-	UNLOCK(&done_lock);
+	assert_false(atomic_load(&done));
 	zonefile = fopen("./zone.data", "wb");
 	assert_non_null(zonefile);
 	origfile = fopen("./testdata/zt/zone1.db", "r+b");
@@ -205,19 +196,19 @@ asyncload_zone(void **state) {
 	fwrite(buf, 1, n, zonefile);
 	fflush(zonefile);
 
-	dns_zone_setfile(zone, "./zone.data");
+	dns_zone_setfile(zone, "./zone.data", dns_masterformat_text,
+			 &dns_master_style_default);
 
 	args.arg1 = zone;
 	args.arg2 = &done;
 	args.arg3 = false;
-	isc_app_onrun(mctx, maintask, start_zone_asyncload, &args);
+	isc_app_onrun(dt_mctx, maintask, start_zone_asyncload, &args);
 
 	isc_app_run();
-	while (dns__zone_loadpending(zone) && i++ < 5000)
+	while (dns__zone_loadpending(zone) && i++ < 5000) {
 		dns_test_nap(1000);
-	LOCK(&done_lock);
-	assert_true(done);
-	UNLOCK(&done_lock);
+	}
+	assert_true(atomic_load(&done));
 	/* The zone should now be loaded; test it */
 	result = dns_zone_getdb(zone, &db);
 	assert_int_equal(result, ISC_R_SUCCESS);
@@ -232,16 +223,15 @@ asyncload_zone(void **state) {
 
 	args.arg1 = zone;
 	args.arg2 = &done;
-	args.arg3 = false;
-	isc_app_onrun(mctx, maintask, start_zone_asyncload, &args);
+	args.arg3 = true;
+	isc_app_onrun(dt_mctx, maintask, start_zone_asyncload, &args);
 
 	isc_app_run();
 
-	while (dns__zone_loadpending(zone) && i++ < 5000)
+	while (dns__zone_loadpending(zone) && i++ < 5000) {
 		dns_test_nap(1000);
-	LOCK(&done_lock);
-	assert_true(done);
-	UNLOCK(&done_lock);
+	}
+	assert_true(atomic_load(&done));
 	/* The zone should now be loaded; test it */
 	result = dns_zone_getdb(zone, &db);
 	assert_int_equal(result, ISC_R_SUCCESS);
@@ -251,31 +241,28 @@ asyncload_zone(void **state) {
 	args.arg1 = zone;
 	args.arg2 = &done;
 	args.arg3 = false;
-	isc_app_onrun(mctx, maintask, start_zone_asyncload, &args);
+	isc_app_onrun(dt_mctx, maintask, start_zone_asyncload, &args);
 
 	isc_app_run();
 
-	while (dns__zone_loadpending(zone) && i++ < 5000)
+	while (dns__zone_loadpending(zone) && i++ < 5000) {
 		dns_test_nap(1000);
-	LOCK(&done_lock);
-	assert_true(done);
-	UNLOCK(&done_lock);
+	}
+	assert_true(atomic_load(&done));
 	/* The zone should now be loaded; test it */
 	result = dns_zone_getdb(zone, &db);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	assert_non_null(db);
-	if (db != NULL)
+	if (db != NULL) {
 		dns_db_detach(&db);
+	}
 
 	dns_test_releasezone(zone);
 	dns_test_closezonemgr();
 
 	dns_zone_detach(&zone);
 	dns_view_detach(&view);
-
-	result = isc_mutex_destroy(&done_lock);
-	assert_int_equal(result, ISC_R_SUCCESS);
 }
 
 /* asynchronous zone table load */
@@ -284,30 +271,32 @@ asyncload_zt(void **state) {
 	isc_result_t result;
 	dns_zone_t *zone1 = NULL, *zone2 = NULL, *zone3 = NULL;
 	dns_view_t *view;
-	dns_zt_t *zt;
+	dns_zt_t *zt = NULL;
 	dns_db_t *db = NULL;
-	bool done = false;
+	atomic_bool done;
 	int i = 0;
 	struct args args;
 
 	UNUSED(state);
 
-	result = isc_mutex_init(&done_lock);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	atomic_init(&done, false);
 
 	result = dns_test_makezone("foo", &zone1, NULL, true);
 	assert_int_equal(result, ISC_R_SUCCESS);
-	dns_zone_setfile(zone1, "testdata/zt/zone1.db");
+	dns_zone_setfile(zone1, "testdata/zt/zone1.db", dns_masterformat_text,
+			 &dns_master_style_default);
 	view = dns_zone_getview(zone1);
 
 	result = dns_test_makezone("bar", &zone2, view, false);
 	assert_int_equal(result, ISC_R_SUCCESS);
-	dns_zone_setfile(zone2, "testdata/zt/zone1.db");
+	dns_zone_setfile(zone2, "testdata/zt/zone1.db", dns_masterformat_text,
+			 &dns_master_style_default);
 
 	/* This one will fail to load */
 	result = dns_test_makezone("fake", &zone3, view, false);
 	assert_int_equal(result, ISC_R_SUCCESS);
-	dns_zone_setfile(zone3, "testdata/zt/nonexistent.db");
+	dns_zone_setfile(zone3, "testdata/zt/nonexistent.db",
+			 dns_masterformat_text, &dns_master_style_default);
 
 	zt = view->zonetable;
 	assert_non_null(zt);
@@ -323,36 +312,32 @@ asyncload_zt(void **state) {
 
 	assert_false(dns__zone_loadpending(zone1));
 	assert_false(dns__zone_loadpending(zone2));
-	LOCK(&done_lock);
-	assert_false(done);
-	UNLOCK(&done_lock);
+	assert_false(atomic_load(&done));
 
 	args.arg1 = zt;
 	args.arg2 = &done;
-	isc_app_onrun(mctx, maintask, start_zt_asyncload, &args);
+	isc_app_onrun(dt_mctx, maintask, start_zt_asyncload, &args);
 
 	isc_app_run();
-	LOCK(&done_lock);
-	while (!done && i++ < 5000) {
-		UNLOCK(&done_lock);
+	while (!atomic_load(&done) && i++ < 5000) {
 		dns_test_nap(1000);
-		LOCK(&done_lock);
 	}
-	assert_true(done);
-	UNLOCK(&done_lock);
+	assert_true(atomic_load(&done));
 
 	/* Both zones should now be loaded; test them */
 	result = dns_zone_getdb(zone1, &db);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_non_null(db);
-	if (db != NULL)
+	if (db != NULL) {
 		dns_db_detach(&db);
+	}
 
 	result = dns_zone_getdb(zone2, &db);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_non_null(db);
-	if (db != NULL)
+	if (db != NULL) {
 		dns_db_detach(&db);
+	}
 
 	dns_test_releasezone(zone3);
 	dns_test_releasezone(zone2);
@@ -363,22 +348,19 @@ asyncload_zt(void **state) {
 	dns_zone_detach(&zone2);
 	dns_zone_detach(&zone3);
 	dns_view_detach(&view);
-
-	result = isc_mutex_destroy(&done_lock);
-	assert_int_equal(result, ISC_R_SUCCESS);
 }
 
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
 		cmocka_unit_test_setup_teardown(apply, _setup, _teardown),
-		cmocka_unit_test_setup_teardown(asyncload_zone,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(asyncload_zt,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(asyncload_zone, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(asyncload_zt, _setup,
+						_teardown),
 	};
 
-	return (cmocka_run_group_tests(tests, dns_test_init, dns_test_final));
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
 #else /* HAVE_CMOCKA */
@@ -388,7 +370,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

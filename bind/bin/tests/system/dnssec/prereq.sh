@@ -1,16 +1,20 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+# shellcheck source=conf.sh
+. "$SYSTEMTESTTOP/conf.sh"
+
+set -e
 
 if test -n "$PYTHON"
 then
@@ -26,9 +30,10 @@ else
     exit 1
 fi
 
-if $PERL -e 'use Net::DNS;' 2>/dev/null
+if "$PERL" -e 'use Net::DNS;' 2>/dev/null
 then
-    if $PERL -e 'use Net::DNS; die if ($Net::DNS::VERSION >= 0.69 && $Net::DNS::VERSION <= 0.70);' 2>/dev/null
+    # shellcheck disable=SC2016
+    if "$PERL" -e 'use Net::DNS; die if ($Net::DNS::VERSION >= 0.69 && $Net::DNS::VERSION <= 0.70);' 2>/dev/null
     then
         :
     else
@@ -37,4 +42,4 @@ then
     fi
 fi
 
-exec $SHELL ../testcrypto.sh
+exit 0

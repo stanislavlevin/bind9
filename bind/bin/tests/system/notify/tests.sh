@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -98,7 +100,7 @@ if [ ! "$CYGWIN" ]; then
     $KILL -HUP `cat ns2/named.pid`
 else
     echo_i "reloading with example2 using rndc and waiting up to 45 seconds"
-    $RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/I:ns2 /'
+    rndc_reload ns2 10.53.0.2
 fi
 
 try=0
@@ -230,6 +232,8 @@ do
 done
 grep "test string" dig.out.b.ns5.test$n > /dev/null || ret=1
 grep "test string" dig.out.c.ns5.test$n > /dev/null || ret=1
+grep "sending notify to 10.53.0.5#[0-9]* : TSIG (b)" ns5/named.run > /dev/null || ret=1
+grep "sending notify to 10.53.0.5#[0-9]* : TSIG (c)" ns5/named.run > /dev/null || ret=1
 
 [ $ret = 0 ] || echo_i "failed"
 status=`expr $ret + $status`

@@ -1,8 +1,10 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -19,8 +21,11 @@ options {
 	listen-on { 10.53.0.3; };
 	listen-on-v6 { none; };
 	recursion yes;
+	dnssec-validation yes;
 	notify yes;
+	qname-minimization disabled;
 	zone-statistics yes;
+	glue-cache yes;
 };
 
 statistics-channels {
@@ -42,13 +47,13 @@ zone "." {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	allow-update { any; };
 	file "internal.db";
 };
 
-zone "a-slave" {
-	type slave;
-	file "slave.bk";
-	masters { 10.53.0.1; };
+zone "a-secondary" {
+	type secondary;
+	file "sec.bk";
+	primaries { 10.53.0.1; };
 };

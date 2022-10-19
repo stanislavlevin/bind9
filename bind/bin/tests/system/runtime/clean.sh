@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -20,5 +22,4 @@ rm -f ns*/named.lock ns*/named*.pid ns*/other.lock
 rm -f ns2/named.conf ns2/named-alt*.conf
 rm -f rndc.out*
 rm -rf ns2/nope
-rm -f ns2/dir ns2/nopedir ns2/mkd ns2/nopemkd
 rm -rf ns2/tmp.*

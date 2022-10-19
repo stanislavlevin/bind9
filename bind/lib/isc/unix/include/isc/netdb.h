@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,13 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISC_NETDB_H
 #define ISC_NETDB_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file
  * \brief
@@ -43,8 +44,8 @@
  *** Imports.
  ***/
 
-#include <isc/net.h>
-
 #include <netdb.h>
+
+#include <isc/net.h>
 
 #endif /* ISC_NETDB_H */

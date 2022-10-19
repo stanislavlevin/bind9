@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -8,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef ISC_STDIO_H
 #define ISC_STDIO_H 1
@@ -49,8 +50,7 @@ isc_stdio_tell(FILE *f, off_t *offsetp);
 
 /*% Read */
 isc_result_t
-isc_stdio_read(void *ptr, size_t size, size_t nmemb, FILE *f,
-	       size_t *nret);
+isc_stdio_read(void *ptr, size_t size, size_t nmemb, FILE *f, size_t *nret);
 
 /*% Write */
 isc_result_t

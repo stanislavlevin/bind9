@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -15,6 +17,7 @@
 #include <inttypes.h>
 
 #include <isc/types.h>
+
 #include <dns/types.h>
 
 /*%
@@ -22,12 +25,12 @@
  * store masters for a slave zone, created by parsing config options.
  */
 struct dns_ipkeylist {
-	isc_sockaddr_t		*addrs;
-	isc_dscp_t		*dscps;
-	dns_name_t		**keys;
-	dns_name_t		**labels;
-	uint32_t		count;
-	uint32_t		allocated;
+	isc_sockaddr_t *addrs;
+	isc_dscp_t     *dscps;
+	dns_name_t    **keys;
+	dns_name_t    **labels;
+	uint32_t	count;
+	uint32_t	allocated;
 };
 
 void
@@ -84,4 +87,4 @@ dns_ipkeylist_resize(isc_mem_t *mctx, dns_ipkeylist_t *ipkl, unsigned int n);
  * \li	#ISC_R_NOMEMORY if there's no memory, ipkeylist is left untouched
  */
 
-#endif
+#endif /* ifndef DNS_IPKEYLIST_H */

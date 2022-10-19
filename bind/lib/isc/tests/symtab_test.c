@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -25,8 +24,8 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
-#include <isc/symtab.h>
 #include <isc/print.h>
+#include <isc/symtab.h>
 #include <isc/util.h>
 
 #include "isctest.h"
@@ -57,8 +56,8 @@ undefine(char *key, unsigned int type, isc_symvalue_t value, void *arg) {
 	UNUSED(arg);
 
 	assert_int_equal(type, 1);
-	isc_mem_free(mctx, key);
-	isc_mem_free(mctx, value.as_pointer);
+	isc_mem_free(test_mctx, key);
+	isc_mem_free(test_mctx, value.as_pointer);
 }
 
 /* test symbol table growth */
@@ -72,7 +71,7 @@ symtab_grow(void **state) {
 
 	UNUSED(state);
 
-	result = isc_symtab_create(mctx, 3, undefine, NULL, false, &st);
+	result = isc_symtab_create(test_mctx, 3, undefine, NULL, false, &st);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_non_null(st);
 
@@ -86,14 +85,15 @@ symtab_grow(void **state) {
 		char str[16], *key;
 
 		snprintf(str, sizeof(str), "%04x", i);
-		key = isc_mem_strdup(mctx, str);
+		key = isc_mem_strdup(test_mctx, str);
 		assert_non_null(key);
-		value.as_pointer = isc_mem_strdup(mctx, str);
+		value.as_pointer = isc_mem_strdup(test_mctx, str);
 		assert_non_null(value.as_pointer);
 		result = isc_symtab_define(st, key, 1, value, policy);
 		assert_int_equal(result, ISC_R_SUCCESS);
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
 			undefine(key, 1, value, NULL);
+		}
 	}
 
 	/*
@@ -103,9 +103,9 @@ symtab_grow(void **state) {
 		char str[16], *key;
 
 		snprintf(str, sizeof(str), "%04x", i);
-		key = isc_mem_strdup(mctx, str);
+		key = isc_mem_strdup(test_mctx, str);
 		assert_non_null(key);
-		value.as_pointer = isc_mem_strdup(mctx, str);
+		value.as_pointer = isc_mem_strdup(test_mctx, str);
 		assert_non_null(value.as_pointer);
 		result = isc_symtab_define(st, key, 1, value, policy);
 		assert_int_equal(result, ISC_R_EXISTS);
@@ -152,8 +152,7 @@ symtab_grow(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(symtab_grow,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(symtab_grow, _setup, _teardown),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
@@ -166,7 +165,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

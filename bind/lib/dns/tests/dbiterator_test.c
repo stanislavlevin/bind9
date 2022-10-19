@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -25,7 +24,6 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
-#include <isc/print.h>
 #include <isc/util.h>
 
 #include <dns/db.h>
@@ -34,9 +32,9 @@
 
 #include "dnstest.h"
 
-#define	BUFLEN		255
-#define	BIGBUFLEN	(64 * 1024)
-#define TEST_ORIGIN	"test"
+#define BUFLEN	    255
+#define BIGBUFLEN   (64 * 1024)
+#define TEST_ORIGIN "test"
 
 static int
 _setup(void **state) {
@@ -117,12 +115,13 @@ test_walk(const char *filename, int nodes) {
 	result = dns_db_createiterator(db, 0, &iter);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	for (result = dns_dbiterator_first(iter);
-	     result == ISC_R_SUCCESS;
-	     result = dns_dbiterator_next(iter)) {
+	for (result = dns_dbiterator_first(iter); result == ISC_R_SUCCESS;
+	     result = dns_dbiterator_next(iter))
+	{
 		result = dns_dbiterator_current(iter, &node, name);
-		if (result == DNS_R_NEWORIGIN)
+		if (result == DNS_R_NEWORIGIN) {
 			result = ISC_R_SUCCESS;
+		}
 		assert_int_equal(result, ISC_R_SUCCESS);
 		dns_db_detachnode(db, &node);
 		i++;
@@ -167,12 +166,13 @@ test_reverse(const char *filename) {
 	result = dns_db_createiterator(db, 0, &iter);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	for (result = dns_dbiterator_last(iter);
-	     result == ISC_R_SUCCESS;
-	     result = dns_dbiterator_prev(iter)) {
+	for (result = dns_dbiterator_last(iter); result == ISC_R_SUCCESS;
+	     result = dns_dbiterator_prev(iter))
+	{
 		result = dns_dbiterator_current(iter, &node, name);
-		if (result == DNS_R_NEWORIGIN)
+		if (result == DNS_R_NEWORIGIN) {
 			result = ISC_R_SUCCESS;
+		}
 		assert_int_equal(result, ISC_R_SUCCESS);
 		dns_db_detachnode(db, &node);
 		i++;
@@ -226,8 +226,9 @@ test_seek_node(const char *filename, int nodes) {
 
 	while (result == ISC_R_SUCCESS) {
 		result = dns_dbiterator_current(iter, &node, name);
-		if (result == DNS_R_NEWORIGIN)
+		if (result == DNS_R_NEWORIGIN) {
 			result = ISC_R_SUCCESS;
+		}
 		assert_int_equal(result, ISC_R_SUCCESS);
 		dns_db_detachnode(db, &node);
 		result = dns_dbiterator_next(iter);
@@ -359,25 +360,25 @@ int
 main(void) {
 	const struct CMUnitTest tests[] = {
 		cmocka_unit_test_setup_teardown(create, _setup, _teardown),
-		cmocka_unit_test_setup_teardown(create_nsec3,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(create_nsec3, _setup,
+						_teardown),
 		cmocka_unit_test_setup_teardown(walk, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(walk_nsec3, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(reverse, _setup, _teardown),
-		cmocka_unit_test_setup_teardown(reverse_nsec3,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(reverse_nsec3, _setup,
+						_teardown),
 		cmocka_unit_test_setup_teardown(seek_node, _setup, _teardown),
-		cmocka_unit_test_setup_teardown(seek_node_nsec3,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(seek_node_nsec3, _setup,
+						_teardown),
 		cmocka_unit_test_setup_teardown(seek_empty, _setup, _teardown),
-		cmocka_unit_test_setup_teardown(seek_empty_nsec3,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(seek_empty_nsec3, _setup,
+						_teardown),
 		cmocka_unit_test_setup_teardown(seek_nx, _setup, _teardown),
-		cmocka_unit_test_setup_teardown(seek_nx_nsec3,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(seek_nx_nsec3, _setup,
+						_teardown),
 	};
 
-	return (cmocka_run_group_tests(tests, dns_test_init, dns_test_final));
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
 #else /* HAVE_CMOCKA */
@@ -387,7 +388,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

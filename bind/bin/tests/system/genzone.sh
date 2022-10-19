@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -12,10 +14,10 @@
 #
 # Set up a test zone
 #
-# Usage: genzone.sh master-server-number slave-server-number...
+# Usage: genzone.sh master-server-number secondary-server-number...
 #
 # e.g., "genzone.sh 2 3 4" means ns2 is the master and ns3, ns4
-# are slaves.
+# are secondaries.
 #
 
 master="$1"
@@ -424,7 +426,7 @@ eui64			EUI64	01-23-45-67-89-ab-cd-ef
 ; The text representation is not specified in the draft.
 ; This example was written based on the bind9 RR parsing code.
 ;tkey01			TKEY	928321914 928321915 (
-;				255		; algorithm
+;				algorithm-name.	; algorithm
 ;				65535 		; mode
 ;				0		; error
 ;				3 		; key size
@@ -434,7 +436,7 @@ eui64			EUI64	01-23-45-67-89-ab-cd-ef
 ;				)
 ;; A TKEY with empty "other data"
 ;tkey02			TKEY	928321914 928321915 (
-;				255		; algorithm
+;				algorithm-name.	; algorithm
 ;				65535 		; mode
 ;				0		; error
 ;				3 		; key size
@@ -493,7 +495,13 @@ dlv			DLV	30795 1 1 (
 
 ; type 65280-65534 (private use)
 
-; keydata (internal type used for managed-keys)
+https0			HTTPS	0 example.net.
+https1			HTTPS	1 . port=60
+
+svcb0			SVCB	0 example.net.
+svcb1			SVCB	1 . port=60
+
+; keydata (internal type used for managed keys)
 keydata			TYPE65533	\# 0
 keydata			TYPE65533	\# 6 010203040506 
 keydata			TYPE65533	\# 18 010203040506010203040506010203040506

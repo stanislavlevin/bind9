@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -14,7 +16,7 @@
 
 #define RRTYPE_MG_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_mg(ARGS_FROMTEXT) {
 	isc_token_t token;
 	dns_name_t name;
@@ -31,13 +33,14 @@ fromtext_mg(ARGS_FROMTEXT) {
 
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
+	if (origin == NULL) {
 		origin = dns_rootname;
+	}
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_mg(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
@@ -58,7 +61,7 @@ totext_mg(ARGS_TOTEXT) {
 	return (dns_name_totext(&prefix, sub, target));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_mg(ARGS_FROMWIRE) {
 	dns_name_t name;
 
@@ -73,7 +76,7 @@ fromwire_mg(ARGS_FROMWIRE) {
 	return (dns_name_fromwire(&name, source, dctx, options, target));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_mg(ARGS_TOWIRE) {
 	dns_name_t name;
 	dns_offsets_t offsets;
@@ -91,7 +94,7 @@ towire_mg(ARGS_TOWIRE) {
 	return (dns_name_towire(&name, cctx, target));
 }
 
-static inline int
+static int
 compare_mg(ARGS_COMPARE) {
 	dns_name_t name1;
 	dns_name_t name2;
@@ -116,17 +119,15 @@ compare_mg(ARGS_COMPARE) {
 	return (dns_name_rdatacompare(&name1, &name2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_mg(ARGS_FROMSTRUCT) {
-	dns_rdata_mg_t *mg;
+	dns_rdata_mg_t *mg = source;
 	isc_region_t region;
 
 	REQUIRE(type == dns_rdatatype_mg);
-	REQUIRE(((dns_rdata_mg_t *)source) != NULL);
-	REQUIRE(((dns_rdata_mg_t *)source)->common.rdtype == type);
-	REQUIRE(((dns_rdata_mg_t *)source)->common.rdclass == rdclass);
-
-	mg = source;
+	REQUIRE(mg != NULL);
+	REQUIRE(mg->common.rdtype == type);
+	REQUIRE(mg->common.rdclass == rdclass);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -135,17 +136,15 @@ fromstruct_mg(ARGS_FROMSTRUCT) {
 	return (isc_buffer_copyregion(target, &region));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_mg(ARGS_TOSTRUCT) {
 	isc_region_t region;
-	dns_rdata_mg_t *mg;
+	dns_rdata_mg_t *mg = target;
 	dns_name_t name;
 
-	REQUIRE(((dns_rdata_mg_t *)target) != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_mg);
+	REQUIRE(mg != NULL);
 	REQUIRE(rdata->length != 0);
-
-	mg = target;
 
 	mg->common.rdclass = rdata->rdclass;
 	mg->common.rdtype = rdata->type;
@@ -160,22 +159,21 @@ tostruct_mg(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_mg(ARGS_FREESTRUCT) {
-	dns_rdata_mg_t *mg;
+	dns_rdata_mg_t *mg = source;
 
-	REQUIRE(((dns_rdata_mg_t *)source) != NULL);
-	REQUIRE(((dns_rdata_mg_t *)source)->common.rdtype == dns_rdatatype_mg);
+	REQUIRE(mg != NULL);
+	REQUIRE(mg->common.rdtype == dns_rdatatype_mg);
 
-	mg = source;
-
-	if (mg->mctx == NULL)
+	if (mg->mctx == NULL) {
 		return;
+	}
 	dns_name_free(&mg->mg, mg->mctx);
 	mg->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_mg(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_mg);
 
@@ -186,7 +184,7 @@ additionaldata_mg(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_mg(ARGS_DIGEST) {
 	isc_region_t r;
 	dns_name_t name;
@@ -200,9 +198,8 @@ digest_mg(ARGS_DIGEST) {
 	return (dns_name_digest(&name, digest, arg));
 }
 
-static inline bool
+static bool
 checkowner_mg(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_mg);
 
 	UNUSED(type);
@@ -212,9 +209,8 @@ checkowner_mg(ARGS_CHECKOWNER) {
 	return (dns_name_ismailbox(name));
 }
 
-static inline bool
+static bool
 checknames_mg(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_mg);
 
 	UNUSED(rdata);
@@ -224,9 +220,9 @@ checknames_mg(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_mg(ARGS_COMPARE) {
 	return (compare_mg(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_MG_8_C */
+#endif /* RDATA_GENERIC_MG_8_C */

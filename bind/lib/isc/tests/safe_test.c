@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -11,15 +13,12 @@
 
 /* ! \file */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 
@@ -27,7 +26,6 @@
 #include <cmocka.h>
 
 #include <isc/safe.h>
-#include <isc/print.h>
 #include <isc/util.h>
 
 /* test isc_safe_memequal() */
@@ -37,28 +35,12 @@ isc_safe_memequal_test(void **state) {
 
 	assert_true(isc_safe_memequal("test", "test", 4));
 	assert_true(!isc_safe_memequal("test", "tesc", 4));
-	assert_true(isc_safe_memequal("\x00\x00\x00\x00",
-				      "\x00\x00\x00\x00", 4));
-	assert_true(!isc_safe_memequal("\x00\x00\x00\x00",
-				       "\x00\x00\x00\x01", 4));
-	assert_true(!isc_safe_memequal("\x00\x00\x00\x02",
-				       "\x00\x00\x00\x00", 4));
-}
-
-/* test isc_safe_memcompare() */
-static void
-isc_safe_memcompare_test(void **state) {
-	UNUSED(state);
-
-	assert_int_equal(isc_safe_memcompare("test", "test", 4), 0);
-	assert_true(isc_safe_memcompare("test", "tesc", 4) > 0);
-	assert_true(isc_safe_memcompare("test", "tesy", 4) < 0);
-	assert_int_equal(isc_safe_memcompare("\x00\x00\x00\x00",
-					     "\x00\x00\x00\x00", 4), 0);
-	assert_true(isc_safe_memcompare("\x00\x00\x00\x00",
-					"\x00\x00\x00\x01", 4) < 0);
-	assert_true(isc_safe_memcompare("\x00\x00\x00\x02",
-					"\x00\x00\x00\x00", 4) > 0);
+	assert_true(
+		isc_safe_memequal("\x00\x00\x00\x00", "\x00\x00\x00\x00", 4));
+	assert_true(
+		!isc_safe_memequal("\x00\x00\x00\x00", "\x00\x00\x00\x01", 4));
+	assert_true(
+		!isc_safe_memequal("\x00\x00\x00\x02", "\x00\x00\x00\x00", 4));
 }
 
 /* test isc_safe_memwipe() */
@@ -68,8 +50,7 @@ isc_safe_memwipe_test(void **state) {
 
 	/* These should pass. */
 	isc_safe_memwipe(NULL, 0);
-	isc_safe_memwipe((void *) -1, 0);
-	isc_safe_memwipe(NULL, 42);
+	isc_safe_memwipe((void *)-1, 0);
 
 	/*
 	 * isc_safe_memwipe(ptr, size) should function same as
@@ -108,7 +89,6 @@ main(void) {
 	const struct CMUnitTest tests[] = {
 		cmocka_unit_test(isc_safe_memequal_test),
 		cmocka_unit_test(isc_safe_memwipe_test),
-		cmocka_unit_test(isc_safe_memcompare_test),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
@@ -121,7 +101,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

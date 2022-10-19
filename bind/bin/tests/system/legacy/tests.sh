@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -76,9 +78,9 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking recursive lookup to notimp edns server succeeds ($n)"
+echo_i "checking recursive lookup to notimp edns server fails ($n)"
 ret=0
-resolution_succeeds ednsnotimp. || ret=1
+resolution_fails ednsnotimp. || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -118,9 +120,9 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking recursive lookup to drop edns server succeeds ($n)"
+echo_i "checking recursive lookup to drop edns server fails ($n)"
 ret=0
-resolution_succeeds dropedns. || ret=1
+resolution_fails dropedns. || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -138,9 +140,9 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking recursive lookup to drop edns + no tcp server succeeds ($n)"
+echo_i "checking recursive lookup to drop edns + no tcp server fails ($n)"
 ret=0
-resolution_succeeds dropedns-notcp. || ret=1
+resolution_fails dropedns-notcp. || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -224,9 +226,9 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking recursive lookup to edns 512 + no tcp server succeeds ($n)"
+echo_i "checking recursive lookup to edns 512 + no tcp server fails ($n)"
 ret=0
-resolution_succeeds edns512-notcp. || ret=1
+resolution_fails edns512-notcp. || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -253,21 +255,21 @@ fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
-if $SHELL ../testcrypto.sh > /dev/null 2>&1
-then
-    $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} legacy ns1
-    copy_setports ns1/named2.conf.in ns1/named.conf
-    $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} legacy ns1
+$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} legacy ns1
+copy_setports ns1/named2.conf.in ns1/named.conf
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} legacy ns1
 
-    n=`expr $n + 1`
-    echo_i "checking recursive lookup to edns 512 + no tcp + trust anchor fails ($n)"
+n=`expr $n + 1`
+echo_i "checking recursive lookup to edns 512 + no tcp + trust anchor fails ($n)"
+# retry loop in case the server restart above causes transient failure
+for try in 0 1 2 3 4 5 6 7 8 9; do
     ret=0
     resolution_fails edns512-notcp. || ret=1
-    if [ $ret != 0 ]; then echo_i "failed"; fi
-    status=`expr $status + $ret`
-else
-    echo_i "skipping checking recursive lookup to edns 512 + no tcp + trust anchor fails as crypto not enabled"
-fi
+    [ "$ret" -eq 0 ] && break
+    sleep 1
+done
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

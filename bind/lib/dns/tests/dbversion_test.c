@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -26,8 +25,6 @@
 #include <cmocka.h>
 
 #include <isc/file.h>
-#include <isc/msgcat.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/serial.h>
 #include <isc/stdtime.h>
@@ -35,10 +32,10 @@
 #include <isc/util.h>
 
 #include <dns/db.h>
+#include <dns/nsec3.h>
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
 #include <dns/rdatasetiter.h>
-#include <dns/nsec3.h>
 
 #include "dnstest.h"
 
@@ -46,7 +43,6 @@ static char tempname[11] = "dtXXXXXXXX";
 static dns_db_t *db1 = NULL, *db2 = NULL;
 static dns_dbversion_t *v1 = NULL, *v2 = NULL;
 
-#ifndef ISC_CHECK_NONE
 /*
  * The code below enables us to trap assertion failures for testing
  * purposes. local_callback() is set as the callback function for
@@ -58,26 +54,22 @@ static dns_dbversion_t *v1 = NULL, *v2 = NULL;
  */
 jmp_buf assertion;
 
-#define check_assertion(function_call)				\
-	do {							\
-		const int r = setjmp(assertion);		\
-		if (r == 0) {					\
-			expect_assert_failure(function_call);	\
-		}						\
-	} while(false);
+#define check_assertion(function_call)                        \
+	do {                                                  \
+		const int r = setjmp(assertion);              \
+		if (r == 0) {                                 \
+			expect_assert_failure(function_call); \
+		}                                             \
+	} while (false);
 
 static void
 local_callback(const char *file, int line, isc_assertiontype_t type,
-	       const char *cond)
-{
+	       const char *cond) {
 	UNUSED(type);
 
 	mock_assert(1, cond, file, line);
 	longjmp(assertion, 1);
 }
-#else
-#define check_assertion(function_call)
-#endif /* ISC_CHECK_NONE */
 
 static int
 _setup(void **state) {
@@ -85,21 +77,19 @@ _setup(void **state) {
 
 	UNUSED(state);
 
-#ifndef ISC_CHECK_NONE
 	isc_assertion_setcallback(local_callback);
-#endif
 
 	res = dns_test_begin(NULL, false);
 	assert_int_equal(res, ISC_R_SUCCESS);
 
-	res = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_zone,
-			       dns_rdataclass_in, 0, NULL, &db1);
+	res = dns_db_create(dt_mctx, "rbt", dns_rootname, dns_dbtype_zone,
+			    dns_rdataclass_in, 0, NULL, &db1);
 	assert_int_equal(res, ISC_R_SUCCESS);
 	dns_db_newversion(db1, &v1);
 	assert_non_null(v1);
 
-	res = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_zone,
-			       dns_rdataclass_in, 0, NULL, &db2);
+	res = dns_db_create(dt_mctx, "rbt", dns_rootname, dns_dbtype_zone,
+			    dns_rdataclass_in, 0, NULL, &db2);
 	assert_int_equal(res, ISC_R_SUCCESS);
 	dns_db_newversion(db2, &v2);
 	assert_non_null(v1);
@@ -187,8 +177,8 @@ find(void **state) {
 	name = dns_fixedname_initname(&fixed);
 
 	dns_rdataset_init(&rdataset);
-	res = dns_db_find(db1, dns_rootname, v1, dns_rdatatype_soa,
-			  0, 0, NULL, name, &rdataset, NULL);
+	res = dns_db_find(db1, dns_rootname, v1, dns_rdatatype_soa, 0, 0, NULL,
+			  name, &rdataset, NULL);
 	assert_int_equal(res, DNS_R_NXDOMAIN);
 
 	if (dns_rdataset_isassociated(&rdataset)) {
@@ -197,8 +187,8 @@ find(void **state) {
 
 	dns_rdataset_init(&rdataset);
 	check_assertion((void)dns_db_find(db1, dns_rootname, v2,
-					  dns_rdatatype_soa, 0, 0, NULL,
-					  name, &rdataset, NULL));
+					  dns_rdatatype_soa, 0, 0, NULL, name,
+					  &rdataset, NULL));
 }
 
 /*
@@ -226,8 +216,6 @@ allrdatasets(void **state) {
 
 	dns_db_detachnode(db1, &node);
 	assert_null(node);
-
-
 }
 
 /*
@@ -246,8 +234,8 @@ findrdataset(void **state) {
 	assert_int_equal(res, ISC_R_SUCCESS);
 
 	dns_rdataset_init(&rdataset);
-	res = dns_db_findrdataset(db1, node, v1, dns_rdatatype_soa,
-				     0, 0, &rdataset, NULL);
+	res = dns_db_findrdataset(db1, node, v1, dns_rdatatype_soa, 0, 0,
+				  &rdataset, NULL);
 	assert_int_equal(res, ISC_R_NOTFOUND);
 
 	if (dns_rdataset_isassociated(&rdataset)) {
@@ -255,9 +243,8 @@ findrdataset(void **state) {
 	}
 
 	dns_rdataset_init(&rdataset);
-	check_assertion(dns_db_findrdataset(db1, node, v2,
-					    dns_rdatatype_soa, 0, 0,
-					    &rdataset, NULL));
+	check_assertion(dns_db_findrdataset(db1, node, v2, dns_rdatatype_soa, 0,
+					    0, &rdataset, NULL));
 
 	dns_db_detachnode(db1, &node);
 	assert_null(node);
@@ -280,8 +267,8 @@ deleterdataset(void **state) {
 	res = dns_db_deleterdataset(db1, node, v1, dns_rdatatype_soa, 0);
 	assert_int_equal(res, DNS_R_UNCHANGED);
 
-	check_assertion(dns_db_deleterdataset(db1, node, v2,
-					      dns_rdatatype_soa, 0));
+	check_assertion(
+		dns_db_deleterdataset(db1, node, v2, dns_rdatatype_soa, 0));
 	dns_db_detachnode(db1, &node);
 	assert_null(node);
 }
@@ -321,8 +308,8 @@ subtract(void **state) {
 	res = dns_rdatalist_tordataset(&rdatalist, &rdataset);
 	assert_int_equal(res, ISC_R_SUCCESS);
 
-	check_assertion(dns_db_subtractrdataset(db1, node, v2,
-						&rdataset, 0, NULL));
+	check_assertion(
+		dns_db_subtractrdataset(db1, node, v2, &rdataset, 0, NULL));
 
 	dns_db_detachnode(db1, &node);
 	assert_null(node);
@@ -376,8 +363,8 @@ addrdataset(void **state) {
 	res = dns_db_addrdataset(db1, node, v1, 0, &rdataset, 0, NULL);
 	assert_int_equal(res, ISC_R_SUCCESS);
 
-	check_assertion(dns_db_addrdataset(db1, node, v2,
-					   0, &rdataset, 0, NULL));
+	check_assertion(
+		dns_db_addrdataset(db1, node, v2, 0, &rdataset, 0, NULL));
 
 	dns_db_detachnode(db1, &node);
 	assert_null(node);
@@ -398,14 +385,12 @@ getnsec3parameters(void **state) {
 
 	UNUSED(state);
 
-	res = dns_db_getnsec3parameters(db1, v1, &hash,
-					&flags, &iterations, salt,
-					   &salt_length);
+	res = dns_db_getnsec3parameters(db1, v1, &hash, &flags, &iterations,
+					salt, &salt_length);
 	assert_int_equal(res, ISC_R_NOTFOUND);
 
-	check_assertion(dns_db_getnsec3parameters(db1, v2, &hash,
-						  &flags, &iterations,
-						  salt, &salt_length));
+	check_assertion(dns_db_getnsec3parameters(
+		db1, v2, &hash, &flags, &iterations, salt, &salt_length));
 }
 
 /*
@@ -481,27 +466,24 @@ main(void) {
 	const struct CMUnitTest tests[] = {
 		cmocka_unit_test_setup_teardown(dump, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(find, _setup, _teardown),
-		cmocka_unit_test_setup_teardown(allrdatasets,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(findrdataset,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(deleterdataset,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(subtract,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(addrdataset,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(getnsec3parameters,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(resigned,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(attachversion,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(closeversion,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(allrdatasets, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(findrdataset, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(deleterdataset, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(subtract, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(addrdataset, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(getnsec3parameters, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(resigned, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(attachversion, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(closeversion, _setup,
+						_teardown),
 	};
 
-	return (cmocka_run_group_tests(tests, dns_test_init, dns_test_final));
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
 #else /* HAVE_CMOCKA */
@@ -511,7 +493,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

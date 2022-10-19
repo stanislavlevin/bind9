@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -14,7 +16,7 @@
 
 #define RRTYPE_NS_ATTRIBUTES (DNS_RDATATYPEATTR_ZONECUTAUTH)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_ns(ARGS_FROMTEXT) {
 	isc_token_t token;
 	dns_name_t name;
@@ -27,25 +29,29 @@ fromtext_ns(ARGS_FROMTEXT) {
 	UNUSED(rdclass);
 	UNUSED(callbacks);
 
-	RETERR(isc_lex_getmastertoken(lexer, &token,isc_tokentype_string,
+	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
 
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
+	if (origin == NULL) {
 		origin = dns_rootname;
+	}
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	ok = true;
-	if ((options & DNS_RDATA_CHECKNAMES) != 0)
+	if ((options & DNS_RDATA_CHECKNAMES) != 0) {
 		ok = dns_name_ishostname(&name, false);
-	if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0)
+	}
+	if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0) {
 		RETTOK(DNS_R_BADNAME);
-	if (!ok && callbacks != NULL)
+	}
+	if (!ok && callbacks != NULL) {
 		warn_badname(&name, lexer, callbacks);
+	}
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_ns(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
@@ -66,7 +72,7 @@ totext_ns(ARGS_TOTEXT) {
 	return (dns_name_totext(&prefix, sub, target));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_ns(ARGS_FROMWIRE) {
 	dns_name_t name;
 
@@ -81,7 +87,7 @@ fromwire_ns(ARGS_FROMWIRE) {
 	return (dns_name_fromwire(&name, source, dctx, options, target));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_ns(ARGS_TOWIRE) {
 	dns_name_t name;
 	dns_offsets_t offsets;
@@ -99,7 +105,7 @@ towire_ns(ARGS_TOWIRE) {
 	return (dns_name_towire(&name, cctx, target));
 }
 
-static inline int
+static int
 compare_ns(ARGS_COMPARE) {
 	dns_name_t name1;
 	dns_name_t name2;
@@ -124,17 +130,15 @@ compare_ns(ARGS_COMPARE) {
 	return (dns_name_rdatacompare(&name1, &name2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_ns(ARGS_FROMSTRUCT) {
-	dns_rdata_ns_t *ns;
+	dns_rdata_ns_t *ns = source;
 	isc_region_t region;
 
 	REQUIRE(type == dns_rdatatype_ns);
-	REQUIRE(((dns_rdata_ns_t *)source) != NULL);
-	REQUIRE(((dns_rdata_ns_t *)source)->common.rdtype == type);
-	REQUIRE(((dns_rdata_ns_t *)source)->common.rdclass == rdclass);
-
-	ns = source;
+	REQUIRE(ns != NULL);
+	REQUIRE(ns->common.rdtype == type);
+	REQUIRE(ns->common.rdclass == rdclass);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -143,17 +147,15 @@ fromstruct_ns(ARGS_FROMSTRUCT) {
 	return (isc_buffer_copyregion(target, &region));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_ns(ARGS_TOSTRUCT) {
 	isc_region_t region;
-	dns_rdata_ns_t *ns;
+	dns_rdata_ns_t *ns = target;
 	dns_name_t name;
 
-	REQUIRE(((dns_rdata_ns_t *)target) != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_ns);
+	REQUIRE(ns != NULL);
 	REQUIRE(rdata->length != 0);
-
-	ns = target;
 
 	ns->common.rdclass = rdata->rdclass;
 	ns->common.rdtype = rdata->type;
@@ -168,22 +170,21 @@ tostruct_ns(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_ns(ARGS_FREESTRUCT) {
-	dns_rdata_ns_t *ns;
+	dns_rdata_ns_t *ns = source;
 
-	REQUIRE(((dns_rdata_ns_t *)source) != NULL);
+	REQUIRE(ns != NULL);
 
-	ns = source;
-
-	if (ns->mctx == NULL)
+	if (ns->mctx == NULL) {
 		return;
+	}
 
 	dns_name_free(&ns->name, ns->mctx);
 	ns->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_ns(ARGS_ADDLDATA) {
 	dns_name_t name;
 	dns_offsets_t offsets;
@@ -198,7 +199,7 @@ additionaldata_ns(ARGS_ADDLDATA) {
 	return ((add)(arg, &name, dns_rdatatype_a));
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_ns(ARGS_DIGEST) {
 	isc_region_t r;
 	dns_name_t name;
@@ -212,9 +213,8 @@ digest_ns(ARGS_DIGEST) {
 	return (dns_name_digest(&name, digest, arg));
 }
 
-static inline bool
+static bool
 checkowner_ns(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_ns);
 
 	UNUSED(name);
@@ -225,7 +225,7 @@ checkowner_ns(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_ns(ARGS_CHECKNAMES) {
 	isc_region_t region;
 	dns_name_t name;
@@ -238,16 +238,17 @@ checknames_ns(ARGS_CHECKNAMES) {
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &region);
 	if (!dns_name_ishostname(&name, false)) {
-		if (bad != NULL)
+		if (bad != NULL) {
 			dns_name_clone(&name, bad);
+		}
 		return (false);
 	}
 	return (true);
 }
 
-static inline int
+static int
 casecompare_ns(ARGS_COMPARE) {
 	return (compare_ns(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_NS_2_C */
+#endif /* RDATA_GENERIC_NS_2_C */

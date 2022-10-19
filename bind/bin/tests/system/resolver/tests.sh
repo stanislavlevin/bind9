@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -247,6 +249,15 @@ if [ -x ${RESOLVE} ] ; then
 fi
 
 n=`expr $n + 1`
+echo_i "check that the resolver accepts a referral response with a non-empty ANSWER section ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 foo.glue-in-answer.example.org. A > dig.ns1.out.${n} || ret=1
+grep "status: NOERROR" dig.ns1.out.${n} > /dev/null || ret=1
+grep "foo.glue-in-answer.example.org.*192.0.2.1" dig.ns1.out.${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
 echo_i "check that the resolver limits the number of NS records it follows in a referral response ($n)"
 # ns5 is the recusor being tested.  ns4 holds the sourcens zone containing names with varying numbers of NS
 # records pointing to non-existent nameservers in the targetns zone on ns6.
@@ -262,7 +273,6 @@ do
         # Expected queries = 2 * number of NS records, up to a maximum of 10.
         expected=`expr 2 \* $nscount`
         if [ $expected -gt 10 ]; then expected=10; fi
-        half=`expr $expected / 2`
         # Work out the queries made by checking statistics on the target before and after the test
         $RNDCCMD 10.53.0.6 stats || ret=1
         initial_count=`awk '/responses sent/ {print $1}' ns6/named.stats`
@@ -273,8 +283,8 @@ do
         mv ns6/named.stats ns6/named.stats.final.${nscount}.${n}
         # Check number of queries during the test is as expected
         actual=`expr $final_count - $initial_count`
-        if [ $actual -ne $expected ] && [ $actual -ne $half ]; then
-                echo_i "query count error: $nscount NS records: expected queries $expected or $half (no IPv6), actual $actual"
+        if [ $actual -ne $expected ]; then
+                echo_i "query count error: $nscount NS records: expected queries $expected, actual $actual"
                 ret=1
         fi
 done
@@ -312,7 +322,7 @@ n=`expr $n + 1`
 echo_i "RT21594 regression test NXDOMAIN answers ($n)"
 ret=0
 # Check that resolver accepts the non-authoritative positive answers.
-$DIG $DIGOPTS +tcp noexistant @10.53.0.5 txt > dig.ns5.out.${n} || ret=1
+$DIG $DIGOPTS +tcp noexistent @10.53.0.5 txt > dig.ns5.out.${n} || ret=1
 grep "status: NXDOMAIN" dig.ns5.out.${n} > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -431,8 +441,7 @@ ret=0
 $DIG $DIGOPTS @10.53.0.5 www.to-be-removed.tld A > dig.ns5.prime.${n}
 grep "status: NOERROR" dig.ns5.prime.${n} > /dev/null || { ret=1; echo_i "priming failed"; }
 cp ns4/tld2.db ns4/tld.db
-($RNDCCMD 10.53.0.4 reload tld 2>&1 ) |
-sed -e '/reload queued/d' -e 's/^/ns4 /' | cat_i
+rndc_reload ns4 10.53.0.4 tld
 old=
 for i in 0 1 2 3 4 5 6 7 8 9
 do
@@ -499,17 +508,17 @@ n=`expr $n + 1`
 echo_i "check prefetch of validated DS's RRSIG TTL is updated (${n})"
 ret=0
 $DIG $DIGOPTS +dnssec @10.53.0.5 ds.example.net ds > dig.out.1.${n} || ret=1
-dsttl1=`awk '$4 == "DS" && $7 == "1" { print $2 }' dig.out.1.${n}`
+dsttl1=`awk '$4 == "DS" && $7 == "2" { print $2 }' dig.out.1.${n}`
 interval=$((dsttl1 - PREFETCH + 1))
 # sleep so we are in prefetch range
 sleep ${interval:-0}
 # trigger prefetch
 $DIG $DIGOPTS @10.53.0.5 ds.example.net ds > dig.out.2.${n} || ret=1
-dsttl2=`awk '$4 == "DS" && $7 == "1" { print $2 }' dig.out.2.${n}`
+dsttl2=`awk '$4 == "DS" && $7 == "2" { print $2 }' dig.out.2.${n}`
 sleep 1
 # check that prefetch occurred
 $DIG $DIGOPTS @10.53.0.5 ds.example.net ds +dnssec > dig.out.3.${n} || ret=1
-dsttl=`awk '$4 == "DS" && $7 == "1" { print $2 }' dig.out.3.${n}`
+dsttl=`awk '$4 == "DS" && $7 == "2" { print $2 }' dig.out.3.${n}`
 sigttl=`awk '$4 == "RRSIG" && $5 == "DS" { print $2 }' dig.out.3.${n}`
 test ${dsttl:-0} -gt ${dsttl2:-1} || ret=1
 test ${sigttl:-0} -gt ${dsttl2:-1} || ret=1
@@ -546,7 +555,7 @@ n=`expr $n + 1`
 echo_i "check prefetch qtype * (${n})"
 ret=0
 $DIG $DIGOPTS @10.53.0.5 fetchall.tld any > dig.out.1.${n} || ret=1
-ttl1=`awk '/"A" "short" "ttl"/ { print $2 - 2 }' dig.out.1.${n}`
+ttl1=`awk '/"A" "short" "ttl"/ { print $2 - 3 }' dig.out.1.${n}`
 # sleep so we are in prefetch range
 sleep ${ttl1:-0}
 # trigger prefetch
@@ -817,9 +826,25 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
+echo_i "checking SERVFAIL is returned when all authoritative servers return FORMERR ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.5 ns.formerr-to-all. a > dig.ns5.out.${n} || ret=1
+grep "status: SERVFAIL" dig.ns5.out.${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
 echo_i "check logged command line ($n)"
 ret=0
 grep "running as: .* -m record,size,mctx " ns1/named.run > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking NXDOMAIN is returned when querying non existing domain in CH class ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 id.hostname txt ch > dig.ns1.out.${n} || ret=1
+grep "status: NXDOMAIN" dig.ns1.out.${n} > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 

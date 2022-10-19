@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,19 +11,19 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NS_TSIGCONF_H
-#define NS_TSIGCONF_H 1
+#ifndef NAMED_TSIGCONF_H
+#define NAMED_TSIGCONF_H 1
 
 /*! \file */
 
-#include <isc/types.h>
 #include <isc/lang.h>
+#include <isc/types.h>
 
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-ns_tsigkeyring_fromconfig(const cfg_obj_t *config, const cfg_obj_t *vconfig,
-			  isc_mem_t *mctx, dns_tsig_keyring_t **ringp);
+named_tsigkeyring_fromconfig(const cfg_obj_t *config, const cfg_obj_t *vconfig,
+			     isc_mem_t *mctx, dns_tsig_keyring_t **ringp);
 /*%<
  * Create a TSIG key ring and configure it according to the 'key'
  * statements in the global and view configuration objects.
@@ -39,4 +41,4 @@ ns_tsigkeyring_fromconfig(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 ISC_LANG_ENDDECLS
 
-#endif /* NS_TSIGCONF_H */
+#endif /* NAMED_TSIGCONF_H */

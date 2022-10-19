@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -53,7 +52,7 @@ _setup(void **state) {
 	result = dns_test_begin(NULL, true);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = dns_dispatchmgr_create(mctx, NULL, &dispatchmgr);
+	result = dns_dispatchmgr_create(dt_mctx, &dispatchmgr);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_test_makeview("view", &view);
@@ -61,8 +60,7 @@ _setup(void **state) {
 
 	isc_sockaddr_any(&local);
 	result = dns_dispatch_getudp(dispatchmgr, socketmgr, taskmgr, &local,
-				     4096, 100, 100, 100, 500, 0, 0,
-				     &dispatch);
+				     4096, 100, 100, 100, 500, 0, 0, &dispatch);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	return (0);
@@ -80,14 +78,12 @@ _teardown(void **state) {
 	return (0);
 }
 
-
 static void
 mkres(dns_resolver_t **resolverp) {
 	isc_result_t result;
 
-	result = dns_resolver_create(view, taskmgr, 1, 1,
-				     socketmgr, timermgr, 0,
-				     dispatchmgr, dispatch, NULL, resolverp);
+	result = dns_resolver_create(view, taskmgr, 1, 1, socketmgr, timermgr,
+				     0, dispatchmgr, dispatch, NULL, resolverp);
 	assert_int_equal(result, ISC_R_SUCCESS);
 }
 
@@ -132,7 +128,6 @@ settimeout_test(void **state) {
 
 	UNUSED(state);
 
-
 	mkres(&resolver);
 
 	default_timeout = dns_resolver_gettimeout(resolver);
@@ -151,14 +146,13 @@ settimeout_default_test(void **state) {
 
 	UNUSED(state);
 
-
 	mkres(&resolver);
 
 	default_timeout = dns_resolver_gettimeout(resolver);
-	dns_resolver_settimeout(resolver, default_timeout + 10);
+	dns_resolver_settimeout(resolver, default_timeout + 100);
 
 	timeout = dns_resolver_gettimeout(resolver);
-	assert_int_equal(timeout, default_timeout + 10);
+	assert_int_equal(timeout, default_timeout + 100);
 
 	dns_resolver_settimeout(resolver, 0);
 	timeout = dns_resolver_gettimeout(resolver);
@@ -175,11 +169,10 @@ settimeout_belowmin_test(void **state) {
 
 	UNUSED(state);
 
-
 	mkres(&resolver);
 
 	default_timeout = dns_resolver_gettimeout(resolver);
-	dns_resolver_settimeout(resolver, 9);
+	dns_resolver_settimeout(resolver, 9000);
 
 	timeout = dns_resolver_gettimeout(resolver);
 	assert_int_equal(timeout, default_timeout);
@@ -195,7 +188,6 @@ settimeout_overmax_test(void **state) {
 
 	UNUSED(state);
 
-
 	mkres(&resolver);
 
 	dns_resolver_settimeout(resolver, 4000000);
@@ -207,21 +199,20 @@ settimeout_overmax_test(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(create_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(gettimeout_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(settimeout_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(settimeout_default_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(create_test, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(gettimeout_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(settimeout_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(settimeout_default_test, _setup,
+						_teardown),
 		cmocka_unit_test_setup_teardown(settimeout_belowmin_test,
 						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(settimeout_overmax_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(settimeout_overmax_test, _setup,
+						_teardown),
 	};
 
-	return (cmocka_run_group_tests(tests, dns_test_init, dns_test_final));
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
 #else /* HAVE_CMOCKA */
@@ -231,7 +222,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -14,28 +16,26 @@
 
 /*! \file */
 
-#include <sys/types.h>		/* Required on some systems. */
 #include <dirent.h>
 
 #include <isc/lang.h>
 #include <isc/platform.h>
 #include <isc/result.h>
 
-#define ISC_DIR_NAMEMAX NAME_MAX
-#define ISC_DIR_PATHMAX PATH_MAX
+#include <sys/types.h> /* Required on some systems. */
 
 /*% Directory Entry */
 typedef struct isc_direntry {
-	char		name[NAME_MAX];
-	unsigned int	length;
+	char	     name[NAME_MAX];
+	unsigned int length;
 } isc_direntry_t;
 
 /*% Directory */
 typedef struct isc_dir {
-	unsigned int	magic;
-	char		dirname[PATH_MAX];
-	isc_direntry_t	entry;
-	DIR *		handle;
+	unsigned int   magic;
+	char	       dirname[PATH_MAX];
+	isc_direntry_t entry;
+	DIR	      *handle;
 } isc_dir_t;
 
 ISC_LANG_BEGINDECLS

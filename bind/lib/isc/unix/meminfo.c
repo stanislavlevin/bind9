@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,14 +11,13 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
-#include <isc/meminfo.h>
 #include <inttypes.h>
 #include <unistd.h>
+
+#include <isc/meminfo.h>
 #if defined(HAVE_SYS_SYSCTL_H) && !defined(__linux__)
 #include <sys/sysctl.h>
-#endif
+#endif /* if defined(HAVE_SYS_SYSCTL_H) && !defined(__linux__) */
 
 uint64_t
 isc_meminfo_totalphys(void) {
@@ -27,12 +28,14 @@ isc_meminfo_totalphys(void) {
 	mib[1] = HW_MEMSIZE;
 #elif defined(HW_PHYSMEM64)
 	mib[1] = HW_PHYSMEM64;
-#endif
+#endif /* if defined(HW_MEMSIZE) */
 	uint64_t size = 0;
 	size_t len = sizeof(size);
-	if (sysctl(mib, 2, &size, &len, NULL, 0) == 0)
+	if (sysctl(mib, 2, &size, &len, NULL, 0) == 0) {
 		return (size);
-#endif
+	}
+#endif /* if defined(CTL_HW) && (defined(HW_PHYSMEM64) || defined(HW_MEMSIZE)) \
+	* */
 #if defined(_SC_PHYS_PAGES) && defined(_SC_PAGESIZE)
 	long pages = sysconf(_SC_PHYS_PAGES);
 	long pagesize = sysconf(_SC_PAGESIZE);

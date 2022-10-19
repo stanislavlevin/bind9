@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -25,7 +24,6 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
-#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -34,7 +32,6 @@
 
 #include "dnstest.h"
 
-#if defined(OPENSSL) || defined(PKCS11CRYPTO)
 static int
 _setup(void **state) {
 	isc_result_t result;
@@ -76,8 +73,8 @@ iteration_test(const char *file, unsigned int expected) {
  * Structure containing parameters for nsec3param_salttotext_test().
  */
 typedef struct {
-	const char *nsec3param_text;	/* NSEC3PARAM RDATA in text form */
-	const char *expected_salt;	/* string expected in target buffer */
+	const char *nsec3param_text; /* NSEC3PARAM RDATA in text form */
+	const char *expected_salt;   /* string expected in target buffer */
 } nsec3param_salttotext_test_params_t;
 
 /*%
@@ -100,10 +97,9 @@ nsec3param_salttotext_test(const nsec3param_salttotext_test_params_t *params) {
 	/*
 	 * Prepare a dns_rdata_nsec3param_t structure for testing.
 	 */
-	result = dns_test_rdatafromstring(&rdata, dns_rdataclass_in,
-					  dns_rdatatype_nsec3param, buf,
-					  sizeof(buf),
-					  params->nsec3param_text, false);
+	result = dns_test_rdatafromstring(
+		&rdata, dns_rdataclass_in, dns_rdatatype_nsec3param, buf,
+		sizeof(buf), params->nsec3param_text, false);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	result = dns_rdata_tostruct(&rdata, &nsec3param, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
@@ -121,7 +117,7 @@ nsec3param_salttotext_test(const nsec3param_salttotext_test_params_t *params) {
 	 * terminating NULL byte.
 	 */
 	length = strlen(params->expected_salt);
-	assert_true(length < sizeof(salt) - 1);	/* prevent buffer overwrite */
+	assert_true(length < sizeof(salt) - 1); /* prevent buffer overwrite */
 	assert_true(length > 0U);		/* prevent length underflow */
 
 	result = dns_nsec3param_salttotext(&nsec3param, salt, length - 1);
@@ -174,22 +170,17 @@ nsec3param_salttotext(void **state) {
 		nsec3param_salttotext_test(&tests[i]);
 	}
 }
-#endif
 
 int
 main(void) {
-#if defined(OPENSSL) || defined(PKCS11CRYPTO)
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(max_iterations,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(nsec3param_salttotext,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(max_iterations, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(nsec3param_salttotext, _setup,
+						_teardown),
 	};
 
-	return (cmocka_run_group_tests(tests, dns_test_init, dns_test_final));
-#else
-	print_message("1..0 # Skipped: nsec3 test requires crypto\n");
-#endif
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
 #else /* HAVE_CMOCKA */
@@ -199,7 +190,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

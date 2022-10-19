@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -14,7 +16,7 @@
 
 #define RRTYPE_TALINK_ATTRIBUTES 0
 
-static inline isc_result_t
+static isc_result_t
 fromtext_talink(ARGS_FROMTEXT) {
 	isc_token_t token;
 	dns_name_t name;
@@ -27,24 +29,24 @@ fromtext_talink(ARGS_FROMTEXT) {
 	UNUSED(rdclass);
 	UNUSED(callbacks);
 
-	if (origin == NULL)
+	if (origin == NULL) {
 		origin = dns_rootname;
+	}
 
 	for (i = 0; i < 2; i++) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_string,
-					      false));
+					      isc_tokentype_string, false));
 
 		dns_name_init(&name, NULL);
 		buffer_fromregion(&buffer, &token.value.as_region);
-		RETTOK(dns_name_fromtext(&name, &buffer, origin,
-					 options, target));
+		RETTOK(dns_name_fromtext(&name, &buffer, origin, options,
+					 target));
 	}
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_talink(ARGS_TOTEXT) {
 	isc_region_t dregion;
 	dns_name_t prev;
@@ -73,10 +75,10 @@ totext_talink(ARGS_TOTEXT) {
 	RETERR(str_totext(" ", target));
 
 	sub = name_prefix(&next, tctx->origin, &prefix);
-	return(dns_name_totext(&prefix, sub, target));
+	return (dns_name_totext(&prefix, sub, target));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_talink(ARGS_FROMWIRE) {
 	dns_name_t prev;
 	dns_name_t next;
@@ -92,10 +94,10 @@ fromwire_talink(ARGS_FROMWIRE) {
 	dns_name_init(&next, NULL);
 
 	RETERR(dns_name_fromwire(&prev, source, dctx, options, target));
-	return(dns_name_fromwire(&next, source, dctx, options, target));
+	return (dns_name_fromwire(&next, source, dctx, options, target));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_talink(ARGS_TOWIRE) {
 	isc_region_t sregion;
 	dns_name_t prev;
@@ -119,10 +121,10 @@ towire_talink(ARGS_TOWIRE) {
 
 	dns_name_fromregion(&next, &sregion);
 	isc_region_consume(&sregion, name_length(&next));
-	return(dns_name_towire(&next, cctx, target));
+	return (dns_name_towire(&next, cctx, target));
 }
 
-static inline int
+static int
 compare_talink(ARGS_COMPARE) {
 	isc_region_t region1;
 	isc_region_t region2;
@@ -138,17 +140,15 @@ compare_talink(ARGS_COMPARE) {
 	return (isc_region_compare(&region1, &region2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_talink(ARGS_FROMSTRUCT) {
-	dns_rdata_talink_t *talink;
+	dns_rdata_talink_t *talink = source;
 	isc_region_t region;
 
 	REQUIRE(type == dns_rdatatype_talink);
-	REQUIRE(((dns_rdata_talink_t *)source) != NULL);
-	REQUIRE(((dns_rdata_talink_t *)source)->common.rdtype == type);
-	REQUIRE(((dns_rdata_talink_t *)source)->common.rdclass == rdclass);
-
-	talink = source;
+	REQUIRE(talink != NULL);
+	REQUIRE(talink->common.rdtype == type);
+	REQUIRE(talink->common.rdclass == rdclass);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -156,21 +156,19 @@ fromstruct_talink(ARGS_FROMSTRUCT) {
 	dns_name_toregion(&talink->prev, &region);
 	RETERR(isc_buffer_copyregion(target, &region));
 	dns_name_toregion(&talink->next, &region);
-	return(isc_buffer_copyregion(target, &region));
+	return (isc_buffer_copyregion(target, &region));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_talink(ARGS_TOSTRUCT) {
 	isc_region_t region;
-	dns_rdata_talink_t *talink;
+	dns_rdata_talink_t *talink = target;
 	dns_name_t name;
 	isc_result_t result;
 
-	REQUIRE(((dns_rdata_talink_t *)target) != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_talink);
+	REQUIRE(talink != NULL);
 	REQUIRE(rdata->length != 0);
-
-	talink = target;
 
 	talink->common.rdclass = rdata->rdclass;
 	talink->common.rdtype = rdata->type;
@@ -188,37 +186,37 @@ tostruct_talink(ARGS_TOSTRUCT) {
 	isc_region_consume(&region, name_length(&name));
 	dns_name_init(&talink->next, NULL);
 	result = name_duporclone(&name, mctx, &talink->next);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
+	}
 
 	talink->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
- cleanup:
-	if (mctx != NULL)
+cleanup:
+	if (mctx != NULL) {
 		dns_name_free(&talink->prev, mctx);
+	}
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
+static void
 freestruct_talink(ARGS_FREESTRUCT) {
-	dns_rdata_talink_t *talink;
+	dns_rdata_talink_t *talink = source;
 
-	REQUIRE(((dns_rdata_talink_t *)source) != NULL);
-	REQUIRE(((dns_rdata_talink_t *)source)->common.rdtype ==
-		dns_rdatatype_talink);
+	REQUIRE(talink != NULL);
+	REQUIRE(talink->common.rdtype == dns_rdatatype_talink);
 
-	talink = source;
-
-	if (talink->mctx == NULL)
+	if (talink->mctx == NULL) {
 		return;
+	}
 
 	dns_name_free(&talink->prev, talink->mctx);
 	dns_name_free(&talink->next, talink->mctx);
 	talink->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_talink(ARGS_ADDLDATA) {
 	UNUSED(rdata);
 	UNUSED(add);
@@ -229,7 +227,7 @@ additionaldata_talink(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_talink(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -239,9 +237,8 @@ digest_talink(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_talink(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_talink);
 
 	UNUSED(name);
@@ -252,9 +249,8 @@ checkowner_talink(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_talink(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_talink);
 
 	UNUSED(bad);
@@ -263,9 +259,9 @@ checknames_talink(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_talink(ARGS_COMPARE) {
 	return (compare_talink(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_TALINK_58_C */
+#endif /* RDATA_GENERIC_TALINK_58_C */

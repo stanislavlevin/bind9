@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -25,7 +24,6 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
-#include <isc/print.h>
 #include <isc/util.h>
 
 #include <dns/peer.h>
@@ -55,7 +53,7 @@ _teardown(void **state) {
 
 /* Test DSCP set/get functions */
 static void
-dscp_test(void **state) {
+dscp(void **state) {
 	isc_result_t result;
 	isc_netaddr_t netaddr;
 	struct in_addr ina;
@@ -69,7 +67,7 @@ dscp_test(void **state) {
 	 */
 	ina.s_addr = INADDR_LOOPBACK;
 	isc_netaddr_fromin(&netaddr, &ina);
-	result = dns_peer_new(mctx, &netaddr, &peer);
+	result = dns_peer_new(dt_mctx, &netaddr, &peer);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/*
@@ -158,10 +156,10 @@ dscp_test(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(dscp_test, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(dscp, _setup, _teardown),
 	};
 
-	return (cmocka_run_group_tests(tests, dns_test_init, dns_test_final));
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
 #else /* HAVE_CMOCKA */
@@ -171,7 +169,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

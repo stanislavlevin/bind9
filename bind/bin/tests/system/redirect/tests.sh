@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -353,8 +355,7 @@ ret=0
 sleep 1 # ensure file mtime will have changed
 tr -d '\r' < ns2/example.db.in | sed -e 's/0 0 0 0 0/1 0 0 0 0/' > ns2/example.db
 tr -d '\r' < ns2/redirect.db.in | sed -e 's/0 0 0 0 0/1 0 0 0 0/' -e 's/\.1$/.2/' > ns2/redirect.db
-$RNDCCMD 10.53.0.2 reload > rndc.out || ret=1
-sed 's/^/ns2 /' rndc.out | cat_i
+rndc_reload ns2 10.53.0.2
 for i in 1 2 3 4 5 6 7 8 9; do
     tmp=0
     $DIG $DIGOPTS +short @10.53.0.2 soa example.nil > dig.out.ns1.test$n || tmp=1
@@ -514,6 +515,22 @@ echo_i "checking nxdomain-redirect against authoritative zone ($n)"
 ret=0
 $DIG $DIGOPTS nonexist.example @10.53.0.4 -b 10.53.0.2 a > dig.out.ns4.test$n || ret=1
 grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+echo_i "checking tld nxdomain-redirect against signed root zone ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.5 asdfasdfasdf > dig.out.ns5.test$n || ret=1
+grep "status: NXDOMAIN" dig.out.ns5.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+echo_i "checking tld nxdomain-redirect against unsigned root zone ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.6 asdfasdfasdf > dig.out.ns6.test$n || ret=1
+grep "status: NXDOMAIN" dig.out.ns6.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`

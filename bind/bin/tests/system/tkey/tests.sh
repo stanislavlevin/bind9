@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -19,7 +21,7 @@ n=1
 
 echo_i "generating new DH key ($n)"
 ret=0
-dhkeyname=`$KEYGEN -T KEY -a DH -b 768 -n host -r $RANDFILE client` || ret=1
+dhkeyname=`$KEYGEN -T KEY -a DH -b 768 -n host client` || ret=1
 if [ $ret != 0 ]; then
 	echo_i "failed"
 	status=$((status+ret))
@@ -45,7 +47,7 @@ do
 
 	echo_i "checking the new key ($n)"
 	ret=0
-	$DIG $DIGOPTS . ns -k $keyname > dig.out.1 || ret=1
+	$DIG $DIGOPTS txt txt.example -k $keyname > dig.out.1 || ret=1
 	grep "status: NOERROR" dig.out.1 > /dev/null || ret=1
 	grep "TSIG.*hmac-md5.*NOERROR" dig.out.1 > /dev/null || ret=1
 	grep "Some TSIG could not be validated" dig.out.1 > /dev/null && ret=1
@@ -66,7 +68,7 @@ do
 
 	echo_i "checking that new key has been deleted ($n)"
 	ret=0
-	$DIG $DIGOPTS . ns -k $keyname > dig.out.2 || ret=1
+	$DIG $DIGOPTS txt txt.example -k $keyname > dig.out.2 || ret=1
 	grep "status: NOERROR" dig.out.2 > /dev/null && ret=1
 	grep "TSIG.*hmac-md5.*NOERROR" dig.out.2 > /dev/null && ret=1
 	grep "Some TSIG could not be validated" dig.out.2 > /dev/null || ret=1

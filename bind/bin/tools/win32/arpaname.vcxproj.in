@@ -60,6 +60,7 @@
       <TreatWarningAsError>false</TreatWarningAsError>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ForcedIncludeFiles>..\..\..\config.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@..\..\..\lib\isc\win32;..\..\..\lib\isc\win32\include;..\..\..\lib\isc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
@@ -74,7 +75,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\..\Build\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\..\lib\isc\win32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libisc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>@OPENSSL_LIBCRYPTO@@OPENSSL_LIBSSL@libisc.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
@@ -87,6 +88,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>@INTRINSIC@</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ForcedIncludeFiles>..\..\..\config.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@..\..\..\lib\isc\win32;..\..\..\lib\isc\win32\include;..\..\..\lib\isc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>
@@ -105,7 +107,7 @@
       <OutputFile>..\..\..\Build\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>..\..\..\lib\isc\win32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libisc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>@OPENSSL_LIBCRYPTO@@OPENSSL_LIBSSL@libisc.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

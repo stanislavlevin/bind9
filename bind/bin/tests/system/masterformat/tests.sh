@@ -1,16 +1,19 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+# shellcheck source=conf.sh
 SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+. "$SYSTEMTESTTOP/conf.sh"
 
 status=0
 n=1
@@ -93,7 +96,7 @@ rndccmd() {
 
 status=0
 
-echo_i "checking that master files in raw format loaded ($n)"
+echo_i "checking that files in raw format loaded ($n)"
 ret=0
 set -- 1 2 3
 for zone in example example-explicit example-compat; do
@@ -148,14 +151,14 @@ do
 	sleep 1
 done
 
-echo_i "checking that slave was saved in raw format by default ($n)"
+echo_i "checking that secondary was saved in raw format by default ($n)"
 ret=0
 israw ns2/transfer.db.raw || ret=1
 n=$((n+1))
 [ $ret -eq 0 ] || echo_i "failed"
 status=$((status+ret))
 
-echo_i "checking that slave was saved in text format when configured ($n)"
+echo_i "checking that secondary was saved in text format when configured ($n)"
 ret=0
 israw ns2/transfer.db.txt && ret=1
 isfull ns2/transfer.db.txt && ret=1
@@ -163,14 +166,14 @@ n=$((n+1))
 [ $ret -eq 0 ] || echo_i "failed"
 status=$((status+ret))
 
-echo_i "checking that slave was saved in 'full' style when configured ($n)"
+echo_i "checking that secondary was saved in 'full' style when configured ($n)"
 ret=0
 isfull ns2/transfer.db.full > /dev/null 2>&1 || ret=1
 n=$((n+1))
 [ $ret -eq 0 ] || echo_i "failed"
 status=$((status+ret))
 
-echo_i "checking that slave formerly in text format is now raw ($n)"
+echo_i "checking that secondary formerly in text format is now raw ($n)"
 for i in 0 1 2 3 4 5 6 7 8 9
 do
     ret=0
@@ -322,13 +325,33 @@ status=$((status+ret))
 echo_i "checking map format zone is scheduled for resigning (signzone) ($n)"
 ret=0
 rndccmd 10.53.0.1 freeze signed > rndc.out 2>&1 || ret=1
-(cd ns1 || exit 1; $SIGNER -S -O map -f signed.db.map -o signed signed.db > /dev/null 2>&1)
-rndccmd 10.53.0.1 reload signed > rndc.out 2>&1 || ret=1
+(cd ns1 || exit 1; $SIGNER -S -O map -f signed.db.map -o signed signed.db > /dev/null)
+rndc_reload ns1 10.53.0.1 signed
 rndccmd 10.53.0.1 zonestatus signed > rndc.out 2>&1 || ret=1
 grep 'next resign' rndc.out > /dev/null 2>&1 || ret=1
 n=$((n+1))
 [ $ret -eq 0 ] || echo_i "failed"
 status=$((status+ret))
+
+# The following test is disabled by default because it is very slow.
+# It fails on Windows, because a single read() call (specifically
+# the one in isc_file_mmap()) cannot process more than INT_MAX (2^31)
+# bytes of data.
+if [ -n "${TEST_LARGE_MAP}" ]; then
+    echo_i "checking map file size > 2GB can be loaded ($n)"
+    ret=0
+    $PERL ../../startperf/mkzonefile.pl test 9000000 > text.$n
+    # convert to map
+    $CHECKZONE -D -f text -F map -o map.$n test text.$n > /dev/null || ret=1
+    # check map file size is over 2GB to ensure the test is valid
+    size=$(ls -l map.$n | awk '{print $5}')
+    [ "$size" -gt 2147483648 ] || ret=1
+    # convert back to text
+    $CHECKZONE -f map test map.$n > /dev/null || ret=1
+    n=$((n+1))
+    [ $ret -eq 0 ] || echo_i "failed"
+    status=$((status+ret))
+fi
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

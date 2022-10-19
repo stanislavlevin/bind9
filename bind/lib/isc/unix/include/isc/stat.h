@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,13 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISC_STAT_H
 #define ISC_STAT_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*
  * Portable <sys/stat.h> support.
@@ -40,7 +41,7 @@
  *** Imports.
  ***/
 
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #endif /* ISC_STAT_H */

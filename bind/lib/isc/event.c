@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,12 +11,9 @@
  * information regarding copyright ownership.
  */
 
-
 /*!
  * \file
  */
-
-#include <config.h>
 
 #include <isc/event.h>
 #include <isc/mem.h>
@@ -33,27 +32,23 @@ destroy(isc_event_t *event) {
 
 isc_event_t *
 isc_event_allocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
-		   isc_taskaction_t action, void *arg, size_t size)
-{
+		   isc_taskaction_t action, void *arg, size_t size) {
 	isc_event_t *event;
 
 	REQUIRE(size >= sizeof(struct isc_event));
 	REQUIRE(action != NULL);
 
 	event = isc_mem_get(mctx, size);
-	if (event == NULL)
-		return (NULL);
 
-	ISC_EVENT_INIT(event, size, 0, NULL, type, action, arg,
-		       sender, destroy, mctx);
+	ISC_EVENT_INIT(event, size, 0, NULL, type, action, arg, sender, destroy,
+		       mctx);
 
 	return (event);
 }
 
 isc_event_t *
 isc_event_constallocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
-			isc_taskaction_t action, const void *arg, size_t size)
-{
+			isc_taskaction_t action, const void *arg, size_t size) {
 	isc_event_t *event;
 	void *deconst_arg;
 
@@ -61,8 +56,6 @@ isc_event_constallocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
 	REQUIRE(action != NULL);
 
 	event = isc_mem_get(mctx, size);
-	if (event == NULL)
-		return (NULL);
 
 	/*
 	 * Removing the const attribute from "arg" is the best of two
@@ -78,8 +71,8 @@ isc_event_constallocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
 	 */
 	DE_CONST(arg, deconst_arg);
 
-	ISC_EVENT_INIT(event, size, 0, NULL, type, action, deconst_arg,
-		       sender, destroy, mctx);
+	ISC_EVENT_INIT(event, size, 0, NULL, type, action, deconst_arg, sender,
+		       destroy, mctx);
 
 	return (event);
 }
@@ -89,15 +82,14 @@ isc_event_free(isc_event_t **eventp) {
 	isc_event_t *event;
 
 	REQUIRE(eventp != NULL);
-	REQUIRE((*eventp) != NULL);
-
 	event = *eventp;
+	*eventp = NULL;
+	REQUIRE(event != NULL);
 
 	REQUIRE(!ISC_LINK_LINKED(event, ev_link));
 	REQUIRE(!ISC_LINK_LINKED(event, ev_ratelink));
 
-	if (event->ev_destroy != NULL)
+	if (event->ev_destroy != NULL) {
 		(event->ev_destroy)(event);
-
-	*eventp = NULL;
+	}
 }

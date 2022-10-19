@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -54,10 +56,10 @@ for dir in [0-9][0-9]-*; do
 
 	# run keymgr to update keys
 	if [ "$CYGWIN" ]; then
-	    $KEYMGR $policy -K $dir -g `cygpath -w $KEYGEN` -r $RANDFILE \
+	    $KEYMGR $policy -K $dir -g `cygpath -w $KEYGEN` \
 		-s `cygpath -w $SETTIME` $kargs > keymgr.$n 2>&1
 	else
-	    $KEYMGR $policy -K $dir -g $KEYGEN -r $RANDFILE \
+	    $KEYMGR $policy -K $dir -g $KEYGEN \
 		-s $SETTIME $kargs > keymgr.$n 2>&1
 	fi
 	# check that return code matches expectations
@@ -116,16 +118,16 @@ done
 
 echo_i "checking domains ending in . ($n)"
 ret=0
-$KEYMGR -g $KEYGEN -r $RANDFILE -s $SETTIME . > keymgr.1.$n 2>&1
+$KEYMGR -g $KEYGEN -s $SETTIME . > keymgr.1.$n 2>&1
 nkeys=`grep dnssec-keygen keymgr.1.$n | wc -l`
 [ "$nkeys" -eq 2 ] || ret=1
-$KEYMGR -g $KEYGEN -r $RANDFILE -s $SETTIME . > keymgr.2.$n 2>&1
+$KEYMGR -g $KEYGEN -s $SETTIME . > keymgr.2.$n 2>&1
 nkeys=`grep dnssec-keygen keymgr.2.$n | wc -l`
 [ "$nkeys" -eq 0 ] || ret=1
-$KEYMGR -g $KEYGEN -r $RANDFILE -s $SETTIME example.com. > keymgr.3.$n 2>&1
+$KEYMGR -g $KEYGEN -s $SETTIME example.com. > keymgr.3.$n 2>&1
 nkeys=`grep dnssec-keygen keymgr.3.$n | wc -l`
 [ "$nkeys" -eq 2 ] || ret=1
-$KEYMGR -g $KEYGEN -r $RANDFILE -s $SETTIME example.com. > keymgr.4.$n 2>&1
+$KEYMGR -g $KEYGEN -s $SETTIME example.com. > keymgr.4.$n 2>&1
 nkeys=`grep dnssec-keygen keymgr.4.$n | wc -l`
 [ "$nkeys" -eq 0 ] || ret=1
 status=`expr $status + $ret`

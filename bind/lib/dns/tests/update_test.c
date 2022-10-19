@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,17 +11,13 @@
  * information regarding copyright ownership.
  */
 
-
-#include <config.h>
-
 #if HAVE_CMOCKA
-
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
 
 #include <inttypes.h>
 #include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
+#include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -28,7 +26,6 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
-#include <isc/print.h>
 #include <isc/serial.h>
 #include <isc/stdtime.h>
 #include <isc/util.h>
@@ -36,6 +33,13 @@
 #include <dns/update.h>
 
 #include "dnstest.h"
+
+/*
+ * Fix the linking order problem for overridden isc_stdtime_get() by making
+ * everything local.  This also allows static functions from update.c to be
+ * tested.
+ */
+#include "../update.c"
 
 static int
 _setup(void **state) {
@@ -73,8 +77,32 @@ set_mystdtime(int year, int month, int day) {
 	mystdtime = timegm(&tm);
 }
 
-void isc_stdtime_get(isc_stdtime_t *now) {
+/*
+ * Override isc_stdtime_get() from lib/isc/[unix/win32]/stdtime.c
+ * with our own for testing purposes.
+ */
+void
+isc_stdtime_get(isc_stdtime_t *now) {
 	*now = mystdtime;
+}
+
+/*
+ * Because update_test.o requires dns_update_*() symbols, the linker is able
+ * to resolve them using libdns.a(update.o).  That object has other symbol
+ * dependencies (dst_key_*()), so it pulls libdns.a(dst_api.o).
+ * That object file requires the isc_stdtime_tostring() symbol.
+ *
+ * Define a local version here so that we don't have to depend on
+ * libisc.a(stdtime.o).  If isc_stdtime_tostring() would be left undefined,
+ * the linker has to get the required object file, and that will result in a
+ * multiple definition error because the isc_stdtime_get() symbol exported
+ * there is already in the exported list.
+ */
+void
+isc_stdtime_tostring(isc_stdtime_t t, char *out, size_t outlen) {
+	UNUSED(t);
+	UNUSED(out);
+	UNUSED(outlen);
 }
 
 /* simple increment by 1 */
@@ -85,7 +113,7 @@ increment_test(void **state) {
 
 	UNUSED(state);
 
-	serial = dns_update_soaserial(old, dns_updatemethod_increment);
+	serial = dns_update_soaserial(old, dns_updatemethod_increment, NULL);
 	assert_true(isc_serial_lt(old, serial));
 	assert_int_not_equal(serial, 0);
 	assert_int_equal(serial, 51);
@@ -99,7 +127,7 @@ increment_past_zero_test(void **state) {
 
 	UNUSED(state);
 
-	serial = dns_update_soaserial(old, dns_updatemethod_increment);
+	serial = dns_update_soaserial(old, dns_updatemethod_increment, NULL);
 	assert_true(isc_serial_lt(old, serial));
 	assert_int_not_equal(serial, 0);
 	assert_int_equal(serial, 1u);
@@ -116,7 +144,7 @@ past_to_unix_test(void **state) {
 	set_mystdtime(2011, 6, 22);
 	old = mystdtime - 1;
 
-	serial = dns_update_soaserial(old, dns_updatemethod_unixtime);
+	serial = dns_update_soaserial(old, dns_updatemethod_unixtime, NULL);
 	assert_true(isc_serial_lt(old, serial));
 	assert_int_not_equal(serial, 0);
 	assert_int_equal(serial, mystdtime);
@@ -133,7 +161,7 @@ now_to_unix_test(void **state) {
 	set_mystdtime(2011, 6, 22);
 	old = mystdtime;
 
-	serial = dns_update_soaserial(old, dns_updatemethod_unixtime);
+	serial = dns_update_soaserial(old, dns_updatemethod_unixtime, NULL);
 	assert_true(isc_serial_lt(old, serial));
 	assert_int_not_equal(serial, 0);
 	assert_int_equal(serial, old + 1);
@@ -150,7 +178,7 @@ future_to_unix_test(void **state) {
 	set_mystdtime(2011, 6, 22);
 	old = mystdtime + 1;
 
-	serial = dns_update_soaserial(old, dns_updatemethod_unixtime);
+	serial = dns_update_soaserial(old, dns_updatemethod_unixtime, NULL);
 	assert_true(isc_serial_lt(old, serial));
 	assert_int_not_equal(serial, 0);
 	assert_int_equal(serial, old + 1);
@@ -168,7 +196,7 @@ undefined_plus1_to_unix_test(void **state) {
 	old = mystdtime ^ 0x80000000u;
 	old += 1;
 
-	serial = dns_update_soaserial(old, dns_updatemethod_unixtime);
+	serial = dns_update_soaserial(old, dns_updatemethod_unixtime, NULL);
 	assert_true(isc_serial_lt(old, serial));
 	assert_int_not_equal(serial, 0);
 	assert_int_equal(serial, mystdtime);
@@ -186,7 +214,7 @@ undefined_minus1_to_unix_test(void **state) {
 	old = mystdtime ^ 0x80000000u;
 	old -= 1;
 
-	serial = dns_update_soaserial(old, dns_updatemethod_unixtime);
+	serial = dns_update_soaserial(old, dns_updatemethod_unixtime, NULL);
 	assert_true(isc_serial_lt(old, serial));
 	assert_int_not_equal(serial, 0);
 	assert_int_equal(serial, old + 1);
@@ -203,7 +231,7 @@ undefined_to_unix_test(void **state) {
 	set_mystdtime(2011, 6, 22);
 	old = mystdtime ^ 0x80000000u;
 
-	serial = dns_update_soaserial(old, dns_updatemethod_unixtime);
+	serial = dns_update_soaserial(old, dns_updatemethod_unixtime, NULL);
 	assert_true(isc_serial_lt(old, serial));
 	assert_int_not_equal(serial, 0);
 	assert_int_equal(serial, old + 1);
@@ -220,7 +248,7 @@ unixtime_zero_test(void **state) {
 	mystdtime = 0;
 	old = 0xfffffff0;
 
-	serial = dns_update_soaserial(old, dns_updatemethod_unixtime);
+	serial = dns_update_soaserial(old, dns_updatemethod_unixtime, NULL);
 	assert_true(isc_serial_lt(old, serial));
 	assert_int_not_equal(serial, 0);
 	assert_int_equal(serial, old + 1);
@@ -230,18 +258,19 @@ unixtime_zero_test(void **state) {
 static void
 past_to_date_test(void **state) {
 	uint32_t old, serial;
+	dns_updatemethod_t used = dns_updatemethod_none;
 
 	UNUSED(state);
 
 	set_mystdtime(2014, 3, 31);
-	old = dns_update_soaserial(0, dns_updatemethod_date);
+	old = dns_update_soaserial(0, dns_updatemethod_date, NULL);
 	set_mystdtime(2014, 4, 1);
 
-	serial = dns_update_soaserial(old, dns_updatemethod_date);
-
+	serial = dns_update_soaserial(old, dns_updatemethod_date, &used);
 	assert_true(isc_serial_lt(old, serial));
 	assert_int_not_equal(serial, 0);
 	assert_int_equal(serial, 2014040100);
+	assert_int_equal(dns_updatemethod_date, used);
 }
 
 /* now to date */
@@ -249,16 +278,35 @@ static void
 now_to_date_test(void **state) {
 	uint32_t old;
 	uint32_t serial;
+	dns_updatemethod_t used = dns_updatemethod_none;
 
 	UNUSED(state);
 
 	set_mystdtime(2014, 4, 1);
-	old = dns_update_soaserial(0, dns_updatemethod_date);
+	old = dns_update_soaserial(0, dns_updatemethod_date, NULL);
 
-	serial = dns_update_soaserial(old, dns_updatemethod_date);
+	serial = dns_update_soaserial(old, dns_updatemethod_date, &used);
 	assert_true(isc_serial_lt(old, serial));
 	assert_int_not_equal(serial, 0);
 	assert_int_equal(serial, 2014040101);
+	assert_int_equal(dns_updatemethod_date, used);
+
+	old = 2014040198;
+	serial = dns_update_soaserial(old, dns_updatemethod_date, &used);
+	assert_true(isc_serial_lt(old, serial));
+	assert_int_not_equal(serial, 0);
+	assert_int_equal(serial, 2014040199);
+	assert_int_equal(dns_updatemethod_date, used);
+
+	/*
+	 * Stealing from "tomorrow".
+	 */
+	old = 2014040199;
+	serial = dns_update_soaserial(old, dns_updatemethod_date, &used);
+	assert_true(isc_serial_lt(old, serial));
+	assert_int_not_equal(serial, 0);
+	assert_int_equal(serial, 2014040200);
+	assert_int_equal(dns_updatemethod_increment, used);
 }
 
 /* future to date */
@@ -266,49 +314,58 @@ static void
 future_to_date_test(void **state) {
 	uint32_t old;
 	uint32_t serial;
+	dns_updatemethod_t used = dns_updatemethod_none;
 
 	UNUSED(state);
 
 	set_mystdtime(2014, 4, 1);
-	old = dns_update_soaserial(0, dns_updatemethod_date);
+	old = dns_update_soaserial(0, dns_updatemethod_date, NULL);
 	set_mystdtime(2014, 3, 31);
 
-	serial = dns_update_soaserial(old, dns_updatemethod_date);
+	serial = dns_update_soaserial(old, dns_updatemethod_date, &used);
 	assert_true(isc_serial_lt(old, serial));
 	assert_int_not_equal(serial, 0);
 	assert_int_equal(serial, 2014040101);
+	assert_int_equal(dns_updatemethod_increment, used);
+
+	old = serial;
+	serial = dns_update_soaserial(old, dns_updatemethod_date, &used);
+	assert_true(isc_serial_lt(old, serial));
+	assert_int_not_equal(serial, 0);
+	assert_int_equal(serial, 2014040102);
+	assert_int_equal(dns_updatemethod_increment, used);
 }
 
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(increment_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(increment_test, _setup,
+						_teardown),
 		cmocka_unit_test_setup_teardown(increment_past_zero_test,
 						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(past_to_unix_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(now_to_unix_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(future_to_unix_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(undefined_to_unix_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(past_to_unix_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(now_to_unix_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(future_to_unix_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(undefined_to_unix_test, _setup,
+						_teardown),
 		cmocka_unit_test_setup_teardown(undefined_plus1_to_unix_test,
 						_setup, _teardown),
 		cmocka_unit_test_setup_teardown(undefined_minus1_to_unix_test,
 						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(unixtime_zero_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(past_to_date_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(now_to_date_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(future_to_date_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(unixtime_zero_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(past_to_date_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(now_to_date_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(future_to_date_test, _setup,
+						_teardown),
 	};
 
-	return (cmocka_run_group_tests(tests, dns_test_init, dns_test_final));
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
 #else /* HAVE_CMOCKA */
@@ -318,7 +375,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

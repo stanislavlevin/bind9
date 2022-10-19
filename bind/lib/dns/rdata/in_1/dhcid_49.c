@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 /* RFC 4701 */
 
 #ifndef RDATA_IN_1_DHCID_49_C
@@ -17,9 +18,8 @@
 
 #define RRTYPE_DHCID_ATTRIBUTES 0
 
-static inline isc_result_t
+static isc_result_t
 fromtext_in_dhcid(ARGS_FROMTEXT) {
-
 	REQUIRE(type == dns_rdatatype_dhcid);
 	REQUIRE(rdclass == dns_rdataclass_in);
 
@@ -32,11 +32,11 @@ fromtext_in_dhcid(ARGS_FROMTEXT) {
 	return (isc_base64_tobuffer(lexer, target, -2));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_in_dhcid(ARGS_TOTEXT) {
 	isc_region_t sr, sr2;
 	/* " ; 64000 255 64000" */
-	char buf[5 + 3*11 + 1];
+	char buf[5 + 3 * 11 + 1];
 
 	REQUIRE(rdata->type == dns_rdatatype_dhcid);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
@@ -45,26 +45,28 @@ totext_in_dhcid(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &sr);
 	sr2 = sr;
 
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext("( " /*)*/, target));
-	if (tctx->width == 0)   /* No splitting */
+	}
+	if (tctx->width == 0) { /* No splitting */
 		RETERR(isc_base64_totext(&sr, 60, "", target));
-	else
-		RETERR(isc_base64_totext(&sr, tctx->width - 2,
-					 tctx->linebreak, target));
+	} else {
+		RETERR(isc_base64_totext(&sr, tctx->width - 2, tctx->linebreak,
+					 target));
+	}
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(/* ( */ " )", target));
 		if (rdata->length > 2) {
 			snprintf(buf, sizeof(buf), " ; %u %u %u",
-				 sr2.base[0] * 256U + sr2.base[1],
-				 sr2.base[2], rdata->length - 3U);
+				 sr2.base[0] * 256U + sr2.base[1], sr2.base[2],
+				 rdata->length - 3U);
 			RETERR(str_totext(buf, target));
 		}
 	}
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_in_dhcid(ARGS_FROMWIRE) {
 	isc_region_t sr;
 
@@ -77,14 +79,15 @@ fromwire_in_dhcid(ARGS_FROMWIRE) {
 	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
-	if (sr.length == 0)
+	if (sr.length == 0) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_in_dhcid(ARGS_TOWIRE) {
 	isc_region_t sr;
 
@@ -98,7 +101,7 @@ towire_in_dhcid(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
+static int
 compare_in_dhcid(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -115,18 +118,16 @@ compare_in_dhcid(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_in_dhcid(ARGS_FROMSTRUCT) {
-	dns_rdata_in_dhcid_t *dhcid;
+	dns_rdata_in_dhcid_t *dhcid = source;
 
 	REQUIRE(type == dns_rdatatype_dhcid);
 	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(((dns_rdata_in_dhcid_t *)source) != NULL);
-	REQUIRE(((dns_rdata_in_dhcid_t *)source)->common.rdtype == type);
-	REQUIRE(((dns_rdata_in_dhcid_t *)source)->common.rdclass == rdclass);
-	REQUIRE(((dns_rdata_in_dhcid_t *)source)->length != 0);
-
-	dhcid = source;
+	REQUIRE(dhcid != NULL);
+	REQUIRE(dhcid->common.rdtype == type);
+	REQUIRE(dhcid->common.rdclass == rdclass);
+	REQUIRE(dhcid->length != 0);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -134,17 +135,15 @@ fromstruct_in_dhcid(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, dhcid->dhcid, dhcid->length));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_in_dhcid(ARGS_TOSTRUCT) {
-	dns_rdata_in_dhcid_t *dhcid;
+	dns_rdata_in_dhcid_t *dhcid = target;
 	isc_region_t region;
 
-	REQUIRE(((dns_rdata_in_dhcid_t *)target) != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_dhcid);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
+	REQUIRE(dhcid != NULL);
 	REQUIRE(rdata->length != 0);
-
-	dhcid = target;
 
 	dhcid->common.rdclass = rdata->rdclass;
 	dhcid->common.rdtype = rdata->type;
@@ -153,34 +152,33 @@ tostruct_in_dhcid(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &region);
 
 	dhcid->dhcid = mem_maybedup(mctx, region.base, region.length);
-	if (dhcid->dhcid == NULL)
+	if (dhcid->dhcid == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 
 	dhcid->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_in_dhcid(ARGS_FREESTRUCT) {
-	dns_rdata_in_dhcid_t *dhcid;
+	dns_rdata_in_dhcid_t *dhcid = source;
 
-	REQUIRE(((dns_rdata_in_dhcid_t *)source) != NULL);
-	REQUIRE(((dns_rdata_in_dhcid_t *)source)->common.rdtype ==
-		dns_rdatatype_dhcid);
-	REQUIRE(((dns_rdata_in_dhcid_t *)source)->common.rdclass ==
-		dns_rdataclass_in);
+	REQUIRE(dhcid != NULL);
+	REQUIRE(dhcid->common.rdtype == dns_rdatatype_dhcid);
+	REQUIRE(dhcid->common.rdclass == dns_rdataclass_in);
 
-	dhcid = source;
-
-	if (dhcid->mctx == NULL)
+	if (dhcid->mctx == NULL) {
 		return;
+	}
 
-	if (dhcid->dhcid != NULL)
+	if (dhcid->dhcid != NULL) {
 		isc_mem_free(dhcid->mctx, dhcid->dhcid);
+	}
 	dhcid->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_in_dhcid(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_dhcid);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
@@ -192,7 +190,7 @@ additionaldata_in_dhcid(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_in_dhcid(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -204,9 +202,8 @@ digest_in_dhcid(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_in_dhcid(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_dhcid);
 	REQUIRE(rdclass == dns_rdataclass_in);
 
@@ -218,9 +215,8 @@ checkowner_in_dhcid(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_in_dhcid(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_dhcid);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
@@ -231,9 +227,9 @@ checknames_in_dhcid(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_in_dhcid(ARGS_COMPARE) {
 	return (compare_in_dhcid(rdata1, rdata2));
 }
 
-#endif	/* RDATA_IN_1_DHCID_49_C */
+#endif /* RDATA_IN_1_DHCID_49_C */

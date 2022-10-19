@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,20 +11,17 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
 
-#include <config.h>
-
-#include <confgen/os.h>
-
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <pwd.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#include <confgen/os.h>
 
 int
 set_user(FILE *fd, const char *user) {

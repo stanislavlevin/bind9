@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,17 +11,13 @@
  * information regarding copyright ownership.
  */
 
-
-#include <config.h>
-
 #if HAVE_CMOCKA
-
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
 
 #include <inttypes.h>
 #include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
+#include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -27,14 +25,13 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
-#include <isc/print.h>
 #include <isc/util.h>
 
 #include <dns/time.h>
 
 #include "dnstest.h"
 
-#define TEST_ORIGIN	"test"
+#define TEST_ORIGIN "test"
 
 static int
 _setup(void **state) {
@@ -192,21 +189,20 @@ some_ago_test(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(epoch_minus_one_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(epoch_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(half_maxint_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(half_plus_one_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(fifty_before_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(some_ago_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(epoch_minus_one_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(epoch_test, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(half_maxint_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(half_plus_one_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(fifty_before_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(some_ago_test, _setup,
+						_teardown),
 	};
 
-	return (cmocka_run_group_tests(tests, dns_test_init, dns_test_final));
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
 #else /* HAVE_CMOCKA */
@@ -216,7 +212,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

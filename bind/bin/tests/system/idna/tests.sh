@@ -1,7 +1,9 @@
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -312,7 +314,9 @@ idna_enabled_test() {
 
     # Tests of a valid unicode string but an invalid U-label (input)
     #
-    # Symbols are not valid IDNA names.
+    # Symbols are not valid IDNA2008 names.  Check whether dig rejects them
+    # when they are supplied on the command line to ensure no IDNA2003
+    # fallbacks are in place.
     #
     # +noidnin: "dig" should send unicode octets to the server and display the
     #           returned qname in the same form.
@@ -321,15 +325,17 @@ idna_enabled_test() {
     # The +[no]idnout options should not have any effect on the test.
 
     text="Checking invalid input U-label"
-    idna_test "$text" ""                   "🟥.com" "\240\159\159\165.com."
-    idna_test "$text" "+noidnin +noidnout" "🟥.com" "\240\159\159\165.com."
-    idna_test "$text" "+noidnin +idnout"   "🟥.com" "\240\159\159\165.com."
-    idna_fail "$text" "+idnin   +noidnout" "🟥.com"
-    idna_fail "$text" "+idnin   +idnout"   "🟥.com"
+    idna_test "$text" ""                   "√.com" "\226\136\154.com."
+    idna_test "$text" "+noidnin +noidnout" "√.com" "\226\136\154.com."
+    idna_test "$text" "+noidnin +idnout"   "√.com" "\226\136\154.com."
+    idna_test "$text" "+idnin   +noidnout" "√.com" "xn--19g.com."
+    idna_test "$text" "+idnin   +idnout"   "√.com" "√.com."
 
     # Tests of a valid unicode string but an invalid U-label (output)
     #
-    # Symbols are not valid IDNA names.
+    # Symbols are not valid IDNA2008 names.  Check whether dig rejects them
+    # when they are received in DNS responses to ensure no IDNA2003 fallbacks
+    # are in place.
     #
     # Note that "+idnin +noidnout" is not tested because libidn2 2.2.0+ parses
     # Punycode more strictly than older versions and thus dig fails with that
@@ -345,8 +351,8 @@ idna_enabled_test() {
     text="Checking invalid output U-label"
     idna_test "$text" ""                   "xn--19g" "xn--19g."
     idna_test "$text" "+noidnin +noidnout" "xn--19g" "xn--19g."
-    idna_fail "$text" "+noidnin +idnout"   "xn--19g"
-    idna_fail "$text" "+idnin   +idnout"   "xn--19g"
+    idna_test "$text" "+noidnin +idnout"   "xn--19g" "√."
+    idna_test "$text" "+idnin   +idnout"   "xn--19g" "√."
 }
 
 

@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -16,13 +18,13 @@
 
 #define RRTYPE_ATMA_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_in_atma(ARGS_FROMTEXT) {
 	isc_token_t token;
 	isc_textregion_t *sr;
 	int n;
 	bool valid = false;
-	bool lastwasperiod = true;	/* leading periods not allowed */
+	bool lastwasperiod = true; /* leading periods not allowed */
 	int digits = 0;
 	unsigned char c = 0;
 
@@ -91,7 +93,7 @@ fromtext_in_atma(ARGS_FROMTEXT) {
 				lastwasperiod = true;
 				continue;
 			}
-			if ((sr->base[0] < '0') || (sr->base[0] > '9')) {
+			if (!isdigit((unsigned char)sr->base[0])) {
 				RETTOK(DNS_R_SYNTAX);
 			}
 			RETERR(mem_tobuffer(target, sr->base, 1));
@@ -105,7 +107,7 @@ fromtext_in_atma(ARGS_FROMTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_in_atma(ARGS_TOTEXT) {
 	isc_region_t region;
 	char buf[sizeof("xx")];
@@ -138,7 +140,7 @@ totext_in_atma(ARGS_TOTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_in_atma(ARGS_FROMWIRE) {
 	isc_region_t region;
 
@@ -157,7 +159,7 @@ fromwire_in_atma(ARGS_FROMWIRE) {
 	if (region.base[0] == 1) {
 		unsigned int i;
 		for (i = 1; i < region.length; i++) {
-			if (region.base[i] < '0' || region.base[i] > '9') {
+			if (!isdigit((unsigned char)region.base[i])) {
 				return (DNS_R_FORMERR);
 			}
 		}
@@ -167,7 +169,7 @@ fromwire_in_atma(ARGS_FROMWIRE) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_in_atma(ARGS_TOWIRE) {
 	REQUIRE(rdata->type == dns_rdatatype_atma);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
@@ -178,7 +180,7 @@ towire_in_atma(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
+static int
 compare_in_atma(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -195,19 +197,16 @@ compare_in_atma(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_in_atma(ARGS_FROMSTRUCT) {
-	dns_rdata_in_atma_t *atma;
+	dns_rdata_in_atma_t *atma = source;
 
 	REQUIRE(type == dns_rdatatype_atma);
 	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(((dns_rdata_in_atma_t *)source) != NULL);
-	REQUIRE(((dns_rdata_in_atma_t *)source)->common.rdtype == type);
-	REQUIRE(((dns_rdata_in_atma_t *)source)->common.rdclass == rdclass);
-	REQUIRE(((dns_rdata_in_atma_t *)source)->atma != NULL ||
-		((dns_rdata_in_atma_t *)source)->atma_len == 0);
-
-	atma = source;
+	REQUIRE(atma != NULL);
+	REQUIRE(atma->common.rdtype == type);
+	REQUIRE(atma->common.rdclass == rdclass);
+	REQUIRE(atma->atma != NULL || atma->atma_len == 0);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -216,17 +215,15 @@ fromstruct_in_atma(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, atma->atma, atma->atma_len));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_in_atma(ARGS_TOSTRUCT) {
-	dns_rdata_in_atma_t *atma;
+	dns_rdata_in_atma_t *atma = target;
 	isc_region_t r;
 
-	REQUIRE(((dns_rdata_in_atma_t *)target) != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_atma);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
+	REQUIRE(atma != NULL);
 	REQUIRE(rdata->length != 0);
-
-	atma = target;
 
 	atma->common.rdclass = rdata->rdclass;
 	atma->common.rdtype = rdata->type;
@@ -245,17 +242,13 @@ tostruct_in_atma(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_in_atma(ARGS_FREESTRUCT) {
-	dns_rdata_in_atma_t *atma;
+	dns_rdata_in_atma_t *atma = source;
 
-	REQUIRE(((dns_rdata_in_atma_t *)source) != NULL);
-	REQUIRE(((dns_rdata_in_atma_t *)source)->common.rdtype ==
-		dns_rdatatype_atma);
-	REQUIRE(((dns_rdata_in_atma_t *)source)->common.rdclass ==
-		dns_rdataclass_in);
-
-	atma = source;
+	REQUIRE(atma != NULL);
+	REQUIRE(atma->common.rdclass == dns_rdataclass_in);
+	REQUIRE(atma->common.rdtype == dns_rdatatype_atma);
 
 	if (atma->mctx == NULL) {
 		return;
@@ -267,7 +260,7 @@ freestruct_in_atma(ARGS_FREESTRUCT) {
 	atma->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_in_atma(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_atma);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
@@ -279,7 +272,7 @@ additionaldata_in_atma(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_in_atma(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -291,9 +284,8 @@ digest_in_atma(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_in_atma(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_atma);
 	REQUIRE(rdclass == dns_rdataclass_in);
 
@@ -305,9 +297,8 @@ checkowner_in_atma(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_in_atma(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_atma);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
@@ -318,9 +309,9 @@ checknames_in_atma(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_in_atma(ARGS_COMPARE) {
 	return (compare_in_atma(rdata1, rdata2));
 }
 
-#endif	/* RDATA_IN_1_atma_22_C */
+#endif /* RDATA_IN_1_atma_22_C */

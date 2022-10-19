@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,10 +11,7 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -24,8 +23,9 @@ isc_serial_lt(uint32_t a, uint32_t b) {
 	/*
 	 * Undefined => false
 	 */
-	if (a == (b ^ 0x80000000U))
+	if (a == (b ^ 0x80000000U)) {
 		return (false);
+	}
 	return (((int32_t)(a - b) < 0) ? true : false);
 }
 

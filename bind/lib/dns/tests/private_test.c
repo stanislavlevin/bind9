@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,18 +11,14 @@
  * information regarding copyright ownership.
  */
 
-
-#include <config.h>
-
 #if HAVE_CMOCKA
-
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
 
 #include <inttypes.h>
 #include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
+#include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -28,7 +26,6 @@
 #include <cmocka.h>
 
 #include <isc/buffer.h>
-#include <isc/print.h>
 #include <isc/util.h>
 
 #include <dns/nsec3.h>
@@ -82,8 +79,7 @@ typedef struct {
 
 static void
 make_signing(signing_testcase_t *testcase, dns_rdata_t *private,
-	     unsigned char *buf, size_t len)
-{
+	     unsigned char *buf, size_t len) {
 	dns_rdata_init(private);
 
 	buf[0] = testcase->alg;
@@ -99,8 +95,7 @@ make_signing(signing_testcase_t *testcase, dns_rdata_t *private,
 
 static void
 make_nsec3(nsec3_testcase_t *testcase, dns_rdata_t *private,
-	   unsigned char *pbuf)
-{
+	   unsigned char *pbuf) {
 	dns_rdata_nsec3param_t params;
 	dns_rdata_t nsec3param = DNS_RDATA_INIT;
 	unsigned char bufdata[BUFSIZ];
@@ -111,7 +106,7 @@ make_nsec3(nsec3_testcase_t *testcase, dns_rdata_t *private,
 
 	/* for simplicity, we're using a maximum salt length of 4 */
 	salt = htonl(testcase->salt);
-	sp = (unsigned char *) &salt;
+	sp = (unsigned char *)&salt;
 	while (slen > 0 && *sp == '\0') {
 		slen--;
 		sp++;
@@ -143,8 +138,8 @@ make_nsec3(nsec3_testcase_t *testcase, dns_rdata_t *private,
 
 	dns_rdata_init(private);
 
-	dns_nsec3param_toprivate(&nsec3param, private, privatetype,
-				 pbuf, DNS_NSEC3PARAM_BUFFERSIZE + 1);
+	dns_nsec3param_toprivate(&nsec3param, private, privatetype, pbuf,
+				 DNS_NSEC3PARAM_BUFFERSIZE + 1);
 }
 
 /* convert private signing records to text */
@@ -153,18 +148,16 @@ private_signing_totext_test(void **state) {
 	dns_rdata_t private;
 	int i;
 
-	signing_testcase_t testcases[] = {
-		{ DST_ALG_RSASHA512, 12345, 0, 0 },
-		{ DST_ALG_RSASHA256, 54321, 1, 0 },
-		{ DST_ALG_NSEC3RSASHA1, 22222, 0, 1 },
-		{ DST_ALG_RSASHA1, 33333, 1, 1 }
-	};
-	const char *results[] = {
-		"Signing with key 12345/RSASHA512",
-		"Removing signatures for key 54321/RSASHA256",
-		"Done signing with key 22222/NSEC3RSASHA1",
-		"Done removing signatures for key 33333/RSASHA1"
-	};
+	signing_testcase_t testcases[] = { { DST_ALG_RSASHA512, 12345, 0, 0 },
+					   { DST_ALG_RSASHA256, 54321, 1, 0 },
+					   { DST_ALG_NSEC3RSASHA1, 22222, 0,
+					     1 },
+					   { DST_ALG_RSASHA1, 33333, 1, 1 } };
+	const char *results[] = { "Signing with key 12345/RSASHA512",
+				  "Removing signatures for key 54321/RSASHA256",
+				  "Done signing with key 22222/NSEC3RSASHA1",
+				  ("Done removing signatures for key "
+				   "33333/RSASHA1") };
 	int ncases = 4;
 
 	UNUSED(state);
@@ -180,7 +173,6 @@ private_signing_totext_test(void **state) {
 		dns_private_totext(&private, &buf);
 		assert_string_equal(output, results[i]);
 	}
-
 }
 
 /* convert private chain records to text */
@@ -196,13 +188,12 @@ private_nsec3_totext_test(void **state) {
 		{ 1, 0, 30, 0xdeaf, 1, 0, 0 },
 		{ 1, 0, 100, 0xfeedabee, 1, 0, 1 },
 	};
-	const char *results[] = {
-		"Creating NSEC3 chain 1 0 1 BEEF",
-		"Creating NSEC3 chain 1 1 10 DADD",
-		"Pending NSEC3 chain 1 0 20 BEAD",
-		"Removing NSEC3 chain 1 0 30 DEAF / creating NSEC chain",
-		"Removing NSEC3 chain 1 0 100 FEEDABEE"
-	};
+	const char *results[] = { "Creating NSEC3 chain 1 0 1 BEEF",
+				  "Creating NSEC3 chain 1 1 10 DADD",
+				  "Pending NSEC3 chain 1 0 20 BEAD",
+				  ("Removing NSEC3 chain 1 0 30 DEAF / "
+				   "creating NSEC chain"),
+				  "Removing NSEC3 chain 1 0 100 FEEDABEE" };
 	int ncases = 5;
 
 	UNUSED(state);
@@ -229,7 +220,7 @@ main(void) {
 						_setup, _teardown),
 	};
 
-	return (cmocka_run_group_tests(tests, dns_test_init, dns_test_final));
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
 #else /* HAVE_CMOCKA */
@@ -239,7 +230,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

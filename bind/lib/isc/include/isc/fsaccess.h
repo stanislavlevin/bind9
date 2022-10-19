@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -8,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef ISC_FSACCESS_H
 #define ISC_FSACCESS_H 1
@@ -131,21 +132,21 @@
 /*
  * Trustees.
  */
-#define ISC_FSACCESS_OWNER	0x1 /*%< User account. */
-#define ISC_FSACCESS_GROUP	0x2 /*%< Primary group owner. */
-#define ISC_FSACCESS_OTHER	0x4 /*%< Not the owner or the group owner. */
-#define ISC_FSACCESS_WORLD	0x7 /*%< User, Group, Other. */
+#define ISC_FSACCESS_OWNER 0x1 /*%< User account. */
+#define ISC_FSACCESS_GROUP 0x2 /*%< Primary group owner. */
+#define ISC_FSACCESS_OTHER 0x4 /*%< Not the owner or the group owner. */
+#define ISC_FSACCESS_WORLD 0x7 /*%< User, Group, Other. */
 
 /*
  * Types of permission.
  */
-#define ISC_FSACCESS_READ		0x00000001 /*%< File only. */
-#define ISC_FSACCESS_WRITE		0x00000002 /*%< File only. */
-#define ISC_FSACCESS_EXECUTE		0x00000004 /*%< File only. */
-#define ISC_FSACCESS_CREATECHILD	0x00000008 /*%< Dir only. */
-#define ISC_FSACCESS_DELETECHILD	0x00000010 /*%< Dir only. */
-#define ISC_FSACCESS_LISTDIRECTORY	0x00000020 /*%< Dir only. */
-#define ISC_FSACCESS_ACCESSCHILD	0x00000040 /*%< Dir only. */
+#define ISC_FSACCESS_READ	   0x00000001 /*%< File only. */
+#define ISC_FSACCESS_WRITE	   0x00000002 /*%< File only. */
+#define ISC_FSACCESS_EXECUTE	   0x00000004 /*%< File only. */
+#define ISC_FSACCESS_CREATECHILD   0x00000008 /*%< Dir only. */
+#define ISC_FSACCESS_DELETECHILD   0x00000010 /*%< Dir only. */
+#define ISC_FSACCESS_LISTDIRECTORY 0x00000020 /*%< Dir only. */
+#define ISC_FSACCESS_ACCESSCHILD   0x00000040 /*%< Dir only. */
 
 /*%
  * Adding any permission bits beyond 0x200 would mean typedef'ing

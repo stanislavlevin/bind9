@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -24,7 +26,7 @@ kill_named() {
 		return 1
 	fi
 
-	pid=`cat "${pidfile}" 2>/dev/null`
+	pid=$(cat "${pidfile}" 2>/dev/null)
 	if [ "${pid:+set}" = "set" ]; then
 		$KILL -15 "${pid}" >/dev/null 2>&1
 		retries=10
@@ -77,20 +79,6 @@ grep "another named process" ns2/named.run > /dev/null && ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
-if [ ! "$CYGWIN" ]; then
-    n=$((n+1))
-    echo_i "verifying that named checks for conflicting listeners ($n)"
-    ret=0
-    testpid=$(run_named ns2 named$n.run -c named-alt1.conf -D ns2-extra-1 -X other.lock)
-    test -n "$testpid" || ret=1
-    retry_quiet 10 check_named_log "unable to listen on any configured interface" ns2/named$n.run || ret=1
-    retry_quiet 10 check_named_log "exiting (due to fatal error)" ns2/named$n.run || ret=1
-    kill_named named.pid && ret=1
-    test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
-    if [ $ret -ne 0 ]; then echo_i "failed"; fi
-    status=$((status+ret))
-fi
-
 n=$((n+1))
 echo_i "verifying that named checks for conflicting named processes ($n)"
 ret=0
@@ -115,96 +103,146 @@ test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
-if $SHELL ../testcrypto.sh -q
-then
-    n=$((n+1))
-    echo_i "checking that named refuses to reconfigure if managed-keys-directory is set and not writable ($n)"
-    ret=0
-    copy_setports ns2/named-alt4.conf.in ns2/named.conf
-    $RNDCCMD 10.53.0.2 reconfig > rndc.out.$n 2>&1 && ret=1
-    grep "failed: permission denied" rndc.out.$n > /dev/null 2>&1 || ret=1
-    retry_quiet 10 check_named_log "managed-keys-directory '.*' is not writable" ns2/named.run || ret=1
-    if [ $ret -ne 0 ]; then echo_i "failed"; fi
-    status=$((status+ret))
+n=$((n+1))
+echo_i "checking that named refuses to reconfigure if working directory is not writable ($n)"
+ret=0
+copy_setports ns2/named-alt4.conf.in ns2/named.conf
+$RNDCCMD 10.53.0.2 reconfig > rndc.out.$n 2>&1 && ret=1
+grep "failed: permission denied" rndc.out.$n > /dev/null 2>&1 || ret=1
+sleep 1
+grep "[^-]directory './nope' is not writable" ns2/named.run > /dev/null 2>&1 || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
-    n=$((n+1))
-    echo_i "checking that named refuses to reconfigure if managed-keys-directory is unset and working directory is not writable ($n)"
-    ret=0
-    copy_setports ns2/named-alt5.conf.in ns2/named.conf
-    $RNDCCMD 10.53.0.2 reconfig > rndc.out.$n 2>&1 && ret=1
-    grep "failed: permission denied" rndc.out.$n > /dev/null 2>&1 || ret=1
-    retry_quiet 10 check_named_log "working directory '.*' is not writable" ns2/named.run || ret=1
-    if [ $ret -ne 0 ]; then echo_i "failed"; fi
-    status=$((status+ret))
+n=$((n+1))
+echo_i "checking that named refuses to reconfigure if managed-keys-directory is not writable ($n)"
+ret=0
+copy_setports ns2/named-alt5.conf.in ns2/named.conf
+$RNDCCMD 10.53.0.2 reconfig > rndc.out.$n 2>&1 && ret=1
+grep "failed: permission denied" rndc.out.$n > /dev/null 2>&1 || ret=1
+sleep 1
+grep "managed-keys-directory './nope' is not writable" ns2/named.run > /dev/null 2>&1 || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
-    n=$((n+1))
-    echo_i "checking that named reconfigures if working directory is not writable but managed-keys-directory is ($n)"
-    ret=0
-    copy_setports ns2/named-alt6.conf.in ns2/named.conf
-    $RNDCCMD 10.53.0.2 reconfig > rndc.out.$n 2>&1 || ret=1
-    grep "failed: permission denied" rndc.out.$n > /dev/null 2>&1 && ret=1
-    kill_named ns2/named.pid || ret=1
-    test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
-    if [ $ret -ne 0 ]; then echo_i "failed"; fi
-    status=$((status+ret))
+n=$((n+1))
+echo_i "checking that named refuses to reconfigure if new-zones-directory is not writable ($n)"
+ret=0
+copy_setports ns2/named-alt6.conf.in ns2/named.conf
+$RNDCCMD 10.53.0.2 reconfig > rndc.out.$n 2>&1 && ret=1
+grep "failed: permission denied" rndc.out.$n > /dev/null 2>&1 || ret=1
+sleep 1
+grep "new-zones-directory './nope' is not writable" ns2/named.run > /dev/null 2>&1 || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
-    n=$((n+1))
-    echo_i "checking that named refuses to start if managed-keys-directory is set and not writable ($n)"
-    ret=0
-    testpid=$(run_named ns2 named$n.run -c named-alt4.conf -D runtime-ns2-extra-4)
-    retry_quiet 10 check_named_log "exiting (due to fatal error)" ns2/named$n.run || ret=1
-    grep "managed-keys-directory '.*' is not writable" ns2/named$n.run > /dev/null 2>&1 || ret=1
-    kill_named ns2/named.pid && ret=1
-    test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
-    if [ $ret -ne 0 ]; then echo_i "failed"; fi
-    status=$((status+ret))
+n=$((n+1))
+echo_i "checking that named recovers when configuration file is valid again ($n)"
+ret=0
+copy_setports ns2/named1.conf.in ns2/named.conf
+$RNDCCMD 10.53.0.2 reconfig > rndc.out.$n 2>&1 || ret=1
+[ -s ns2/named.pid ] || ret=1
+kill_named ns2/named.pid || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
-    n=$((n+1))
-    echo_i "checking that named refuses to start if managed-keys-directory is unset and working directory is not writable ($n)"
-    ret=0
-    testpid=$(run_named ns2 named$n.run -c named-alt5.conf -D runtime-ns2-extra-5)
-    test -n "$testpid" || ret=1
-    retry_quiet 10 check_named_log "exiting (due to fatal error)" ns2/named$n.run || ret=1
-    grep "working directory '.*' is not writable" ns2/named$n.run > /dev/null 2>&1 || ret=1
-    kill_named ns2/named.pid && ret=1
-    test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
-    if [ $ret -ne 0 ]; then echo_i "failed"; fi
-    status=$((status+ret))
+n=$((n+1))
+echo_i "checking that named refuses to start if working directory is not writable ($n)"
+ret=0
+testpid=$(run_named ns2 named$n.run -c named-alt4.conf -D runtime-ns2-extra-4)
+test -n "$testpid" || ret=1
+retry_quiet 10 check_named_log "exiting (due to fatal error)" ns2/named$n.run || ret=1
+grep "[^-]directory './nope' is not writable" ns2/named$n.run > /dev/null 2>&1 || ret=1
+kill_named ns2/named.pid && ret=1
+test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
-    n=$((n+1))
-    echo_i "checking that named starts if managed-keys-directory is writable and working directory is not writable ($n)"
-    ret=0
-    testpid=$(run_named ns2/nope ../named$n.run -c ../named-alt6.conf -D runtime-ns2-extra-6)
-    test -n "$testpid" || ret=1
-    retry_quiet 10 check_named_log " running$" ns2/named$n.run || ret=1
-    kill_named ns2/named.pid || ret=1
-    test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
-    if [ $ret -ne 0 ]; then echo_i "failed"; fi
-    status=$((status+ret))
-fi
+n=$((n+1))
+echo_i "checking that named refuses to start if managed-keys-directory is not writable ($n)"
+ret=0
+testpid=$(run_named ns2 named$n.run -c named-alt5.conf -D runtime-ns2-extra-5)
+test -n "$testpid" || ret=1
+retry_quiet 10 check_named_log "exiting (due to fatal error)" ns2/named$n.run || ret=1
+grep "managed-keys-directory './nope' is not writable" ns2/named$n.run > /dev/null 2>&1 || ret=1
+kill_named named.pid && ret=1
+test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+n=$((n+1))
+echo_i "checking that named refuses to start if new-zones-directory is not writable ($n)"
+ret=0
+testpid=$(run_named ns2 named$n.run -c named-alt6.conf -D runtime-ns2-extra-6)
+test -n "$testpid" || ret=1
+retry_quiet 10 check_named_log "exiting (due to fatal error)" ns2/named$n.run || ret=1
+grep "new-zones-directory './nope' is not writable" ns2/named$n.run > /dev/null 2>&1 || ret=1
+kill_named ns2/named.pid && ret=1
+test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+n=$((n+1))
+echo_i "checking that named logs control characters in octal notation ($n)"
+ret=0
+INSTANCE_NAME="runtime-ns2-extra-7-$(cat ctrl-chars)"
+testpid=$(run_named ns2 named$n.run -c named-alt7.conf -D "${INSTANCE_NAME}")
+test -n "$testpid" || ret=1
+retry_quiet 10 check_named_log "running$" ns2/named$n.run || ret=1
+grep 'running as.*\\177\\033' ns2/named$n.run > /dev/null || ret=1
+kill_named ns2/named.pid || ret=1
+test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+n=$((n+1))
+echo_i "checking that named escapes special characters in the logs ($n)"
+ret=0
+INSTANCE_NAME="runtime-ns2-extra-8-$;"
+testpid=$(run_named ns2 named$n.run -c named-alt7.conf -D "${INSTANCE_NAME}")
+test -n "$testpid" || ret=1
+retry_quiet 10 check_named_log "running$" ns2/named$n.run || ret=1
+grep 'running as.*\\$\\;' ns2/named$n.run > /dev/null || ret=1
+kill_named ns2/named.pid || ret=1
+test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+n=$((n+1))
+echo_i "checking that named logs an ellipsis when the command line is larger than 8k bytes ($n)"
+ret=0
+LONG_CMD_LINE=$(cat long-cmd-line)
+# shellcheck disable=SC2086
+testpid=$(run_named ns2 named$n.run $LONG_CMD_LINE -c "named-alt7.conf")
+test -n "$testpid" || ret=1
+retry_quiet 10 check_named_log "running$" ns2/named$n.run || ret=1
+grep "running as.*\.\.\.$" ns2/named$n.run > /dev/null || ret=1
+kill_named ns2/named.pid || ret=1
+test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
 n=$((n+1))
 echo_i "verifying that named switches UID ($n)"
-if [ "`id -u`" -eq 0 ] && [ -z "$CYGWIN" ]; then
+if [ "$(id -u)" -eq 0 ] && [ -z "$CYGWIN" ]; then
     ret=0
-    CURRENT_DIR="`pwd`"
-    TEMP_NAMED_DIR=`mktemp -d "${CURRENT_DIR}/ns2/tmp.XXXXXXXX"`
+    TEMP_NAMED_DIR=$(mktemp -d "$(pwd)/ns2/tmp.XXXXXXXX")
     if [ "$?" -eq 0 ]; then
-        copy_setports ns2/named-alt9.conf.in "${TEMP_NAMED_DIR}/named-alt9.conf"
-        export SOFTHSM2_CONF="${TEMP_NAMED_DIR}/softhsm2.conf"
-        sh -x "$TOP/bin/tests/prepare-softhsm2.sh"
-        chown -R nobody: "${TEMP_NAMED_DIR}"
-        chmod 0700 "${TEMP_NAMED_DIR}"
-        testpid=$(run_named "${TEMP_NAMED_DIR}" named$n.run -u nobody -c named-alt9.conf)
+	copy_setports ns2/named-alt9.conf.in "${TEMP_NAMED_DIR}/named-alt9.conf"
+	export SOFTHSM2_CONF="${TEMP_NAMED_DIR}/softhsm2.conf"
+	sh "$TOP/bin/tests/prepare-softhsm2.sh"
+	chown -R nobody: "${TEMP_NAMED_DIR}"
+	chmod 0700 "${TEMP_NAMED_DIR}"
+	testpid=$(run_named "${TEMP_NAMED_DIR}" "${TEMP_NAMED_DIR}/named$n.run" -u nobody -c named-alt9.conf)
 	test -n "$testpid" || ret=1
-        retry_quiet 10 check_named_log "running$" "${TEMP_NAMED_DIR}/named$n.run" || ret=1
-        [ -s "${TEMP_NAMED_DIR}/named9.pid" ] || ret=1
-        grep "loading configuration: permission denied" "${TEMP_NAMED_DIR}/named$n.run" > /dev/null && ret=1
-        kill_named "${TEMP_NAMED_DIR}/named9.pid" || ret=1
-        test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
+	retry_quiet 10 check_named_log "running$" "${TEMP_NAMED_DIR}/named$n.run" || ret=1
+	[ -s "${TEMP_NAMED_DIR}/named9.pid" ] || ret=1
+	grep "loading configuration: permission denied" "${TEMP_NAMED_DIR}/named$n.run" > /dev/null && ret=1
+	kill_named "${TEMP_NAMED_DIR}/named9.pid" || ret=1
+	test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
     else
-        echo_i "mktemp failed"
-        ret=1
+	echo_i "mktemp failed"
+	ret=1
     fi
     if [ $ret -ne 0 ]; then echo_i "failed"; fi
     status=$((status+ret))

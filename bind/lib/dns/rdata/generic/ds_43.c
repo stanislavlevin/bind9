@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,24 +11,20 @@
  * information regarding copyright ownership.
  */
 
-
 /* RFC3658 */
 
 #ifndef RDATA_GENERIC_DS_43_C
 #define RDATA_GENERIC_DS_43_C
 
-#define RRTYPE_DS_ATTRIBUTES \
-	( DNS_RDATATYPEATTR_DNSSEC | DNS_RDATATYPEATTR_ZONECUTAUTH | \
-	  DNS_RDATATYPEATTR_ATPARENT )
+#define RRTYPE_DS_ATTRIBUTES                                        \
+	(DNS_RDATATYPEATTR_DNSSEC | DNS_RDATATYPEATTR_ZONECUTAUTH | \
+	 DNS_RDATATYPEATTR_ATPARENT)
 
-#include <isc/sha1.h>
-#include <isc/sha2.h>
+#include <isc/md.h>
 
 #include <dns/ds.h>
 
-#include "dst_gost.h"
-
-static inline isc_result_t
+static isc_result_t
 generic_fromtext_ds(ARGS_FROMTEXT) {
 	isc_token_t token;
 	unsigned char c;
@@ -43,8 +41,9 @@ generic_fromtext_ds(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffffU)
+	if (token.value.as_ulong > 0xffffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
 
 	/*
@@ -73,11 +72,6 @@ generic_fromtext_ds(ARGS_FROMTEXT) {
 	case DNS_DSDIGEST_SHA256:
 		length = ISC_SHA256_DIGESTLENGTH;
 		break;
-#ifdef ISC_GOST_DIGESTLENGTH
-	case DNS_DSDIGEST_GOST:
-		length = ISC_GOST_DIGESTLENGTH;
-		break;
-#endif
 	case DNS_DSDIGEST_SHA384:
 		length = ISC_SHA384_DIGESTLENGTH;
 		break;
@@ -88,15 +82,14 @@ generic_fromtext_ds(ARGS_FROMTEXT) {
 	return (isc_hex_tobuffer(lexer, target, length));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromtext_ds(ARGS_FROMTEXT) {
-
 	REQUIRE(type == dns_rdatatype_ds);
 
 	return (generic_fromtext_ds(CALL_FROMTEXT));
 }
 
-static inline isc_result_t
+static isc_result_t
 generic_totext_ds(ARGS_TOTEXT) {
 	isc_region_t sr;
 	char buf[sizeof("64000 ")];
@@ -135,23 +128,27 @@ generic_totext_ds(ARGS_TOTEXT) {
 	/*
 	 * Digest.
 	 */
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" (", target));
+	}
 	RETERR(str_totext(tctx->linebreak, target));
 	if ((tctx->flags & DNS_STYLEFLAG_NOCRYPTO) == 0) {
-		if (tctx->width == 0) /* No splitting */
+		if (tctx->width == 0) { /* No splitting */
 			RETERR(isc_hex_totext(&sr, 0, "", target));
-		else
+		} else {
 			RETERR(isc_hex_totext(&sr, tctx->width - 2,
 					      tctx->linebreak, target));
-	} else
+		}
+	} else {
 		RETERR(str_totext("[omitted]", target));
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	}
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" )", target));
+	}
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_ds(ARGS_TOTEXT) {
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_ds);
@@ -159,7 +156,7 @@ totext_ds(ARGS_TOTEXT) {
 	return (generic_totext_ds(CALL_TOTEXT));
 }
 
-static inline isc_result_t
+static isc_result_t
 generic_fromwire_ds(ARGS_FROMWIRE) {
 	isc_region_t sr;
 
@@ -178,43 +175,37 @@ generic_fromwire_ds(ARGS_FROMWIRE) {
 	     sr.length < 4 + ISC_SHA1_DIGESTLENGTH) ||
 	    (sr.base[3] == DNS_DSDIGEST_SHA256 &&
 	     sr.length < 4 + ISC_SHA256_DIGESTLENGTH) ||
-#ifdef ISC_GOST_DIGESTLENGTH
-	    (sr.base[3] == DNS_DSDIGEST_GOST &&
-	     sr.length < 4 + ISC_GOST_DIGESTLENGTH) ||
-#endif
 	    (sr.base[3] == DNS_DSDIGEST_SHA384 &&
 	     sr.length < 4 + ISC_SHA384_DIGESTLENGTH))
+	{
 		return (ISC_R_UNEXPECTEDEND);
+	}
 
 	/*
 	 * Only copy digest lengths if we know them.
 	 * If there is extra data dns_rdata_fromwire() will
 	 * detect that.
 	 */
-	if (sr.base[3] == DNS_DSDIGEST_SHA1)
+	if (sr.base[3] == DNS_DSDIGEST_SHA1) {
 		sr.length = 4 + ISC_SHA1_DIGESTLENGTH;
-	else if (sr.base[3] == DNS_DSDIGEST_SHA256)
+	} else if (sr.base[3] == DNS_DSDIGEST_SHA256) {
 		sr.length = 4 + ISC_SHA256_DIGESTLENGTH;
-#ifdef ISC_GOST_DIGESTLENGTH
-	else if (sr.base[3] == DNS_DSDIGEST_GOST)
-		sr.length = 4 + ISC_GOST_DIGESTLENGTH;
-#endif
-	else if (sr.base[3] == DNS_DSDIGEST_SHA384)
+	} else if (sr.base[3] == DNS_DSDIGEST_SHA384) {
 		sr.length = 4 + ISC_SHA384_DIGESTLENGTH;
+	}
 
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_ds(ARGS_FROMWIRE) {
-
 	REQUIRE(type == dns_rdatatype_ds);
 
 	return (generic_fromwire_ds(CALL_FROMWIRE));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_ds(ARGS_TOWIRE) {
 	isc_region_t sr;
 
@@ -227,7 +218,7 @@ towire_ds(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
+static int
 compare_ds(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -243,15 +234,13 @@ compare_ds(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 generic_fromstruct_ds(ARGS_FROMSTRUCT) {
-	dns_rdata_ds_t *ds;
+	dns_rdata_ds_t *ds = source;
 
-	REQUIRE(((dns_rdata_ds_t *)source) != NULL);
-	REQUIRE(((dns_rdata_ds_t *)source)->common.rdtype == type);
-	REQUIRE(((dns_rdata_ds_t *)source)->common.rdclass == rdclass);
-
-	ds = source;
+	REQUIRE(ds != NULL);
+	REQUIRE(ds->common.rdtype == type);
+	REQUIRE(ds->common.rdclass == rdclass);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -263,11 +252,6 @@ generic_fromstruct_ds(ARGS_FROMSTRUCT) {
 	case DNS_DSDIGEST_SHA256:
 		REQUIRE(ds->length == ISC_SHA256_DIGESTLENGTH);
 		break;
-#ifdef ISC_GOST_DIGESTLENGTH
-	case DNS_DSDIGEST_GOST:
-		REQUIRE(ds->length == ISC_GOST_DIGESTLENGTH);
-		break;
-#endif
 	case DNS_DSDIGEST_SHA384:
 		REQUIRE(ds->length == ISC_SHA384_DIGESTLENGTH);
 		break;
@@ -280,26 +264,23 @@ generic_fromstruct_ds(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, ds->digest, ds->length));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_ds(ARGS_FROMSTRUCT) {
-
 	REQUIRE(type == dns_rdatatype_ds);
 
 	return (generic_fromstruct_ds(CALL_FROMSTRUCT));
 }
 
-static inline isc_result_t
+static isc_result_t
 generic_tostruct_ds(ARGS_TOSTRUCT) {
-	dns_rdata_ds_t *ds;
+	dns_rdata_ds_t *ds = target;
 	isc_region_t region;
 
+	REQUIRE(ds != NULL);
 	REQUIRE(rdata->length != 0);
-	REQUIRE(((dns_rdata_ds_t *)target) != NULL);
-	REQUIRE(((dns_rdata_ds_t *)target)->common.rdtype == rdata->type);
-	REQUIRE(((dns_rdata_ds_t *)target)->common.rdclass == rdata->rdclass);
-	REQUIRE(!ISC_LINK_LINKED(&((dns_rdata_ds_t *)target)->common, link));
-
-	ds = target;
+	REQUIRE(ds->common.rdtype == rdata->type);
+	REQUIRE(ds->common.rdclass == rdata->rdclass);
+	REQUIRE(!ISC_LINK_LINKED(&ds->common, link));
 
 	dns_rdata_toregion(rdata, &region);
 
@@ -312,21 +293,20 @@ generic_tostruct_ds(ARGS_TOSTRUCT) {
 	ds->length = region.length;
 
 	ds->digest = mem_maybedup(mctx, region.base, region.length);
-	if (ds->digest == NULL)
+	if (ds->digest == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 
 	ds->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_ds(ARGS_TOSTRUCT) {
-	dns_rdata_ds_t *ds;
+	dns_rdata_ds_t *ds = target;
 
-	REQUIRE(((dns_rdata_ds_t *)target) != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_ds);
-
-	ds = target;
+	REQUIRE(ds != NULL);
 
 	ds->common.rdclass = rdata->rdclass;
 	ds->common.rdtype = rdata->type;
@@ -335,24 +315,24 @@ tostruct_ds(ARGS_TOSTRUCT) {
 	return (generic_tostruct_ds(CALL_TOSTRUCT));
 }
 
-static inline void
+static void
 freestruct_ds(ARGS_FREESTRUCT) {
-	dns_rdata_ds_t *ds;
+	dns_rdata_ds_t *ds = source;
 
-	REQUIRE(((dns_rdata_ds_t *)source) != NULL);
-	REQUIRE(((dns_rdata_ds_t *)source)->common.rdtype == dns_rdatatype_ds);
+	REQUIRE(ds != NULL);
+	REQUIRE(ds->common.rdtype == dns_rdatatype_ds);
 
-	ds = source;
-
-	if (ds->mctx == NULL)
+	if (ds->mctx == NULL) {
 		return;
+	}
 
-	if (ds->digest != NULL)
+	if (ds->digest != NULL) {
 		isc_mem_free(ds->mctx, ds->digest);
+	}
 	ds->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_ds(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_ds);
 
@@ -363,7 +343,7 @@ additionaldata_ds(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_ds(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -374,9 +354,8 @@ digest_ds(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_ds(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_ds);
 
 	UNUSED(name);
@@ -387,9 +366,8 @@ checkowner_ds(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_ds(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_ds);
 
 	UNUSED(rdata);
@@ -399,9 +377,9 @@ checknames_ds(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_ds(ARGS_COMPARE) {
 	return (compare_ds(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_DS_43_C */
+#endif /* RDATA_GENERIC_DS_43_C */

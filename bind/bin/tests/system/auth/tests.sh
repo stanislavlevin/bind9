@@ -1,15 +1,18 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-. ../conf.sh
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
 
 DIGOPTS="+tcp -p ${PORT}"
 
@@ -33,40 +36,39 @@ done
 status=`expr $status + $ret`
 
 #
-#  Cross zone CNAME behaviour is changed in version 9.12.1 BIND.
-#  The CNAME is not followed in subsequent versions unless it is a
-#  recursive query and recursion is allowed (rd=1/ra=1).
+# If recursion is unrequested or unavailable, then cross-zone CNAME records
+# should not be followed. If both requested and available, they should be.
 #
 n=`expr $n + 1`
-echo_i "check that cross-zone CNAME records return target data (rd=0/ra=0) ($n)"
+echo_i "check that cross-zone CNAME record does not return target data (rd=0/ra=0) ($n)"
 ret=0
 $DIG $DIGOPTS +norec @10.53.0.1 www.example.com > dig.out.test$n || ret=1
-grep "ANSWER: 2," dig.out.test$n > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.test$n > /dev/null || ret=1
 grep "flags: qr aa;" dig.out.test$n > /dev/null || ret=1
 grep "www.example.com.*CNAME.*server.example.net" dig.out.test$n > /dev/null || ret=1
-grep "server.example.net.*A.*10.53.0.100" dig.out.test$n > /dev/null || ret=1
+grep "server.example.net.*A.*10.53.0.100" dig.out.test$n > /dev/null && ret=1
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "check that cross-zone CNAME records return target data (rd=1/ra=0) ($n)"
+echo_i "check that cross-zone CNAME record does not return target data (rd=1/ra=0) ($n)"
 ret=0
 $DIG $DIGOPTS +rec @10.53.0.1 www.example.com > dig.out.test$n || ret=1
-grep "ANSWER: 2," dig.out.test$n > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.test$n > /dev/null || ret=1
 grep "flags: qr aa rd;" dig.out.test$n > /dev/null || ret=1
 grep "www.example.com.*CNAME.*server.example.net" dig.out.test$n > /dev/null || ret=1
-grep "server.example.net.*A.*10.53.0.100" dig.out.test$n > /dev/null || ret=1
+grep "server.example.net.*A.*10.53.0.100" dig.out.test$n > /dev/null && ret=1
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "check that cross-zone CNAME records return target data (rd=0/ra=1) ($n)"
+echo_i "check that cross-zone CNAME record does not return target data (rd=0/ra=1) ($n)"
 ret=0
 $DIG $DIGOPTS +norec @10.53.0.2 www.example.com > dig.out.test$n || ret=1
-grep "ANSWER: 2," dig.out.test$n > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.test$n > /dev/null || ret=1
 grep "flags: qr aa ra;" dig.out.test$n > /dev/null || ret=1
 grep "www.example.com.*CNAME.*server.example.net" dig.out.test$n > /dev/null || ret=1
-grep "server.example.net.*A.*10.53.0.100" dig.out.test$n > /dev/null || ret=1
+grep "server.example.net.*A.*10.53.0.100" dig.out.test$n > /dev/null && ret=1
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
@@ -96,7 +98,7 @@ grep "a.example.com.*A.*10.53.0.1" dig.out.test$n > /dev/null || ret=1
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "check that in-zone CNAME records return target data (rd=1/ra=0) ($n)"
+echo_i "check that in-zone CNAME records returns target data (rd=1/ra=0) ($n)"
 ret=0
 $DIG $DIGOPTS +rec @10.53.0.1 inzone.example.com > dig.out.test$n || ret=1
 grep "ANSWER: 2," dig.out.test$n > /dev/null || ret=1

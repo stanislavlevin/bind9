@@ -1,9 +1,11 @@
 #!/usr/bin/perl -w
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -69,15 +71,12 @@ my $RNDC = $ENV{RNDC};
 
 my @ns;
 my @ans;
-my @lwresd;
 
 if ($server_arg) {
 	if ($server_arg =~ /^ns/) {
 		push(@ns, $server_arg);
 	} elsif ($server_arg =~ /^ans/) {
 		push(@ans, $server_arg);
-	} elsif ($server_arg =~ /^lwresd/) {
-		push(@lwresd, $server_arg);
 	} else {
 		print "$0: ns or ans directory expected";
 		print "I:$test:failed";
@@ -90,7 +89,6 @@ if ($server_arg) {
 
 	@ns = grep /^ns[0-9]*$/, @files;
 	@ans = grep /^ans[0-9]*$/, @files;
-	@lwresd = grep /^lwresd[0-9]*$/, @files;
 }
 
 # Stop the server(s), pass 1: rndc.
@@ -113,16 +111,10 @@ foreach my $name(@ans) {
 	stop_signal($name, "TERM", 1);
 }
 
-@ans = wait_for_servers(60, @ans);
-
-foreach my $name(@lwresd) {
-	stop_signal($name, "TERM");
-}
-
-@lwresd = wait_for_servers(60, @lwresd);
+@ans = wait_for_servers(1200, @ans);
 
 # Pass 3: SIGABRT
-foreach my $name (@ns, @lwresd) {
+foreach my $name (@ns) {
 	print "I:$test:$name didn't die when sent a SIGTERM\n";
 	stop_signal($name, "ABRT");
 	$errors = 1;
@@ -141,11 +133,10 @@ exit($errors);
 sub server_lock_file {
 	my ( $server ) = @_;
 
-	return if (defined($ENV{'CYGWIN'}));
+	return if (defined($ENV{'CYGWIN'}) && $ENV{'CYGWIN'});
 
 	return $testdir . "/" . $server . "/named.lock" if ($server =~ /^ns/);
 	return if ($server =~ /^ans/);
-	return $testdir . "/" . $server . "/lwresd.lock" if ($server =~ /^lwresd/);
 
 	die "Unknown server type $server\n";
 }
@@ -156,7 +147,6 @@ sub server_pid_file {
 
 	return $testdir . "/" . $server . "/named.pid" if ($server =~ /^ns/);
 	return $testdir . "/" . $server . "/ans.pid" if ($server =~ /^ans/);
-	return $testdir . "/" . $server . "/lwresd.pid" if ($server =~ /^lwresd/);
 
 	die "Unknown server type $server\n";
 }
@@ -264,7 +254,7 @@ sub pid_file_exists {
 	if (send_signal(0, $pid) == 0) {
 		# XXX: on windows this is likely to result in a
 		# false positive, so don't bother reporting the error.
-		if (!defined($ENV{'CYGWIN'})) {
+		if (!defined($ENV{'CYGWIN'}) || !$ENV{'CYGWIN'}) {
 			print "I:$test:$server crashed on shutdown\n";
 			$errors = 1;
 		}

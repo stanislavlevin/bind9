@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -23,18 +25,21 @@
  * Redefine CHECK here so cppcheck "sees" the define.
  */
 #ifndef CHECK
-#define CHECK(op)						\
-	do { result = (op);					\
-		if (result != ISC_R_SUCCESS) goto cleanup;	\
+#define CHECK(op)                            \
+	do {                                 \
+		result = (op);               \
+		if (result != ISC_R_SUCCESS) \
+			goto cleanup;        \
 	} while (0)
-#endif
+#endif /* ifndef CHECK */
 
 #define RRTYPE_WKS_ATTRIBUTES (0)
 
 static isc_mutex_t wks_lock;
 
-static void init_lock(void) {
-	RUNTIME_CHECK(isc_mutex_init(&wks_lock) == ISC_R_SUCCESS);
+static void
+init_lock(void) {
+	isc_mutex_init(&wks_lock);
 }
 
 static bool
@@ -43,8 +48,9 @@ mygetprotobyname(const char *name, long *proto) {
 
 	LOCK(&wks_lock);
 	pe = getprotobyname(name);
-	if (pe != NULL)
+	if (pe != NULL) {
 		*proto = pe->p_proto;
+	}
 	UNLOCK(&wks_lock);
 	return (pe != NULL);
 }
@@ -55,8 +61,9 @@ mygetservbyname(const char *name, const char *proto, long *port) {
 
 	LOCK(&wks_lock);
 	se = getservbyname(name, proto);
-	if (se != NULL)
+	if (se != NULL) {
 		*port = ntohs(se->s_port);
+	}
 	UNLOCK(&wks_lock);
 	return (se != NULL);
 }
@@ -65,9 +72,9 @@ mygetservbyname(const char *name, const char *proto, long *port) {
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#endif
+#endif /* ifdef _WIN32 */
 
-static inline isc_result_t
+static isc_result_t
 fromtext_in_wks(ARGS_FROMTEXT) {
 	static isc_once_t once = ISC_ONCE_INIT;
 	isc_token_t token;
@@ -75,7 +82,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	struct in_addr addr;
 	char *e = NULL;
 	long proto;
-	unsigned char bm[8*1024]; /* 64k bits */
+	unsigned char bm[8 * 1024]; /* 64k bits */
 	long port;
 	long maxport = -1;
 	const char *ps = NULL;
@@ -91,6 +98,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	UNUSED(origin);
 	UNUSED(options);
 	UNUSED(rdclass);
+	UNUSED(callbacks);
 
 	RUNTIME_CHECK(isc_once_do(&once, init_lock) == ISC_R_SUCCESS);
 
@@ -102,20 +110,21 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 
 		wVersionRequested = MAKEWORD(2, 0);
 
-		err = WSAStartup(wVersionRequested, &wsaData );
-		if (err != 0)
+		err = WSAStartup(wVersionRequested, &wsaData);
+		if (err != 0) {
 			return (ISC_R_FAILURE);
+		}
 	}
-#endif
+#endif /* ifdef _WIN32 */
 
 	/*
 	 * IPv4 dotted quad.
 	 */
 	CHECK(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      false));
+				     false));
 
 	isc_buffer_availableregion(target, &region);
-	if (getquad(DNS_AS_STR(token), &addr, lexer, callbacks) != 1) {
+	if (inet_pton(AF_INET, DNS_AS_STR(token), &addr) != 1) {
 		CHECKTOK(DNS_R_BADDOTTEDQUAD);
 	}
 	if (region.length < 4) {
@@ -128,7 +137,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	 * Protocol.
 	 */
 	CHECK(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      false));
+				     false));
 
 	proto = strtol(DNS_AS_STR(token), &e, 10);
 	if (*e != '\0' && !mygetprotobyname(DNS_AS_STR(token), &proto)) {
@@ -150,7 +159,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	memset(bm, 0, sizeof(bm));
 	do {
 		CHECK(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_string, true));
+					     isc_tokentype_string, true));
 		if (token.type != isc_tokentype_string) {
 			break;
 		}
@@ -160,9 +169,11 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 		 * case sensitive and the database is usually in lowercase.
 		 */
 		strlcpy(service, DNS_AS_STR(token), sizeof(service));
-		for (i = strlen(service) - 1; i >= 0; i--)
-			if (isupper(service[i]&0xff))
-				service[i] = tolower(service[i]&0xff);
+		for (i = strlen(service) - 1; i >= 0; i--) {
+			if (isupper(service[i] & 0xff)) {
+				service[i] = tolower(service[i] & 0xff);
+			}
+		}
 
 		port = strtol(DNS_AS_STR(token), &e, 10);
 		if (*e != 0 && !mygetservbyname(service, ps, &port) &&
@@ -170,7 +181,6 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 		{
 			CHECKTOK(DNS_R_UNKNOWNSERVICE);
 		}
-
 		if (port < 0 || port > 0xffff) {
 			CHECKTOK(ISC_R_RANGE);
 		}
@@ -188,15 +198,15 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	n = (maxport + 8) / 8;
 	result = mem_tobuffer(target, bm, n);
 
- cleanup:
+cleanup:
 #ifdef _WIN32
 	WSACleanup();
-#endif
+#endif /* ifdef _WIN32 */
 
 	return (result);
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_in_wks(ARGS_TOTEXT) {
 	isc_region_t sr;
 	unsigned short proto;
@@ -219,22 +229,26 @@ totext_in_wks(ARGS_TOTEXT) {
 	RETERR(str_totext(buf, target));
 	isc_region_consume(&sr, 1);
 
-	INSIST(sr.length <= 8*1024);
+	INSIST(sr.length <= 8 * 1024);
 	for (i = 0; i < sr.length; i++) {
-		if (sr.base[i] != 0)
-			for (j = 0; j < 8; j++)
+		if (sr.base[i] != 0) {
+			for (j = 0; j < 8; j++) {
 				if ((sr.base[i] & (0x80 >> j)) != 0) {
-					snprintf(buf, sizeof(buf),
-						 "%u", i * 8 + j);
-					RETERR(str_totext(" ", target));
-					RETERR(str_totext(buf, target));
+					{
+						snprintf(buf, sizeof(buf), "%u",
+							 i * 8 + j);
+						RETERR(str_totext(" ", target));
+						RETERR(str_totext(buf, target));
+					}
 				}
+			}
+		}
 	}
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_in_wks(ARGS_FROMWIRE) {
 	isc_region_t sr;
 	isc_region_t tr;
@@ -270,7 +284,7 @@ fromwire_in_wks(ARGS_FROMWIRE) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_in_wks(ARGS_TOWIRE) {
 	isc_region_t sr;
 
@@ -284,7 +298,7 @@ towire_in_wks(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
+static int
 compare_in_wks(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -301,21 +315,18 @@ compare_in_wks(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_in_wks(ARGS_FROMSTRUCT) {
-	dns_rdata_in_wks_t *wks;
+	dns_rdata_in_wks_t *wks = source;
 	uint32_t a;
 
 	REQUIRE(type == dns_rdatatype_wks);
 	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(((dns_rdata_in_wks_t *)source) != NULL);
-	REQUIRE(((dns_rdata_in_wks_t *)source)->common.rdtype == type);
-	REQUIRE(((dns_rdata_in_wks_t *)source)->common.rdclass == rdclass);
-	REQUIRE((((dns_rdata_in_wks_t *)source)->map != NULL &&
-		 ((dns_rdata_in_wks_t *)source)->map_len <= 8*1024) ||
-		((dns_rdata_in_wks_t *)source)->map_len == 0);
-
-	wks = source;
+	REQUIRE(wks != NULL);
+	REQUIRE(wks->common.rdtype == type);
+	REQUIRE(wks->common.rdclass == rdclass);
+	REQUIRE((wks->map != NULL && wks->map_len <= 8 * 1024) ||
+		wks->map_len == 0);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -326,18 +337,16 @@ fromstruct_in_wks(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, wks->map, wks->map_len));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_in_wks(ARGS_TOSTRUCT) {
-	dns_rdata_in_wks_t *wks;
+	dns_rdata_in_wks_t *wks = target;
 	uint32_t n;
 	isc_region_t region;
 
-	REQUIRE(((dns_rdata_in_wks_t *)target) != NULL);
+	REQUIRE(wks != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_wks);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 	REQUIRE(rdata->length != 0);
-
-	wks = target;
 
 	wks->common.rdclass = rdata->rdclass;
 	wks->common.rdtype = rdata->type;
@@ -351,33 +360,32 @@ tostruct_in_wks(ARGS_TOSTRUCT) {
 	isc_region_consume(&region, 1);
 	wks->map_len = region.length;
 	wks->map = mem_maybedup(mctx, region.base, region.length);
-	if (wks->map == NULL)
+	if (wks->map == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 	wks->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_in_wks(ARGS_FREESTRUCT) {
-	dns_rdata_in_wks_t *wks;
+	dns_rdata_in_wks_t *wks = source;
 
-	REQUIRE(((dns_rdata_in_wks_t *)source) != NULL);
-	REQUIRE(((dns_rdata_in_wks_t *)source)->common.rdtype ==
-		dns_rdatatype_wks);
-	REQUIRE(((dns_rdata_in_wks_t *)source)->common.rdclass ==
-		dns_rdataclass_in);
+	REQUIRE(wks != NULL);
+	REQUIRE(wks->common.rdtype == dns_rdatatype_wks);
+	REQUIRE(wks->common.rdclass == dns_rdataclass_in);
 
-	wks = source;
-
-	if (wks->mctx == NULL)
+	if (wks->mctx == NULL) {
 		return;
+	}
 
-	if (wks->map != NULL)
+	if (wks->map != NULL) {
 		isc_mem_free(wks->mctx, wks->map);
+	}
 	wks->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_in_wks(ARGS_ADDLDATA) {
 	UNUSED(rdata);
 	UNUSED(add);
@@ -389,7 +397,7 @@ additionaldata_in_wks(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_in_wks(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -401,9 +409,8 @@ digest_in_wks(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_in_wks(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_wks);
 	REQUIRE(rdclass == dns_rdataclass_in);
 
@@ -413,9 +420,8 @@ checkowner_in_wks(ARGS_CHECKOWNER) {
 	return (dns_name_ishostname(name, wildcard));
 }
 
-static inline bool
+static bool
 checknames_in_wks(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_wks);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
@@ -426,9 +432,9 @@ checknames_in_wks(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_in_wks(ARGS_COMPARE) {
 	return (compare_in_wks(rdata1, rdata2));
 }
 
-#endif	/* RDATA_IN_1_WKS_11_C */
+#endif /* RDATA_IN_1_WKS_11_C */

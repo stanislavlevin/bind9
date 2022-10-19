@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
-#include <stdarg.h>
-#include <stddef.h>
 #include <setjmp.h>
-
+#include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,7 +25,6 @@
 #include <cmocka.h>
 
 #include <isc/netaddr.h>
-#include <isc/print.h>
 #include <isc/sockaddr.h>
 #include <isc/util.h>
 
@@ -38,24 +36,17 @@ netaddr_isnetzero(void **state) {
 	struct {
 		const char *address;
 		bool expect;
-	} tests[] = {
-		{ "0.0.0.0", true },
-		{ "0.0.0.1", true },
-		{ "0.0.1.2", true },
-		{ "0.1.2.3", true },
-		{ "10.0.0.0", false },
-		{ "10.9.0.0", false },
-		{ "10.9.8.0", false },
-		{ "10.9.8.7", false },
-		{ "127.0.0.0", false },
-		{ "127.0.0.1", false }
-	};
+	} tests[] = { { "0.0.0.0", true },    { "0.0.0.1", true },
+		      { "0.0.1.2", true },    { "0.1.2.3", true },
+		      { "10.0.0.0", false },  { "10.9.0.0", false },
+		      { "10.9.8.0", false },  { "10.9.8.7", false },
+		      { "127.0.0.0", false }, { "127.0.0.1", false } };
 	bool result;
 	isc_netaddr_t netaddr;
 
 	UNUSED(state);
 
-	for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++) {
+	for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
 		ina.s_addr = inet_addr(tests[i].address);
 		isc_netaddr_fromin(&netaddr, &ina);
 		result = isc_netaddr_isnetzero(&netaddr);
@@ -93,7 +84,7 @@ netaddr_masktoprefixlen(void **state) {
 	assert_int_equal(plen, 0);
 
 	assert_int_equal(isc_netaddr_masktoprefixlen(&ina_b, &plen),
-		     ISC_R_SUCCESS);
+			 ISC_R_SUCCESS);
 	assert_int_equal(plen, 31);
 
 	assert_int_equal(isc_netaddr_masktoprefixlen(&ina_c, &plen),
@@ -114,12 +105,9 @@ netaddr_multicast(void **state) {
 		const char *addr;
 		bool is_multicast;
 	} tests[] = {
-		{ AF_INET, "1.2.3.4", false },
-		{ AF_INET, "4.3.2.1", false },
-		{ AF_INET, "224.1.1.1", true },
-		{ AF_INET, "1.1.1.244", false },
-		{ AF_INET6, "::1", false },
-		{ AF_INET6, "ff02::1", true }
+		{ AF_INET, "1.2.3.4", false },	{ AF_INET, "4.3.2.1", false },
+		{ AF_INET, "224.1.1.1", true }, { AF_INET, "1.1.1.244", false },
+		{ AF_INET6, "::1", false },	{ AF_INET6, "ff02::1", true }
 	};
 
 	UNUSED(state);
@@ -165,7 +153,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

@@ -1,8 +1,10 @@
 /*
- * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -136,11 +138,9 @@ const FileData installFiles[] =
 	{"libisccfg.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
 	{"libisccc.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
 	{"libdns.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
-	{"liblwres.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
 	{"libirs.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
-#ifdef OPENSSL
 	{"libeay32.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
-#endif
+	{"libuv.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
 #ifdef HAVE_LIBXML2
 	{"libxml2.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
 #endif
@@ -171,7 +171,6 @@ const FileData installFiles[] =
 	{"delv.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
 	{"arpaname.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
 	{"nsec3hash.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
-	{"genrandom.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"rndc-confgen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"ddns-confgen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"tsig-keygen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
@@ -188,7 +187,6 @@ const FileData installFiles[] =
 	{"named-compilezone.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"named-journalprint.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"named-rrchecker.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
-	{"isc-hmac-fixup.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 #ifdef USE_PKCS11
 	{"pkcs11-destroy.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"pkcs11-keygen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},

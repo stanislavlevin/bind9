@@ -1,3 +1,14 @@
+-- Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+--
+-- SPDX-License-Identifier: MPL-2.0
+--
+-- This Source Code Form is subject to the terms of the Mozilla Public
+-- License, v. 2.0.  If a copy of the MPL was not distributed with this
+-- file, you can obtain one at https://mozilla.org/MPL/2.0/.
+--
+-- See the COPYRIGHT file distributed with this work for additional
+-- information regarding copyright ownership.
+
 syntax(2)
 test_suite('bind9')
 
@@ -11,15 +22,15 @@ tap_test_program{name='dispatch_test'}
 tap_test_program{name='dnstap_test'}
 tap_test_program{name='dst_test'}
 tap_test_program{name='geoip_test'}
-tap_test_program{name='gost_test'}
 tap_test_program{name='keytable_test'}
 tap_test_program{name='master_test'}
 tap_test_program{name='name_test'}
 tap_test_program{name='nsec3_test'}
 tap_test_program{name='peer_test'}
 tap_test_program{name='private_test'}
-tap_test_program{name='rbt_serialize_test'}
+tap_test_program{name='rbt_serialize_test', is_exclusive=true}
 tap_test_program{name='rbt_test'}
+tap_test_program{name='rbtdb_test'}
 tap_test_program{name='rdata_test'}
 tap_test_program{name='rdataset_test'}
 tap_test_program{name='rdatasetstats_test'}

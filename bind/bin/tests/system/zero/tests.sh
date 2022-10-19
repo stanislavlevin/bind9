@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -27,7 +29,7 @@ wait_for_pid() (
 status=0
 n=0
 
-n=`expr $n + 1`
+n=$((n+1))
 echo_i "check lookups against TTL=0 records ($n)"
 i=0
 ret=0
@@ -36,8 +38,7 @@ dig_with_opts @10.53.0.2 axfr example | grep -v "^ds0" | \
 awk '$2 == "0" { print "-q", $1, $4; print "-q", "zzz"$1, $4;}' > query.list
 
 # add 1/5 second per query
-query_count=`wc -l < query.list`
-timeout=`expr $query_count / 5`
+timeout=$(($(wc -l < query.list) / 5))
 while [ $i -lt $passes ]
 do
 	(dig_with_opts @10.53.0.3 -f query.list > "dig.out$i.1.test$n") & pid1="$!"
@@ -64,17 +65,17 @@ do
 	grep "status: SERVFAIL" "dig.out$i.5.test$n" > /dev/null && ret=1
 	grep "status: SERVFAIL" "dig.out$i.6.test$n" > /dev/null && ret=1
 	[ $ret = 1 ] && break
-	i=`expr $i + 1`
+	i=$((i+1))
 	echo_i "successfully completed pass $i of $passes"
 done
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status+ret))
 
 repeat_query() (
 	i=0
 	while [ "$i" -lt "$1" ]; do
 		dig_with_opts +short "@$2" "$3" | tee "dig.out$i.test$n" || return 1
-		i=`expr $i + 1`
+		i=$((i+1))
 	done
 )
 
@@ -82,15 +83,15 @@ count_unique() (
 	repeat_query "$@" | sort -u | wc -l
 )
 
-n=`expr $n + 1`
+n=$((n+1))
 echo_i "check repeated recursive lookups of non recurring TTL=0 responses get new values ($n)"
 ret=0
 repeats=9
-count=`count_unique "$repeats" 10.53.0.3 foo.increment`
+count=$(count_unique "$repeats" 10.53.0.3 foo.increment)
 if [ "$count" -ne "$repeats" ] ; then echo_i "failed (count=$count, repeats=$repeats)"; ret=1; fi
-status=`expr $status + $ret`
+status=$((status+ret))
 
-n=`expr $n + 1`
+n=$((n+1))
 echo_i "check lookups against TTL=1 records ($n)"
 i=0
 passes=10
@@ -110,12 +111,12 @@ do
 	grep "status: SERVFAIL" "dig.out$i.5.test$n" > /dev/null && ret=1
 	grep "status: SERVFAIL" "dig.out$i.6.test$n" > /dev/null && ret=1
 	[ $ret = 1 ] && break
-	i=`expr $i + 1`
+	i=$((i+1))
 	echo_i "successfully completed pass $i of $passes"
 	sleep 1
 done
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status+ret))
 
 echo_i "exit status: $status"
 [ "$status" -eq 0 ] || exit 1

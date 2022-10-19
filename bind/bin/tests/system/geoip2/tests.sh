@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -77,7 +79,7 @@ fi
 echo_i "reloading server"
 copy_setports ns2/named2.conf.in ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -116,7 +118,7 @@ fi
 echo_i "reloading server"
 copy_setports ns2/named3.conf.in ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -155,7 +157,7 @@ fi
 echo_i "reloading server"
 copy_setports ns2/named4.conf.in ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -196,7 +198,7 @@ fi
 echo_i "reloading server"
 copy_setports ns2/named5.conf.in ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -238,7 +240,7 @@ n=`expr $n + 1`
 echo_i "reloading server"
 copy_setports ns2/named6.conf.in ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -277,7 +279,7 @@ fi
 echo_i "reloading server"
 copy_setports ns2/named7.conf.in ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -316,7 +318,7 @@ fi
 echo_i "reloading server"
 copy_setports ns2/named8.conf.in ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -355,7 +357,7 @@ fi
 echo_i "reloading server"
 copy_setports ns2/named9.conf.in ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -394,7 +396,7 @@ fi
 echo_i "reloading server"
 copy_setports ns2/named10.conf.in ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -433,7 +435,7 @@ fi
 echo_i "reloading server"
 copy_setports ns2/named11.conf.in ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -472,7 +474,7 @@ fi
 echo_i "reloading server"
 copy_setports ns2/named12.conf.in ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -480,54 +482,6 @@ echo_i "checking geoip blackhole ACL ($n)"
 ret=0
 $DIG $DIGOPTS txt example -b 10.53.0.7 > dig.out.ns2.test$n || ret=1
 $RNDCCMD 10.53.0.2 status 2>&1 > rndc.out.ns2.test$n || ret=1
-[ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
-
-echo_i "reloading server"
-copy_setports ns2/named13.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
-sleep 3
-
-n=`expr $n + 1`
-echo_i "checking 'geoip-use-ecs no;' ($n)"
-ret=0
-lret=0
-for i in 1 2 3 4 5 6 7; do
-    $DIG $DIGOPTS txt example -b 10.53.0.$i > dig.out.ns2.test$n.$i || lret=1
-    j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
-    [ "$i" = "$j" ] || lret=1
-    [ $lret -eq 1 ] && break
-
-    $DIG $DIGOPTS txt example -b 127.0.0.1 +subnet="10.53.0.$i/32" > dig.out.ns2.test$n.ecs.$i || lret=1
-    j=`cat dig.out.ns2.test$n.ecs.$i | tr -d '"'`
-    [ "$j" = "bogus" ] || lret=1
-    [ $lret -eq 1 ] && break
-done
-[ $lret -eq 1 ] && ret=1
-[ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
-
-echo_i "reloading server"
-copy_setports ns2/named14.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
-sleep 3
-
-n=`expr $n + 1`
-echo_i "checking 'geoip-use-ecs yes;' ($n)"
-ret=0
-lret=0
-for i in 1 2 3 4 5 6 7; do
-    $DIG $DIGOPTS txt example -b 10.53.0.$i > dig.out.ns2.test$n.$i || lret=1
-    j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
-    [ "$i" = "$j" ] || lret=1
-    [ $lret -eq 1 ] && break
-
-    $DIG $DIGOPTS txt example -b 127.0.0.1 +subnet="10.53.0.$i/32" > dig.out.ns2.test$n.ecs.$i || lret=1
-    j=`cat dig.out.ns2.test$n.ecs.$i | tr -d '"'`
-    [ "$i" = "$j" ] || lret=1
-    [ $lret -eq 1 ] && break
-done
-[ $lret -eq 1 ] && ret=1
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 

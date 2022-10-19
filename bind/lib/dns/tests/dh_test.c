@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -25,21 +24,18 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
-#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
+
+#include <pk11/site.h>
 
 #include <dns/name.h>
 
 #include <dst/result.h>
 
-#include <pk11/site.h>
-
 #include "../dst_internal.h"
-
 #include "dnstest.h"
 
-#if defined(OPENSSL) && !defined(PK11_DH_DISABLE)
 static int
 _setup(void **state) {
 	isc_result_t result;
@@ -80,8 +76,8 @@ dh_computesecret(void **state) {
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dst_key_fromfile(name, 18602, DST_ALG_DH,
-				  DST_TYPE_PUBLIC | DST_TYPE_KEY,
-				  "./", mctx, &key);
+				  DST_TYPE_PUBLIC | DST_TYPE_KEY, "./", dt_mctx,
+				  &key);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_buffer_init(&buf, array, sizeof(array));
@@ -92,20 +88,15 @@ dh_computesecret(void **state) {
 
 	dst_key_free(&key);
 }
-#endif
 
 int
 main(void) {
-#if defined(OPENSSL) && !defined(PK11_DH_DISABLE)
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(dh_computesecret,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(dh_computesecret, _setup,
+						_teardown),
 	};
 
-	return (cmocka_run_group_tests(tests, dns_test_init, dns_test_final));
-#else
-	print_message("1..0 # Skipped: dh test broken with PKCS11");
-#endif
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
 #else /* HAVE_CMOCKA */
@@ -115,7 +106,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

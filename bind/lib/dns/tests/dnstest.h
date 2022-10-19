@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -11,13 +13,10 @@
 
 /*! \file */
 
-#include <config.h>
-
 #include <inttypes.h>
 #include <stdbool.h>
 
 #include <isc/buffer.h>
-#include <isc/entropy.h>
 #include <isc/hash.h>
 #include <isc/log.h>
 #include <isc/mem.h>
@@ -30,13 +29,6 @@
 #include <dns/result.h>
 #include <dns/zone.h>
 
-#define CHECK(r) \
-	do { \
-		result = (r); \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup; \
-	} while (0)
-
 typedef struct {
 	dns_diffop_t op;
 	const char *owner;
@@ -45,10 +37,12 @@ typedef struct {
 	const char *rdata;
 } zonechange_t;
 
-#define ZONECHANGE_SENTINEL { 0, NULL, 0, NULL, NULL }
+#define ZONECHANGE_SENTINEL            \
+	{                              \
+		0, NULL, 0, NULL, NULL \
+	}
 
-extern isc_mem_t *mctx;
-extern isc_entropy_t *ectx;
+extern isc_mem_t *dt_mctx;
 extern isc_log_t *lctx;
 extern isc_taskmgr_t *taskmgr;
 extern isc_task_t *maintask;
@@ -59,21 +53,11 @@ extern bool app_running;
 extern int ncpus;
 extern bool debug_mem_record;
 
-/* Run once before all tests */
-int
-dns_test_init(void **);
-
-/* Can be run before each test case */
 isc_result_t
 dns_test_begin(FILE *logfile, bool create_managers);
 
-/* Can be after each test case */
 void
 dns_test_end(void);
-
-/* Run once after all tests */
-int
-dns_test_final(void **);
 
 isc_result_t
 dns_test_makeview(const char *name, dns_view_t **viewp);
@@ -118,8 +102,8 @@ dns_test_loaddb(dns_db_t **db, dns_dbtype_t dbtype, const char *origin,
 		const char *testfile);
 
 isc_result_t
-dns_test_getdata(const char *file, unsigned char *buf,
-		 size_t bufsiz, size_t *sizep);
+dns_test_getdata(const char *file, unsigned char *buf, size_t bufsiz,
+		 size_t *sizep);
 
 char *
 dns_test_tohex(const unsigned char *data, size_t len, char *buf, size_t buflen);

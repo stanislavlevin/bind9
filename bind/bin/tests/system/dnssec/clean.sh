@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -11,7 +13,7 @@
 
 set -e
 
-rm -f ./*/K* ./*/keyset-* ./*/dsset-* ./*/dlvset-* ./*/signedkey-* ./*/*.signed
+rm -f ./*/K* ./*/keyset-* ./*/dsset-* ./*/signedkey-* ./*/*.signed
 rm -f ./*/example.bk
 rm -f ./*/named.conf
 rm -f ./*/named.memstats
@@ -19,7 +21,7 @@ rm -f ./*/named.run ./*/named.run.prev
 rm -f ./*/named.secroots
 rm -f ./*/tmp* ./*/*.jnl ./*/*.bk ./*/*.jbk
 rm -f ./*/trusted.conf ./*/managed.conf ./*/revoked.conf
-rm -f ./Kexample.*
+rm -f ./Kexample.* ./Kkeygen* ./keygen*.err
 rm -f ./ans10/query.log ./ans10/ans.run
 rm -f ./canonical?.*
 rm -f ./delv.out*
@@ -36,18 +38,21 @@ rm -f ./ns*/managed-keys.bind* ./ns*/*.mkeys*
 rm -f ./ns*/named.lock
 rm -f ./ns1/managed.key.id
 rm -f ./ns1/root.db ./ns2/example.db ./ns2/managed.db ./ns2/trusted.db
+rm -f ./ns1/trusted.keys
 rm -f ./ns2/algroll.db
 rm -f ./ns2/badparam.db ./ns2/badparam.db.bad
+rm -f ./ns2/cdnskey-kskonly.secure.db
+rm -f ./ns2/cdnskey-kskonly.secure.id
 rm -f ./ns2/cdnskey-update.secure.db
 rm -f ./ns2/cdnskey-x.secure.db
 rm -f ./ns2/cdnskey.secure.db
 rm -f ./ns2/cds-auto.secure.db ./ns2/cds-auto.secure.db.jnl
+rm -f ./ns2/cds-kskonly.secure.db
+rm -f ./ns2/cds-kskonly.secure.id
 rm -f ./ns2/cds-update.secure.db ./ns2/cds-update.secure.db.jnl
 rm -f ./ns2/cds.secure.db ./ns2/cds-x.secure.db
-rm -f ./ns2/dlv.db
 rm -f ./ns2/in-addr.arpa.db
 rm -f ./ns2/nsec3chain-test.db
-rm -f ./ns2/private.secure.example.db
 rm -f ./ns2/single-nsec3.db
 rm -f ./ns2/updatecheck-kskonly.secure.*
 rm -f ./ns3/auto-nsec.example.db ./ns3/auto-nsec3.example.db

@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -132,7 +134,7 @@ status=$((status+ret))
 
 echo_i "testing external policy with SIG(0) key ($n)"
 ret=0
-$NSUPDATE -R $RANDFILE -k ns1/Kkey.example.nil.*.private <<END > /dev/null 2>&1 || ret=1
+$NSUPDATE -k ns1/Kkey.example.nil.*.private <<END > /dev/null 2>&1 || ret=1
 server 10.53.0.1 ${PORT}
 zone example.nil
 update add fred.example.nil 120 cname foo.bar.

@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -208,15 +210,10 @@ if [ $ret -eq 1 ] ; then
 	echo_i "failed"; status=1
 fi
 
-echo_i "check that multiple dnssec-keygen calls don't emit dns_dnssec_findmatchingkeys warning"
+echo_i "check that dnssec-keygen won't generate TSIG keys"
 ret=0
-$KEYGEN -r $RANDFILE -a hmac-sha256 -b 128 -n host example.net > keygen.out1 2>&1 || ret=1
-grep dns_dnssec_findmatchingkeys keygen.out1 > /dev/null && ret=1
-$KEYGEN -r $RANDFILE -a hmac-sha256 -b 128 -n host example.net > keygen.out2 2>&1 || ret=1
-grep dns_dnssec_findmatchingkeys keygen.out2 > /dev/null && ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i " failed"; status=1
-fi
+$KEYGEN -a hmac-sha256 -b 128 -n host example.net > keygen.out3 2>&1 && ret=1
+grep "unknown algorithm" keygen.out3 > /dev/null || ret=1
 
 echo_i "check that a 'BADTIME' response with 'QR=0' is handled as a request"
 ret=0

@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -25,7 +24,6 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
-#include <isc/print.h>
 #include <isc/util.h>
 
 #include <dns/rdataset.h>
@@ -74,8 +72,7 @@ trimttl(void **state) {
 	rrsig.timeexpire = ttltimeexpire;
 	rrsig.originalttl = 1000;
 
-	dns_rdataset_trimttl(&rdataset, &sigrdataset, &rrsig, ttltimenow,
-			     true);
+	dns_rdataset_trimttl(&rdataset, &sigrdataset, &rrsig, ttltimenow, true);
 	assert_int_equal(rdataset.ttl, 800);
 	assert_int_equal(sigrdataset.ttl, 800);
 
@@ -84,8 +81,7 @@ trimttl(void **state) {
 	rrsig.timeexpire = ttltimenow - 200;
 	rrsig.originalttl = 1000;
 
-	dns_rdataset_trimttl(&rdataset, &sigrdataset, &rrsig, ttltimenow,
-			     true);
+	dns_rdataset_trimttl(&rdataset, &sigrdataset, &rrsig, ttltimenow, true);
 	assert_int_equal(rdataset.ttl, 120);
 	assert_int_equal(sigrdataset.ttl, 120);
 
@@ -104,8 +100,7 @@ trimttl(void **state) {
 	rrsig.timeexpire = ttltimeexpire;
 	rrsig.originalttl = 1000;
 
-	dns_rdataset_trimttl(&rdataset, &sigrdataset, &rrsig, ttltimenow,
-			     true);
+	dns_rdataset_trimttl(&rdataset, &sigrdataset, &rrsig, ttltimenow, true);
 	assert_int_equal(rdataset.ttl, 800);
 	assert_int_equal(sigrdataset.ttl, 800);
 
@@ -114,8 +109,7 @@ trimttl(void **state) {
 	rrsig.timeexpire = ttltimenow - 200;
 	rrsig.originalttl = 1000;
 
-	dns_rdataset_trimttl(&rdataset, &sigrdataset, &rrsig, ttltimenow,
-			     true);
+	dns_rdataset_trimttl(&rdataset, &sigrdataset, &rrsig, ttltimenow, true);
 	assert_int_equal(rdataset.ttl, 120);
 	assert_int_equal(sigrdataset.ttl, 120);
 
@@ -136,7 +130,7 @@ main(void) {
 		cmocka_unit_test_setup_teardown(trimttl, _setup, _teardown),
 	};
 
-	return (cmocka_run_group_tests(tests, dns_test_init, dns_test_final));
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
 #else /* HAVE_CMOCKA */
@@ -146,7 +140,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

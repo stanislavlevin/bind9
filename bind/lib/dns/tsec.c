@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,51 +11,46 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #include <isc/mem.h>
 #include <isc/util.h>
 
 #include <pk11/site.h>
 
+#include <dns/result.h>
 #include <dns/tsec.h>
 #include <dns/tsig.h>
-#include <dns/result.h>
 
 #include <dst/dst.h>
 
-#define DNS_TSEC_MAGIC			ISC_MAGIC('T', 's', 'e', 'c')
-#define DNS_TSEC_VALID(t)		ISC_MAGIC_VALID(t, DNS_TSEC_MAGIC)
+#define DNS_TSEC_MAGIC	  ISC_MAGIC('T', 's', 'e', 'c')
+#define DNS_TSEC_VALID(t) ISC_MAGIC_VALID(t, DNS_TSEC_MAGIC)
 
 /*%
  * DNS Transaction Security object.  We assume this is not shared by
  * multiple threads, and so the structure does not contain a lock.
  */
 struct dns_tsec {
-	unsigned int		magic;
-	dns_tsectype_t		type;
-	isc_mem_t		*mctx;
+	unsigned int magic;
+	dns_tsectype_t type;
+	isc_mem_t *mctx;
 	union {
-		dns_tsigkey_t	*tsigkey;
-		dst_key_t	*key;
+		dns_tsigkey_t *tsigkey;
+		dst_key_t *key;
 	} ukey;
 };
 
 isc_result_t
 dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
-		dns_tsec_t **tsecp)
-{
+		dns_tsec_t **tsecp) {
 	isc_result_t result;
 	dns_tsec_t *tsec;
 	dns_tsigkey_t *tsigkey = NULL;
-	dns_name_t *algname;
+	const dns_name_t *algname;
 
 	REQUIRE(mctx != NULL);
 	REQUIRE(tsecp != NULL && *tsecp == NULL);
 
 	tsec = isc_mem_get(mctx, sizeof(*tsec));
-	if (tsec == NULL)
-		return (ISC_R_NOMEMORY);
 
 	tsec->type = type;
 	tsec->mctx = mctx;
@@ -61,11 +58,9 @@ dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
 	switch (type) {
 	case dns_tsectype_tsig:
 		switch (dst_key_alg(key)) {
-#ifndef PK11_MD5_DISABLE
 		case DST_ALG_HMACMD5:
 			algname = dns_tsig_hmacmd5_name;
 			break;
-#endif
 		case DST_ALG_HMACSHA1:
 			algname = dns_tsig_hmacsha1_name;
 			break;
@@ -85,10 +80,9 @@ dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
 			isc_mem_put(mctx, tsec, sizeof(*tsec));
 			return (DNS_R_BADALG);
 		}
-		result = dns_tsigkey_createfromkey(dst_key_name(key),
-						   algname, key, false,
-						   NULL, 0, 0, mctx, NULL,
-						   &tsigkey);
+		result = dns_tsigkey_createfromkey(dst_key_name(key), algname,
+						   key, false, NULL, 0, 0, mctx,
+						   NULL, &tsigkey);
 		if (result != ISC_R_SUCCESS) {
 			isc_mem_put(mctx, tsec, sizeof(*tsec));
 			return (result);
@@ -99,8 +93,7 @@ dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
 		tsec->ukey.key = key;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	tsec->magic = DNS_TSEC_MAGIC;
@@ -115,6 +108,7 @@ dns_tsec_destroy(dns_tsec_t **tsecp) {
 
 	REQUIRE(tsecp != NULL && *tsecp != NULL);
 	tsec = *tsecp;
+	*tsecp = NULL;
 	REQUIRE(DNS_TSEC_VALID(tsec));
 
 	switch (tsec->type) {
@@ -125,14 +119,11 @@ dns_tsec_destroy(dns_tsec_t **tsecp) {
 		dst_key_free(&tsec->ukey.key);
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	tsec->magic = 0;
 	isc_mem_put(tsec->mctx, tsec, sizeof(*tsec));
-
-	*tsecp = NULL;
 }
 
 dns_tsectype_t
@@ -155,7 +146,6 @@ dns_tsec_getkey(dns_tsec_t *tsec, void *keyp) {
 		*(dst_key_t **)keyp = tsec->ukey.key;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 }
