@@ -7,6 +7,7 @@ Summary: ISC BIND - DNS server
 License: MPL-2.0
 Group: System/Servers
 Url: http://www.isc.org/products/BIND/
+VCS: https://gitlab.isc.org/isc-projects/bind9.git
 
 # ftp://ftp.isc.org/isc/bind9/%src_version/bind-%src_version.tar.gz
 Source0: %name-%version.tar
