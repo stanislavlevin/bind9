@@ -26,7 +26,7 @@ Group: System/Servers
 Url: https://www.isc.org/bind/
 VCS: https://gitlab.isc.org/isc-projects/bind9.git
 
-# ftp://ftp.isc.org/isc/bind9/%src_version/bind-%src_version.tar.gz
+# ftp://ftp.isc.org/isc/bind9/%src_version/bind-%src_version.tar.xz
 Source0: %name-%version.tar
 Source3: README.bind-devel
 Source4: README.ALT
