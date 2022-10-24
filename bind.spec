@@ -1,7 +1,6 @@
 %define _unpackaged_files_terminate_build 1
 
 # build rules
-%def_disable static
 %def_with openssl
 %def_with libjson
 %def_without python
@@ -109,11 +108,6 @@ Requires: libbind = %EVR
 Provides: libisc-export-devel = %EVR
 Obsoletes: libisc-export-devel < %version
 
-%package devel-static
-Summary: ISC BIND static development libraries
-Group: Development/C
-Requires: %name-devel = %EVR
-
 %package doc
 Summary: Documentation for ISC BIND
 Group: Development/Other
@@ -148,13 +142,6 @@ pages for libdns, libisc, libisccc, libisccfg and liblwres. These are
 only needed if you want to compile packages that need more BIND
 %src_version nameserver API than the resolver code provided by
 glibc.
-
-%description devel-static
-This package contains development static libraries, header files, and
-API man pages for libdns, libisc, libisccc, libisccfg and liblwres.
-These are only needed if you want to compile statically linked packages
-that need more BIND %src_version nameserver API than the resolver
-code provided by glibc.
 
 %description doc
 This package provides various documents that are useful for maintaining
@@ -206,7 +193,7 @@ sed -i '/# Large File/iAC_SYS_LARGEFILE/' configure.ac
 	 %{subst_with openssl} \
 	 %{subst_with libjson} \
 	 %{subst_with python} \
-	 %{subst_enable static} \
+	--disable-static \
 	--includedir=%{_includedir}/bind9 \
 	--with-libtool \
 	--with-gssapi=yes \
@@ -336,11 +323,6 @@ fi
 %_man3dir/*
 %dir %docdir
 %docdir/README.bind-devel
-
-%if_enabled static
-%files devel-static
-%_libdir/*.a
-%endif
 
 %files
 %_bindir/arpaname
