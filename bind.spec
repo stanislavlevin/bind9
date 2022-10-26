@@ -87,6 +87,7 @@ BuildPreReq: libcap-devel
 %{?_with_libjson:BuildPreReq: libjson-c-devel}
 BuildPreReq: libkrb5-devel
 BuildRequires: libuv-devel
+BuildRequires: libidn2-devel
 
 %package utils
 Summary: Utilities provided by ISC BIND
@@ -194,6 +195,7 @@ export SPHINX_BUILD=/usr/bin/sphinx-build-3
 %autoreconf
 %configure \
 	--localstatedir=/var \
+	--with-libidn2 \
 	--enable-linux-caps \
 	--enable-fixed-rrset \
 	 %{subst_with openssl} \
