@@ -5,6 +5,8 @@
 %def_with openssl
 %def_with libjson
 %def_without python
+%def_with check
+%def_without system_tests
 
 # common directory for documentation
 %define docdir %_docdir/bind-%version
@@ -62,10 +64,28 @@ Patch0001: 0001-ALT-defaults-Reintroduce-chrooted-named-by-default.patch
 Patch0002: 0002-ALT-Minimize-linux-capabilities.patch
 Patch0003: 0003-ALT-Make-it-possible-to-retain-Linux-capabilities-of.patch
 Patch0004: 0004-ALT-named-Allow-non-writable-working-directory.patch
+Patch0005: 0005-ALT-tests-Unchroot-named-for-tests.patch
 
 %if_with docs
 BuildRequires: python3(sphinx)
 BuildRequires: python3(sphinx_rtd_theme)
+%endif
+
+%if_with check
+%if_with system_tests
+BuildRequires: python3(dns)
+BuildRequires: python3(hypothesis)
+%else
+BuildRequires: rpm-build-vm
+BuildRequires: /sbin/runuser
+BuildRequires: /dev/kvm
+%endif
+
+BuildRequires: iproute2
+BuildRequires: perl-Net-DNS
+BuildRequires: perl-File-Fetch
+BuildRequires: perl-Digest-HMAC
+BuildRequires: python3(pytest)
 %endif
 
 Provides: bind-chroot(%_chrootdir)
@@ -278,6 +298,55 @@ cp -a doc/arm/_build/html %buildroot%docdir/arm/
 
 # legacy path for plugins (for example, bind-dyndb-ldap)
 mkdir -p %buildroot%_libdir/bind
+
+%check
+%if_with system_tests
+# setup and teardown require root
+perl bin/tests/system/testsock.pl || sudo sh -x bin/tests/system/ifconfig.sh up
+
+# tests are run as current user
+# see .gitlab-ci.yml
+pushd bin/tests/system
+# named must be unchrooted for upstream tests
+export ALT_NAMED_OPTIONS=' -t / '
+SYSTEMTEST_NO_CLEAN=1 %make_build -k test V=1
+
+# teardown
+popd
+sudo sh bin/tests/system/ifconfig.sh down
+
+%else
+# today's (2021) vm-run (underlying KVM) is relatively slow.
+# The complete tests suite takes ~1h on x86_64 and results are not stable atm.
+# I tried to filter out some expected heavy tests by roughly the number of
+# named instances they use (<=2). The expected acceptable tests time is ~10min
+# on x86_64.
+
+cat > run_smoke.sh <<'_EOF'
+# setup
+runas="$1"
+perl bin/tests/system/testsock.pl || sh -x bin/tests/system/ifconfig.sh up
+ip a
+
+# tests
+# named must be unchrooted for upstream tests
+export ALT_NAMED_OPTIONS=' -t / '
+
+pushd bin/tests/system
+source ./conf.sh
+for testdir in $SUBDIRS; do
+    subns=$(find "$testdir" -maxdepth 1 -type d -name "ns[0-9]" | wc -l)
+    if [ $subns -lt 2 ]; then
+        runuser -u "$runas" -- sh run.sh "$testdir"
+    fi
+done
+
+# teardown
+popd
+sh bin/tests/system/ifconfig.sh down
+_EOF
+time vm-run --kvm=cond --sbin -- /bin/bash --norc --noprofile -eu run_smoke.sh "$(id -un)"
+%endif
 
 %pre
 /usr/sbin/groupadd -r -f %named_group

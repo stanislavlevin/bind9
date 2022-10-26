@@ -1,0 +1,58 @@
+From ca6e1181c7b3e87cf82fe6cefb100fa9370ecd56 Mon Sep 17 00:00:00 2001
+From: Stanislav Levin <slev@altlinux.org>
+Date: Thu, 3 Nov 2022 18:35:19 +0300
+Subject: [PATCH] ALT: tests: Unchroot named for tests
+
+Upstream tests runner expects unchrooted named.
+Exposed as ALT_NAMED_OPTIONS=' -t /'.
+---
+ bind/bin/tests/system/rrl/tests.sh     | 2 +-
+ bind/bin/tests/system/runtime/tests.sh | 2 +-
+ bind/bin/tests/system/start.pl         | 5 +++++
+ 3 files changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/bind/bin/tests/system/rrl/tests.sh b/bind/bin/tests/system/rrl/tests.sh
+index 911ccd11d4a..da34e3fa3a9 100644
+--- a/bind/bin/tests/system/rrl/tests.sh
++++ b/bind/bin/tests/system/rrl/tests.sh
+@@ -276,7 +276,7 @@ $DIG $DIGOPTS @$ns4 TXT big.tld4 > /dev/null 2>&1
+ grep "would limit" ns4/named.run >/dev/null 2>&1 ||
+ setret "\"would limit\" not found in log file."
+ 
+-$NAMED -D rrl-ns5 -gc broken.conf > broken.out 2>&1 &
++$NAMED -D rrl-ns5 -gc broken.conf $ALT_NAMED_OPTIONS > broken.out 2>&1 &
+ sleep 2
+ grep "min-table-size 1" broken.out > /dev/null || setret "min-table-size 0 was not changed to 1"
+ 
+diff --git a/bind/bin/tests/system/runtime/tests.sh b/bind/bin/tests/system/runtime/tests.sh
+index 81184099b81..70212814e2a 100644
+--- a/bind/bin/tests/system/runtime/tests.sh
++++ b/bind/bin/tests/system/runtime/tests.sh
+@@ -18,7 +18,7 @@ SYSTEMTESTTOP=..
+ set -e
+ 
+ RNDCCMD="$RNDC -c $SYSTEMTESTTOP/common/rndc.conf -p ${CONTROLPORT} -s"
+-NAMED_DEFAULT_ARGS="-m record,size,mctx -d 99 -g -U 4"
++NAMED_DEFAULT_ARGS="-m record,size,mctx -d 99 -g -U 4 $ALT_NAMED_OPTIONS"
+ 
+ kill_named() {
+ 	pidfile="${1}"
+diff --git a/bind/bin/tests/system/start.pl b/bind/bin/tests/system/start.pl
+index 657d9880807..1cf465ff5eb 100755
+--- a/bind/bin/tests/system/start.pl
++++ b/bind/bin/tests/system/start.pl
+@@ -286,6 +286,11 @@ sub construct_ns_command {
+ 		$command .= " -T notcp"
+ 	}
+ 
++	# ALT specific: chrooted by default, so it must be unchrooted for tests
++	if ($ENV{'ALT_NAMED_OPTIONS'}) {
++		$command .= $ENV{'ALT_NAMED_OPTIONS'}
++	}
++
+ 	if ($restart) {
+ 		$command .= " >>named.run 2>&1 &";
+ 	} else {
+-- 
+2.33.4
+
