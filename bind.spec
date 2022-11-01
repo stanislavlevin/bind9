@@ -165,6 +165,7 @@ find -type f -print0 |
 	xargs -r0 sed -i \
 '
 s,@ROOT@,%_chrootdir,g;
+s,@DISTRO_OPTIONS@,-u %named_user,g;
 ' --
 
 %build
