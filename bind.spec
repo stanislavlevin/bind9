@@ -55,9 +55,8 @@ Source44: bind.empty
 Source50: bind.service
 
 # NB: there must be at least one patch :)
+Patch0001: 0001-ALT-defaults-Reintroduce-chrooted-named-by-default.patch
 Patch0002: 0002-openbsd-owl-pidfile.patch
-Patch0003: 0003-openbsd-owl-chroot-defaults.patch
-Patch0005: 0005-owl-checkconf-chroot.patch
 Patch0009: 0009-Minimize-linux-capabilities.patch
 Patch0011: 0011-ALT-Make-it-possible-to-retain-Linux-capabilities-of.patch
 

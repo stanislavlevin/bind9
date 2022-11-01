@@ -1,0 +1,76 @@
+From 6d6753962a0b7674d1c2a9ffb70bb8100faff804 Mon Sep 17 00:00:00 2001
+From: Stanislav Levin <slev@altlinux.org>
+Date: Tue, 1 Nov 2022 17:43:07 +0300
+Subject: [PATCH] ALT: defaults: Reintroduce chrooted named by default
+
+Historically, ALT's `named` was chrooted by default.
+This is the optional behaviour and can be changed with
+`control` tool:
+
+```console
+[user@host dir]# control bind-chroot help
+disabled: Disable chrootedness of the ISC BIND server
+enabled: Enable chrootedness of the ISC BIND server
+```
+
+However, the previous version of chroot patch broken some
+legitimate cases, for example:
+
+- relative paths given via command line options don't work
+  ```console
+  [user@host dir]# /usr/sbin/named -g -c named.conf
+  ...
+  loading configuration from '/named.conf'
+  open: /named.conf: file not found
+  loading configuration: file not found
+  exiting (due to fatal error)
+  ```
+  *Only* an absolute path should be provided in local version, while
+  upstream's named just works.
+
+ALT's unchrooted named is configured as `-t /`. In this way
+named always do chroot+chdir into either `/var/lib/bind` (chrooted) or
+`/` (unchrooted). Thus, chroot+chdir("/") happens even if named is
+configured to run out of chroot(see `named_os_chroot`).
+
+With this patch `-t /` has a special meaning like it was not given
+at all.
+---
+ bind/bin/named/include/named/globals.h | 2 +-
+ bind/bin/named/main.c                  | 7 ++++++-
+ 2 files changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/bind/bin/named/include/named/globals.h b/bind/bin/named/include/named/globals.h
+index 82b632ef043..490d13e2904 100644
+--- a/bind/bin/named/include/named/globals.h
++++ b/bind/bin/named/include/named/globals.h
+@@ -112,7 +112,7 @@ EXTERN isc_resourcevalue_t named_g_initopenfiles INIT(0);
+  * Misc.
+  */
+ EXTERN bool named_g_coreok	     INIT(true);
+-EXTERN const char *named_g_chrootdir INIT(NULL);
++EXTERN const char *named_g_chrootdir INIT("@ROOT@");
+ EXTERN bool named_g_foreground	     INIT(false);
+ EXTERN bool named_g_logstderr	     INIT(false);
+ EXTERN bool named_g_nosyslog	     INIT(false);
+diff --git a/bind/bin/named/main.c b/bind/bin/named/main.c
+index 97cd36f6925..58289ef20da 100644
+--- a/bind/bin/named/main.c
++++ b/bind/bin/named/main.c
+@@ -964,7 +964,12 @@ parse_command_line(int argc, char *argv[]) {
+ 			break;
+ 		case 't':
+ 			/* XXXJAB should we make a copy? */
+-			named_g_chrootdir = isc_commandline_argument;
++			// special case for control's facility bind-chroot
++			if (strcmp(isc_commandline_argument, "/") != 0) {
++				named_g_chrootdir = isc_commandline_argument;
++			} else {
++				named_g_chrootdir = NULL;
++			}
+ 			break;
+ 		case 'T': /* NOT DOCUMENTED */
+ 			parse_T_opt(isc_commandline_argument);
+-- 
+2.33.4
+
