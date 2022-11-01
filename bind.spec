@@ -59,8 +59,8 @@ Source51: bind.tmpfiles.conf
 
 # NB: there must be at least one patch :)
 Patch0001: 0001-ALT-defaults-Reintroduce-chrooted-named-by-default.patch
-Patch0009: 0009-Minimize-linux-capabilities.patch
-Patch0011: 0011-ALT-Make-it-possible-to-retain-Linux-capabilities-of.patch
+Patch0002: 0002-ALT-Minimize-linux-capabilities.patch
+Patch0003: 0003-ALT-Make-it-possible-to-retain-Linux-capabilities-of.patch
 
 %if_with docs
 BuildRequires: python3(sphinx)
