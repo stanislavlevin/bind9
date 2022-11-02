@@ -284,10 +284,6 @@ mkdir %buildroot%_sysconfdir/syslog.d
 ln -s %_chrootdir/dev/log %buildroot%_sysconfdir/syslog.d/bind
 #... end of the chroot configuration.
 
-# Create ndc compatibility symlinks.
-ln -s rndc %buildroot%_sbindir/ndc
-ln -s rndc.8 %buildroot%_man8dir/ndc.8
-
 # ALT docs
 mkdir -p %buildroot%docdir
 cp -a README %SOURCE3 %SOURCE4 CHANGES %buildroot%docdir/
