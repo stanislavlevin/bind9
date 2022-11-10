@@ -68,6 +68,7 @@ Patch0004: 0004-ALT-named-Allow-non-writable-working-directory.patch
 Patch0005: 0005-ALT-tests-Unchroot-named-for-tests.patch
 Patch0006: 0006-ALT-tests-Add-tests-for-signing-with-custom-OpenSSL.patch
 Patch0007: 0007-ALT-tests-Raise-expected-delta-time-for-cds.patch
+Patch0008: 0008-ALT-tests-Wait-up-to-30sec-for-the-server-start.patch
 
 %if_with docs
 BuildRequires: python3(sphinx)
