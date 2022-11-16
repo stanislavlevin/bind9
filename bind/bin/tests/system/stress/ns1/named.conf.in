@@ -11,25 +11,22 @@
  * information regarding copyright ownership.
  */
 
+controls { /* empty */ };
+
 options {
-	port 5300;
+	query-source address 10.53.0.1;
+	notify-source 10.53.0.1;
+	transfer-source 10.53.0.1;
+	port @PORT@;
 	pid-file "named.pid";
-	listen-on { 10.53.0.2; };
+	listen-on { 10.53.0.1; };
 	listen-on-v6 { none; };
-	allow-query { any; };
 	recursion no;
 	dnssec-validation no;
-	allow-new-zones yes;
+	notify yes;
 };
-
-include "../../common/controls.conf";
 
 zone "." {
-	type hint;
-	file "../../common/root.hint";
-};
-
-zone "normal.example" {
 	type master;
-	file "normal.db";
+	file "root.db";
 };

@@ -2486,10 +2486,9 @@ prefetch_done(isc_task_t *task, isc_event_t *event) {
 	 */
 	if (client->recursionquota != NULL) {
 		isc_quota_detach(&client->recursionquota);
+		ns_stats_decrement(client->sctx->nsstats,
+				   ns_statscounter_recursclients);
 	}
-
-	ns_stats_decrement(client->sctx->nsstats,
-			   ns_statscounter_recursclients);
 
 	free_devent(client, &event, &devent);
 	isc_nmhandle_detach(&client->prefetchhandle);
@@ -2518,6 +2517,8 @@ query_prefetch(ns_client_t *client, dns_name_t *qname,
 					  &client->recursionquota);
 		switch (result) {
 		case ISC_R_SUCCESS:
+			ns_stats_increment(client->sctx->nsstats,
+					   ns_statscounter_recursclients);
 			break;
 		case ISC_R_SOFTQUOTA:
 			isc_quota_detach(&client->recursionquota);
@@ -2526,9 +2527,6 @@ query_prefetch(ns_client_t *client, dns_name_t *qname,
 			return;
 		}
 	}
-
-	ns_stats_increment(client->sctx->nsstats,
-			   ns_statscounter_recursclients);
 
 	tmprdataset = ns_client_newrdataset(client);
 	if (tmprdataset == NULL) {
@@ -2736,6 +2734,8 @@ query_rpzfetch(ns_client_t *client, dns_name_t *qname, dns_rdatatype_t type) {
 					  &client->recursionquota);
 		switch (result) {
 		case ISC_R_SUCCESS:
+			ns_stats_increment(client->sctx->nsstats,
+					   ns_statscounter_recursclients);
 			break;
 		case ISC_R_SOFTQUOTA:
 			isc_quota_detach(&client->recursionquota);
@@ -2744,9 +2744,6 @@ query_rpzfetch(ns_client_t *client, dns_name_t *qname, dns_rdatatype_t type) {
 			return;
 		}
 	}
-
-	ns_stats_increment(client->sctx->nsstats,
-			   ns_statscounter_recursclients);
 
 	tmprdataset = ns_client_newrdataset(client);
 	if (tmprdataset == NULL) {
@@ -3588,7 +3585,7 @@ rpz_rewrite_ip_rrset(ns_client_t *client, dns_name_t *name,
 	struct in_addr ina;
 	struct in6_addr in6a;
 	isc_result_t result;
-	unsigned int options = DNS_DBFIND_GLUEOK;
+	unsigned int options = client->query.dboptions | DNS_DBFIND_GLUEOK;
 	bool done = false;
 
 	CTRACE(ISC_LOG_DEBUG(3), "rpz_rewrite_ip_rrset");
@@ -3649,8 +3646,9 @@ rpz_rewrite_ip_rrset(ns_client_t *client, dns_name_t *name,
 		 * otherwise we are done.
 		 */
 		if (result == DNS_R_GLUE) {
-			options = 0;
+			options = client->query.dboptions;
 		} else {
+			options = client->query.dboptions | DNS_DBFIND_GLUEOK;
 			done = true;
 		}
 
@@ -4210,7 +4208,7 @@ rpz_rewrite(ns_client_t *client, dns_rdatatype_t qtype, isc_result_t qresult,
 
 	dns_fixedname_init(&nsnamef);
 	dns_name_clone(client->query.qname, dns_fixedname_name(&nsnamef));
-	options = DNS_DBFIND_GLUEOK;
+	options = client->query.dboptions | DNS_DBFIND_GLUEOK;
 	while (st->r.label > st->popt.min_ns_labels) {
 		bool was_glue = false;
 		/*
@@ -4336,9 +4334,9 @@ rpz_rewrite(ns_client_t *client, dns_rdatatype_t qtype, isc_result_t qresult,
 		 * glue responses, otherwise setup for the next name.
 		 */
 		if (was_glue) {
-			options = 0;
+			options = client->query.dboptions;
 		} else {
-			options = DNS_DBFIND_GLUEOK;
+			options = client->query.dboptions | DNS_DBFIND_GLUEOK;
 			st->r.label--;
 		}
 
@@ -6128,10 +6126,9 @@ fetch_callback(isc_task_t *task, isc_event_t *event) {
 
 	if (client->recursionquota != NULL) {
 		isc_quota_detach(&client->recursionquota);
+		ns_stats_decrement(client->sctx->nsstats,
+				   ns_statscounter_recursclients);
 	}
-
-	ns_stats_decrement(client->sctx->nsstats,
-			   ns_statscounter_recursclients);
 
 	LOCK(&client->manager->reclock);
 	if (ISC_LINK_LINKED(client, rlink)) {
@@ -6285,6 +6282,11 @@ ns_query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qname,
 	if (client->recursionquota == NULL) {
 		result = isc_quota_attach(&client->sctx->recursionquota,
 					  &client->recursionquota);
+		if (result == ISC_R_SUCCESS || result == ISC_R_SOFTQUOTA) {
+			ns_stats_increment(client->sctx->nsstats,
+					   ns_statscounter_recursclients);
+		}
+
 		if (result == ISC_R_SOFTQUOTA) {
 			isc_stdtime_t now;
 			isc_stdtime_get(&now);
@@ -6332,9 +6334,6 @@ ns_query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qname,
 		dns_message_clonebuffer(client->message);
 		ns_client_recursing(client);
 	}
-
-	ns_stats_increment(client->sctx->nsstats,
-			   ns_statscounter_recursclients);
 
 	/*
 	 * Invoke the resolver.

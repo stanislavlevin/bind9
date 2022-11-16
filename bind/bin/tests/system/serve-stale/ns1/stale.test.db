@@ -9,18 +9,11 @@
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
 
-; RPZ rewrite responses from this signed zone
-
-$TTL	120
-@		SOA	tld2s.  hostmaster.ns.tld2. ( 1 3600 1200 604800 60 )
-		NS	ns
-		NS	.			; check for RT 24985
-ns		A	10.53.0.2
-
-
-a0-1		A	192.168.0.1
-a0-1-scname	CNAME	a0-1.tld2.
-
-a3-5		A	192.168.3.5
-
-a7-2		A	192.168.7.2
+$ORIGIN stale.test.
+stale.test.		300	SOA	. . 0 0 0 0 0
+stale.test.		300	NS	ns.stale.test.
+ns.stale.test.		300	A	10.53.0.1
+cname1.stale.test.	1	CNAME	a1.stale.test.
+a1.stale.test.		1	A	192.0.2.1
+cname2.stale.test.	1	CNAME	a2.stale.test.
+a2.stale.test.		300	A	192.0.2.2

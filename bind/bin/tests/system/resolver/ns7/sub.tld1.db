@@ -9,18 +9,9 @@
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
 
-; RPZ rewrite responses from this signed zone
+$TTL 600
+@	IN SOA	ns hostmaster 1 1800 900 604800 600
 
-$TTL	120
-@		SOA	tld2s.  hostmaster.ns.tld2. ( 1 3600 1200 604800 60 )
-		NS	ns
-		NS	.			; check for RT 24985
-ns		A	10.53.0.2
+$GENERATE 1-21 @ IN NS sub-ns$.tld2.
 
-
-a0-1		A	192.168.0.1
-a0-1-scname	CNAME	a0-1.tld2.
-
-a3-5		A	192.168.3.5
-
-a7-2		A	192.168.7.2
+$GENERATE 1-21 bar IN NS bar-sub-ns$.tld2.

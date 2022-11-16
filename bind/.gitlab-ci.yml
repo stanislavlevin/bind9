@@ -319,6 +319,7 @@ stages:
     - ( cd bin/tests/system && make -j${TEST_PARALLEL_JOBS:-1} -k test V=1 )
     - test -s bin/tests/system/systests.output
     - if git rev-parse > /dev/null 2>&1; then ( ! grep "^I:.*:file.*not removed$" bin/tests/system/systests.output ); fi
+    - '( ! grep -F "grep: warning:" bin/tests/system/systests.output )'
 
 .system_test: &system_test_job
   <<: *system_test_common
@@ -643,7 +644,7 @@ gcc:oraclelinux9:amd64:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON}"
-    EXTRA_CONFIGURE: "--with-libidn2"
+    EXTRA_CONFIGURE: "--with-libidn2 --disable-developer"
   <<: *oraclelinux_9_amd64_image
   <<: *build_job
 

@@ -14,22 +14,27 @@
 controls { /* empty */ };
 
 options {
-	query-source address 10.53.0.4;
-	notify-source 10.53.0.4;
-	transfer-source 10.53.0.4;
-	port 5300;
+	query-source address 10.53.0.3;
+	notify-source 10.53.0.3;
+	transfer-source 10.53.0.3;
+	port @PORT@;
 	pid-file "named.pid";
-	listen-on { 10.53.0.4; };
+	listen-on { 10.53.0.3; };
 	listen-on-v6 { none; };
-	recursion yes;
-	dnssec-validation yes;
-	notify yes;
+	heartbeat-interval 2;
+	recursion no;
+	dnssec-validation no;
 };
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "hint.db";
 };
 
-include "zones.conf";
-
+zone "example." {
+	type slave;
+	dialup refresh;
+	notify no;
+	file "example.bk";
+	masters { 10.53.0.2; };
+};

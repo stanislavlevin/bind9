@@ -9,18 +9,13 @@
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
 
-; RPZ rewrite responses from this signed zone
-
-$TTL	120
-@		SOA	tld2s.  hostmaster.ns.tld2. ( 1 3600 1200 604800 60 )
-		NS	ns
-		NS	.			; check for RT 24985
-ns		A	10.53.0.2
-
-
-a0-1		A	192.168.0.1
-a0-1-scname	CNAME	a0-1.tld2.
-
-a3-5		A	192.168.3.5
-
-a7-2		A	192.168.7.2
+$ORIGIN .
+$TTL 0	; 0 seconds
+@			IN SOA	. . (
+				2          ; serial
+				0          ; refresh (0 seconds)
+				0          ; retry (0 seconds)
+				0          ; expire (0 seconds)
+				0          ; minimum (0 seconds)
+				)
+			KEYDATA	20221028094934 19700101000000 19700101000000 0 0 0 ; placeholder
