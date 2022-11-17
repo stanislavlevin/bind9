@@ -58,7 +58,7 @@ index 81184099b81..72a8e7f61f3 100644
 +echo_i "restore back named.conf (working directory and rndc config) ($n)"
 +kill_named ns2/named.pid || ret=1
 +copy_setports ns2/named1.conf.in ns2/named.conf
-+start_server --port ${PORT} runtime ns2
++start_server --noclean --restart --port ${PORT} runtime ns2
 +[ -s ns2/named.pid ] || ret=1
 +if [ $ret -ne 0 ]; then echo_i "failed"; fi
 +status=$((status+ret))
