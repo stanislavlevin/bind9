@@ -26,7 +26,7 @@
 Name: bind
 Version: 9.16.35
 %define src_version 9.16.35
-Release: alt1
+Release: alt2
 
 Summary: ISC BIND - DNS server
 License: MPL-2.0
@@ -546,6 +546,9 @@ fi
 %endif
 
 %changelog
+* Tue Dec 06 2022 Stanislav Levin <slev@altlinux.org> 9.16.35-alt2
+- Skip flaky dupsigs test (GL #3665).
+
 * Wed Nov 16 2022 Stanislav Levin <slev@altlinux.org> 9.16.35-alt1
 - 9.16.34 -> 9.16.35.
 
