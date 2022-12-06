@@ -76,6 +76,8 @@ BuildRequires: python3(sphinx_rtd_theme)
 %endif
 
 %if_with check
+# for backtraces
+BuildRequires: gdb
 %if_with system_tests
 BuildRequires: python3(dns)
 BuildRequires: python3(hypothesis)
