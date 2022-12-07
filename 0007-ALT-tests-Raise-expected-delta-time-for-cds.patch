@@ -64,7 +64,7 @@ index d85fd9125c4..039a8c6159d 100644
  die "missing inception time" unless $inception;
  my $delta = $inception - $notbefore;
 -die "bad inception time $delta" unless abs($delta - $target) <= 10;
-+die "bad inception time $delta" unless abs($delta - $target) <= 15;
++die "bad inception time $delta" unless abs($delta - $target) <= 30;
 -- 
 2.33.4
 
