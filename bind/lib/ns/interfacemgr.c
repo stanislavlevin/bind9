@@ -537,7 +537,8 @@ ns_interface_setup(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr,
 		result = ns_interface_listentcp(ifp);
 		if (result != ISC_R_SUCCESS) {
 			if ((result == ISC_R_ADDRINUSE) &&
-			    (addr_in_use != NULL)) {
+			    (addr_in_use != NULL))
+			{
 				*addr_in_use = true;
 			}
 
@@ -573,6 +574,7 @@ ns_interface_shutdown(ns_interface_t *ifp) {
 		isc_nmsocket_close(&ifp->tcplistensocket);
 	}
 	if (ifp->clientmgr != NULL) {
+		ns_clientmgr_shutdown(ifp->clientmgr);
 		ns_clientmgr_destroy(&ifp->clientmgr);
 	}
 }
@@ -933,11 +935,13 @@ do_scan(ns_interfacemgr_t *mgr, bool verbose) {
 		 * a temporary media glitch at rescan time.
 		 */
 		if (family == AF_INET &&
-		    isc_netaddr_equal(&interface.address, &zero_address)) {
+		    isc_netaddr_equal(&interface.address, &zero_address))
+		{
 			continue;
 		}
 		if (family == AF_INET6 &&
-		    isc_netaddr_equal(&interface.address, &zero_address6)) {
+		    isc_netaddr_equal(&interface.address, &zero_address6))
+		{
 			continue;
 		}
 
@@ -960,7 +964,8 @@ do_scan(ns_interfacemgr_t *mgr, bool verbose) {
 		ll = (family == AF_INET) ? mgr->listenon4 : mgr->listenon6;
 		dolistenon = true;
 		for (le = ISC_LIST_HEAD(ll->elts); le != NULL;
-		     le = ISC_LIST_NEXT(le, link)) {
+		     le = ISC_LIST_NEXT(le, link))
+		{
 			int match;
 			bool ipv6_wildcard = false;
 			isc_netaddr_t listen_netaddr;
@@ -1003,7 +1008,8 @@ do_scan(ns_interfacemgr_t *mgr, bool verbose) {
 			 * special considerations later, so remember it.
 			 */
 			if (family == AF_INET6 && ipv6only && ipv6pktinfo &&
-			    listenon_is_ip6_any(le)) {
+			    listenon_is_ip6_any(le))
+			{
 				ipv6_wildcard = true;
 			}
 
@@ -1030,7 +1036,8 @@ do_scan(ns_interfacemgr_t *mgr, bool verbose) {
 				}
 
 				if (log_explicit && family == AF_INET6 &&
-				    listenon_is_ip6_any(le)) {
+				    listenon_is_ip6_any(le))
+				{
 					isc_log_write(
 						IFMGR_COMMON_LOGARGS,
 						verbose ? ISC_LOG_INFO

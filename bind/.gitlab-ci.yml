@@ -16,7 +16,7 @@ variables:
   TEST_PARALLEL_JOBS: 6
 
   CONFIGURE: ./configure
-  CLANG_VERSION: 14
+  CLANG_VERSION: 15
   CLANG: "clang-${CLANG_VERSION}"
   SCAN_BUILD: "scan-build-${CLANG_VERSION}"
   ASAN_SYMBOLIZER_PATH: "/usr/lib/llvm-${CLANG_VERSION}/bin/llvm-symbolizer"
@@ -144,12 +144,12 @@ stages:
 
 # Fedora
 
-.fedora-36-amd64: &fedora_36_amd64_image
-  image: "$CI_REGISTRY_IMAGE:fedora-36-amd64"
+.fedora-37-amd64: &fedora_37_amd64_image
+  image: "$CI_REGISTRY_IMAGE:fedora-37-amd64"
   <<: *linux_amd64
 
-.fedora-36-arm64: &fedora_36_arm64_image
-  image: "$CI_REGISTRY_IMAGE:fedora-36-arm64"
+.fedora-37-arm64: &fedora_37_arm64_image
+  image: "$CI_REGISTRY_IMAGE:fedora-37-arm64"
   <<: *linux_stress_arm64
 
 # Ubuntu
@@ -189,7 +189,7 @@ stages:
   <<: *libvirt_amd64
 
 .openbsd-amd64: &openbsd_amd64_image
-  image: "openbsd-7.1-x86_64"
+  image: "openbsd-7.2-x86_64"
   <<: *libvirt_amd64
 
 ### Job Templates
@@ -248,6 +248,9 @@ stages:
       $EXTRA_CONFIGURE
       || (test -s config.log && cat config.log; exit 1)
 
+.parse_tsan: &parse_tsan
+    - find -name 'tsan.*' -exec python3 util/parse_tsan.py {} \;
+
 .build: &build_job
   <<: *default_triggering_rules
   stage: build
@@ -259,7 +262,9 @@ stages:
     - test -n "${SKIP_MAKE_DEPEND}" || make -j${BUILD_PARALLEL_JOBS:-1} depend 2>&1 | tee make-depend.log
     - test -n "${SKIP_MAKE_DEPEND}" || ( ! grep -F "error:" make-depend.log )
     - make -j${BUILD_PARALLEL_JOBS:-1} -k all V=1
+    - test -z "${BUILD_CONTRIB}" || for DIR in contrib/dlz/modules/*; do test -f "${DIR}/Makefile" && make -C "${DIR}"; done
     - test -z "${RUN_MAKE_INSTALL}" || make DESTDIR="${INSTALL_PATH}" install
+    - test -z "${RUN_MAKE_INSTALL}" -o -z "${BUILD_CONTRIB}" || for DIR in contrib/dlz/modules/*; do test -f "${DIR}/Makefile" && make -C "${DIR}" DESTDIR="${INSTALL_PATH}" install; done
     - test -z "${RUN_MAKE_INSTALL}" || DESTDIR="${INSTALL_PATH}" sh util/check-make-install
     - if [[ "${CFLAGS}" == *"-fsanitize=address"* ]]; then ( ! grep -F AddressSanitizer config.log ); fi
     - test -z "${CROSS_COMPILATION}" || grep -F -A 1 "checking whether we are cross compiling" config.log | grep -q "result.*yes"
@@ -338,7 +343,7 @@ stages:
 .system_test_tsan: &system_test_tsan_job
   <<: *system_test_common
   after_script:
-    - find -name 'tsan.*' -exec python3 util/parse_tsan.py {} \;
+    - *parse_tsan
   artifacts:
     expire_in: "1 day"
     untracked: true
@@ -397,7 +402,7 @@ stages:
   <<: *unit_test_common
   after_script:
     - *kyua_report_html
-    - find -name 'tsan.*' -exec python3 util/parse_tsan.py {} \;
+    - *parse_tsan
   artifacts:
     untracked: true
     expire_in: "1 day"
@@ -520,6 +525,12 @@ pylint:
     - pylint --rcfile $CI_PROJECT_DIR/.pylintrc $(git ls-files '*.py' | grep -vE '(ans\.py|dangerfile\.py|^bin/tests/system/)')
       # Ignore Pylint wrong-import-position error in system test to enable use of pytest.importorskip
     - pylint --rcfile $CI_PROJECT_DIR/.pylintrc --disable=wrong-import-position $(git ls-files 'bin/tests/system/*.py' | grep -vE 'ans\.py')
+
+checkbashisms:
+  <<: *precheck_job
+  needs: []
+  script:
+    - checkbashisms $(find . -path './.git' -prune -o -type f -exec sh -c 'head -n 1 "{}" | grep -qsF "#!/bin/sh"' \; -print | sed -e '/^\.\/install-sh$/d')
 
 tarball-create:
   stage: precheck
@@ -694,10 +705,12 @@ unit:gcc:buster:amd64:
 
 gcc:bullseye:amd64:
   variables:
+    BUILD_CONTRIB: 1
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} --coverage -O0"
     EXTRA_CONFIGURE: "--with-libidn2"
     LDFLAGS: "--coverage"
+    RUN_MAKE_INSTALL: 1
   <<: *debian_bullseye_amd64_image
   <<: *build_job
 
@@ -970,7 +983,7 @@ unit:gcc:jammy:amd64:
     - job: gcc:jammy:amd64
       artifacts: true
 
-# Jobs for ASAN builds on Fedora 36 (amd64)
+# Jobs for ASAN builds on Fedora 37 (amd64)
 
 gcc:asan:
   variables:
@@ -978,18 +991,18 @@ gcc:asan:
     CFLAGS: "${CFLAGS_COMMON} -fsanitize=address,undefined -DISC_MEM_USE_INTERNAL_MALLOC=0"
     LDFLAGS: "-fsanitize=address,undefined"
     EXTRA_CONFIGURE: "--with-libidn2"
-  <<: *fedora_36_amd64_image
+  <<: *fedora_37_amd64_image
   <<: *build_job
 
 system:gcc:asan:
-  <<: *fedora_36_amd64_image
+  <<: *fedora_37_amd64_image
   <<: *system_test_job
   needs:
     - job: gcc:asan
       artifacts: true
 
 unit:gcc:asan:
-  <<: *fedora_36_amd64_image
+  <<: *fedora_37_amd64_image
   <<: *unit_test_job
   needs:
     - job: gcc:asan
@@ -1018,7 +1031,7 @@ unit:clang:asan:
     - job: clang:asan
       artifacts: true
 
-# Jobs for TSAN builds on Fedora 36 (amd64)
+# Jobs for TSAN builds on Fedora 37 (amd64)
 
 gcc:tsan:
   variables:
@@ -1026,13 +1039,13 @@ gcc:tsan:
     CFLAGS: "${CFLAGS_COMMON} -fsanitize=thread -DISC_MEM_USE_INTERNAL_MALLOC=0"
     LDFLAGS: "-fsanitize=thread"
     EXTRA_CONFIGURE: "--with-libidn2 --enable-pthread-rwlock"
-  <<: *fedora_36_amd64_image
+  <<: *fedora_37_amd64_image
   <<: *build_job
 
 system:gcc:tsan:
   variables:
     TSAN_OPTIONS: "${TSAN_OPTIONS_COMMON} external_symbolizer_path=/usr/bin/llvm-symbolizer"
-  <<: *fedora_36_amd64_image
+  <<: *fedora_37_amd64_image
   <<: *system_test_tsan_job
   needs:
     - job: gcc:tsan
@@ -1041,7 +1054,7 @@ system:gcc:tsan:
 unit:gcc:tsan:
   variables:
     TSAN_OPTIONS: "${TSAN_OPTIONS_COMMON} external_symbolizer_path=/usr/bin/llvm-symbolizer"
-  <<: *fedora_36_amd64_image
+  <<: *fedora_37_amd64_image
   <<: *unit_test_tsan_job
   needs:
     - job: gcc:tsan
@@ -1075,12 +1088,16 @@ unit:clang:tsan:
       artifacts: true
 
 # Jobs for Clang builds on Debian 11 "bullseye" (amd64)
+# The -Wno-compound-token-split-by-macro option prevents warning when compiling
+# Perl DLZ module with Clang against Perl older than version 5.35.2.
 
 clang:bullseye:amd64:
   variables:
+    BUILD_CONTRIB: 1
     CC: ${CLANG}
-    CFLAGS: "${CFLAGS_COMMON} -Wenum-conversion"
+    CFLAGS: "${CFLAGS_COMMON} -Wenum-conversion -Wno-compound-token-split-by-macro"
     EXTRA_CONFIGURE: "--with-python=python3"
+    RUN_MAKE_INSTALL: 1
   <<: *debian_bullseye_amd64_image
   <<: *build_job
 
@@ -1367,6 +1384,34 @@ respdiff-short:
   script:
     - bash respdiff.sh -s named -q "${PWD}/10k_a.txt" -c 3 -w "${PWD}/rspworkdir" "${CI_PROJECT_DIR}" "/usr/local/respdiff-reference-bind/sbin/named"
 
+respdiff-short:asan:
+  <<: *respdiff_job
+  <<: *default_triggering_rules
+  variables:
+    CC: gcc
+    CFLAGS: "${CFLAGS_COMMON} -Og -fsanitize=address,undefined -DISC_MEM_USE_INTERNAL_MALLOC=0"
+    LDFLAGS: "-fsanitize=address,undefined"
+    MAX_DISAGREEMENTS_PERCENTAGE: "0.1"
+  script:
+    - bash respdiff.sh -s named -q "${PWD}/10k_a.txt" -c 3 -w "${PWD}/rspworkdir" "${CI_PROJECT_DIR}" "/usr/local/respdiff-reference-bind/sbin/named"
+  allow_failure: true
+
+respdiff-short:tsan:
+  <<: *respdiff_job
+  <<: *default_triggering_rules
+  variables:
+    CC: gcc
+    CFLAGS: "${CFLAGS_COMMON} -Og -fsanitize=thread -DISC_MEM_USE_INTERNAL_MALLOC=0"
+    LDFLAGS: "-fsanitize=thread"
+    EXTRA_CONFIGURE: "--enable-pthread-rwlock"
+    MAX_DISAGREEMENTS_PERCENTAGE: "0.1"
+    TSAN_OPTIONS: "${TSAN_OPTIONS_COMMON} external_symbolizer_path=/usr/bin/llvm-symbolizer"
+  script:
+    - bash respdiff.sh -s named -q "${PWD}/10k_a.txt" -c 3 -w "${PWD}/rspworkdir" "${CI_PROJECT_DIR}" "/usr/local/respdiff-reference-bind/sbin/named"
+  after_script:
+    - *parse_tsan
+  allow_failure: true
+
 respdiff-long:
   <<: *respdiff_job
   <<: *api_schedules_tags_triggers_web_triggering_rules
@@ -1376,6 +1421,34 @@ respdiff-long:
     MAX_DISAGREEMENTS_PERCENTAGE: "0.1"
   script:
     - bash respdiff.sh -s named -q "${PWD}/100k_mixed.txt" -c 3 -w "${PWD}/rspworkdir" "${CI_PROJECT_DIR}" "/usr/local/respdiff-reference-bind/sbin/named"
+
+respdiff-long:asan:
+  <<: *respdiff_job
+  <<: *api_schedules_tags_triggers_web_triggering_rules
+  variables:
+    CC: gcc
+    CFLAGS: "${CFLAGS_COMMON} -Og -fsanitize=address,undefined -DISC_MEM_USE_INTERNAL_MALLOC=0"
+    LDFLAGS: "-fsanitize=address,undefined"
+    MAX_DISAGREEMENTS_PERCENTAGE: "0.1"
+  script:
+    - bash respdiff.sh -s named -q "${PWD}/100k_mixed.txt" -c 3 -w "${PWD}/rspworkdir" "${CI_PROJECT_DIR}" "/usr/local/respdiff-reference-bind/sbin/named"
+  allow_failure: true
+
+respdiff-long:tsan:
+  <<: *respdiff_job
+  <<: *api_schedules_tags_triggers_web_triggering_rules
+  variables:
+    CC: gcc
+    CFLAGS: "${CFLAGS_COMMON} -Og -fsanitize=thread -DISC_MEM_USE_INTERNAL_MALLOC=0"
+    LDFLAGS: "-fsanitize=thread"
+    EXTRA_CONFIGURE: "--enable-pthread-rwlock"
+    MAX_DISAGREEMENTS_PERCENTAGE: "0.1"
+    TSAN_OPTIONS: "${TSAN_OPTIONS_COMMON} external_symbolizer_path=/usr/bin/llvm-symbolizer"
+  script:
+    - bash respdiff.sh -s named -q "${PWD}/100k_mixed.txt" -c 3 -w "${PWD}/rspworkdir" "${CI_PROJECT_DIR}" "/usr/local/respdiff-reference-bind/sbin/named"
+  after_script:
+    - *parse_tsan
+  allow_failure: true
 
 respdiff-long-third-party:
   <<: *respdiff_job
@@ -1409,8 +1482,8 @@ respdiff-long-third-party:
     when: always
   timeout: 2h
 
-stress:authoritative:fedora:36:amd64:
-  <<: *fedora_36_amd64_image
+stress:authoritative:fedora:37:amd64:
+  <<: *fedora_37_amd64_image
   <<: *linux_stress_amd64
   <<: *stress_job
   variables:
@@ -1423,8 +1496,8 @@ stress:authoritative:fedora:36:amd64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /linux/i && $BIND_STRESS_TEST_MODE =~ /authoritative/i && $BIND_STRESS_TEST_ARCH =~ /amd64/i)
 
-stress:recursive:fedora:36:amd64:
-  <<: *fedora_36_amd64_image
+stress:recursive:fedora:37:amd64:
+  <<: *fedora_37_amd64_image
   <<: *linux_stress_amd64
   <<: *stress_job
   variables:
@@ -1437,8 +1510,8 @@ stress:recursive:fedora:36:amd64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /linux/i && $BIND_STRESS_TEST_MODE =~ /recursive/i && $BIND_STRESS_TEST_ARCH =~ /amd64/i)
 
-stress:rpz:fedora:36:amd64:
-  <<: *fedora_36_amd64_image
+stress:rpz:fedora:37:amd64:
+  <<: *fedora_37_amd64_image
   <<: *linux_stress_amd64
   <<: *stress_job
   variables:
@@ -1451,8 +1524,8 @@ stress:rpz:fedora:36:amd64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /linux/i && $BIND_STRESS_TEST_MODE =~ /rpz/i && $BIND_STRESS_TEST_ARCH =~ /amd64/i)
 
-stress:authoritative:fedora:36:arm64:
-  <<: *fedora_36_arm64_image
+stress:authoritative:fedora:37:arm64:
+  <<: *fedora_37_arm64_image
   <<: *linux_stress_arm64
   <<: *stress_job
   variables:
@@ -1465,8 +1538,8 @@ stress:authoritative:fedora:36:arm64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /linux/i && $BIND_STRESS_TEST_MODE =~ /authoritative/i && $BIND_STRESS_TEST_ARCH =~ /arm64/i)
 
-stress:recursive:fedora:36:arm64:
-  <<: *fedora_36_arm64_image
+stress:recursive:fedora:37:arm64:
+  <<: *fedora_37_arm64_image
   <<: *linux_stress_arm64
   <<: *stress_job
   variables:
@@ -1479,8 +1552,8 @@ stress:recursive:fedora:36:arm64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /linux/i && $BIND_STRESS_TEST_MODE =~ /recursive/i && $BIND_STRESS_TEST_ARCH =~ /arm64/i)
 
-stress:rpz:fedora:36:arm64:
-  <<: *fedora_36_arm64_image
+stress:rpz:fedora:37:arm64:
+  <<: *fedora_37_arm64_image
   <<: *linux_stress_arm64
   <<: *stress_job
   variables:
@@ -1552,13 +1625,15 @@ gcov:
     - find lib/dns/rdata/* -name "*.c" -execdir cp -f "{}" ../../ \;
     # These drivers are built into bin/named/named in a way which trips up
     # gcovr.  Copy them to where gcovr expects them.
-    - cp contrib/dlz/drivers/dlz_drivers.c contrib/dlz/drivers/dlz_filesystem_driver.c contrib/dlz/drivers/sdlz_helper.c bin/named/
+    - cp contrib/dlz/drivers/{dlz_drivers,dlz_filesystem_driver,sdlz_helper}.c bin/named/
+    # Help gcovr find dlz_dbi.c file
+    - for DST in ldap mysql mysqldyn sqlite3 wildcard; do cp contrib/dlz/modules/common/dlz_dbi.c "contrib/dlz/modules/${DST}"; done
     # Generate XML file in the Cobertura XML format suitable for use by GitLab
     # for the purpose of displaying code coverage information in the diff view
     # of a given merge request.
-    - gcovr --root . --exclude-directories bin/tests --exclude-directories doc --exclude-directories libltdl --exclude-directories lib/samples --exclude 'lib/.*/tests/.*' --xml -o coverage.xml
-    - gcovr --root . --exclude-directories bin/tests --exclude-directories doc --exclude-directories libltdl --exclude-directories lib/samples --exclude 'lib/.*/tests/.*' --html-details -o coverage.html
-    - gcovr --root . --exclude-directories bin/tests --exclude-directories doc --exclude-directories libltdl --exclude-directories lib/samples --exclude 'lib/.*/tests/.*' -o coverage.txt
+    - gcovr --root . --exclude-directories bin/tests --exclude-directories doc --exclude-directories fuzz --exclude-directories libltdl --exclude-directories lib/samples --exclude 'lib/.*/tests/.*' --xml -o coverage.xml
+    - gcovr --root . --exclude-directories bin/tests --exclude-directories doc --exclude-directories fuzz --exclude-directories libltdl --exclude-directories lib/samples --exclude 'lib/.*/tests/.*' --html-details -o coverage.html
+    - gcovr --root . --exclude-directories bin/tests --exclude-directories doc --exclude-directories fuzz --exclude-directories libltdl --exclude-directories lib/samples --exclude 'lib/.*/tests/.*' -o coverage.txt
     - tail -n 3 coverage.txt
   artifacts:
     paths:
