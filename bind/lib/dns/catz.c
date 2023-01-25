@@ -662,7 +662,7 @@ dns_catz_new_zone(dns_catz_zones_t *catzs, dns_catz_zone_t **zonep,
 	dns_name_init(&new_zone->name, NULL);
 	dns_name_dup(name, catzs->mctx, &new_zone->name);
 
-	isc_ht_init(&new_zone->entries, catzs->mctx, 4);
+	isc_ht_init(&new_zone->entries, catzs->mctx, 16);
 
 	new_zone->updatetimer = NULL;
 	result = isc_timer_create(catzs->timermgr, isc_timertype_inactive, NULL,
@@ -1874,8 +1874,8 @@ dns_catz_update_from_db(dns_db_t *db, dns_catz_zones_t *catzs) {
 
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL, DNS_LOGMODULE_MASTER,
 		      ISC_LOG_INFO,
-		      "catz: updating catalog zone '%s' with serial %d", bname,
-		      vers);
+		      "catz: updating catalog zone '%s' with serial %" PRIu32,
+		      bname, vers);
 
 	result = dns_catz_new_zone(catzs, &newzone, &db->origin);
 	if (result != ISC_R_SUCCESS) {

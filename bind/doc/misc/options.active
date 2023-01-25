@@ -163,7 +163,7 @@ options {
             <size> ) ] [ versions ( unlimited | <integer> ) ] [ suffix (
             increment | timestamp ) ];
         dnstap-version ( <quoted_string> | none );
-        dscp <integer>;
+        dscp <integer>; // deprecated
         dual-stack-servers [ port <integer> ] { ( <quoted_string> [ port
             <integer> ] [ dscp <integer> ] | <ipv4_address> [ port
             <integer> ] [ dscp <integer> ] | <ipv6_address> [ port
@@ -363,6 +363,7 @@ options {
         trust-anchor-telemetry <boolean>; // experimental
         try-tcp-refresh <boolean>;
         update-check-ksk <boolean>;
+        update-quota <integer>;
         use-alt-transfer-source <boolean>;
         use-v4-udp-ports { <portrange>; ... };
         use-v6-udp-ports { <portrange>; ... };

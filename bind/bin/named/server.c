@@ -2330,6 +2330,9 @@ configure_rpz_zone(dns_view_t *view, const cfg_listelt_t *element,
 	} else {
 		zone->max_policy_ttl = ttl_default;
 	}
+	if (*old_rpz_okp && zone->max_policy_ttl != old->max_policy_ttl) {
+		*old_rpz_okp = false;
+	}
 
 	obj = cfg_tuple_get(rpz_obj, "min-update-interval");
 	if (cfg_obj_isduration(obj)) {
@@ -2337,8 +2340,9 @@ configure_rpz_zone(dns_view_t *view, const cfg_listelt_t *element,
 	} else {
 		zone->min_update_interval = minupdateinterval_default;
 	}
-
-	if (*old_rpz_okp && zone->max_policy_ttl != old->max_policy_ttl) {
+	if (*old_rpz_okp &&
+	    zone->min_update_interval != old->min_update_interval)
+	{
 		*old_rpz_okp = false;
 	}
 
@@ -2440,6 +2444,9 @@ configure_rpz_zone(dns_view_t *view, const cfg_listelt_t *element,
 		zone->addsoa = add_soa_default;
 	} else {
 		zone->addsoa = cfg_obj_asboolean(obj);
+	}
+	if (*old_rpz_okp && zone->addsoa != old->addsoa) {
+		*old_rpz_okp = false;
 	}
 
 	return (ISC_R_SUCCESS);
@@ -8535,6 +8542,7 @@ load_configuration(const char *filename, named_server_t *server,
 	configure_server_quota(maps, "tcp-clients", &server->sctx->tcpquota);
 	configure_server_quota(maps, "recursive-clients",
 			       &server->sctx->recursionquota);
+	configure_server_quota(maps, "update-quota", &server->sctx->updquota);
 
 	max = isc_quota_getmax(&server->sctx->recursionquota);
 	if (max > 1000) {
@@ -13885,10 +13893,11 @@ typedef struct {
 static void
 rmzone(isc_task_t *task, isc_event_t *event) {
 	ns_dzctx_t *dz = (ns_dzctx_t *)event->ev_arg;
-	dns_zone_t *zone, *raw = NULL, *mayberaw;
+	dns_zone_t *zone = NULL, *raw = NULL, *mayberaw = NULL;
+	dns_catz_zone_t *catz = NULL;
 	char zonename[DNS_NAME_FORMATSIZE];
-	dns_view_t *view;
-	ns_cfgctx_t *cfg;
+	dns_view_t *view = NULL;
+	ns_cfgctx_t *cfg = NULL;
 	dns_db_t *dbp = NULL;
 	bool added;
 	isc_result_t result;
@@ -13912,10 +13921,14 @@ rmzone(isc_task_t *task, isc_event_t *event) {
 		      "deleting zone %s in view %s via delzone", zonename,
 		      view->name);
 
-	/* Remove the zone from configuration (and NZF file if applicable) */
+	/*
+	 * Remove the zone from configuration (and NZF file if applicable)
+	 * (If this is a catalog zone member then nzf_config can be NULL)
+	 */
 	added = dns_zone_getadded(zone);
+	catz = dns_zone_get_parentcatz(zone);
 
-	if (added && cfg != NULL) {
+	if (added && catz == NULL && cfg != NULL) {
 #ifdef HAVE_LMDB
 		/* Make sure we can open the NZD database */
 		LOCK(&view->new_zone_lock);
@@ -13932,8 +13945,7 @@ rmzone(isc_task_t *task, isc_event_t *event) {
 		if (result != ISC_R_SUCCESS) {
 			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 				      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
-				      "unable to "
-				      "delete zone configuration: %s",
+				      "unable to delete zone configuration: %s",
 				      isc_result_totext(result));
 		}
 
@@ -13948,8 +13960,7 @@ rmzone(isc_task_t *task, isc_event_t *event) {
 		if (result != ISC_R_SUCCESS) {
 			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 				      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
-				      "unable to "
-				      "delete zone configuration: %s",
+				      "unable to delete zone configuration: %s",
 				      isc_result_totext(result));
 		}
 #endif /* HAVE_LMDB */
@@ -13970,8 +13981,7 @@ rmzone(isc_task_t *task, isc_event_t *event) {
 		if (result != ISC_R_SUCCESS) {
 			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 				      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
-				      "unable to "
-				      "delete zone configuration: %s",
+				      "unable to delete zone configuration: %s",
 				      isc_result_totext(result));
 		}
 	}
@@ -14088,8 +14098,8 @@ named_server_delzone(named_server_t *server, isc_lex_t *lex,
 	if (dns_zone_get_rpz_num(zone) != DNS_RPZ_INVALID_NUM) {
 		TCHECK(putstr(text, "zone '"));
 		TCHECK(putstr(text, zonename));
-		TCHECK(putstr(text, "' cannot be deleted: response-policy "
-				    "zone."));
+		TCHECK(putstr(text,
+			      "' cannot be deleted: response-policy zone."));
 		result = ISC_R_FAILURE;
 		goto cleanup;
 	}
