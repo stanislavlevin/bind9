@@ -81,24 +81,24 @@ index b9641c42b2d..974b4405134 100644
 --- a/bind/bin/tests/system/conf.sh.in
 +++ b/bind/bin/tests/system/conf.sh.in
 @@ -54,9 +54,15 @@ NSEC3HASH=$TOP/bin/tools/nsec3hash
- NSLOOKUP=$TOP/bin/dig/nslookup
- NSUPDATE=$TOP/bin/nsupdate/nsupdate
- NZD2NZF=$TOP/bin/tools/named-nzd2nzf
--PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s ${SLOT:-0} -p ${HSMPIN:-1234} -w 0"
--PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -q -s ${SLOT:-0} -p ${HSMPIN:-1234}"
--PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s ${SLOT:-0} -p ${HSMPIN:-1234}"
+ export NSLOOKUP=$TOP/bin/dig/nslookup
+ export NSUPDATE=$TOP/bin/nsupdate/nsupdate
+ export NZD2NZF=$TOP/bin/tools/named-nzd2nzf
+-export PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s ${SLOT:-0} -p ${HSMPIN:-1234} -w 0"
+-export PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -q -s ${SLOT:-0} -p ${HSMPIN:-1234}"
+-export PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s ${SLOT:-0} -p ${HSMPIN:-1234}"
 +if [ -n "${PKCS11_ENGINE:-}" ]; then
-+    PK11DEL_OPENSSL="pkcs11-tool --module $SOFTHSM_MODULE_PATH --slot ${SLOT:-0} --pin ${HSMPIN:-1234} --delete-object"
-+    PK11GEN_OPENSSL="pkcs11-tool --module $SOFTHSM_MODULE_PATH --slot ${SLOT:-0} --pin ${HSMPIN:-1234} --keypairgen --usage-sign"
-+    PK11LIST_OPENSSL="pkcs11-tool --list-objects --module $SOFTHSM_MODULE_PATH --slot ${SLOT:-0} --pin ${HSMPIN:-1234}"
++    export PK11DEL_OPENSSL="pkcs11-tool --module $SOFTHSM_MODULE_PATH --slot ${SLOT:-0} --pin ${HSMPIN:-1234} --delete-object"
++    export PK11GEN_OPENSSL="pkcs11-tool --module $SOFTHSM_MODULE_PATH --slot ${SLOT:-0} --pin ${HSMPIN:-1234} --keypairgen --usage-sign"
++    export PK11LIST_OPENSSL="pkcs11-tool --list-objects --module $SOFTHSM_MODULE_PATH --slot ${SLOT:-0} --pin ${HSMPIN:-1234}"
 +else
-+    PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s ${SLOT:-0} -p ${HSMPIN:-1234} -w 0"
-+    PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -q -s ${SLOT:-0} -p ${HSMPIN:-1234}"
-+    PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s ${SLOT:-0} -p ${HSMPIN:-1234}"
++    export PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s ${SLOT:-0} -p ${HSMPIN:-1234} -w 0"
++    export PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -q -s ${SLOT:-0} -p ${HSMPIN:-1234}"
++    export PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s ${SLOT:-0} -p ${HSMPIN:-1234}"
 +fi
- RESOLVE=$TOP/bin/tests/system/resolve
- REVOKE=$TOP/bin/dnssec/dnssec-revoke
- RNDC=$TOP/bin/rndc/rndc
+ export RESOLVE=$TOP/bin/tests/system/resolve
+ export REVOKE=$TOP/bin/dnssec/dnssec-revoke
+ export RNDC=$TOP/bin/rndc/rndc
 diff --git a/bind/bin/tests/system/pkcs11/setup.sh b/bind/bin/tests/system/pkcs11/setup.sh
 index b592fd095ca..140b16d447e 100644
 --- a/bind/bin/tests/system/pkcs11/setup.sh
