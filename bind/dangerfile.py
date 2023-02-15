@@ -60,7 +60,7 @@ mr = proj.mergerequests.get(os.environ["CI_MERGE_REQUEST_IID"])
 #
 # - FAIL if any of the following is true for any commit on the MR branch:
 #
-#     * The subject line starts with "fixup!" or "Apply suggestion".
+#     * The subject line starts with "fixup!", "amend!" or "Apply suggestion".
 #
 #     * The subject line starts with a prohibited word indicating a work in
 #       progress commit (e.g. "WIP").
@@ -98,7 +98,9 @@ for commit in danger.git.commits:
     message_lines = commit.message.splitlines()
     subject = message_lines[0]
     if not fixup_error_logged and (
-        subject.startswith("fixup!") or subject.startswith("Apply suggestion")
+        subject.startswith("fixup!")
+        or subject.startswith("amend!")
+        or subject.startswith("Apply suggestion")
     ):
         fail(
             "Fixup commits are still present in this merge request. "
@@ -123,8 +125,9 @@ for commit in danger.git.commits:
     if (
         len(message_lines) < 3
         and "fixup! " not in subject
-        and " CHANGES " not in subject
-        and " release note" not in subject
+        and "CHANGES " not in subject
+        and "release note" not in subject.lower()
+        and "GL #" not in subject
     ):
         warn(f"Please write a log message for commit {commit.sha}.")
     for line in message_lines[2:]:
@@ -284,7 +287,7 @@ elif not approved:
 # * The merge request adds a new CHANGES entry that is not a placeholder and
 #   does not contain any GitLab/RT issue/MR identifiers.
 
-changes_modified = "CHANGES" in modified_files
+changes_modified = "CHANGES" in modified_files or "CHANGES.SE" in modified_files
 no_changes_label_set = "No CHANGES" in mr_labels
 if not changes_modified and not no_changes_label_set:
     fail(
@@ -297,7 +300,7 @@ if changes_modified and no_changes_label_set:
         "Revert `CHANGES` modifications or unset the *No Changes* label."
     )
 
-changes_added_lines = added_lines(target_branch, ["CHANGES"])
+changes_added_lines = added_lines(target_branch, ["CHANGES", "CHANGES.SE"])
 placeholders_added = lines_containing(changes_added_lines, "[placeholder]")
 identifiers_found = filter(changes_issue_or_mr_id_regex.search, changes_added_lines)
 if changes_added_lines:
