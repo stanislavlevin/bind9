@@ -1160,14 +1160,20 @@ default is used.
    effective user ID of the ``named`` process.
 
 ``qname-minimization``
-   This option controls QNAME minimization behavior in the BIND
-   resolver. When set to ``strict``, BIND follows the QNAME
+   When this is set to ``strict``, BIND follows the QNAME
    minimization algorithm to the letter, as specified in :rfc:`7816`.
+
    Setting this option to ``relaxed`` causes BIND to fall back to
    normal (non-minimized) query mode when it receives either NXDOMAIN or
    other unexpected responses (e.g., SERVFAIL, improper zone cut,
-   REFUSED) to a minimized query. ``disabled`` disables QNAME
-   minimization completely. The current default is ``relaxed``, but it
+   REFUSED) to a minimized query. A resolver can use a leading
+   underscore, like ``_.example.com``, in an attempt to improve
+   interoperability. (See :rfc:`7816` section 3.)
+
+   ``disabled`` disables QNAME minimization completely.
+   ``off`` is a synonym for ``disabled``.
+
+   The current default is ``relaxed``, but it
    may be changed to ``strict`` in a future release.
 
 ``tkey-gssapi-keytab``
@@ -3560,9 +3566,8 @@ Tuning
    to be sent without fragmentation at the minimum MTU sizes for
    Ethernet and IPv6 networks.)
 
-   The ``named`` now sets the DON'T FRAGMENT flag on outgoing UDP packets.
-   According to the measurements done by multiple parties this should not be
-   causing any operational problems as most of the Internet "core" is able to
+   According to the measurements done by multiple parties the default value
+   should not be causing the fragmentation as most of the Internet "core" is able to
    cope with IP message sizes between 1400-1500 bytes, the 1232 size was picked
    as a conservative minimal number that could be changed by the DNS operator to
    a estimated path MTU minus the estimated header space. In practice, the
@@ -6542,6 +6547,7 @@ This example generates A and AAAA records using modifiers; the AAAA
 is equivalent to:
 
 ::
+
    HOST-0000.EXAMPLE.   A      1.2.3.1
    HOST-0001.EXAMPLE.   A      1.2.3.2
    HOST-0002.EXAMPLE.   A      1.2.3.3

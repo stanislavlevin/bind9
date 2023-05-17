@@ -12,8 +12,11 @@ variables:
   KYUA_RESULT: "$CI_PROJECT_DIR/kyua.results"
 
   GIT_DEPTH: 1
+  GIT_CLEAN_FLAGS: -ffdxq
+
+  # The following values may be overwritten in GitLab's CI/CD Variables Settings.
   BUILD_PARALLEL_JOBS: 6
-  TEST_PARALLEL_JOBS: 6
+  TEST_PARALLEL_JOBS: 4
 
   CONFIGURE: ./configure
   CLANG_VERSION: 15
@@ -42,11 +45,11 @@ variables:
   BIND_STRESS_TEST_OS: linux
   BIND_STRESS_TEST_ARCH: amd64
 
-# Allow all running CI jobs to be automatically canceled when a new
-# version of a branch is pushed.
-#
-# See: https://docs.gitlab.com/ee/ci/pipelines/settings.html#auto-cancel-redundant-pipelines
 default:
+  # Allow all running CI jobs to be automatically canceled when a new
+  # version of a branch is pushed.
+  #
+  # See: https://docs.gitlab.com/ee/ci/pipelines/settings.html#auto-cancel-redundant-pipelines
   interruptible: true
 
 stages:
@@ -101,8 +104,8 @@ stages:
 
 # Alpine Linux
 
-.alpine-3.16-amd64: &alpine_3_16_amd64_image
-  image: "$CI_REGISTRY_IMAGE:alpine-3.16-amd64"
+.alpine-3.17-amd64: &alpine_3_17_amd64_image
+  image: "$CI_REGISTRY_IMAGE:alpine-3.17-amd64"
   <<: *linux_amd64
 
 # Oracle Linux
@@ -182,7 +185,7 @@ stages:
 ### QCOW2 Image Templates
 
 .freebsd-12-amd64: &freebsd_12_amd64_image
-  image: "freebsd-12.3-x86_64"
+  image: "freebsd-12.4-x86_64"
   <<: *libvirt_amd64
 
 .freebsd-13-amd64: &freebsd_13_amd64_image
@@ -232,7 +235,6 @@ stages:
     - autoreconf -fi
   artifacts:
     untracked: true
-    expire_in: "1 day"
 
 .configure: &configure
     - ${CONFIGURE}
@@ -276,7 +278,6 @@ stages:
       artifacts: true
   artifacts:
     untracked: true
-    expire_in: "1 day"
     when: always
 
 .windows_build: &windows_build_job
@@ -302,7 +303,6 @@ stages:
   needs: []
   artifacts:
     untracked: true
-    expire_in: "1 day"
 
 .setup_interfaces: &setup_interfaces
     - if [ "$(id -u)" -eq "0" ]; then
@@ -331,14 +331,12 @@ stages:
   <<: *system_test_common
   artifacts:
     untracked: true
-    expire_in: "1 day"
     when: on_failure
 
 .system_test_gcov: &system_test_gcov_job
   <<: *system_test_common
   artifacts:
     untracked: true
-    expire_in: "1 day"
     when: always
 
 .system_test_tsan: &system_test_tsan_job
@@ -346,7 +344,6 @@ stages:
   after_script:
     - *parse_tsan
   artifacts:
-    expire_in: "1 day"
     untracked: true
     when: on_failure
 
@@ -358,7 +355,6 @@ stages:
          --output kyua_html > /dev/null
 
 .windows_system_test: &windows_system_test_job
-  <<: *api_schedules_tags_triggers_web_triggering_rules
   stage: system
   script:
     - 'Push-Location bin/tests/system'
@@ -372,7 +368,6 @@ stages:
     - 'If (Test-Path C:/CrashDumps/*) { dir C:/CrashDumps; Throw }'
   artifacts:
     untracked: true
-    expire_in: "1 day"
     when: on_failure
 
 .unit_test_common: &unit_test_common
@@ -389,14 +384,12 @@ stages:
   <<: *unit_test_common
   artifacts:
     untracked: true
-    expire_in: "1 day"
     when: on_failure
 
 .unit_test_gcov: &unit_test_gcov_job
   <<: *unit_test_common
   artifacts:
     untracked: true
-    expire_in: "1 day"
     when: always
 
 .unit_test_tsan: &unit_test_tsan_job
@@ -406,7 +399,6 @@ stages:
     - *parse_tsan
   artifacts:
     untracked: true
-    expire_in: "1 day"
     when: on_failure
 
 .respdiff: &respdiff_job
@@ -425,7 +417,6 @@ stages:
     exclude:
       - bind-qa/bind9/respdiff/rspworkdir/data.mdb # Exclude a 10 GB file.
     untracked: true
-    expire_in: "1 day"
     when: always
 
 ### Job Definitions
@@ -457,7 +448,6 @@ misc:
   artifacts:
     paths:
       - checklibs.out
-    expire_in: "1 day"
     when: on_failure
 
 black:
@@ -539,11 +529,16 @@ tarball-create:
   <<: *default_triggering_rules
   script:
     - source version
-    - export BIND_DIRECTORY="bind-${MAJORVER}.${MINORVER}.${PATCHVER}${RELEASETYPE}${RELEASEVER}"
+    - export BIND9_VERSION="${MAJORVER}.${MINORVER}${PATCHVER:+.}${PATCHVER}${RELEASETYPE}${RELEASEVER}${EXTENSIONS}"
+    - export BIND_DIRECTORY="bind-${BIND9_VERSION}"
     - git archive --prefix="${BIND_DIRECTORY}/" --output="${BIND_DIRECTORY}.tar" HEAD
     - mkdir "${BIND_DIRECTORY}"
     - echo "SRCID=$(git rev-list --max-count=1 HEAD | cut -b1-7)" > "${BIND_DIRECTORY}/srcid"
     - tar --append --file="${BIND_DIRECTORY}.tar" "${BIND_DIRECTORY}/srcid"
+    - sphinx-build -b man -d "${BIND_DIRECTORY}/tmp/.doctrees/" -W -a -v -c doc/man/ -D version="@BIND9_VERSION@" -D today="@RELEASE_DATE@" -D release="@BIND9_VERSIONSTRING@" doc/man "${BIND_DIRECTORY}/doc/man"
+    - rm -rf "${BIND_DIRECTORY}/tmp/.doctrees/"
+    - for man in "${BIND_DIRECTORY}/doc/man/"*; do mv "$man" "$man"in; done
+    - tar --append --file="${BIND_DIRECTORY}.tar" "${BIND_DIRECTORY}/doc/man/"*in
     - ${TARBALL_COMPRESSOR} "${BIND_DIRECTORY}.tar"
   artifacts:
     paths:
@@ -571,7 +566,6 @@ docs:
   needs:
     - job: autoreconf
       artifacts: true
-  allow_failure: false
   artifacts:
     paths:
       - doc/arm/
@@ -579,27 +573,27 @@ docs:
       - doc/misc/
     when: always
 
-# Jobs for regular GCC builds on Alpine Linux 3.16 (amd64)
+# Jobs for regular GCC builds on Alpine Linux 3.17 (amd64)
 
-gcc:alpine3.16:amd64:
+gcc:alpine3.17:amd64:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON}"
-  <<: *alpine_3_16_amd64_image
+  <<: *alpine_3_17_amd64_image
   <<: *build_job
 
-system:gcc:alpine3.16:amd64:
-  <<: *alpine_3_16_amd64_image
+system:gcc:alpine3.17:amd64:
+  <<: *alpine_3_17_amd64_image
   <<: *system_test_job
   needs:
-    - job: gcc:alpine3.16:amd64
+    - job: gcc:alpine3.17:amd64
       artifacts: true
 
-unit:gcc:alpine3.16:amd64:
-  <<: *alpine_3_16_amd64_image
+unit:gcc:alpine3.17:amd64:
+  <<: *alpine_3_17_amd64_image
   <<: *unit_test_job
   needs:
-    - job: gcc:alpine3.16:amd64
+    - job: gcc:alpine3.17:amd64
       artifacts: true
 
 # Jobs for regular GCC builds on Oracle Linux 7 (amd64)
@@ -675,6 +669,23 @@ unit:gcc:oraclelinux9:amd64:
     - job: gcc:oraclelinux9:amd64
       artifacts: true
 
+gcc:tarball:nosphinx:
+  variables:
+    CC: gcc
+    CFLAGS: "${CFLAGS_COMMON}"
+    EXTRA_CONFIGURE: "--with-libidn2 --disable-developer"
+    RUN_MAKE_INSTALL: 1
+  <<: *oraclelinux_9_amd64_image
+  <<: *build_job
+  before_script:
+    - (! command -v sphinx-build >/dev/null)
+    - tar --extract --file bind-*.tar.${TARBALL_EXTENSION}
+    - rm -f bind-*.tar.${TARBALL_EXTENSION}
+    - cd bind-*
+  needs:
+    - job: tarball-create
+      artifacts: true
+
 # Jobs for regular GCC builds on Debian 10 "buster" (amd64)
 
 gcc:buster:amd64:
@@ -703,7 +714,6 @@ unit:gcc:buster:amd64:
       artifacts: true
 
 # Jobs for regular GCC builds on Debian 11 "bullseye" (amd64)
-# (The second unit test job also executes unstable unit tests.)
 
 gcc:bullseye:amd64:
   variables:
@@ -719,39 +729,23 @@ gcc:bullseye:amd64:
 system:gcc:bullseye:amd64:
   <<: *debian_bullseye_amd64_image
   <<: *system_test_gcov_job
-  needs:
-    - job: unit:gcc:bullseye:amd64
-      artifacts: true
-
-system:gcc:bullseye:unstable:amd64:
-  <<: *debian_bullseye_amd64_image
-  <<: *system_test_job
-  <<: *api_schedules_triggers_web_triggering_rules
   variables:
     CI_ENABLE_ALL_TESTS: 1
   needs:
-    - job: gcc:bullseye:amd64
+    - job: unit:gcc:bullseye:amd64
       artifacts: true
 
 unit:gcc:bullseye:amd64:
   <<: *debian_bullseye_amd64_image
   <<: *unit_test_gcov_job
-  needs:
-    - job: gcc:bullseye:amd64
-      artifacts: true
-
-unit:gcc:bullseye:unstable:amd64:
-  <<: *debian_bullseye_amd64_image
-  <<: *unit_test_job
-  <<: *api_schedules_triggers_web_triggering_rules
   variables:
     CI_ENABLE_ALL_TESTS: 1
   needs:
     - job: gcc:bullseye:amd64
       artifacts: true
 
-# Jobs for cross-compiled GCC builds on Debian 11 "bullseye" (amd64) with
-# 32-bit libraries
+# Build job for cross-compiled GCC builds on 64-bit Debian 11 "bullseye"
+# (amd64) with 32-bit BIND 9.
 
 gcc:bullseye:amd64cross32:
   variables:
@@ -762,20 +756,6 @@ gcc:bullseye:amd64cross32:
     EXTRA_CONFIGURE: "--build=x86_64-linux-gnu --host=i686-linux-gnu --with-libidn2"
   <<: *debian_bullseye_amd64cross32_image
   <<: *build_job
-
-system:gcc:bullseye:amd64cross32:
-  <<: *debian_bullseye_amd64cross32_image
-  <<: *system_test_job
-  needs:
-    - job: gcc:bullseye:amd64cross32
-      artifacts: true
-
-unit:gcc:bullseye:amd64cross32:
-  <<: *debian_bullseye_amd64cross32_image
-  <<: *unit_test_job
-  needs:
-    - job: gcc:bullseye:amd64cross32
-      artifacts: true
 
 # Jobs for scan-build builds on Debian 11 "bullseye" (amd64)
 
@@ -804,7 +784,6 @@ scan-build:
   artifacts:
     paths:
       - scan-build.reports/
-    expire_in: "1 day"
     when: on_failure
 
 # Jobs for regular GCC builds on Debian "sid" (amd64)
@@ -1158,7 +1137,6 @@ system:clang:freebsd12:amd64:
   <<: *system_test_job
   variables:
     USER: gitlab-runner
-    TEST_PARALLEL_JOBS: 4
   needs:
     - job: clang:freebsd12:amd64
       artifacts: true
@@ -1185,7 +1163,6 @@ system:clang:freebsd13:amd64:
   <<: *system_test_job
   variables:
     USER: gitlab-runner
-    TEST_PARALLEL_JOBS: 4
   needs:
     - job: clang:freebsd13:amd64
       artifacts: true
@@ -1216,6 +1193,7 @@ system:clang:openbsd:amd64:
   needs:
     - job: clang:openbsd:amd64
       artifacts: true
+  allow_failure: true
 
 # Jobs with libtool disabled
 
@@ -1253,6 +1231,7 @@ msvc:windows:amd64:
 system:msvc:windows:amd64:
   <<: *windows_server_2016_amd64_image
   <<: *windows_system_test_job
+  <<: *default_triggering_rules
   variables:
     VSCONF: Release
   needs:
@@ -1269,6 +1248,7 @@ msvc-debug:windows:amd64:
 system:msvc-debug:windows:amd64:
   <<: *windows_server_2016_amd64_image
   <<: *windows_system_test_job
+  <<: *api_schedules_tags_triggers_web_triggering_rules
   variables:
     VSCONF: Debug
   needs:
@@ -1398,7 +1378,6 @@ respdiff-short:asan:
     MAX_DISAGREEMENTS_PERCENTAGE: "0.1"
   script:
     - bash respdiff.sh -s named -q "${PWD}/10k_a.txt" -c 3 -w "${PWD}/rspworkdir" "${CI_PROJECT_DIR}" "/usr/local/respdiff-reference-bind/sbin/named"
-  allow_failure: true
 
 respdiff-short:tsan:
   <<: *respdiff_job
@@ -1414,7 +1393,6 @@ respdiff-short:tsan:
     - bash respdiff.sh -s named -q "${PWD}/10k_a.txt" -c 3 -w "${PWD}/rspworkdir" "${CI_PROJECT_DIR}" "/usr/local/respdiff-reference-bind/sbin/named"
   after_script:
     - *parse_tsan
-  allow_failure: true
 
 respdiff-long:
   <<: *respdiff_job
@@ -1436,7 +1414,6 @@ respdiff-long:asan:
     MAX_DISAGREEMENTS_PERCENTAGE: "0.1"
   script:
     - bash respdiff.sh -s named -q "${PWD}/100k_mixed.txt" -c 3 -w "${PWD}/rspworkdir" "${CI_PROJECT_DIR}" "/usr/local/respdiff-reference-bind/sbin/named"
-  allow_failure: true
 
 respdiff-long:tsan:
   <<: *respdiff_job
@@ -1452,7 +1429,6 @@ respdiff-long:tsan:
     - bash respdiff.sh -s named -q "${PWD}/100k_mixed.txt" -c 3 -w "${PWD}/rspworkdir" "${CI_PROJECT_DIR}" "/usr/local/respdiff-reference-bind/sbin/named"
   after_script:
     - *parse_tsan
-  allow_failure: true
 
 respdiff-long-third-party:
   <<: *respdiff_job
@@ -1466,13 +1442,17 @@ respdiff-long-third-party:
 
 # "Stress" tests
 
+# Parallel build in the "make" step is avoided since multiple jobs can be
+# executed concurrently on the same runner. This may present problems when one
+# job runs a performance-sensitive task of replying to queries while another
+# takes all cores to build BIND.
 .stress: &stress_job
   stage: performance
   script:
     - *configure
     - *setup_interfaces
     - *setup_softhsm
-    - make -j${BUILD_PARALLEL_JOBS:-1} -k all V=1
+    - make -k all V=1
     - make DESTDIR="${INSTALL_PATH}" install
     - git clone --depth 1 https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.isc.org/isc-private/bind-qa.git
     - cd bind-qa/bind9/stress
@@ -1492,6 +1472,7 @@ stress:authoritative:fedora:37:amd64:
   <<: *stress_job
   variables:
     CC: gcc
+    CFLAGS: "${CFLAGS_COMMON} -Og"
     FLAME: /usr/bin/flame
     MODE: authoritative
     RATE: 10000
@@ -1506,6 +1487,7 @@ stress:recursive:fedora:37:amd64:
   <<: *stress_job
   variables:
     CC: gcc
+    CFLAGS: "${CFLAGS_COMMON} -Og"
     FLAME: /usr/bin/flame
     MODE: recursive
     RATE: 10000
@@ -1520,6 +1502,7 @@ stress:rpz:fedora:37:amd64:
   <<: *stress_job
   variables:
     CC: gcc
+    CFLAGS: "${CFLAGS_COMMON} -Og"
     FLAME: /usr/bin/flame
     MODE: rpz
     RATE: 1500
@@ -1534,6 +1517,7 @@ stress:authoritative:fedora:37:arm64:
   <<: *stress_job
   variables:
     CC: gcc
+    CFLAGS: "${CFLAGS_COMMON} -Og"
     FLAME: /usr/bin/flame
     MODE: authoritative
     RATE: 10000
@@ -1548,6 +1532,7 @@ stress:recursive:fedora:37:arm64:
   <<: *stress_job
   variables:
     CC: gcc
+    CFLAGS: "${CFLAGS_COMMON} -Og"
     FLAME: /usr/bin/flame
     MODE: recursive
     RATE: 10000
@@ -1562,6 +1547,7 @@ stress:rpz:fedora:37:arm64:
   <<: *stress_job
   variables:
     CC: gcc
+    CFLAGS: "${CFLAGS_COMMON} -Og"
     FLAME: /usr/bin/flame
     MODE: rpz
     RATE: 1500
@@ -1576,6 +1562,7 @@ stress:authoritative:freebsd12:amd64:
   <<: *stress_job
   variables:
     CC: clang
+    CFLAGS: "${CFLAGS_COMMON} -Og"
     FLAME: /usr/local/bin/flame
     MODE: authoritative
     RATE: 10000
@@ -1590,6 +1577,7 @@ stress:recursive:freebsd12:amd64:
   <<: *stress_job
   variables:
     CC: clang
+    CFLAGS: "${CFLAGS_COMMON} -Og"
     FLAME: /usr/local/bin/flame
     MODE: recursive
     RATE: 10000
@@ -1604,6 +1592,7 @@ stress:rpz:freebsd12:amd64:
   <<: *stress_job
   variables:
     CC: clang
+    CFLAGS: "${CFLAGS_COMMON} -Og"
     FLAME: /usr/local/bin/flame
     MODE: rpz
     RATE: 1500
