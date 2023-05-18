@@ -367,9 +367,6 @@ export ALT_NAMED_OPTIONS=' -t / '
 pushd bin/tests/system
 source ./conf.sh
 for testdir in $SUBDIRS; do
-    # skip due to https://gitlab.isc.org/isc-projects/bind9/-/issues/3665
-    [ "$testdir" = "dupsigs" ] && continue
-
     subns=$(find "$testdir" -maxdepth 1 -type d -name "ns[0-9]" | wc -l)
     if [ $subns -lt 2 ]; then
         runuser -u "$runas" -- sh run.sh "$testdir"
