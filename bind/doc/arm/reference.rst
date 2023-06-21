@@ -416,12 +416,11 @@ To disable the command channel, use an empty ``controls`` statement:
 ``include`` Statement Definition and Usage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``include`` statement inserts the specified file (or files if a valid glob
-expression is detected) at the point where the ``include`` statement is
-encountered. The ``include`` statement facilitates the administration of
-configuration files by permitting the reading or writing of some things but not
-others. For example, the statement could include private keys that are readable
-only by the name server.
+The ``include`` statement inserts the specified file at the point where the
+``include`` statement is encountered. The ``include`` statement facilitates
+the administration of configuration files by permitting the reading or
+writing of some things but not others. For example, the statement could
+include private keys that are readable only by the name server.
 
 .. _key_grammar:
 
@@ -3095,6 +3094,11 @@ system.
        ``max-cache-size`` appropriately for each view, as using the
        default value of that option (90% of physical memory for each
        individual cache) may lead to memory exhaustion over time.
+
+   .. note::
+
+       ``max-cache-size`` does not work reliably for the maximum
+       amount of memory of 100 MB or lower.
 
    Upon startup and reconfiguration, caches with a limited size
    preallocate a small amount of memory (less than 1% of

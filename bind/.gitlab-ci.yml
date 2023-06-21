@@ -19,9 +19,10 @@ variables:
   TEST_PARALLEL_JOBS: 4
 
   CONFIGURE: ./configure
-  CLANG_VERSION: 15
+  CLANG_VERSION: 16
   CLANG: "clang-${CLANG_VERSION}"
   SCAN_BUILD: "scan-build-${CLANG_VERSION}"
+  LLVM_SYMBOLIZER: "/usr/lib/llvm-${CLANG_VERSION}/bin/llvm-symbolizer"
   ASAN_SYMBOLIZER_PATH: "/usr/lib/llvm-${CLANG_VERSION}/bin/llvm-symbolizer"
   CLANG_FORMAT: "clang-format-${CLANG_VERSION}"
 
@@ -29,7 +30,12 @@ variables:
 
   # Pass run-time flags to AddressSanitizer to get core dumps on error.
   ASAN_OPTIONS: abort_on_error=1:disable_coredump=0:unmap_shadow_on_exit=1
-  TSAN_OPTIONS_COMMON: "disable_coredump=0 second_deadlock_stack=1 history_size=7 log_exe_name=true log_path=tsan"
+
+  TSAN_OPTIONS_COMMON: "disable_coredump=0 second_deadlock_stack=1 atexit_sleep_ms=1000 history_size=7 log_exe_name=true log_path=tsan"
+  TSAN_SUPPRESSIONS: "suppressions=${CI_PROJECT_DIR}/.tsan-suppress"
+  TSAN_OPTIONS_DEBIAN: "${TSAN_OPTIONS_COMMON} ${TSAN_SUPPRESSIONS} external_symbolizer_path=${LLVM_SYMBOLIZER}"
+  TSAN_OPTIONS_FEDORA: "${TSAN_OPTIONS_COMMON} ${TSAN_SUPPRESSIONS} external_symbolizer_path=/usr/bin/llvm-symbolizer"
+
   UBSAN_OPTIONS: "halt_on_error=1:abort_on_error=1:disable_coredump=0"
 
   TARBALL_COMPRESSOR: xz
@@ -69,10 +75,24 @@ stages:
     - libvirt
     - amd64
 
+# Jobs with these tags do not run on AWS but on permanent OVH systems.
+
+.linux-respdiff-amd64: &linux_respdiff_amd64
+  tags:
+    - linux
+    - ovh
+    - amd64
+
+# Autoscaling GitLab Runner on AWS EC2
+
 .linux-amd64: &linux_amd64
   tags:
     - linux
+    - aws
+    - runner-manager
     - amd64
+
+# Stress-testing runners
 
 .linux-stress-amd64: &linux_stress_amd64
   tags:
@@ -104,8 +124,8 @@ stages:
 
 # Alpine Linux
 
-.alpine-3.17-amd64: &alpine_3_17_amd64_image
-  image: "$CI_REGISTRY_IMAGE:alpine-3.17-amd64"
+.alpine-3.18-amd64: &alpine_3_18_amd64_image
+  image: "$CI_REGISTRY_IMAGE:alpine-3.18-amd64"
   <<: *linux_amd64
 
 # Oracle Linux
@@ -128,8 +148,16 @@ stages:
   image: "$CI_REGISTRY_IMAGE:debian-buster-amd64"
   <<: *linux_amd64
 
+.respdiff-debian-bullseye-amd64: &respdiff_debian_bullseye_amd64_image
+  image: "$CI_REGISTRY_IMAGE:debian-bullseye-amd64"
+  <<: *linux_respdiff_amd64
+
 .debian-bullseye-amd64: &debian_bullseye_amd64_image
   image: "$CI_REGISTRY_IMAGE:debian-bullseye-amd64"
+  <<: *linux_amd64
+
+.tsan-debian-bullseye-amd64: &tsan_debian_bullseye_amd64_image
+  image: "$CI_REGISTRY_IMAGE:tsan-debian-bullseye-amd64"
   <<: *linux_amd64
 
 .debian-bullseye-amd64cross32: &debian_bullseye_amd64cross32_image
@@ -148,12 +176,16 @@ stages:
 
 # Fedora
 
-.fedora-37-amd64: &fedora_37_amd64_image
-  image: "$CI_REGISTRY_IMAGE:fedora-37-amd64"
+.tsan-fedora-38-amd64: &tsan_fedora_38_amd64_image
+  image: "$CI_REGISTRY_IMAGE:tsan-fedora-38-amd64"
   <<: *linux_amd64
 
-.fedora-37-arm64: &fedora_37_arm64_image
-  image: "$CI_REGISTRY_IMAGE:fedora-37-arm64"
+.fedora-38-amd64: &fedora_38_amd64_image
+  image: "$CI_REGISTRY_IMAGE:fedora-38-amd64"
+  <<: *linux_amd64
+
+.fedora-38-arm64: &fedora_38_arm64_image
+  image: "$CI_REGISTRY_IMAGE:fedora-38-arm64"
   <<: *linux_stress_arm64
 
 # Ubuntu
@@ -189,11 +221,11 @@ stages:
   <<: *libvirt_amd64
 
 .freebsd-13-amd64: &freebsd_13_amd64_image
-  image: "freebsd-13.1-x86_64"
+  image: "freebsd-13.2-x86_64"
   <<: *libvirt_amd64
 
 .openbsd-amd64: &openbsd_amd64_image
-  image: "openbsd-7.2-x86_64"
+  image: "openbsd-7.3-x86_64"
   <<: *libvirt_amd64
 
 ### Job Templates
@@ -402,7 +434,6 @@ stages:
     when: on_failure
 
 .respdiff: &respdiff_job
-  <<: *base_image
   stage: system
   before_script:
     - *configure
@@ -573,27 +604,27 @@ docs:
       - doc/misc/
     when: always
 
-# Jobs for regular GCC builds on Alpine Linux 3.17 (amd64)
+# Jobs for regular GCC builds on Alpine Linux 3.18 (amd64)
 
-gcc:alpine3.17:amd64:
+gcc:alpine3.18:amd64:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON}"
-  <<: *alpine_3_17_amd64_image
+  <<: *alpine_3_18_amd64_image
   <<: *build_job
 
-system:gcc:alpine3.17:amd64:
-  <<: *alpine_3_17_amd64_image
+system:gcc:alpine3.18:amd64:
+  <<: *alpine_3_18_amd64_image
   <<: *system_test_job
   needs:
-    - job: gcc:alpine3.17:amd64
+    - job: gcc:alpine3.18:amd64
       artifacts: true
 
-unit:gcc:alpine3.17:amd64:
-  <<: *alpine_3_17_amd64_image
+unit:gcc:alpine3.18:amd64:
+  <<: *alpine_3_18_amd64_image
   <<: *unit_test_job
   needs:
-    - job: gcc:alpine3.17:amd64
+    - job: gcc:alpine3.18:amd64
       artifacts: true
 
 # Jobs for regular GCC builds on Oracle Linux 7 (amd64)
@@ -964,7 +995,7 @@ unit:gcc:jammy:amd64:
     - job: gcc:jammy:amd64
       artifacts: true
 
-# Jobs for ASAN builds on Fedora 37 (amd64)
+# Jobs for ASAN builds on Fedora 38 (amd64)
 
 gcc:asan:
   variables:
@@ -972,18 +1003,18 @@ gcc:asan:
     CFLAGS: "${CFLAGS_COMMON} -fsanitize=address,undefined -DISC_MEM_USE_INTERNAL_MALLOC=0"
     LDFLAGS: "-fsanitize=address,undefined"
     EXTRA_CONFIGURE: "--with-libidn2"
-  <<: *fedora_37_amd64_image
+  <<: *fedora_38_amd64_image
   <<: *build_job
 
 system:gcc:asan:
-  <<: *fedora_37_amd64_image
+  <<: *fedora_38_amd64_image
   <<: *system_test_job
   needs:
     - job: gcc:asan
       artifacts: true
 
 unit:gcc:asan:
-  <<: *fedora_37_amd64_image
+  <<: *fedora_38_amd64_image
   <<: *unit_test_job
   needs:
     - job: gcc:asan
@@ -1012,7 +1043,7 @@ unit:clang:asan:
     - job: clang:asan
       artifacts: true
 
-# Jobs for TSAN builds on Fedora 37 (amd64)
+# Jobs for TSAN builds on Fedora 38 (amd64)
 
 gcc:tsan:
   variables:
@@ -1020,13 +1051,13 @@ gcc:tsan:
     CFLAGS: "${CFLAGS_COMMON} -fsanitize=thread -DISC_MEM_USE_INTERNAL_MALLOC=0"
     LDFLAGS: "-fsanitize=thread"
     EXTRA_CONFIGURE: "--with-libidn2 --enable-pthread-rwlock"
-  <<: *fedora_37_amd64_image
+  <<: *tsan_fedora_38_amd64_image
   <<: *build_job
 
 system:gcc:tsan:
   variables:
-    TSAN_OPTIONS: "${TSAN_OPTIONS_COMMON} external_symbolizer_path=/usr/bin/llvm-symbolizer"
-  <<: *fedora_37_amd64_image
+    TSAN_OPTIONS: "${TSAN_OPTIONS_FEDORA}"
+  <<: *tsan_fedora_38_amd64_image
   <<: *system_test_tsan_job
   needs:
     - job: gcc:tsan
@@ -1034,15 +1065,15 @@ system:gcc:tsan:
 
 unit:gcc:tsan:
   variables:
-    TSAN_OPTIONS: "${TSAN_OPTIONS_COMMON} external_symbolizer_path=/usr/bin/llvm-symbolizer"
-  <<: *fedora_37_amd64_image
+    TSAN_OPTIONS: "${TSAN_OPTIONS_FEDORA}"
+  <<: *tsan_fedora_38_amd64_image
   <<: *unit_test_tsan_job
   needs:
     - job: gcc:tsan
       artifacts: true
 
 clang:tsan:
-  <<: *base_image
+  <<: *tsan_debian_bullseye_amd64_image
   <<: *build_job
   variables:
     CC: "${CLANG}"
@@ -1052,8 +1083,8 @@ clang:tsan:
 
 system:clang:tsan:
   variables:
-    TSAN_OPTIONS: "${TSAN_OPTIONS_COMMON} external_symbolizer_path=/usr/lib/llvm-${CLANG_VERSION}/bin/llvm-symbolizer"
-  <<: *base_image
+    TSAN_OPTIONS: "${TSAN_OPTIONS_DEBIAN}"
+  <<: *tsan_debian_bullseye_amd64_image
   <<: *system_test_tsan_job
   needs:
     - job: clang:tsan
@@ -1061,8 +1092,8 @@ system:clang:tsan:
 
 unit:clang:tsan:
   variables:
-    TSAN_OPTIONS: "${TSAN_OPTIONS_COMMON} external_symbolizer_path=/usr/lib/llvm-${CLANG_VERSION}/bin/llvm-symbolizer suppressions=$CI_PROJECT_DIR/tsan-suppressions.txt"
-  <<: *base_image
+    TSAN_OPTIONS: "${TSAN_OPTIONS_DEBIAN}"
+  <<: *tsan_debian_bullseye_amd64_image
   <<: *unit_test_tsan_job
   needs:
     - job: clang:tsan
@@ -1315,10 +1346,10 @@ release:
          --form token=$COVERITY_SCAN_TOKEN
   - test "$(md5sum /tmp/cov-analysis-linux64.tgz | awk '{ print $1 }')" = "$(cat /tmp/cov-analysis-linux64.md5)"
   - tar --extract --gzip --file=/tmp/cov-analysis-linux64.tgz --directory=/tmp
-  - test -d /tmp/cov-analysis-linux64-2022.6.0
+  - test -d /tmp/cov-analysis-linux64-*
 
 .coverity_build: &coverity_build
-  - /tmp/cov-analysis-linux64-2022.6.0/bin/cov-build --dir /tmp/cov-int --fs-capture-search . sh -c 'make -j${BUILD_PARALLEL_JOBS:-1} -k all V=1'
+  - /tmp/cov-analysis-linux64-*/bin/cov-build --dir /tmp/cov-int --fs-capture-search . sh -c 'make -j${BUILD_PARALLEL_JOBS:-1} -k all V=1'
   - tar --create --gzip --file=/tmp/cov-int.tar.gz --directory /tmp cov-int
   - curl -v https://scan.coverity.com/builds?project=$COVERITY_SCAN_PROJECT_NAME
         --form token=$COVERITY_SCAN_TOKEN
@@ -1361,6 +1392,7 @@ coverity:
 respdiff-short:
   <<: *respdiff_job
   <<: *default_triggering_rules
+  <<: *debian_bullseye_amd64_image
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -Og"
@@ -1371,6 +1403,7 @@ respdiff-short:
 respdiff-short:asan:
   <<: *respdiff_job
   <<: *default_triggering_rules
+  <<: *debian_bullseye_amd64_image
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -Og -fsanitize=address,undefined -DISC_MEM_USE_INTERNAL_MALLOC=0"
@@ -1382,13 +1415,15 @@ respdiff-short:asan:
 respdiff-short:tsan:
   <<: *respdiff_job
   <<: *default_triggering_rules
+  <<: *tsan_debian_bullseye_amd64_image
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -Og -fsanitize=thread -DISC_MEM_USE_INTERNAL_MALLOC=0"
     LDFLAGS: "-fsanitize=thread"
     EXTRA_CONFIGURE: "--enable-pthread-rwlock"
     MAX_DISAGREEMENTS_PERCENTAGE: "0.1"
-    TSAN_OPTIONS: "${TSAN_OPTIONS_COMMON} external_symbolizer_path=/usr/bin/llvm-symbolizer"
+    TSAN_OPTIONS: "${TSAN_OPTIONS_DEBIAN}"
+    RESPDIFF_JOBS: 32
   script:
     - bash respdiff.sh -s named -q "${PWD}/10k_a.txt" -c 3 -w "${PWD}/rspworkdir" "${CI_PROJECT_DIR}" "/usr/local/respdiff-reference-bind/sbin/named"
   after_script:
@@ -1397,6 +1432,7 @@ respdiff-short:tsan:
 respdiff-long:
   <<: *respdiff_job
   <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *respdiff_debian_bullseye_amd64_image
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -Og"
@@ -1407,6 +1443,7 @@ respdiff-long:
 respdiff-long:asan:
   <<: *respdiff_job
   <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *debian_bullseye_amd64_image
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -Og -fsanitize=address,undefined -DISC_MEM_USE_INTERNAL_MALLOC=0"
@@ -1418,13 +1455,15 @@ respdiff-long:asan:
 respdiff-long:tsan:
   <<: *respdiff_job
   <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *tsan_debian_bullseye_amd64_image
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -Og -fsanitize=thread -DISC_MEM_USE_INTERNAL_MALLOC=0"
     LDFLAGS: "-fsanitize=thread"
     EXTRA_CONFIGURE: "--enable-pthread-rwlock"
     MAX_DISAGREEMENTS_PERCENTAGE: "0.1"
-    TSAN_OPTIONS: "${TSAN_OPTIONS_COMMON} external_symbolizer_path=/usr/bin/llvm-symbolizer"
+    TSAN_OPTIONS: "${TSAN_OPTIONS_DEBIAN}"
+    RESPDIFF_JOBS: 32
   script:
     - bash respdiff.sh -s named -q "${PWD}/100k_mixed.txt" -c 3 -w "${PWD}/rspworkdir" "${CI_PROJECT_DIR}" "/usr/local/respdiff-reference-bind/sbin/named"
   after_script:
@@ -1433,6 +1472,7 @@ respdiff-long:tsan:
 respdiff-long-third-party:
   <<: *respdiff_job
   <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *debian_bullseye_amd64_image
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -Og"
@@ -1466,8 +1506,8 @@ respdiff-long-third-party:
     when: always
   timeout: 2h
 
-stress:authoritative:fedora:37:amd64:
-  <<: *fedora_37_amd64_image
+stress:authoritative:fedora:38:amd64:
+  <<: *fedora_38_amd64_image
   <<: *linux_stress_amd64
   <<: *stress_job
   variables:
@@ -1481,8 +1521,8 @@ stress:authoritative:fedora:37:amd64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /linux/i && $BIND_STRESS_TEST_MODE =~ /authoritative/i && $BIND_STRESS_TEST_ARCH =~ /amd64/i)
 
-stress:recursive:fedora:37:amd64:
-  <<: *fedora_37_amd64_image
+stress:recursive:fedora:38:amd64:
+  <<: *fedora_38_amd64_image
   <<: *linux_stress_amd64
   <<: *stress_job
   variables:
@@ -1496,8 +1536,8 @@ stress:recursive:fedora:37:amd64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /linux/i && $BIND_STRESS_TEST_MODE =~ /recursive/i && $BIND_STRESS_TEST_ARCH =~ /amd64/i)
 
-stress:rpz:fedora:37:amd64:
-  <<: *fedora_37_amd64_image
+stress:rpz:fedora:38:amd64:
+  <<: *fedora_38_amd64_image
   <<: *linux_stress_amd64
   <<: *stress_job
   variables:
@@ -1511,8 +1551,8 @@ stress:rpz:fedora:37:amd64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /linux/i && $BIND_STRESS_TEST_MODE =~ /rpz/i && $BIND_STRESS_TEST_ARCH =~ /amd64/i)
 
-stress:authoritative:fedora:37:arm64:
-  <<: *fedora_37_arm64_image
+stress:authoritative:fedora:38:arm64:
+  <<: *fedora_38_arm64_image
   <<: *linux_stress_arm64
   <<: *stress_job
   variables:
@@ -1526,8 +1566,8 @@ stress:authoritative:fedora:37:arm64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /linux/i && $BIND_STRESS_TEST_MODE =~ /authoritative/i && $BIND_STRESS_TEST_ARCH =~ /arm64/i)
 
-stress:recursive:fedora:37:arm64:
-  <<: *fedora_37_arm64_image
+stress:recursive:fedora:38:arm64:
+  <<: *fedora_38_arm64_image
   <<: *linux_stress_arm64
   <<: *stress_job
   variables:
@@ -1541,8 +1581,8 @@ stress:recursive:fedora:37:arm64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /linux/i && $BIND_STRESS_TEST_MODE =~ /recursive/i && $BIND_STRESS_TEST_ARCH =~ /arm64/i)
 
-stress:rpz:fedora:37:arm64:
-  <<: *fedora_37_arm64_image
+stress:rpz:fedora:38:arm64:
+  <<: *fedora_38_arm64_image
   <<: *linux_stress_arm64
   <<: *stress_job
   variables:
