@@ -66,7 +66,6 @@ Patch0002: 0002-ALT-Minimize-linux-capabilities.patch
 Patch0003: 0003-ALT-Make-it-possible-to-retain-Linux-capabilities-of.patch
 Patch0004: 0004-ALT-named-Allow-non-writable-working-directory.patch
 Patch0005: 0005-ALT-tests-Unchroot-named-for-tests.patch
-Patch0006: 0006-ALT-tests-Add-tests-for-signing-with-custom-OpenSSL.patch
 Patch0007: 0007-ALT-tests-Raise-expected-delta-time-for-cds.patch
 Patch0009: 0009-ALT-tests-Avoid-socket-creation-on-9pfs.patch
 Patch0010: 0010-ALT-tests-Handle-unset-TSAN_OPTIONS.patch
@@ -86,6 +85,7 @@ BuildRequires: python3(hypothesis)
 BuildRequires: softhsm
 BuildRequires: libp11
 BuildRequires: opensc
+BuildRequires: openssl
 %else
 BuildRequires: rpm-build-vm
 BuildRequires: /sbin/runuser
@@ -327,11 +327,35 @@ chmod 0755 %buildroot%_rpmlibdir/%name-restart.filetrigger
 perl bin/tests/system/testsock.pl || sudo sh -x bin/tests/system/ifconfig.sh up
 
 # setup softhsm
-export SOFTHSM_MODULE_PATH=%_libdir/softhsm/libsofthsm2.so
-export SOFTHSM2_CONF=/tmp/softhsm2/softhsm2.conf
-export OPENSSL_CONF=/tmp/softhsm2/openssl.cnf
-export PKCS11_ENGINE=pkcs11
-export SLOT=$(sh -eu bin/tests/prepare-softhsm2.sh)
+# taken from https://gitlab.isc.org/isc-projects/images/-/blob/main/docker/bind9/debian-template/prep-softhsm-openssl-engine.sh.in
+export OPENSSL_CONF="/tmp/openssl.cnf"
+export SOFTHSM2_WORKDIR="/tmp/softhsm2"
+export SOFTHSM2_CONF="$SOFTHSM2_WORKDIR/softhsm2.conf"
+export SOFTHSM2_MODULE="%_libdir/softhsm/libsofthsm2.so"
+
+rm -rf "$SOFTHSM2_WORKDIR"
+mkdir -p "$SOFTHSM2_WORKDIR/tokens"
+cat <<EOF > "$SOFTHSM2_CONF"
+directories.tokendir = $SOFTHSM2_WORKDIR/tokens
+objectstore.backend = file
+log.level = DEBUG
+EOF
+
+cat > "$OPENSSL_CONF"<<EOF
+openssl_conf = openssl_init
+
+[openssl_init]
+engines = engine_section
+
+[engine_section]
+pkcs11 = pkcs11_section
+
+[pkcs11_section]
+engine_id = pkcs11
+dynamic_path = $(pkg-config libcrypto --variable=enginesdir)/pkcs11.so
+MODULE_PATH = %_libdir/softhsm/libsofthsm2.so
+init=0
+EOF
 
 # tests are run as current user
 # see .gitlab-ci.yml
@@ -339,10 +363,6 @@ pushd bin/tests/system
 # named must be unchrooted for upstream tests
 export ALT_NAMED_OPTIONS=' -t / '
 SYSTEMTEST_NO_CLEAN=1 %make_build -k test V=1
-
-# depends on PKCS11_TEST, which is only defined if named is built with native
-# PKCS11
-SYSTEMTEST_NO_CLEAN=1 sh run.sh pkcs11
 
 # teardown
 popd
