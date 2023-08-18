@@ -79,7 +79,7 @@ Fixes: https://bugzilla.altlinux.org/show_bug.cgi?id=33300
  bind/bin/named/include/named/main.h    |  2 +-
  bind/bin/named/main.c                  |  5 +++-
  bind/bin/named/server.c                |  4 ++-
- bind/bin/named/unix/os.c               | 36 +++++++++++++++++++++++---
+ bind/bin/named/os.c               | 36 +++++++++++++++++++++++---
  5 files changed, 42 insertions(+), 6 deletions(-)
 
 diff --git a/bind/bin/named/include/named/globals.h b/bind/bin/named/include/named/globals.h
@@ -92,7 +92,7 @@ index 82b632ef043..4436ef8eb61 100644
   */
 +EXTERN bool named_g_retain_caps     INIT(false);
  EXTERN bool named_g_coreok	     INIT(true);
- EXTERN const char *named_g_chrootdir INIT(NULL);
+ EXTERN const char *named_g_chrootdir INIT("@ROOT@");
  EXTERN bool named_g_foreground	     INIT(false);
 diff --git a/bind/bin/named/include/named/main.h b/bind/bin/named/include/named/main.h
 index ee790b96ca3..ee4a451b3dd 100644
@@ -100,13 +100,13 @@ index ee790b96ca3..ee4a451b3dd 100644
 +++ b/bind/bin/named/include/named/main.h
 @@ -23,7 +23,7 @@
  /*
-  * Commandline arguments for named; also referenced in win32/ntservice.c
+  * Commandline arguments for named;
   */
 -#define NAMED_MAIN_ARGS "46A:c:Cd:D:E:fFgL:M:m:n:N:p:sS:t:T:U:u:vVx:X:"
 +#define NAMED_MAIN_ARGS "46A:c:Cd:D:E:fFgL:M:m:n:N:p:rsS:t:T:U:u:vVx:X:"
  
- ISC_PLATFORM_NORETURN_PRE void
- named_main_earlyfatal(const char *format, ...)
+ noreturn void
+ named_main_earlyfatal(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);
 diff --git a/bind/bin/named/main.c b/bind/bin/named/main.c
 index 97cd36f6925..25c3313fc35 100644
 --- a/bind/bin/named/main.c
@@ -121,8 +121,8 @@ index 97cd36f6925..25c3313fc35 100644
  			"username] [-U listeners]\n"
  			"             [-X lockfile] [-m "
 @@ -954,6 +954,9 @@ parse_command_line(int argc, char *argv[]) {
- 			}
- 			named_g_port = port;
+ 		case 'p':
+ 			parse_port(isc_commandline_argument);
  			break;
 +		case 'r':
 +			named_g_retain_caps = true;
@@ -145,10 +145,10 @@ index 0c0fdc409bd..3a5e2e15cd7 100644
  	}
  
  	/*
-diff --git a/bind/bin/named/unix/os.c b/bind/bin/named/unix/os.c
+diff --git a/bind/bin/named/os.c b/bind/bin/named/os.c
 index 44faacde85e..090b1654fd3 100644
---- a/bind/bin/named/unix/os.c
-+++ b/bind/bin/named/unix/os.c
+--- a/bind/bin/named/os.c
++++ b/bind/bin/named/os.c
 @@ -197,6 +197,28 @@ linux_initialprivs(void) {
  	FREE_CAP;
  }
