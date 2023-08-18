@@ -4,7 +4,6 @@
 %def_with docs
 %def_with openssl
 %def_with libjson
-%def_without python
 %def_with check
 %def_without system_tests
 
@@ -233,7 +232,6 @@ export SPHINX_BUILD=/usr/bin/sphinx-build-3
 %if_with libjson
 	--with-json-c=yes \
 %endif
-	 %{subst_with python} \
 	--disable-static \
 	--includedir=%{_includedir}/bind9 \
 	--with-libtool \
