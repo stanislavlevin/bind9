@@ -251,7 +251,7 @@ export SPHINX_BUILD=/usr/bin/sphinx-build-3
 %makeinstall_std
 
 # Install additional headers.
-install -pm644 lib/isc/unix/errno2result.h %buildroot%_includedir/bind9/isc/
+install -pm644 lib/isc/errno2result.h %buildroot%_includedir/bind9/isc/
 
 # Install startup scripts.
 install -pD -m755 addon/bind.init %buildroot%_initdir/bind
