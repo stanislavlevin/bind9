@@ -238,6 +238,7 @@ export SPHINX_BUILD=/usr/bin/sphinx-build-3
 	--includedir=%{_includedir}/bind9 \
 	--with-libtool \
 	--with-gssapi=yes \
+	--disable-doh \
 	#
 
 %make_build
