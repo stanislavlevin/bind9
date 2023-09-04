@@ -1,0 +1,59 @@
+From 0b06dee378af53cd3e071b1d91903b9f3c13d545 Mon Sep 17 00:00:00 2001
+From: Stanislav Levin <slev@altlinux.org>
+Date: Mon, 4 Sep 2023 18:40:58 +0300
+Subject: [PATCH] ALT: tests: Avoid socket creation on 9pfs
+
+qemu-system-x86_64: 9p: broken or compromised client detected; attempt to open special file (i.e. neither regular file, nor directory)
+unable to create socket ns1/auth.sock at ./authsock.pl line 40.
+ at ./authsock.pl line 40.
+
+Broken with the fix for CVE-2023-2861:
+https://lists.gnu.org/archive/html/qemu-devel/2023-06/msg01966.html
+---
+ bind/bin/tests/system/tsiggss/clean.sh          | 2 +-
+ bind/bin/tests/system/tsiggss/ns1/named.conf.in | 2 +-
+ bind/bin/tests/system/tsiggss/tests.sh          | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/bind/bin/tests/system/tsiggss/clean.sh b/bind/bin/tests/system/tsiggss/clean.sh
+index 0ace209efb5..70e7c74338d 100644
+--- a/bind/bin/tests/system/tsiggss/clean.sh
++++ b/bind/bin/tests/system/tsiggss/clean.sh
+@@ -15,7 +15,7 @@
+ # Clean up after tsiggss tests.
+ #
+ 
+-rm -f ns1/*.jnl ns1/update.txt ns1/auth.sock
++rm -f ns1/*.jnl ns1/update.txt ns1/auth.sock /tmp/tsiggss.auth.sock
+ rm -f ns1/*.db ns1/K*.key ns1/K*.private
+ rm -f ns1/_default.tsigkeys
+ rm -f */named.memstats
+diff --git a/bind/bin/tests/system/tsiggss/ns1/named.conf.in b/bind/bin/tests/system/tsiggss/ns1/named.conf.in
+index 1dfa49a900d..91cc9911c63 100644
+--- a/bind/bin/tests/system/tsiggss/ns1/named.conf.in
++++ b/bind/bin/tests/system/tsiggss/ns1/named.conf.in
+@@ -41,7 +41,7 @@ zone "example.nil." IN {
+ 	update-policy {
+ 		grant Administrator@EXAMPLE.NIL wildcard * A AAAA SRV CNAME;
+ 		grant testdenied@EXAMPLE.NIL wildcard * TXT;
+-		grant "local:auth.sock" external * CNAME;
++		grant "local:/tmp/tsiggss.auth.sock" external * CNAME;
+ 	};
+ 
+ 	/* we need to use check-names ignore so _msdcs A records can be created */
+diff --git a/bind/bin/tests/system/tsiggss/tests.sh b/bind/bin/tests/system/tsiggss/tests.sh
+index 2d5dc8e06ed..185a15b5576 100644
+--- a/bind/bin/tests/system/tsiggss/tests.sh
++++ b/bind/bin/tests/system/tsiggss/tests.sh
+@@ -118,7 +118,7 @@ status=$((status+ret))
+ 
+ echo_i "testing external update policy (CNAME) with auth sock ($n)"
+ ret=0
+-$PERL ./authsock.pl --type=CNAME --path=ns1/auth.sock --pidfile=authsock.pid --timeout=120 > /dev/null 2>&1 &
++$PERL ./authsock.pl --type=CNAME --path=/tmp/tsiggss.auth.sock --pidfile=authsock.pid --timeout=120 > /dev/null 2>&1 &
+ sleep 1
+ test_update $n testcname.example.nil. CNAME "86400 CNAME testdenied.example.nil" "testdenied" || ret=1
+ n=$((n+1))
+-- 
+2.33.8
+
