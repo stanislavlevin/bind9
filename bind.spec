@@ -384,13 +384,19 @@ ip a
 export ALT_NAMED_OPTIONS=' -t / '
 
 pushd bin/tests/system
-source ./conf.sh
-for testdir in $SUBDIRS; do
+testdirs=
+for testdir in */; do
     subns=$(find "$testdir" -maxdepth 1 -type d -name "ns[0-9]" | wc -l)
-    if [ $subns -lt 2 ]; then
-        runuser -u "$runas" -- sh run.sh "$testdir"
+    if [ $subns -lt 2 ] && [ $subns -gt 0 ] ; then
+        testdirs="$testdirs ${testdir%%*/}"
     fi
 done
+
+if [ -z "$testdirs" ] ; then
+    echo 'Tests using ns==1 not found'
+    exit 1
+fi
+runuser -u "$runas" -- python3 -m pytest $testdirs
 
 # teardown
 popd

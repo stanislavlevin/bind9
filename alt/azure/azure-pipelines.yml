@@ -106,16 +106,11 @@ jobs:
         logs_dir="$(Build.Repository.LocalPath)/logs"
         mkdir "$logs_dir"
         pushd $(Build.Repository.LocalPath)/rpmbuild/BUILD/bind-*
-        pushd 'bin/tests/system'
-        source conf.sh
-        for testdir in $SUBDIRS pkcs11; do
-            tar \
-                --ignore-failed-read \
-                --warning=no-failed-read  \
-                -czf "$logs_dir/$testdir.tar.gz" \
-                "$testdir" \
-                "test.output.$testdir"
-        done
+        tar \
+            --ignore-failed-read \
+            --warning=no-failed-read  \
+            -czf "$logs_dir/system_tests.tar.gz" \
+            'bin/tests/system'
         chmod o+rX -R "$logs_dir"
       condition: always()
       displayName: Collect tests logs
