@@ -70,6 +70,7 @@ Patch0006: 0006-ALT-tests-Add-tests-for-signing-with-custom-OpenSSL.patch
 Patch0007: 0007-ALT-tests-Raise-expected-delta-time-for-cds.patch
 Patch0008: 0008-ALT-tests-Wait-up-to-30sec-for-the-server-start.patch
 Patch0009: 0009-ALT-tests-Avoid-socket-creation-on-9pfs.patch
+Patch0010: 0010-ALT-tests-Handle-unset-TSAN_OPTIONS.patch
 
 %if_with docs
 BuildRequires: python3(sphinx)

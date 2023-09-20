@@ -1,0 +1,27 @@
+From 01b64f12218f8cea57fe513736be2edb56de669c Mon Sep 17 00:00:00 2001
+From: Stanislav Levin <slev@altlinux.org>
+Date: Wed, 20 Sep 2023 19:17:57 +0300
+Subject: [PATCH] ALT: tests: Handle unset TSAN_OPTIONS
+
+Fixes:
+./conf.sh: line 36: TSAN_OPTIONS: unbound variable
+---
+ bind/bin/tests/system/conf.sh.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/bind/bin/tests/system/conf.sh.in b/bind/bin/tests/system/conf.sh.in
+index d5b5996473e..42fbf90c5e3 100644
+--- a/bind/bin/tests/system/conf.sh.in
++++ b/bind/bin/tests/system/conf.sh.in
+@@ -33,7 +33,7 @@ export CHECKDS=$TOP/bin/python/dnssec-checkds
+ export CHECKZONE=$TOP/bin/check/named-checkzone
+ export COVERAGE=$TOP/bin/python/dnssec-coverage
+ export DDNSCONFGEN=$TOP/bin/confgen/ddns-confgen
+-if [ -z "$TSAN_OPTIONS" ]; then  # workaround for GL#4119
++if [ -z "${TSAN_OPTIONS:-}" ]; then  # workaround for GL#4119
+     export DELV=$TOP/bin/delv/delv
+     export RESOLVE=$TOP/bin/tests/system/resolve
+ else
+-- 
+2.33.8
+
