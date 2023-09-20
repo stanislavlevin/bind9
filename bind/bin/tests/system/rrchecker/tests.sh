@@ -11,26 +11,27 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+set -e
+
+. ../conf.sh
 
 status=0
 n=0
 
-n=`expr $n + 1`
+n=$((n + 1))
 echo_i "class list ($n)"
 $RRCHECKER -C > classlist.out
-$DIFF classlist.out classlist.good || { echo_i "failed"; status=`expr $status + 1`; }
+diff classlist.out classlist.good || { echo_i "failed"; status=$((status + 1)); }
 
-n=`expr $n + 1`
+n=$((n + 1))
 echo_i "type list ($n)"
 $RRCHECKER -T > typelist.out
-$DIFF typelist.out typelist.good || { echo_i "failed"; status=`expr $status + 1`; }
+diff typelist.out typelist.good || { echo_i "failed"; status=$((status + 1)); }
 
-n=`expr $n + 1`
+n=$((n + 1))
 echo_i "private type list ($n)"
 $RRCHECKER -P > privatelist.out
-$DIFF privatelist.out privatelist.good || { echo_i "failed"; status=`expr $status + 1`; }
+diff privatelist.out privatelist.good || { echo_i "failed"; status=$((status + 1)); }
 
 myecho() {
 cat << EOF
@@ -38,10 +39,10 @@ $*
 EOF
 }
 
-n=`expr $n + 1`
+n=$((n + 1))
 echo_i "check conversions to canonical format ($n)"
 ret=0
-$SHELL ../genzone.sh 0 > tempzone
+$SHELL ${TOP_SRCDIR}/bin/tests/system/genzone.sh 0 > tempzone
 $CHECKZONE -Dq . tempzone | sed '/^;/d' > checkzone.out$n
 while read -r name tt cl ty rest
 do
@@ -55,9 +56,9 @@ do
 		echo_i "'$cl $ty $rest' != '$cl0 $ty0 $rest0'"
 	}
 done < checkzone.out$n
-test $ret -eq 0 || { echo_i "failed"; status=`expr $status + 1`; }
+test $ret -eq 0 || { echo_i "failed"; status=$((status + 1)); }
 
-n=`expr $n + 1`
+n=$((n + 1))
 echo_i "check conversions to and from unknown record format ($n)"
 ret=0
 $CHECKZONE -Dq . tempzone | sed '/^;/d' > checkzone.out$n
@@ -78,7 +79,7 @@ do
 		echo_i "'$cl $ty $rest' != '$cl0 $ty0 $rest0'"
 	}
 done < checkzone.out$n
-test $ret -eq 0 || { echo_i "failed"; status=`expr $status + 1`; }
+test $ret -eq 0 || { echo_i "failed"; status=$((status + 1)); }
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

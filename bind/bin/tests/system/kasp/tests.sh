@@ -11,11 +11,12 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+set -e
+
 # shellcheck source=conf.sh
+. ../conf.sh
 # shellcheck source=kasp.sh
-SYSTEMTESTTOP=..
-. "$SYSTEMTESTTOP/conf.sh"
-. "$SYSTEMTESTTOP/kasp.sh"
+. ../kasp.sh
 
 start_time="$(TZ=UTC date +%s)"
 status=0
@@ -37,7 +38,7 @@ dig_with_opts() {
 
 # RNDC.
 rndccmd() {
-	"$RNDC" -c "$SYSTEMTESTTOP/common/rndc.conf" -p "$CONTROLPORT" -s "$@"
+	"$RNDC" -c ../common/rndc.conf -p "$CONTROLPORT" -s "$@"
 }
 
 # Log error and increment failure rate.
@@ -162,7 +163,7 @@ cp "$STATE_FILE" "$CMP_FILE"
 $SETTIME -P +3600 "$BASE_FILE" > /dev/null || log_error "settime failed"
 grep "; Publish: " "$KEY_FILE" > /dev/null || log_error "mismatch published in $KEY_FILE"
 grep "Publish: " "$PRIVATE_FILE" > /dev/null || log_error "mismatch published in $PRIVATE_FILE"
-$DIFF "$CMP_FILE" "$STATE_FILE" || log_error "unexpected file change in $STATE_FILE"
+diff "$CMP_FILE" "$STATE_FILE" || log_error "unexpected file change in $STATE_FILE"
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
 
@@ -2165,7 +2166,7 @@ dnssec_verify
 n=$((n+1))
 echo_i "check that rndc dnssec -rollover fails if key is inactive ($n)"
 ret=0
-rndccmd "$SERVER" dnssec -rollover -key $(key_get KEY4 ID) "$ZONE" > rndc.dnssec.rollover.out.$ZONE.$n
+rndccmd "$SERVER" dnssec -rollover -key $(key_get KEY4 ID) "$ZONE" > rndc.dnssec.rollover.out.$ZONE.$n || ret=1
 grep "key is not actively signing" rndc.dnssec.rollover.out.$ZONE.$n > /dev/null || log_error "bad error message"
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))

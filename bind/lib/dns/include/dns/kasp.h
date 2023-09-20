@@ -11,8 +11,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_KASP_H
-#define DNS_KASP_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -106,17 +105,17 @@ struct dns_kasp {
 #define DNS_KASP_VALID(kasp) ISC_MAGIC_VALID(kasp, DNS_KASP_MAGIC)
 
 /* Defaults */
-#define DNS_KASP_SIG_REFRESH	     (86400 * 5)
-#define DNS_KASP_SIG_VALIDITY	     (86400 * 14)
-#define DNS_KASP_SIG_VALIDITY_DNSKEY (86400 * 14)
-#define DNS_KASP_KEY_TTL	     (3600)
-#define DNS_KASP_DS_TTL		     (86400)
-#define DNS_KASP_PUBLISH_SAFETY	     (3600)
-#define DNS_KASP_PURGE_KEYS	     (86400 * 90)
-#define DNS_KASP_RETIRE_SAFETY	     (3600)
-#define DNS_KASP_ZONE_MAXTTL	     (86400)
-#define DNS_KASP_ZONE_PROPDELAY	     (300)
-#define DNS_KASP_PARENT_PROPDELAY    (3600)
+#define DNS_KASP_SIG_REFRESH	     "P5D"
+#define DNS_KASP_SIG_VALIDITY	     "P14D"
+#define DNS_KASP_SIG_VALIDITY_DNSKEY "P14D"
+#define DNS_KASP_KEY_TTL	     "3600"
+#define DNS_KASP_DS_TTL		     "86400"
+#define DNS_KASP_PUBLISH_SAFETY	     "3600"
+#define DNS_KASP_PURGE_KEYS	     "P90D"
+#define DNS_KASP_RETIRE_SAFETY	     "3600"
+#define DNS_KASP_ZONE_MAXTTL	     "86400"
+#define DNS_KASP_ZONE_PROPDELAY	     "300"
+#define DNS_KASP_PARENT_PROPDELAY    "3600"
 
 /* Key roles */
 #define DNS_KASP_KEY_ROLE_KSK 0x01
@@ -383,9 +382,11 @@ dns_kasp_setretiresafety(dns_kasp_t *kasp, uint32_t value);
  */
 
 dns_ttl_t
-dns_kasp_zonemaxttl(dns_kasp_t *kasp);
+dns_kasp_zonemaxttl(dns_kasp_t *kasp, bool fallback);
 /*%<
- * Get maximum zone TTL.
+ * Get maximum zone TTL. If 'fallback' is true, return a default maximum TTL
+ * if the maximum zone TTL is set to unlimited (value 0). Fallback should be
+ * used if determining key rollover timings in keymgr.c
  *
  * Requires:
  *
@@ -713,5 +714,3 @@ dns_kasp_setnsec3param(dns_kasp_t *kasp, uint8_t iter, bool optout,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_KASP_H */

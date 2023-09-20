@@ -11,11 +11,10 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-# shellcheck source=conf.sh
-SYSTEMTESTTOP=..
-. "$SYSTEMTESTTOP/conf.sh"
-
 set -e
+
+# shellcheck source=conf.sh
+. ../conf.sh
 
 status=0
 n=1
@@ -39,7 +38,7 @@ delv_with_opts() {
 }
 
 rndccmd() {
-    "$RNDC" -c "$SYSTEMTESTTOP/common/rndc.conf" -p "$CONTROLPORT" -s "$@"
+    "$RNDC" -c ../common/rndc.conf -p "$CONTROLPORT" -s "$@"
 }
 
 # TODO: Move loadkeys_on to conf.sh.common
@@ -84,8 +83,7 @@ israw0 () {
     < "$1" $PERL -e 'binmode STDIN;
 	             read(STDIN, $input, 8);
 	             ($style, $version) = unpack("NN", $input);
-	             exit 1 if ($style != 2 || $version != 0);'
-    return $?
+	             exit 1 if ($style != 2 || $version != 0);' || return $?
 }
 
 # check that a zone file is raw format, version 1
@@ -94,8 +92,7 @@ israw1 () {
     < "$1" $PERL -e 'binmode STDIN;
 		     read(STDIN, $input, 8);
                      ($style, $version) = unpack("NN", $input);
-                     exit 1 if ($style != 2 || $version != 1);'
-    return $?
+                     exit 1 if ($style != 2 || $version != 1);' || return $?
 }
 
 # strip NS and RRSIG NS from input
@@ -110,13 +107,11 @@ stripns () {
 # Ensure there is not a blank line before "Secure roots:".
 #
 check_secroots_layout () {
-	tr -d '\r' < "$1" | \
 	awk '$0 == "" { if (empty) exit(1); empty=1; next }
 	     /Start view/ { if (!empty) exit(1) }
 	     /Secure roots:/ { if (empty) exit(1) }
 	     /Negative trust anchors:/ { if (!empty) exit(1) }
-	     { empty=0 }'
-	return $?
+	     { empty=0 }' $1 || return $?
 }
 
 # Check that for a query against a validating resolver where the
@@ -1423,7 +1418,6 @@ status=$((status+ret))
 get_default_algorithm_key_ids_from_sigs() {
 	zone=$1
 
-	tr -d '\r' < signer/$zone.db.signed | \
 	awk -v alg=$DEFAULT_ALGORITHM_NUMBER '
 		NF < 8 { next }
 		$(NF-5) != "RRSIG" { next }
@@ -1433,8 +1427,7 @@ get_default_algorithm_key_ids_from_sigs() {
 			getline;
 			print $3;
 		}
-	' | \
-	sort -u
+	' signer/$zone.db.signed | sort -u
 }
 
 # Test dnssec-signzone ZSK prepublish smooth rollover.
@@ -1854,7 +1847,7 @@ check_secroots_layout named.secroots.test$n || ret=1
 linecount=$(grep -c "./$DEFAULT_ALGORITHM/$keyid ; static" named.secroots.test$n || true)
 [ "$linecount" -eq 1 ] || ret=1
 linecount=$(< named.secroots.test$n wc -l)
-[ "$linecount" -eq 9 ] || ret=1
+[ "$linecount" -eq 10 ] || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
@@ -1974,14 +1967,14 @@ rndccmd 10.53.0.4 nta badds.example 2>&1 | sed 's/^/ns4 /' | cat_i
 rndccmd 10.53.0.4 reconfig 2>&1 | sed 's/^/ns4 /' | cat_i
 rndccmd 10.53.0.4 nta -d > rndc.out.ns4.test$n.1
 lines=$(wc -l < rndc.out.ns4.test$n.1)
-[ "$lines" -eq 2 ] || ret=1
+[ "$lines" -eq 3 ] || ret=1
 rndccmd 10.53.0.4 nta secure.example 2>&1 | sed 's/^/ns4 /' | cat_i
 rndccmd 10.53.0.4 nta fakenode.secure.example 2>&1 | sed 's/^/ns4 /' | cat_i
 # reload should maintain NTAs
 rndc_reload ns4 10.53.0.4
 rndccmd 10.53.0.4 nta -d > rndc.out.ns4.test$n.2
 lines=$(wc -l < rndc.out.ns4.test$n.2)
-[ "$lines" -eq 4 ] || ret=1
+[ "$lines" -eq 5 ] || ret=1
 # shellcheck disable=SC2016
 start=$($PERL -e 'print time()."\n";')
 
@@ -2157,7 +2150,7 @@ status=$((status+ret))
 ret=0
 
 echo_i "killing ns4 with SIGTERM"
-$KILL -TERM "$(cat ns4/named.pid)"
+kill -TERM "$(cat ns4/named.pid)"
 rm -f ns4/named.pid
 
 #
@@ -2188,7 +2181,7 @@ sleep 4
 #
 rndccmd 10.53.0.4 nta -d > rndc.out.ns4.test$n.3
 lines=$(wc -l < rndc.out.ns4.test$n.3)
-[ "$lines" -eq 1 ] || ret=1
+[ "$lines" -eq 2 ] || ret=1
 grep "bogus.example/_default: expiry" rndc.out.ns4.test$n.3 > /dev/null || ret=1
 dig_with_opts b.bogus.example. a @10.53.0.4 > dig.out.ns4.test$n.4 || ret=1
 grep "status: SERVFAIL" dig.out.ns4.test$n.4 > /dev/null && ret=1
@@ -2212,14 +2205,14 @@ n=$((n+1))
 echo_i "testing loading regular attribute from NTA file ($n)"
 rndccmd 10.53.0.4 nta -d > rndc.out.ns4.test$n.1 2>/dev/null
 lines=$(wc -l < rndc.out.ns4.test$n.1)
-[ "$lines" -eq 0 ] || ret=1
+[ "$lines" -eq 1 ] || ret=1
 # initially, secure.example. validates with AD=1
 dig_with_opts a.secure.example. a @10.53.0.4 > dig.out.ns4.test$n.2 || ret=1
 grep "status: SERVFAIL" dig.out.ns4.test$n.2 > /dev/null && ret=1
 grep "flags:[^;]* ad[^;]*;" dig.out.ns4.test$n.2 > /dev/null || ret=1
 
 echo_i "killing ns4 with SIGTERM"
-$KILL -TERM "$(cat ns4/named.pid)"
+kill -TERM "$(cat ns4/named.pid)"
 rm -f ns4/named.pid
 
 echo_i "sleeping for an additional 4 seconds for ns4 to fully shutdown"
@@ -2270,14 +2263,14 @@ n=$((n+1))
 echo_i "testing loading forced attribute from NTA file ($n)"
 rndccmd 10.53.0.4 nta -d > rndc.out.ns4.test$n.1 2>/dev/null
 lines=$(wc -l < rndc.out.ns4.test$n.1)
-[ "$lines" -eq 0 ] || ret=1
+[ "$lines" -eq 1 ] || ret=1
 # initially, secure.example. validates with AD=1
 dig_with_opts a.secure.example. a @10.53.0.4 > dig.out.ns4.test$n.2 || ret=1
 grep "status: SERVFAIL" dig.out.ns4.test$n.2 > /dev/null && ret=1
 grep "flags:[^;]* ad[^;]*;" dig.out.ns4.test$n.2 > /dev/null || ret=1
 
 echo_i "killing ns4 with SIGTERM"
-$KILL -TERM "$(cat ns4/named.pid)"
+kill -TERM "$(cat ns4/named.pid)"
 rm -f named.pid
 
 echo_i "sleeping for an additional 4 seconds for ns4 to fully shutdown"
@@ -2325,7 +2318,7 @@ n=$((n+1))
 echo_i "testing loading out of bounds lifetime from NTA file ($n)"
 
 echo_i "killing ns4 with SIGTERM"
-$KILL -TERM "$(cat ns4/named.pid)"
+kill -TERM "$(cat ns4/named.pid)"
 rm -f ns4/named.pid
 
 echo_i "sleeping for an additional 4 seconds for ns4 to fully shutdown"
@@ -2351,10 +2344,11 @@ echo_i "sleeping for an additional 4 seconds for ns4 to fully startup"
 sleep 4
 
 # dump the NTA to a file (omit validate-except entries)
-echo_i "testing 'rndc nta'"
-rndccmd 10.53.0.4 nta -d > rndc.out.ns4.test$n.1 2>/dev/null
+echo_i "testing 'rndc nta -d' with NTA"
+rndccmd 10.53.0.4 nta -d | grep -v ": permanent" > rndc.out.ns4.test$n.1 2>/dev/null
 # "corp" is configured as a validate-except domain and thus should be
-# omitted. only "secure.example" should be in the dump at this point.
+# removed by the grep -v above. only "secure.example" should appear in
+# the dump.
 lines=$(wc -l < rndc.out.ns4.test$n.1)
 [ "$lines" -eq 1 ] || ret=1
 grep 'secure.example' rndc.out.ns4.test$n.1 > /dev/null || ret=1
@@ -2376,11 +2370,28 @@ else
     echo_i "skipped ntadiff test; install PERL module Time::Piece"
 fi
 
+echo_i "testing 'rndc nta' lifetime clamping"
+rndccmd 10.53.0.4 nta -d | grep ": permanent" > rndc.out.ns4.test$n.1 2>/dev/null
+# "corp" is configured as a validate-except domain and thus should be
+# the only entry in the dump.
+lines=$(wc -l < rndc.out.ns4.test$n.1)
+[ "$lines" -eq 1 ] || ret=1
+grep 'corp/_default' rndc.out.ns4.test$n.1 > /dev/null || ret=1
+
 # cleanup
 rndccmd 10.53.0.4 nta -remove secure.example > rndc.out.ns4.test$n.3 2>/dev/null
 
 n=$((n+1))
-if [ "$ret" -ne 0 ]; then echo_i "failed - NTA lifetime clamping failed"; fi
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+echo_i "testing 'rndc nta -d' displays validate-except entries"
+rndccmd 10.53.0.4 nta -d | grep ": permanent" > rndc.out.ns4.test$n.1 2>/dev/null
+lines=$(wc -l < rndc.out.ns4.test$n.1)
+[ "$lines" -eq 1 ] || ret=1
+grep 'corp/_default' rndc.out.ns4.test$n.1 > /dev/null || ret=1
+n=$((n+1))
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
 echo_i "checking that NTAs work with 'forward only;' to a validating resolver ($n)"
@@ -2414,8 +2425,8 @@ if $PERL -e 'use Net::DNS;' 2>/dev/null
 then
     echo_i "running DNSSEC update test"
     ret=0
-    output=$($PERL dnssec_update_test.pl -s 10.53.0.3 -p "$PORT" dynamic.example.)
-    test "$?" -eq 0 || ret=1
+    { output=$($PERL dnssec_update_test.pl -s 10.53.0.3 -p "$PORT" dynamic.example.); rc=$?; } || true
+    test "$rc" -eq 0 || ret=1
     echo "$output" | cat_i
     [ $ret -eq 1 ] && status=1
 else
@@ -2872,8 +2883,8 @@ awk '{
 	for (i=1;i<7;i++) printf("%s ", $i);
 	for (i=7;i<=NF;i++) printf("%s", $i);
 	printf("\n");
-}' < ns1/dsset-algroll$TP > canonical2.$n || ret=1
-$DIFF -b canonical1.$n canonical2.$n > /dev/null 2>&1 || ret=1
+}' < ns1/dsset-algroll. > canonical2.$n || ret=1
+diff -b canonical1.$n canonical2.$n > /dev/null 2>&1 || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
@@ -2932,7 +2943,7 @@ ret=0
 dig_with_answeropts +nottlid nosign.example ns @10.53.0.3 | \
         grep RRSIG | sed 's/[ 	][ 	]*/ /g' > dig.out.ns3.test$n 2>&1
 # the NS RRSIG should not be changed
-$DIFF nosign.before dig.out.ns3.test$n > /dev/null|| ret=1
+diff nosign.before dig.out.ns3.test$n > /dev/null|| ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
@@ -2956,7 +2967,7 @@ status=$((status+ret))
 echo_i "testing legacy upper case signer name validation ($n)"
 ret=0
 $DIG +tcp +noadd +noauth +dnssec -p "$PORT" soa upper.example @10.53.0.4 \
-        > dig.out.ns4.test$n 2>&1
+        > dig.out.ns4.test$n 2>&1 || ret=1
 grep "flags:.* ad;" dig.out.ns4.test$n > /dev/null || ret=1
 grep "RRSIG.*SOA.* UPPER\\.EXAMPLE\\. " dig.out.ns4.test$n > /dev/null || ret=1
 n=$((n+1))
@@ -2966,7 +2977,7 @@ status=$((status+ret))
 echo_i "testing that we lower case signer name ($n)"
 ret=0
 $DIG +tcp +noadd +noauth +dnssec -p "$PORT" soa LOWER.EXAMPLE @10.53.0.4 \
-        > dig.out.ns4.test$n 2>&1
+        > dig.out.ns4.test$n 2>&1 || ret=1
 grep "flags:.* ad;" dig.out.ns4.test$n > /dev/null || ret=1
 grep "RRSIG.*SOA.* lower\\.example\\. " dig.out.ns4.test$n > /dev/null || ret=1
 n=$((n+1))
@@ -3266,11 +3277,11 @@ if [ -x "$PYTHON" ]; then
     # convert expiry date to a comma-separated list of integers python can
     # use as input to date(). strip leading 0s in months and days so
     # python3 will recognize them as integers.
-    $DIG +dnssec +short -p "$PORT" @10.53.0.3 soa siginterval.example > dig.out.soa.test$n
+    $DIG +dnssec +short -p "$PORT" @10.53.0.3 soa siginterval.example > dig.out.soa.test$n || ret=1
     soaexpire=$(awk '$1 ~ /SOA/ { print $5 }' dig.out.soa.test$n |
 	       sed 's/\(....\)\(..\)\(..\).*/\1, \2, \3/' |
 	       sed 's/ 0/ /g')
-    $DIG +dnssec +short -p "$PORT" @10.53.0.3 dnskey siginterval.example > dig.out.dnskey.test$n
+    $DIG +dnssec +short -p "$PORT" @10.53.0.3 dnskey siginterval.example > dig.out.dnskey.test$n || ret=1
     dnskeyexpire=$(awk '$1 ~ /DNSKEY/ { print $5; exit 0 }' dig.out.dnskey.test$n |
 		  sed 's/\(....\)\(..\)\(..\).*/\1, \2, \3/' |
 		  sed 's/ 0/ /g')
@@ -3370,12 +3381,6 @@ do
 	    ;;
 	15|16)
 	    key1=$($KEYGEN -a "$alg" -n zone "$zone" 2> "keygen-$alg.err" || true)
-	    # Soft-fail	in case HSM doesn't support Edwards curves
-	    if grep "not found" "keygen-$alg.err" > /dev/null && [ "$CRYPTO" = "pkcs11" ]; then
-		echo_i "Algorithm $alg not supported by HSM: skipping"
-		alg=$((alg+1))
-		continue
-	    fi
 	    ;;
 	*)
 	    key1=$($KEYGEN -a "$alg" -n zone "$zone" 2> "keygen-$alg.err" || true)
@@ -3456,7 +3461,7 @@ echo send
 dig_with_opts +noall +answer @10.53.0.2 cds cds-update.secure > dig.out.test$n
 lines=$(awk '$4 == "CDS" {print}' dig.out.test$n | wc -l)
 test "${lines:-10}" -eq 1 || ret=1
-lines=$(tr -d '\r' < dig.out.test$n | awk '$4 == "CDS" && $5 == "0" && $6 == "0" && $7 == "0" && $8 == "00" {print}' | wc -l)
+lines=$(awk '$4 == "CDS" && $5 == "0" && $6 == "0" && $7 == "0" && $8 == "00" {print}' dig.out.test$n | wc -l)
 test "$lines" -eq 1 || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
@@ -3528,7 +3533,7 @@ lines=$(awk -v id="${keyid}" '$4 == "RRSIG" && $5 == "CDS" && $11 == id {print}'
 test "$lines" -eq 1 || ret=1
 lines=$(awk '$4 == "CDS" {print}' dig.out.test$n | wc -l)
 test "$lines" -eq 1 || ret=1
-lines=$(tr -d '\r' < dig.out.test$n | awk '$4 == "CDS" && $5 == "0" && $6 == "0" && $7 == "0" && $8 == "00" {print}' | wc -l)
+lines=$(awk '$4 == "CDS" && $5 == "0" && $6 == "0" && $7 == "0" && $8 == "00" {print}' dig.out.test$n | wc -l)
 test "$lines" -eq 1 || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
@@ -3669,7 +3674,7 @@ echo send
 dig_with_opts +noall +answer @10.53.0.2 cdnskey cdnskey-update.secure > dig.out.test$n
 lines=$(awk '$4 == "CDNSKEY" {print}' dig.out.test$n | wc -l)
 test "${lines:-10}" -eq 1 || ret=1
-lines=$(tr -d '\r' < dig.out.test$n | awk '$4 == "CDNSKEY" && $5 == "0" && $6 == "3" && $7 == "0" && $8 == "AA==" {print}' | wc -l)
+lines=$(awk '$4 == "CDNSKEY" && $5 == "0" && $6 == "3" && $7 == "0" && $8 == "AA==" {print}' dig.out.test$n | wc -l)
 test "${lines:-10}" -eq 1 || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
@@ -3746,7 +3751,7 @@ lines=$(awk -v id="${keyid}" '$4 == "RRSIG" && $5 == "CDNSKEY" && $11 == id {pri
 test "$lines" -eq 1 || ret=1
 lines=$(awk '$4 == "CDNSKEY" {print}' dig.out.test$n | wc -l)
 test "$lines" -eq 1 || ret=1
-lines=$(tr -d '\r' < dig.out.test$n | awk '$4 == "CDNSKEY" && $5 == "0" && $6 == "3" && $7 == "0" && $8 == "AA==" {print}' | wc -l)
+lines=$(awk '$4 == "CDNSKEY" && $5 == "0" && $6 == "3" && $7 == "0" && $8 == "AA==" {print}' dig.out.test$n | wc -l)
 test "${lines:-10}" -eq 1 || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"

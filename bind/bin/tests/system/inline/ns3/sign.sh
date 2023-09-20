@@ -11,8 +11,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=../..
-. $SYSTEMTESTTOP/conf.sh
+. ../../conf.sh
 
 # Fake an unsupported key
 unsupportedkey=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone unsupported)
@@ -33,7 +32,7 @@ keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
 keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
 $DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
 
-zone=master
+zone=primary
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
 keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
@@ -54,7 +53,7 @@ keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
 keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
 $DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
 $SIGNER -S -O raw -L 2000042407 -o ${zone} ${zone}.db > /dev/null
-cp master2.db.in updated.db
+cp primary2.db.in updated.db
 
 # signatures are expired and should be regenerated on startup
 zone=expired
@@ -149,11 +148,11 @@ do
     $DSFROMKEY -T 1200 $k4 >> ../ns1/root.db
 
     # Convert k1 and k2 in to External Keys.
-    rm -f $k1.private 
+    rm -f $k1.private
     mv $k1.key a-file
     $IMPORTKEY -P now -D now+3600 -f a-file $zone > /dev/null 2>&1 ||
         ( echo_i "importkey failed: $alg" )
-    rm -f $k2.private 
+    rm -f $k2.private
     mv $k2.key a-file
     $IMPORTKEY -f a-file $zone > /dev/null 2>&1 ||
         ( echo_i "importkey failed: $alg" )

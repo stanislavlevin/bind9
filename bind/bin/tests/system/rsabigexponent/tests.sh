@@ -11,8 +11,9 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+set -e
+
+. ../conf.sh
 
 status=0
 
@@ -26,7 +27,7 @@ do
 	ret=0
 	$CHECKCONF $f > /dev/null || ret=1
 	if [ $ret != 0 ]; then echo_i "failed"; fi
-	status=`expr $status + $ret`
+	status=$((status + ret))
 done
 
 for f in conf/bad*.conf
@@ -35,14 +36,14 @@ do
 	ret=0
 	$CHECKCONF $f > /dev/null && ret=1
 	if [ $ret != 0 ]; then echo_i "failed"; fi
-	status=`expr $status + $ret`
+	status=$((status + ret))
 done
 
 echo_i "checking that RSA big exponent keys can't be loaded"
 ret=0
 grep "out of range" ns2/signer.err > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "checking that RSA big exponent signature can't validate"
 ret=0
@@ -51,7 +52,7 @@ $DIG $DIGOPTS a.example @10.53.0.3 > dig.out.ns3 || ret=1
 grep "status: NOERROR" dig.out.ns2 > /dev/null || ret=1
 grep "status: SERVFAIL" dig.out.ns3 > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

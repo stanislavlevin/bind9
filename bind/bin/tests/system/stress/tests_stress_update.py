@@ -37,7 +37,7 @@ def rndc_loop(test_state, server):
         time.sleep(1)
 
 
-def update_zone(test_state, zone, named_port):
+def update_zone(test_state, zone, named_port, logger):
     server = "10.53.0.2"
     for i in range(1000):
         if test_state["finished"]:
@@ -48,13 +48,13 @@ def update_zone(test_state, zone, named_port):
             response = dns.query.udp(update, server, 10, named_port)
             assert response.rcode() == dns.rcode.NOERROR
         except dns.exception.Timeout:
-            print(f"error: query timeout for {zone}")
+            logger.info(f"error: query timeout for {zone}")
 
-    print(f"Update of {server} zone {zone} successful")
+    logger.info(f"Update of {server} zone {zone} successful")
 
 
 # If the test has run to completion without named crashing, it has succeeded.
-def test_update_stress(named_port):
+def test_update_stress(named_port, logger):
     test_state = {"finished": False}
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -63,7 +63,9 @@ def test_update_stress(named_port):
         updaters = []
         for i in range(5):
             zone = f"zone00000{i}.example."
-            updaters.append(executor.submit(update_zone, test_state, zone, named_port))
+            updaters.append(
+                executor.submit(update_zone, test_state, zone, named_port, logger)
+            )
 
         # All the update_zone() tasks are expected to complete within 5
         # minutes.  If they do not, we cannot assert immediately as that will
