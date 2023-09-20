@@ -237,7 +237,7 @@ if [ $status -eq 0 ]; then
             if start_servers; then
                 run=$((run+1))
                 test_status=0
-                (cd "$systest" && "$PYTEST" -rsxX -v "$test" "$@" || echo "$?" > "$test.status") | SYSTESTDIR="$systest" cat_d
+                (cd "$systest" && "$PYTEST" --confcutdir ../ -rsxX -v "$test" "$@" || echo "$?" > "$test.status") | SYSTESTDIR="$systest" cat_d
                 if [ -f "$systest/$test.status" ]; then
                     if [ "$(cat "$systest/$test.status")" != "5" ]; then
                         test_status=$(cat "$systest/$test.status")
@@ -297,7 +297,7 @@ if [ -n "$core_dumps" ]; then
         echoinfo "D:$systest:full backtrace from $coredump saved in $coredump_backtrace"
         "${TOP}/libtool" --mode=execute gdb \
                       -batch \
-                      -command=run.gdb \
+                      -command="${TOP_SRCDIR}/bin/tests/system/run.gdb" \
                       -core="$coredump" \
                       -- \
                       "$binary" > "$coredump_backtrace" 2>&1
