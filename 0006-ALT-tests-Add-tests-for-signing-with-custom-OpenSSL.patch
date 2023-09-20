@@ -96,9 +96,9 @@ index b9641c42b2d..974b4405134 100644
 +    export PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -q -s ${SLOT:-0} -p ${HSMPIN:-1234}"
 +    export PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s ${SLOT:-0} -p ${HSMPIN:-1234}"
 +fi
- export RESOLVE=$TOP/bin/tests/system/resolve
  export REVOKE=$TOP/bin/dnssec/dnssec-revoke
  export RNDC=$TOP/bin/rndc/rndc
+ export RNDCCONFGEN=$TOP/bin/confgen/rndc-confgen
 diff --git a/bind/bin/tests/system/pkcs11/setup.sh b/bind/bin/tests/system/pkcs11/setup.sh
 index b592fd095ca..140b16d447e 100644
 --- a/bind/bin/tests/system/pkcs11/setup.sh
