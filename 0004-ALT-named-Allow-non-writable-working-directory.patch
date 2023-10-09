@@ -89,3 +89,20 @@ index 81184099b81..72a8e7f61f3 100644
 -- 
 2.33.4
 
+diff --git a/bind/bin/tests/system/runtime/ns2/named-alt4.conf.in b/bind/bin/tests/system/runtime/ns2/named-alt4.conf.in
+index 4c0312acd54..f4faf7b7446 100644
+--- a/bind/bin/tests/system/runtime/ns2/named-alt4.conf.in
++++ b/bind/bin/tests/system/runtime/ns2/named-alt4.conf.in
+@@ -20,3 +20,12 @@ options {
+ 	recursion no;
+ 	dnssec-validation no;
+ };
++
++key rndc_key {
++	secret "1234abcd8765";
++	algorithm @DEFAULT_HMAC@;
++};
++
++controls {
++	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
++};
