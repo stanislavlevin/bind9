@@ -23,8 +23,8 @@
 %endif
 
 Name: bind
-Version: 9.16.44
-%define src_version 9.16.44
+Version: 9.18.19
+%define src_version 9.18.19
 Release: alt1
 
 Summary: ISC BIND - DNS server
@@ -582,6 +582,9 @@ fi
 %endif
 
 %changelog
+* Tue Sep 26 2023 Stanislav Levin <slev@altlinux.org> 9.18.19-alt1
+- 9.16.44 -> 9.18.19.
+
 * Wed Sep 20 2023 Stanislav Levin <slev@altlinux.org> 9.16.44-alt1
 - 9.16.42 -> 9.16.44 (fixes: CVE-2023-3341).
 
