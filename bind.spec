@@ -301,8 +301,8 @@ mkdir -p %buildroot%docdir/arm
 cp -a doc/arm/_build/html %buildroot%docdir/arm/
 %endif
 
-# legacy path for plugins (for example, bind-dyndb-ldap)
-mkdir -p %buildroot%_libdir/bind
+# alternative path for plugins
+mkdir -p %buildroot%_libdir/named
 
 # filetrigger: delayed restart of named if named or its plugins were
 # installed/upgraded
@@ -499,9 +499,8 @@ fi
 %docdir/README.ALT
 # plugins
 %dir %_libdir/named
-%_libdir/named/filter-aaaa.so
-# legacy path for plugins (for example, bind-dyndb-ldap)
 %dir %_libdir/bind
+%_libdir/bind/filter-aaaa.so
 
 %_bindir/arpaname
 %_bindir/named-rrchecker
