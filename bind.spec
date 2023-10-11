@@ -304,6 +304,9 @@ cp -a doc/arm/_build/html %buildroot%docdir/arm/
 # alternative path for plugins
 mkdir -p %buildroot%_libdir/named
 
+# clean up la files
+rm %buildroot%_libdir/bind/*.la
+
 # filetrigger: delayed restart of named if named or its plugins were
 # installed/upgraded
 mkdir -p %buildroot%_rpmlibdir
@@ -501,6 +504,7 @@ fi
 %dir %_libdir/named
 %dir %_libdir/bind
 %_libdir/bind/filter-aaaa.so
+%_libdir/bind/filter-a.so
 
 %_bindir/arpaname
 %_bindir/named-*
