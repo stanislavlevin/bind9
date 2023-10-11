@@ -503,8 +503,14 @@ fi
 %_libdir/bind/filter-aaaa.so
 
 %_bindir/arpaname
-%_bindir/named-rrchecker
-%_sbindir/*
+%_bindir/named-*
+%_bindir/nsec3hash
+%_bindir/dnssec-*
+%_sbindir/ddns-confgen
+%_sbindir/named
+%_sbindir/rndc
+%_sbindir/rndc-confgen
+%_sbindir/tsig-keygen
 %_sysconfdir/bind
 %_sysconfdir/bind.keys
 %_sysconfdir/named.conf
@@ -518,10 +524,12 @@ fi
 
 %_rpmlibdir/%name-restart.filetrigger
 
-%_man1dir/named-rrchecker.1*
+%_man1dir/arpaname.1.*
+%_man1dir/dnssec-*.*
+%_man1dir/named-*.1.*
+%_man1dir/nsec3hash.1.*
 %_man5dir/*
 %_man8dir/*
-%_man1dir/arpaname*
 
 #chroot
 %_sysconfdir/syslog.d/*

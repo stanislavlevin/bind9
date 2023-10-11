@@ -11,7 +11,7 @@ EnvironmentFile=-/etc/sysconfig/bind
 #Environment=KRB5_KTNAME=/etc/named.keytab
 
 ExecStartPre=/etc/init.d/bind rndc_keygen
-ExecStartPre=/usr/sbin/named-checkconf $CHROOT -z /etc/named.conf
+ExecStartPre=/usr/bin/named-checkconf $CHROOT -z /etc/named.conf
 ExecStart=/usr/sbin/named @DISTRO_OPTIONS@ $CHROOT $RETAIN_CAPS $EXTRAOPTIONS
 
 ExecReload=/bin/sh -c '/usr/sbin/rndc reload > /dev/null 2>&1 || /bin/kill -HUP $MAINPID'
