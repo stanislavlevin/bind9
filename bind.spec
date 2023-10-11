@@ -1,7 +1,7 @@
 %define _unpackaged_files_terminate_build 1
 
 # build rules
-%def_with docs
+%def_without docs
 %def_with openssl
 %def_with libjson
 %def_with check
