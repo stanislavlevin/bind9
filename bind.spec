@@ -222,6 +222,9 @@ s,@LOG_DIR@,%log_dir,g;
 export SPHINX_BUILD=/usr/bin/sphinx-build-3
 %endif
 
+# https://bugzilla.redhat.com/show_bug.cgi?id=2122841#c30
+%add_optflags -DOPENSSL_API_COMPAT=10100
+
 %autoreconf
 %configure \
 	--localstatedir=/var \
