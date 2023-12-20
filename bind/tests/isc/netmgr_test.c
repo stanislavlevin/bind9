@@ -393,8 +393,8 @@ noop_recv_cb(isc_nmhandle_t *handle, isc_result_t eresult, isc_region_t *region,
 	UNUSED(cbarg);
 }
 
-static unsigned int
-noop_accept_cb(isc_nmhandle_t *handle, unsigned int result, void *cbarg) {
+static isc_result_t
+noop_accept_cb(isc_nmhandle_t *handle, isc_result_t result, void *cbarg) {
 	UNUSED(handle);
 	UNUSED(cbarg);
 
@@ -402,7 +402,7 @@ noop_accept_cb(isc_nmhandle_t *handle, unsigned int result, void *cbarg) {
 		(void)atomic_fetch_add(&saccepts, 1);
 	}
 
-	return (0);
+	return (ISC_R_SUCCESS);
 }
 
 static void

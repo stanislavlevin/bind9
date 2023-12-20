@@ -175,8 +175,8 @@ def test_named_shutdown(named_port, control_port, kill_method):
     rndc = os.getenv("RNDC")
     assert rndc is not None
 
-    # rndc configuration resides in ../common/rndc.conf
-    rndc_cfg = os.path.join("..", "common", "rndc.conf")
+    # rndc configuration resides in ../_common/rndc.conf
+    rndc_cfg = os.path.join("..", "_common", "rndc.conf")
     assert os.path.isfile(rndc_cfg)
 
     # rndc command with default arguments.
@@ -188,8 +188,6 @@ def test_named_shutdown(named_port, control_port, kill_method):
     resolver.port = named_port
 
     named_cmdline = [named, "-c", cfg_file, "-f"]
-    # ALT options for named
-    named_cmdline.extend(os.getenv("ALT_NAMED_OPTIONS", "").split())
     with subprocess.Popen(named_cmdline, cwd=cfg_dir) as named_proc:
         try:
             assert named_proc.poll() is None, "named isn't running"

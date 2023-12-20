@@ -126,7 +126,7 @@
  */
 #define RANGE(a, min, max) (((a) < (min)) ? (min) : ((a) < (max) ? (a) : (max)))
 
-#define NSEC3REMOVE(x) (((x)&DNS_NSEC3FLAG_REMOVE) != 0)
+#define NSEC3REMOVE(x) (((x) & DNS_NSEC3FLAG_REMOVE) != 0)
 
 /*%
  * Key flags
@@ -3971,15 +3971,11 @@ set_resigntime(dns_zone_t *zone) {
 	INSIST(LOCKED_ZONE(zone));
 
 	/* We only re-sign zones that can be dynamically updated */
-	if (zone->update_disabled) {
+	if (!dns_zone_isdynamic(zone, false)) {
 		return;
 	}
 
-	if (!inline_secure(zone) &&
-	    (zone->type != dns_zone_primary ||
-	     (zone->ssutable == NULL &&
-	      (zone->update_acl == NULL || dns_acl_isnone(zone->update_acl)))))
-	{
+	if (inline_raw(zone)) {
 		return;
 	}
 
@@ -5330,7 +5326,7 @@ zone_postload(dns_zone_t *zone, dns_db_t *db, isc_time_t loadtime,
 		is_dynamic = dns_zone_isdynamic(zone, false);
 		if (zone->type == dns_zone_primary &&
 		    !DNS_ZONEKEY_OPTION(zone, DNS_ZONEKEY_NORESIGN) &&
-		    is_dynamic && dns_db_issecure(db))
+		    is_dynamic && dns_db_issecure(db) && !inline_raw(zone))
 		{
 			dns_name_t *name;
 			dns_fixedname_t fixed;
@@ -12705,14 +12701,14 @@ notify_send_toaddr(isc_task_t *task, isc_event_t *event) {
 		result = ISC_R_NOTIMPLEMENTED;
 		goto cleanup_key;
 	}
-	timeout = 15;
+	timeout = 5;
 	if (DNS_ZONE_FLAG(notify->zone, DNS_ZONEFLG_DIALNOTIFY)) {
 		timeout = 30;
 	}
-	result = dns_request_create(notify->zone->view->requestmgr, message,
-				    &src, &notify->dst, options, key,
-				    timeout * 3, timeout, 2, notify->zone->task,
-				    notify_done, notify, &notify->request);
+	result = dns_request_create(
+		notify->zone->view->requestmgr, message, &src, &notify->dst,
+		options, key, timeout * 3 + 1, timeout, 2, notify->zone->task,
+		notify_done, notify, &notify->request);
 	if (result == ISC_R_SUCCESS) {
 		if (isc_sockaddr_pf(&notify->dst) == AF_INET) {
 			inc_stats(notify->zone,
@@ -14672,13 +14668,13 @@ again:
 	}
 
 	zone_iattach(zone, &dummy);
-	timeout = 15;
+	timeout = 5;
 	if (DNS_ZONE_FLAG(zone, DNS_ZONEFLG_DIALREFRESH)) {
 		timeout = 30;
 	}
 	result = dns_request_create(
 		zone->view->requestmgr, message, &zone->sourceaddr,
-		&zone->primaryaddr, options, key, timeout * 3, timeout, 2,
+		&zone->primaryaddr, options, key, timeout * 3 + 1, timeout, 2,
 		zone->task, refresh_callback, zone, &zone->request);
 	if (result != ISC_R_SUCCESS) {
 		zone_idetach(&dummy);
@@ -14928,7 +14924,7 @@ ns_query(dns_zone_t *zone, dns_rdataset_t *soardataset, dns_stub_t *stub) {
 		POST(result);
 		goto cleanup;
 	}
-	timeout = 15;
+	timeout = 5;
 	if (DNS_ZONE_FLAG(zone, DNS_ZONEFLG_DIALREFRESH)) {
 		timeout = 30;
 	}
@@ -14946,7 +14942,7 @@ ns_query(dns_zone_t *zone, dns_rdataset_t *soardataset, dns_stub_t *stub) {
 
 	result = dns_request_create(
 		zone->view->requestmgr, message, &zone->sourceaddr,
-		&zone->primaryaddr, DNS_REQUESTOPT_TCP, key, timeout * 3,
+		&zone->primaryaddr, DNS_REQUESTOPT_TCP, key, timeout * 3 + 1,
 		timeout, 2, zone->task, stub_callback, cb_args, &zone->request);
 	if (result != ISC_R_SUCCESS) {
 		zone_debuglog(zone, me, 1, "dns_request_create() failed: %s",
@@ -17666,6 +17662,12 @@ again:
 			DNS_ZONE_TIME_ADD(&now, zone->expire,
 					  &zone->expiretime);
 		}
+
+		/*
+		 * Set loadtime.
+		 */
+		zone->loadtime = now;
+
 		if (result == ISC_R_SUCCESS && xfrresult == ISC_R_SUCCESS) {
 			char buf[DNS_NAME_FORMATSIZE + sizeof(": TSIG ''")];
 			if (zone->tsigkey != NULL) {
@@ -21252,11 +21254,11 @@ checkds_send_toaddr(isc_task_t *task, isc_event_t *event) {
 	dns_zone_log(checkds->zone, ISC_LOG_DEBUG(3),
 		     "checkds: create request for DS query to %s", addrbuf);
 
-	timeout = 15;
+	timeout = 5;
 	options |= DNS_REQUESTOPT_TCP;
 	result = dns_request_create(
 		checkds->zone->view->requestmgr, message, &src, &checkds->dst,
-		options, key, timeout * 3, timeout, 2, checkds->zone->task,
+		options, key, timeout * 3 + 1, timeout, 2, checkds->zone->task,
 		checkds_done, checkds, &checkds->request);
 	if (result != ISC_R_SUCCESS) {
 		dns_zone_log(checkds->zone, ISC_LOG_DEBUG(3),
