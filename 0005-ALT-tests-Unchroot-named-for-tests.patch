@@ -53,6 +53,19 @@ index 657d9880807..1cf465ff5eb 100755
  	if ($restart) {
  		$command .= " >>named.run 2>&1 &";
  	} else {
+diff --git a/bind/bin/tests/system/shutdown/tests_shutdown.py b/bind/bin/tests/system/shutdown/tests_shutdown.py
+index 89cada2bb77..3fe1e3b562b 100755
+--- a/bind/bin/tests/system/shutdown/tests_shutdown.py
++++ b/bind/bin/tests/system/shutdown/tests_shutdown.py
+@@ -188,6 +188,8 @@ def test_named_shutdown(named_port, control_port, kill_method):
+     resolver.port = named_port
+ 
+     named_cmdline = [named, "-c", cfg_file, "-f"]
++    # ALT options for named
++    named_cmdline.extend(os.getenv("ALT_NAMED_OPTIONS", "").split())
+     with subprocess.Popen(named_cmdline, cwd=cfg_dir) as named_proc:
+         try:
+             assert named_proc.poll() is None, "named isn't running"
 -- 
-2.33.4
+2.42.1
 
