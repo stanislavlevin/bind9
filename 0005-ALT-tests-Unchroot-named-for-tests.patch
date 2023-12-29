@@ -19,10 +19,10 @@ index 911ccd11d4a..da34e3fa3a9 100644
  grep "would limit" ns4/named.run >/dev/null 2>&1 ||
  setret "\"would limit\" not found in log file."
  
--$NAMED -D rrl-ns5 -gc broken.conf > broken.out 2>&1 &
-+$NAMED -D rrl-ns5 -gc broken.conf $ALT_NAMED_OPTIONS > broken.out 2>&1 &
+-$NAMED -D rrl-ns5 -gc broken.conf >broken.out 2>&1 &
++$NAMED -D rrl-ns5 -gc broken.conf $ALT_NAMED_OPTIONS >broken.out 2>&1 &
  sleep 2
- grep "min-table-size 1" broken.out > /dev/null || setret "min-table-size 0 was not changed to 1"
+ grep "min-table-size 1" broken.out >/dev/null || setret "min-table-size 0 was not changed to 1"
  
 diff --git a/bind/bin/tests/system/runtime/tests.sh b/bind/bin/tests/system/runtime/tests.sh
 index 81184099b81..70212814e2a 100644
@@ -31,7 +31,7 @@ index 81184099b81..70212814e2a 100644
 @@ -18,7 +18,7 @@ SYSTEMTESTTOP=..
  set -e
  
- RNDCCMD="$RNDC -c ../common/rndc.conf -p ${CONTROLPORT} -s"
+ RNDCCMD="$RNDC -c ../_common/rndc.conf -p ${CONTROLPORT} -s"
 -NAMED_DEFAULT_ARGS="-m record -d 99 -g -U 4"
 +NAMED_DEFAULT_ARGS="-m record -d 99 -g -U 4 $ALT_NAMED_OPTIONS"
  
