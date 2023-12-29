@@ -17,10 +17,10 @@ index d5b5996473e..42fbf90c5e3 100644
  export CHECKZONE=$TOP/bin/check/named-checkzone
  export COVERAGE=$TOP/bin/python/dnssec-coverage
  export DDNSCONFGEN=$TOP/bin/confgen/ddns-confgen
--if [ -z "$TSAN_OPTIONS" ]; then  # workaround for GL#4119
-+if [ -z "${TSAN_OPTIONS:-}" ]; then  # workaround for GL#4119
-     export DELV=$TOP/bin/delv/delv
-     export RESOLVE=$TOP/bin/tests/system/resolve
+-if [ -z "$TSAN_OPTIONS" ]; then # workaround for GL#4119
++if [ -z "${TSAN_OPTIONS:-}" ]; then # workaround for GL#4119
+   export DELV=$TOP/bin/delv/delv
+   export RESOLVE=$TOP/bin/tests/system/resolve
  else
 -- 
 2.33.8
