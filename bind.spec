@@ -4,6 +4,7 @@
 %def_without docs
 %def_with openssl
 %def_with libjson
+%def_with libjemalloc
 %def_with check
 %def_without system_tests
 # skip enginepkcs11 tests
@@ -120,6 +121,7 @@ BuildPreReq: libcap-devel
 
 %{?_with_openssl:BuildPreReq: libssl-devel}
 %{?_with_libjson:BuildPreReq: libjson-c-devel}
+%{?_with_libjemalloc:BuildRequires: libjemalloc-devel}
 BuildPreReq: libkrb5-devel
 BuildRequires: libuv-devel
 BuildRequires: libidn2-devel
@@ -237,6 +239,7 @@ export SPHINX_BUILD=/usr/bin/sphinx-build-3
 	--enable-linux-caps \
 	--enable-fixed-rrset \
 	 %{subst_with openssl} \
+	 %{subst_with libjemalloc} \
 %if_with libjson
 	--with-json-c=yes \
 %endif
