@@ -89,7 +89,6 @@ BuildRequires: libp11
 BuildRequires: opensc
 %else
 BuildRequires: rpm-build-vm
-BuildRequires: /sbin/runuser
 BuildRequires: /dev/kvm
 %endif
 
@@ -358,6 +357,8 @@ sudo sh bin/tests/system/ifconfig.sh down
 
 cat > run_smoke.sh <<'_EOF'
 # setup
+set -x
+ulimit -n $(ulimit -Hn)
 runas="$1"
 perl bin/tests/system/testsock.pl || sh -x bin/tests/system/ifconfig.sh up
 ip a
@@ -371,7 +372,7 @@ source ./conf.sh
 for testdir in $SUBDIRS; do
     subns=$(find "$testdir" -maxdepth 1 -type d -name "ns[0-9]" | wc -l)
     if [ $subns -lt 2 ]; then
-        runuser -u "$runas" -- sh run.sh "$testdir"
+        setpriv --reuid "$runas" -- sh run.sh "$testdir"
     fi
 done
 
