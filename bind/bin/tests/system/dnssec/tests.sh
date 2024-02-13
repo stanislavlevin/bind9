@@ -766,6 +766,21 @@ n=$((n + 1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status + ret))
 
+echo_i "checking mixed-case positive validation ($n)"
+ret=0
+for type in a txt aaaa loc; do
+  dig_with_opts +noauth mixedcase.secure.example. \
+    @10.53.0.3 $type >dig.out.$type.ns3.test$n || ret=1
+  dig_with_opts +noauth mixedcase.secure.example. \
+    @10.53.0.4 $type >dig.out.$type.ns4.test$n || ret=1
+  digcomp --lc dig.out.$type.ns3.test$n dig.out.$type.ns4.test$n || ret=1
+  grep "status: NOERROR" dig.out.$type.ns4.test$n >/dev/null || ret=1
+  grep "flags:.*ad.*QUERY" dig.out.$type.ns4.test$n >/dev/null || ret=1
+done
+n=$((n + 1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status + ret))
+
 echo_i "checking multi-stage positive validation NSEC/NSEC3 ($n)"
 ret=0
 dig_with_opts +noauth a.nsec3.example. \
@@ -2720,7 +2735,7 @@ rndccmd 10.53.0.3 signing -nsec3param 1 0 0 auto inline.example >/dev/null 2>&1 
 rndccmd 10.53.0.3 status >/dev/null || ret=1
 for i in 1 2 3 4 5 6 7 8 9 10; do
   salt=$(dig_with_opts +nodnssec +short nsec3param inline.example. @10.53.0.3 | awk '{print $4}')
-  [ -n "$salt" ] && [ "$salt" != "-" ] && break
+  [ "$salt" != "-" ] && [ "${#salt}" -eq 16 ] && break
   echo_i "sleeping ...."
   sleep 1
 done
@@ -2737,7 +2752,7 @@ rndccmd 10.53.0.3 signing -nsec3param 1 0 0 auto inline.example >/dev/null 2>&1 
 rndccmd 10.53.0.3 status >/dev/null || ret=1
 for i in 1 2 3 4 5 6 7 8 9 10; do
   salt=$(dig_with_opts +nodnssec +short nsec3param inline.example. @10.53.0.3 | awk '{print $4}')
-  [ -n "$salt" ] && [ "$salt" != "$oldsalt" ] && break
+  [ "$salt" != "$oldsalt" ] && [ "${#salt}" -eq 16 ] && break
   echo_i "sleeping ...."
   sleep 1
 done
