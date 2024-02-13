@@ -46,12 +46,11 @@ Current versions of BIND 9 are fully supported and regularly tested on the
 following systems:
 
 -  Debian 10, 11, 12
--  Ubuntu LTS 18.04, 20.04, 22.04
--  Fedora 38
+-  Ubuntu LTS 20.04, 22.04
+-  Fedora 39
 -  Red Hat Enterprise Linux / CentOS / Oracle Linux 7, 8, 9
--  FreeBSD 12.4, 13.2
--  OpenBSD 7.3
--  Alpine Linux 3.18
+-  FreeBSD 12.4, 13.2, 14.0
+-  Alpine Linux 3.19
 
 The amd64, i386, armhf and arm64 CPU architectures are all fully
 supported.
@@ -70,6 +69,7 @@ Server 2016, none of these are tested regularly by ISC.
 -  macOS 10.12+
 -  Solaris 11
 -  NetBSD
+-  OpenBSD
 -  Other Linux distributions still supported by their vendors, such as:
 
    -  Ubuntu 20.10+

@@ -20,11 +20,13 @@ import gitlab
 def added_lines(target_branch, paths):
     import subprocess
 
-    subprocess.check_output(
-        ["/usr/bin/git", "fetch", "--depth", "1", "origin", target_branch]
-    )
+    # Hazard fetches the target branch itself, so there is no need to fetch it
+    # explicitly using `git fetch --depth 1000 origin <target_branch>`.  The
+    # refs/remotes/origin/<target_branch> ref is also expected to be readily
+    # usable by the time this file is executed.
+
     diff = subprocess.check_output(
-        ["/usr/bin/git", "diff", "FETCH_HEAD..", "--"] + paths
+        ["/usr/bin/git", "diff", f"origin/{target_branch}...", "--"] + paths
     )
     added_lines = []
     for line in diff.splitlines():
@@ -42,6 +44,9 @@ relnotes_issue_or_mr_id_regex = re.compile(rb":gl:`[#!][0-9]+`")
 release_notes_regex = re.compile(r"doc/(arm|notes)/notes-.*\.(rst|xml)")
 
 modified_files = danger.git.modified_files
+affected_files = (
+    danger.git.modified_files + danger.git.created_files + danger.git.deleted_files
+)
 mr_labels = danger.gitlab.mr.labels
 target_branch = danger.gitlab.mr.target_branch
 is_backport = "Backport" in mr_labels or "Backport::Partial" in mr_labels
@@ -97,11 +102,13 @@ fixup_error_logged = False
 for commit in danger.git.commits:
     message_lines = commit.message.splitlines()
     subject = message_lines[0]
-    if not fixup_error_logged and (
+    is_merge = subject.startswith("Merge branch ")
+    is_fixup = (
         subject.startswith("fixup!")
         or subject.startswith("amend!")
         or subject.startswith("Apply suggestion")
-    ):
+    )
+    if not fixup_error_logged and is_fixup:
         fail(
             "Fixup commits are still present in this merge request. "
             "Please squash them before merging."
@@ -113,7 +120,7 @@ for commit in danger.git.commits:
             f"Prohibited keyword `{match.groups()[0]}` detected "
             f"at the start of a subject line in commit {commit.sha}."
         )
-    if len(subject) > 72 and not subject.startswith("Merge branch "):
+    if len(subject) > 72 and not is_merge and not is_fixup:
         warn(
             f"Subject line for commit {commit.sha} is too long: "
             f"```{subject}``` ({len(subject)} > 72 characters)."
@@ -176,7 +183,6 @@ BACKPORT_OF_RE = re.compile(
     r"Backport\s+of.*(merge_requests/|!)([0-9]+)", flags=re.IGNORECASE
 )
 VERSION_LABEL_RE = re.compile(r"v9.([0-9]+)(-S)?")
-backport_desc = BACKPORT_OF_RE.search(danger.gitlab.mr.description)
 version_labels = [l for l in mr_labels if l.startswith("v9.")]
 affects_labels = [l for l in mr_labels if l.startswith("Affects v9.")]
 if is_backport:
@@ -195,6 +201,7 @@ if is_backport:
                 "Backport MRs must have their target version in the title. "
                 f"Please put `[9.{minor_ver}{edition}]` at the start of the MR title."
             )
+    backport_desc = BACKPORT_OF_RE.search(danger.gitlab.mr.description or "")
     if backport_desc is None:
         fail(
             "Backport MRs must link to the original MR. Please put "
@@ -337,18 +344,18 @@ if changes_added_lines:
 #       MR.
 
 release_notes_regex = re.compile(r"doc/(arm|notes)/notes-.*\.(rst|xml)")
-release_notes_changed = list(filter(release_notes_regex.match, modified_files))
+release_notes_changed = list(filter(release_notes_regex.match, affected_files))
 release_notes_label_set = "Release Notes" in mr_labels
 if not release_notes_changed:
     if release_notes_label_set:
         fail(
             "This merge request has the *Release Notes* label set. "
-            "Add a release note or unset the *Release Notes* label."
+            "Update release notes or unset the *Release Notes* label."
         )
     elif "Customer" in mr_labels:
         warn(
             "This merge request has the *Customer* label set. "
-            "Add a release note unless the changes introduced are trivial."
+            "Update release notes unless the changes introduced are trivial."
         )
 if release_notes_changed and not release_notes_label_set:
     fail(
@@ -357,7 +364,9 @@ if release_notes_changed and not release_notes_label_set:
     )
 
 if release_notes_changed:
-    notes_added_lines = added_lines(target_branch, release_notes_changed)
+    modified_or_new_files = danger.git.modified_files + danger.git.created_files
+    release_notes_added = list(filter(release_notes_regex.match, modified_or_new_files))
+    notes_added_lines = added_lines(target_branch, release_notes_added)
     identifiers_found = filter(relnotes_issue_or_mr_id_regex.search, notes_added_lines)
     if notes_added_lines and not any(identifiers_found):
         warn("No valid issue/MR identifiers found in added release notes.")
@@ -378,7 +387,7 @@ if lines_containing(changes_added_lines, "[security]"):
             "This merge request fixes a security issue. "
             "Please add a CHANGES entry which includes a CVE identifier."
         )
-    if not lines_containing(notes_added_lines, "CVE-20"):
+    if not lines_containing(notes_added_lines, ":cve:`20"):
         fail(
             "This merge request fixes a security issue. "
             "Please add a release note which includes a CVE identifier."

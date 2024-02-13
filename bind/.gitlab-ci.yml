@@ -19,7 +19,7 @@ variables:
   TEST_PARALLEL_JOBS: 4
 
   CONFIGURE: ./configure
-  CLANG_VERSION: 16
+  CLANG_VERSION: 17
   CLANG: "clang-${CLANG_VERSION}"
   SCAN_BUILD: "scan-build-${CLANG_VERSION}"
   LLVM_SYMBOLIZER: "/usr/lib/llvm-${CLANG_VERSION}/bin/llvm-symbolizer"
@@ -37,9 +37,6 @@ variables:
   TSAN_OPTIONS_FEDORA: "${TSAN_OPTIONS_COMMON} ${TSAN_SUPPRESSIONS} external_symbolizer_path=/usr/bin/llvm-symbolizer"
 
   UBSAN_OPTIONS: "halt_on_error=1:abort_on_error=1:disable_coredump=0"
-
-  TARBALL_COMPRESSOR: xz
-  TARBALL_EXTENSION: xz
 
   INSTALL_PATH: "${CI_PROJECT_DIR}/.local"
 
@@ -83,7 +80,7 @@ stages:
     - ovh
     - amd64
 
-# Autoscaling GitLab Runner on AWS EC2
+# Autoscaling GitLab Runner on AWS EC2 (amd64)
 
 .linux-amd64: &linux_amd64
   tags:
@@ -92,21 +89,16 @@ stages:
     - runner-manager
     - amd64
 
-# Stress-testing runners
+# Autoscaling GitLab Runner on AWS EC2 (arm64)
 
-.linux-stress-amd64: &linux_stress_amd64
+.linux-arm64: &linux_arm64
   tags:
-    - amd64
+    - linux
     - aws
-    - linux-stress
-    - stress
-
-.linux-stress-arm64: &linux_stress_arm64
-  tags:
+    - runner-manager
     - aarch64
-    - aws
-    - linux-stress
-    - stress
+
+# Stress-testing runners
 
 .freebsd-stress-amd64: &freebsd_stress_amd64
   tags:
@@ -124,8 +116,8 @@ stages:
 
 # Alpine Linux
 
-.alpine-3.18-amd64: &alpine_3_18_amd64_image
-  image: "$CI_REGISTRY_IMAGE:alpine-3.18-amd64"
+.alpine-3.19-amd64: &alpine_3_19_amd64_image
+  image: "$CI_REGISTRY_IMAGE:alpine-3.19-amd64"
   <<: *linux_amd64
 
 # Oracle Linux
@@ -180,23 +172,19 @@ stages:
 
 # Fedora
 
-.tsan-fedora-38-amd64: &tsan_fedora_38_amd64_image
-  image: "$CI_REGISTRY_IMAGE:tsan-fedora-38-amd64"
+.tsan-fedora-39-amd64: &tsan_fedora_39_amd64_image
+  image: "$CI_REGISTRY_IMAGE:tsan-fedora-39-amd64"
   <<: *linux_amd64
 
-.fedora-38-amd64: &fedora_38_amd64_image
-  image: "$CI_REGISTRY_IMAGE:fedora-38-amd64"
+.fedora-39-amd64: &fedora_39_amd64_image
+  image: "$CI_REGISTRY_IMAGE:fedora-39-amd64"
   <<: *linux_amd64
 
-.fedora-38-arm64: &fedora_38_arm64_image
-  image: "$CI_REGISTRY_IMAGE:fedora-38-arm64"
-  <<: *linux_stress_arm64
+.fedora-39-arm64: &fedora_39_arm64_image
+  image: "$CI_REGISTRY_IMAGE:fedora-39-arm64"
+  <<: *linux_arm64
 
 # Ubuntu
-
-.ubuntu-bionic-amd64: &ubuntu_bionic_amd64_image
-  image: "$CI_REGISTRY_IMAGE:ubuntu-bionic-amd64"
-  <<: *linux_amd64
 
 .ubuntu-focal-amd64: &ubuntu_focal_amd64_image
   image: "$CI_REGISTRY_IMAGE:ubuntu-focal-amd64"
@@ -228,8 +216,12 @@ stages:
   image: "freebsd-13.2-x86_64"
   <<: *libvirt_amd64
 
+.freebsd-14-amd64: &freebsd_14_amd64_image
+  image: "freebsd-14.0-x86_64"
+  <<: *libvirt_amd64
+
 .openbsd-amd64: &openbsd_amd64_image
-  image: "openbsd-7.3-x86_64"
+  image: "openbsd-7.4-x86_64"
   <<: *libvirt_amd64
 
 ### Job Templates
@@ -262,15 +254,6 @@ stages:
   <<: *default_triggering_rules
   <<: *base_image
   stage: precheck
-
-.autoconf: &autoconf_job
-  <<: *default_triggering_rules
-  <<: *base_image
-  stage: precheck
-  script:
-    - autoreconf2.69 -fi
-  artifacts:
-    untracked: true
 
 .configure: &configure
     - ${CONFIGURE}
@@ -309,12 +292,10 @@ stages:
     - test -z "${CROSS_COMPILATION}" || grep -F -A 1 "checking whether we are cross compiling" config.log | grep -q "result.*yes"
     - test -z "${CROSS_COMPILATION}" || file lib/dns/gen | grep -F -q "ELF 64-bit LSB"
     - test -z "${CROSS_COMPILATION}" || ( ! git ls-files -z --others --exclude lib/dns/gen | xargs -0 file | grep "ELF 64-bit LSB" )
-  needs:
-    - job: autoreconf
-      artifacts: true
   artifacts:
     untracked: true
     when: always
+  needs: []
 
 .windows_build: &windows_build_job
   stage: build
@@ -350,52 +331,6 @@ stages:
 .setup_softhsm: &setup_softhsm
     - export SLOT=$(sh -x bin/tests/prepare-softhsm2.sh)
     - test -n "${SLOT}" && test "${SLOT}" -gt 0
-
-cross-version-config-tests:
-  stage: system
-  <<: *base_image
-  <<: *default_triggering_rules
-  variables:
-    CC: gcc
-    CFLAGS: "${CFLAGS_COMMON}"
-    # Disable option checking to prevent problems with new default options in
-    # the &configure anchor.
-    EXTRA_CONFIGURE: "--disable-option-checking"
-  script:
-    # Exclude the dyndb test from the system test as the sample library can't
-    # locate the libdns library from the BIND 9 baseline version.
-    - sed -i '/^dyndb \\$/d' bin/tests/system/conf.sh.common
-    - *configure
-    - *setup_interfaces
-    - make -j${BUILD_PARALLEL_JOBS:-1}
-    - export BIND_BRANCH=16
-    # When testing a .0 release, compare it against the previous development
-    # release (e.g., 9.19.0 and 9.18.0 should both be compared against 9.17.22).
-    - if [ "$(sed -n -E "s|^m4_define\(\[bind_VERSION_PATCH\], ([0-9]+)\)dnl$|\1|p" configure.ac)" = "0" ]; then export BIND_BRANCH=$((BIND_BRANCH - 1 - (BIND_BRANCH % 2))); fi
-    - BASELINE="$(curl -s "https://gitlab.isc.org/api/v4/projects/1/repository/tags?search=^v9.${BIND_BRANCH}&order_by=version" | jq -r ".[0].name")"
-    - git clone --branch "${BASELINE}" --depth 1 https://gitlab.isc.org/isc-projects/bind9.git "bind-${BASELINE}"
-    - cd "bind-${BASELINE}"
-    - autoreconf2.69 -fi
-    - *configure
-    - make -j${BUILD_PARALLEL_JOBS:-1}
-    - cd bin/tests/system
-    # Neutralize shell and pytests; in effect, "nsX" servers are just started
-    # and stopped, thus configuration checked.
-    - truncate --size=0 */tests{.sh,*.py}
-    # Run the setup phase of all system tests in the most recently tagged BIND 9
-    # release using the binaries built for the current BIND 9 version.  This
-    # intends to detect obvious backward compatibility issues with the latter.
-    - sed -i -E "s|(export TOP)=.*|\1=${CI_PROJECT_DIR}|" conf.sh
-    - make -j${TEST_PARALLEL_JOBS:-1} -k check V=1
-  needs:
-    - job: autoreconf
-      artifacts: true
-  artifacts:
-    paths:
-      - bind-*
-    untracked: true
-    expire_in: "1 day"
-    when: on_failure
 
 .system_test_common: &system_test_common
   <<: *default_triggering_rules
@@ -504,9 +439,6 @@ cross-version-config-tests:
 
 # Jobs in the precheck stage
 
-autoreconf:
-  <<: *autoconf_job
-
 misc:
   <<: *precheck_job
   script:
@@ -525,7 +457,6 @@ misc:
     - sh util/check-win32util-configure
     - sh util/check-categories.sh
     - sh util/xmllint-html.sh
-  needs: []
   artifacts:
     paths:
       - checklibs.out
@@ -533,7 +464,6 @@ misc:
 
 black:
   <<: *precheck_job
-  needs: []
   script:
     - black $(git ls-files '*.py' '*.py.in')
     - git diff > black.patch
@@ -546,7 +476,6 @@ black:
 
 clang-format:
   <<: *precheck_job
-  needs: []
   script:
     - if [ -r .clang-format ]; then "${CLANG_FORMAT}" -i -style=file $(git ls-files '*.c' '*.h'); fi
     - git diff > clang-format.patch
@@ -559,25 +488,41 @@ clang-format:
 
 coccinelle:
   <<: *precheck_job
-  needs: []
   script:
     - util/check-cocci
     - if test "$(git status --porcelain | grep -Ev '\?\?' | wc -l)" -gt "0"; then git status --short; exit 1; fi
 
 reuse:
   <<: *precheck_job
-  needs: []
   image:
     name: docker.io/fsfe/reuse:latest
     entrypoint: [""]
   script:
     - reuse lint
 
-danger:
+shfmt:
   <<: *precheck_job
   needs: []
   script:
-    - danger-python ci -f
+    - shfmt -w -i 2 -ci -bn bin/tests/system/ util/ $(find bin/tests/system/ -name "*.sh.in")
+    - git diff > shfmt.patch
+    - if test "$(git status --porcelain | grep -Ev '\?\?' | wc -l)" -gt "0"; then git status --short; exit 1; fi
+  artifacts:
+    paths:
+      - shfmt.patch
+    expire_in: "1 week"
+    when: on_failure
+
+danger:
+  <<: *precheck_job
+  # Keep the GIT_DEPTH environment variable set to a "high number" before
+  # https://github.com/libgit2/libgit2/pull/6662 is addressed and integrated
+  # into pygit2.
+  variables:
+    GIT_DEPTH: 1000
+  script:
+    - pip install git+https://gitlab.isc.org/isc-projects/hazard.git
+    - hazard
   only:
     refs:
       - merge_requests
@@ -588,19 +533,16 @@ pylint:
   <<: *default_triggering_rules
   <<: *base_image
   stage: postcheck
-  needs:
-    - job: autoreconf
-      artifacts: true
   script:
     - *configure
     - export PYTHONPATH="$PYTHONPATH:$CI_PROJECT_DIR/bin/python"
     - pylint --rcfile $CI_PROJECT_DIR/.pylintrc $(git ls-files '*.py' | grep -vE '(ans\.py|dangerfile\.py|^bin/tests/system/)')
       # Ignore Pylint wrong-import-position error in system test to enable use of pytest.importorskip
     - pylint --rcfile $CI_PROJECT_DIR/.pylintrc --disable=wrong-import-position $(git ls-files 'bin/tests/system/*.py' | grep -vE 'ans\.py')
+  needs: []
 
 checkbashisms:
   <<: *precheck_job
-  needs: []
   script:
     - checkbashisms $(find . -path './.git' -prune -o -type f -exec sh -c 'head -n 1 "{}" | grep -qsF "#!/bin/sh"' \; -print | sed -e '/^\.\/install-sh$/d')
 
@@ -620,10 +562,10 @@ tarball-create:
     - rm -rf "${BIND_DIRECTORY}/tmp/.doctrees/"
     - for man in "${BIND_DIRECTORY}/doc/man/"*; do mv "$man" "$man"in; done
     - tar --append --file="${BIND_DIRECTORY}.tar" "${BIND_DIRECTORY}/doc/man/"*in
-    - ${TARBALL_COMPRESSOR} "${BIND_DIRECTORY}.tar"
+    - xz "${BIND_DIRECTORY}.tar"
   artifacts:
     paths:
-      - bind-*.tar.${TARBALL_EXTENSION}
+      - bind-*.tar.xz
 
 # Jobs for doc builds on Debian 12 "bookworm" (amd64)
 
@@ -641,40 +583,96 @@ docs:
     - *configure
     - make -j${BUILD_PARALLEL_JOBS:-1} all V=1
     - make -j${BUILD_PARALLEL_JOBS:-1} doc V=1
-    - if test "$(git status --porcelain | grep -Ev '\?\?' | grep -v -F -e aclocal.m4 -e configure -e ltmain.sh -e m4/ | wc -l)" -gt "0"; then git status --short; exit 1; fi
-    - qpdf --check doc/arm/_build/latex/Bv9ARM.pdf
+    - if test "$(git status --porcelain | grep -Ev '\?\?' | grep -v -F -e aclocal.m4 -e configure -e ltmain.sh -e bin/named/bind9.xsl.h -e m4/ | wc -l)" -gt "0"; then git status --short; exit 1; fi
     - find doc/man/ -maxdepth 1 -name "*.[0-9]" -exec mandoc -T lint "{}" \; | ( ! grep -v -e "skipping paragraph macro. sp after" -e "unknown font, skipping request. ft C" -e "input text line longer than 80 bytes" )
-  needs:
-    - job: autoreconf
-      artifacts: true
   artifacts:
     paths:
       - doc/arm/
       - doc/man/
       - doc/misc/
     when: always
+  needs: []
 
-# Jobs for regular GCC builds on Alpine Linux 3.18 (amd64)
+docs:pdf:
+  <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *base_image
+  stage: docs
+  before_script:
+    - apt-get -y install qpdf texlive-full texlive-xetex xindy
+  script:
+    - *configure
+    - make -C doc/arm/ pdf V=1
+    - qpdf --check doc/arm/_build/latex/Bv9ARM.pdf
+  artifacts:
+    untracked: true
+  needs: []
 
-gcc:alpine3.18:amd64:
+# Job detecting named.conf breakage introduced since the previous point release
+
+cross-version-config-tests:
+  stage: system
+  <<: *base_image
+  <<: *default_triggering_rules
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON}"
-  <<: *alpine_3_18_amd64_image
+    # Disable option checking to prevent problems with new default options in
+    # the &configure anchor.
+    EXTRA_CONFIGURE: "--disable-option-checking"
+  script:
+    # Exclude the dyndb test from the system test as the sample library can't
+    # locate the libdns library from the BIND 9 baseline version.
+    - sed -i '/^dyndb \\$/d' bin/tests/system/conf.sh.common
+    - *configure
+    - *setup_interfaces
+    - make -j${BUILD_PARALLEL_JOBS:-1}
+    - export BIND_BRANCH=16
+    # When testing a .0 release, compare it against the previous development
+    # release (e.g., 9.19.0 and 9.18.0 should both be compared against 9.17.22).
+    - if [ "$(sed -n -E "s|^m4_define\(\[bind_VERSION_PATCH\], ([0-9]+)\)dnl$|\1|p" configure.ac)" = "0" ]; then export BIND_BRANCH=$((BIND_BRANCH - 1 - (BIND_BRANCH % 2))); fi
+    - BASELINE="$(curl -s "https://gitlab.isc.org/api/v4/projects/1/repository/tags?search=^v9.${BIND_BRANCH}&order_by=version" | jq -r ".[0].name")"
+    - git clone --branch "${BASELINE}" --depth 1 https://gitlab.isc.org/isc-projects/bind9.git "bind-${BASELINE}"
+    - cd "bind-${BASELINE}"
+    - *configure
+    - make -j${BUILD_PARALLEL_JOBS:-1}
+    - cd bin/tests/system
+    # Neutralize shell and pytests; in effect, "nsX" servers are just started
+    # and stopped, thus configuration checked.
+    - truncate --size=0 */tests{.sh,*.py}
+    # Run the setup phase of all system tests in the most recently tagged BIND 9
+    # release using the binaries built for the current BIND 9 version.  This
+    # intends to detect obvious backward compatibility issues with the latter.
+    - sed -i -E "s|(export TOP)=.*|\1=${CI_PROJECT_DIR}|" conf.sh
+    - make -j${TEST_PARALLEL_JOBS:-1} -k check V=1
+  artifacts:
+    paths:
+      - bind-*
+    untracked: true
+    expire_in: "1 day"
+    when: on_failure
+  needs: []
+
+# Jobs for regular GCC builds on Alpine Linux 3.19 (amd64)
+
+gcc:alpine3.19:amd64:
+  variables:
+    CC: gcc
+    CFLAGS: "${CFLAGS_COMMON}"
+  <<: *alpine_3_19_amd64_image
   <<: *build_job
 
-system:gcc:alpine3.18:amd64:
-  <<: *alpine_3_18_amd64_image
+system:gcc:alpine3.19:amd64:
+  <<: *alpine_3_19_amd64_image
   <<: *system_test_job
   needs:
-    - job: gcc:alpine3.18:amd64
+    - job: gcc:alpine3.19:amd64
       artifacts: true
 
-unit:gcc:alpine3.18:amd64:
-  <<: *alpine_3_18_amd64_image
+unit:gcc:alpine3.19:amd64:
+  <<: *alpine_3_19_amd64_image
   <<: *unit_test_job
   needs:
-    - job: gcc:alpine3.18:amd64
+    - job: gcc:alpine3.19:amd64
       artifacts: true
 
 # Jobs for regular GCC builds on Oracle Linux 7 (amd64)
@@ -760,8 +758,8 @@ gcc:tarball:nosphinx:
   <<: *build_job
   before_script:
     - (! command -v sphinx-build >/dev/null)
-    - tar --extract --file bind-*.tar.${TARBALL_EXTENSION}
-    - rm -f bind-*.tar.${TARBALL_EXTENSION}
+    - tar --extract --file bind-*.tar.xz
+    - rm -f bind-*.tar.xz
     - cd bind-*
   needs:
     - job: tarball-create
@@ -904,13 +902,11 @@ scan-build:
   script:
     - *configure
     - *scan_build
-  needs:
-    - job: autoreconf
-      artifacts: true
   artifacts:
     paths:
       - scan-build.reports/
     when: on_failure
+  needs: []
 
 # Jobs for regular GCC builds on Debian "sid" (amd64)
 # Also tests configration option: --without-lmdb.
@@ -963,8 +959,8 @@ gcc:tarball:
   <<: *base_image
   <<: *build_job
   before_script:
-    - tar --extract --file bind-*.tar.${TARBALL_EXTENSION}
-    - rm -f bind-*.tar.${TARBALL_EXTENSION}
+    - tar --extract --file bind-*.tar.xz
+    - rm -f bind-*.tar.xz
     - cd bind-*
   needs:
     - job: tarball-create
@@ -1015,25 +1011,6 @@ unit:gcc:tumbleweed:amd64:
     - job: gcc:tumbleweed:amd64
       artifacts: true
 
-# Jobs for regular GCC builds on Ubuntu 18.04 Bionic Beaver (amd64)
-
-gcc:bionic:amd64:
-  variables:
-    CC: gcc
-    CFLAGS: "${CFLAGS_COMMON} -O2"
-    EXTRA_CONFIGURE: "--disable-dnstap --with-gssapi --without-cmocka"
-  <<: *ubuntu_bionic_amd64_image
-  <<: *build_job
-  <<: *api_schedules_tags_triggers_web_triggering_rules
-
-system:gcc:bionic:amd64:
-  <<: *ubuntu_bionic_amd64_image
-  <<: *system_test_job
-  <<: *api_schedules_tags_triggers_web_triggering_rules
-  needs:
-    - job: gcc:bionic:amd64
-      artifacts: true
-
 # Jobs for regular GCC builds on Ubuntu 20.04 Focal Fossa (amd64)
 
 gcc:focal:amd64:
@@ -1063,8 +1040,8 @@ unit:gcc:focal:amd64:
 gcc:jammy:amd64:
   variables:
     CC: gcc
-    CFLAGS: "${CFLAGS_COMMON}"
-    EXTRA_CONFIGURE: "--with-libidn2"
+    CFLAGS: "${CFLAGS_COMMON} -O2"
+    EXTRA_CONFIGURE: "--with-libidn2 --disable-dnstap --with-gssapi --without-cmocka"
   <<: *ubuntu_jammy_amd64_image
   <<: *build_job
 
@@ -1082,7 +1059,7 @@ unit:gcc:jammy:amd64:
     - job: gcc:jammy:amd64
       artifacts: true
 
-# Jobs for ASAN builds on Fedora 38 (amd64)
+# Jobs for ASAN builds on Fedora 39 (amd64)
 
 gcc:asan:
   variables:
@@ -1090,18 +1067,18 @@ gcc:asan:
     CFLAGS: "${CFLAGS_COMMON} -fsanitize=address,undefined -DISC_MEM_USE_INTERNAL_MALLOC=0"
     LDFLAGS: "-fsanitize=address,undefined"
     EXTRA_CONFIGURE: "--with-libidn2"
-  <<: *fedora_38_amd64_image
+  <<: *fedora_39_amd64_image
   <<: *build_job
 
 system:gcc:asan:
-  <<: *fedora_38_amd64_image
+  <<: *fedora_39_amd64_image
   <<: *system_test_job
   needs:
     - job: gcc:asan
       artifacts: true
 
 unit:gcc:asan:
-  <<: *fedora_38_amd64_image
+  <<: *fedora_39_amd64_image
   <<: *unit_test_job
   needs:
     - job: gcc:asan
@@ -1130,7 +1107,7 @@ unit:clang:asan:
     - job: clang:asan
       artifacts: true
 
-# Jobs for TSAN builds on Fedora 38 (amd64)
+# Jobs for TSAN builds on Fedora 39 (amd64)
 
 gcc:tsan:
   variables:
@@ -1138,13 +1115,13 @@ gcc:tsan:
     CFLAGS: "${CFLAGS_COMMON} -fsanitize=thread -DISC_MEM_USE_INTERNAL_MALLOC=0"
     LDFLAGS: "-fsanitize=thread"
     EXTRA_CONFIGURE: "--with-libidn2 --enable-pthread-rwlock"
-  <<: *tsan_fedora_38_amd64_image
+  <<: *tsan_fedora_39_amd64_image
   <<: *build_job
 
 system:gcc:tsan:
   variables:
     TSAN_OPTIONS: "${TSAN_OPTIONS_FEDORA}"
-  <<: *tsan_fedora_38_amd64_image
+  <<: *tsan_fedora_39_amd64_image
   <<: *system_test_tsan_job
   needs:
     - job: gcc:tsan
@@ -1153,7 +1130,7 @@ system:gcc:tsan:
 unit:gcc:tsan:
   variables:
     TSAN_OPTIONS: "${TSAN_OPTIONS_FEDORA}"
-  <<: *tsan_fedora_38_amd64_image
+  <<: *tsan_fedora_39_amd64_image
   <<: *unit_test_tsan_job
   needs:
     - job: gcc:tsan
@@ -1314,6 +1291,33 @@ unit:clang:freebsd13:amd64:
     - job: clang:freebsd13:amd64
       artifacts: true
 
+# Jobs for Clang builds on FreeBSD 14 (amd64)
+
+clang:freebsd14:amd64:
+  variables:
+    CFLAGS: "${CFLAGS_COMMON}"
+    # Disable BIND 9 GSS-API support because of Heimdal incompatibility; see FreeBSD bug #275241.
+    EXTRA_CONFIGURE: "${WITH_READLINE_LIBEDIT} --without-gssapi"
+    USER: gitlab-runner
+  <<: *freebsd_14_amd64_image
+  <<: *build_job
+
+system:clang:freebsd14:amd64:
+  <<: *freebsd_14_amd64_image
+  <<: *system_test_job
+  variables:
+    USER: gitlab-runner
+  needs:
+    - job: clang:freebsd14:amd64
+      artifacts: true
+
+unit:clang:freebsd14:amd64:
+  <<: *freebsd_14_amd64_image
+  <<: *unit_test_job
+  needs:
+    - job: clang:freebsd14:amd64
+      artifacts: true
+
 # Jobs for Clang builds on OpenBSD (amd64)
 
 clang:openbsd:amd64:
@@ -1323,17 +1327,6 @@ clang:openbsd:amd64:
     EXTRA_CONFIGURE: "--disable-dnstap"
   <<: *openbsd_amd64_image
   <<: *build_job
-
-system:clang:openbsd:amd64:
-  <<: *openbsd_amd64_image
-  <<: *system_test_job
-  <<: *api_schedules_triggers_web_triggering_rules
-  variables:
-    USER: gitlab-runner
-  needs:
-    - job: clang:openbsd:amd64
-      artifacts: true
-  allow_failure: true
 
 # Jobs with libtool disabled
 
@@ -1395,7 +1388,7 @@ system:msvc-debug:windows:amd64:
     - job: msvc-debug:windows:amd64
       artifacts: true
 
-# Job producing a release tarball
+# Job producing a release directory
 
 release:
   <<: *base_image
@@ -1409,24 +1402,22 @@ release:
     - find Build/Debug/ \( -name "*.bsc" -o -name "*.idb" \) -print -delete
     - find Build/ -regextype posix-extended -regex "Build/.*/($(find bin/tests/ -type f | sed -nE "s|^bin/tests(/system)?/win32/(.*)\.vcxproj$|\2|p" | paste -d"|" -s))\..*" -print -delete
     # Create Windows zips
-    - openssl dgst -sha256 "${BIND_DIRECTORY}.tar.${TARBALL_EXTENSION}" | tee Build/Release/SHA256 Build/Debug/SHA256
+    - openssl dgst -sha256 "${BIND_DIRECTORY}.tar.xz" | tee Build/Release/SHA256 Build/Debug/SHA256
     - cp "doc/arm/_build/latex/Bv9ARM.pdf" Build/Release/
     - cp "doc/arm/_build/latex/Bv9ARM.pdf" Build/Debug/
     - ( cd Build/Release; zip "../../BIND${BIND_DIRECTORY#bind-}.x64.zip" * )
     - ( cd Build/Debug; zip "../../BIND${BIND_DIRECTORY#bind-}.debug.x64.zip" * )
     # Prepare release tarball contents (tarballs + zips + documentation)
-    - mkdir -p release/doc/arm
-    - pushd release
-    - mv "../${BIND_DIRECTORY}.tar.${TARBALL_EXTENSION}" ../BIND*.zip .
-    - tar --extract --file="${BIND_DIRECTORY}.tar.${TARBALL_EXTENSION}"
+    - mkdir -p "${BIND_DIRECTORY}-release/doc/arm"
+    - pushd "${BIND_DIRECTORY}-release"
+    - mv "../${BIND_DIRECTORY}.tar.xz" ../BIND*.zip .
+    - tar --extract --file="${BIND_DIRECTORY}.tar.xz"
     - mv "${BIND_DIRECTORY}"/{CHANGES*,COPYRIGHT,LICENSE,README,srcid} .
     - rm -rf "${BIND_DIRECTORY}"
     - mv "../doc/arm/_build/html" doc/arm/
     - mv "../doc/arm/_build/latex/Bv9ARM.pdf" doc/arm/
     - echo '<!DOCTYPE HTML><html lang="en"><meta http-equiv="refresh" content="0; url=doc/arm/html/notes.html"><title>Redirect</title></html>' > "RELEASE-NOTES-${BIND_DIRECTORY}.html"
     - popd
-    # Create release tarball
-    - tar --create --file="${CI_COMMIT_TAG}.tar.gz" --gzip release/
   needs:
     - job: tarball-create
       artifacts: true
@@ -1436,12 +1427,56 @@ release:
       artifacts: true
     - job: docs
       artifacts: true
+    - job: docs:pdf
+      artifacts: true
   only:
     - tags
   artifacts:
     paths:
+      - "*-release"
+    expire_in: "1 month"
+
+# Job signing the source tarballs in the release directory
+
+sign:
+  stage: release
+  tags:
+    - signer
+  script:
+    - export RELEASE_DIRECTORY="$(echo *-release)"
+    - pushd "${RELEASE_DIRECTORY}"
+    - |
+      echo
+      cat > /tmp/sign-bind9.sh <<EOF
+      #!/bin/sh
+      {
+          for FILE in \$(find "${PWD}" -name "*.tar.xz" -o -name "*.zip" | sort); do
+              echo ">>> Signing \${FILE}..."
+              gpg2 --local-user "\${SIGNING_KEY_FINGERPRINT}" --armor --digest-algo SHA512 --detach-sign --output "\${FILE}.asc" "\${FILE}"
+          done
+      } 2>&1 | tee "${CI_PROJECT_DIR}/signing.log"
+      EOF
+      chmod +x /tmp/sign-bind9.sh
+      echo -e "\e[31m*** Please sign the releases by following the instructions at:\e[0m"
+      echo -e "\e[31m*** \e[0m"
+      echo -e "\e[31m*** ${SIGNING_HELP_URL}\e[0m"
+      echo -e "\e[31m*** \e[0m"
+      echo -e "\e[31m*** Sleeping until files in ${PWD} are signed... ⌛\e[0m"
+      while [ "$(find . -name "*.asc" -size +0 | sed "s|\.asc$||" | sort)" != "$(find . -name "*.tar.xz" -o -name "*.zip" | sort)" ]; do sleep 10; done
+    - popd
+    - tar --create --file="${RELEASE_DIRECTORY}.tar.gz" --gzip "${RELEASE_DIRECTORY}"
+  artifacts:
+    paths:
       - "*.tar.gz"
+      - signing.log
     expire_in: never
+  needs:
+    - job: release
+      artifacts: true
+  only:
+    - tags
+  when: manual
+  allow_failure: false
 
 # Coverity Scan analysis upload
 
@@ -1482,9 +1517,6 @@ coverity:
     - *coverity_build
   after_script:
     - mv -v /tmp/cov-int.tar.gz ${CI_PROJECT_DIR}/
-  needs:
-    - job: autoreconf
-      artifacts: true
   artifacts:
     paths:
       - curl-response.txt
@@ -1495,6 +1527,7 @@ coverity:
     variables:
       - $COVERITY_SCAN_PROJECT_NAME
       - $COVERITY_SCAN_TOKEN
+  needs: []
 
 # Respdiff tests
 
@@ -1606,18 +1639,16 @@ respdiff-long-third-party:
     - git clone --depth 1 https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.isc.org/isc-private/bind-qa.git
     - cd bind-qa/bind9/stress
     - LD_LIBRARY_PATH="${INSTALL_PATH}/usr/local/lib" BIND_INSTALL_PATH="${INSTALL_PATH}/usr/local" WORKSPACE="${CI_PROJECT_DIR}" bash stress.sh
-  needs:
-    - job: autoreconf
-      artifacts: true
   artifacts:
     untracked: true
     expire_in: "1 week"
     when: always
   timeout: 2h
+  needs: []
 
-stress:authoritative:fedora:38:amd64:
-  <<: *fedora_38_amd64_image
-  <<: *linux_stress_amd64
+stress:authoritative:fedora:39:amd64:
+  <<: *fedora_39_amd64_image
+  <<: *linux_amd64
   <<: *stress_job
   variables:
     CC: gcc
@@ -1630,9 +1661,9 @@ stress:authoritative:fedora:38:amd64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /linux/i && $BIND_STRESS_TEST_MODE =~ /authoritative/i && $BIND_STRESS_TEST_ARCH =~ /amd64/i)
 
-stress:recursive:fedora:38:amd64:
-  <<: *fedora_38_amd64_image
-  <<: *linux_stress_amd64
+stress:recursive:fedora:39:amd64:
+  <<: *fedora_39_amd64_image
+  <<: *linux_amd64
   <<: *stress_job
   variables:
     CC: gcc
@@ -1645,9 +1676,9 @@ stress:recursive:fedora:38:amd64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /linux/i && $BIND_STRESS_TEST_MODE =~ /recursive/i && $BIND_STRESS_TEST_ARCH =~ /amd64/i)
 
-stress:rpz:fedora:38:amd64:
-  <<: *fedora_38_amd64_image
-  <<: *linux_stress_amd64
+stress:rpz:fedora:39:amd64:
+  <<: *fedora_39_amd64_image
+  <<: *linux_amd64
   <<: *stress_job
   variables:
     CC: gcc
@@ -1660,9 +1691,9 @@ stress:rpz:fedora:38:amd64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /linux/i && $BIND_STRESS_TEST_MODE =~ /rpz/i && $BIND_STRESS_TEST_ARCH =~ /amd64/i)
 
-stress:authoritative:fedora:38:arm64:
-  <<: *fedora_38_arm64_image
-  <<: *linux_stress_arm64
+stress:authoritative:fedora:39:arm64:
+  <<: *fedora_39_arm64_image
+  <<: *linux_arm64
   <<: *stress_job
   variables:
     CC: gcc
@@ -1675,9 +1706,9 @@ stress:authoritative:fedora:38:arm64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /linux/i && $BIND_STRESS_TEST_MODE =~ /authoritative/i && $BIND_STRESS_TEST_ARCH =~ /arm64/i)
 
-stress:recursive:fedora:38:arm64:
-  <<: *fedora_38_arm64_image
-  <<: *linux_stress_arm64
+stress:recursive:fedora:39:arm64:
+  <<: *fedora_39_arm64_image
+  <<: *linux_arm64
   <<: *stress_job
   variables:
     CC: gcc
@@ -1690,9 +1721,9 @@ stress:recursive:fedora:38:arm64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /linux/i && $BIND_STRESS_TEST_MODE =~ /recursive/i && $BIND_STRESS_TEST_ARCH =~ /arm64/i)
 
-stress:rpz:fedora:38:arm64:
-  <<: *fedora_38_arm64_image
-  <<: *linux_stress_arm64
+stress:rpz:fedora:39:arm64:
+  <<: *fedora_39_arm64_image
+  <<: *linux_arm64
   <<: *stress_job
   variables:
     CC: gcc
@@ -1784,9 +1815,6 @@ gcov:
 pairwise:
   <<: *base_image
   stage: build
-  needs:
-    - job: autoreconf
-      artifacts: true
   script:
       - util/pairwise-testing.sh
   artifacts:
@@ -1798,3 +1826,4 @@ pairwise:
   only:
     variables:
       - $PAIRWISE_TESTING
+  needs: []

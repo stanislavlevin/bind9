@@ -10,6 +10,7 @@
 # information regarding copyright ownership.
 
 from datetime import datetime, timedelta
+from time import sleep
 import os
 
 
@@ -19,8 +20,10 @@ fmt = "%Y-%m-%dT%H:%M:%SZ"
 # The constants were taken from BIND 9 source code (lib/dns/zone.c)
 max_refresh = timedelta(seconds=2419200)  # 4 weeks
 max_expires = timedelta(seconds=14515200)  # 24 weeks
-now = datetime.utcnow().replace(microsecond=0)
 dayzero = datetime.utcfromtimestamp(0).replace(microsecond=0)
+
+# Wait for the secondary zone files to appear to extract their mtime
+max_secondary_zone_waittime_sec = 5
 
 
 # Generic helper functions
@@ -34,19 +37,20 @@ def check_refresh(refresh, min_time, max_time):
     assert refresh <= max_time
 
 
-def check_loaded(loaded, expected):
+def check_loaded(loaded, expected, now):
     # Sanity check the zone timers values
-    assert loaded == expected
-    assert loaded < now
+    assert (loaded - expected).total_seconds() < max_secondary_zone_waittime_sec
+    assert loaded <= now
 
 
 def check_zone_timers(loaded, expires, refresh, loaded_exp):
+    now = datetime.utcnow().replace(microsecond=0)
     # Sanity checks the zone timers values
     if expires is not None:
         check_expires(expires, now, now + max_expires)
     if refresh is not None:
         check_refresh(refresh, now, now + max_refresh)
-    check_loaded(loaded, loaded_exp)
+    check_loaded(loaded, loaded_exp, now)
 
 
 #
@@ -86,12 +90,26 @@ def test_zone_timers_secondary(fetch_zones, load_timers, **kwargs):
     statsport = kwargs["statsport"]
     zonedir = kwargs["zonedir"]
 
-    zones = fetch_zones(statsip, statsport)
-
-    for zone in zones:
-        (name, loaded, expires, refresh) = load_timers(zone, False)
-        mtime = zone_mtime(zonedir, name)
-        check_zone_timers(loaded, expires, refresh, mtime)
+    # If any one of the zone files isn't ready, then retry until timeout.
+    tries = max_secondary_zone_waittime_sec
+    while tries >= 0:
+        zones = fetch_zones(statsip, statsport)
+        again = False
+        for zone in zones:
+            (name, loaded, expires, refresh) = load_timers(zone, False)
+            mtime = zone_mtime(zonedir, name)
+            if (mtime != dayzero) or (tries == 0):
+                # mtime was either retrieved successfully or no tries were
+                # left, run the check anyway.
+                check_zone_timers(loaded, expires, refresh, mtime)
+            else:
+                tries = tries - 1
+                again = True
+                break
+        if again:
+            sleep(1)
+        else:
+            break
 
 
 def test_zone_with_many_keys(fetch_zones, load_zone, **kwargs):
