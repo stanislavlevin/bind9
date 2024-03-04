@@ -10,10 +10,8 @@ def named_caps():
     ).stdout.strip()
     raw_caps = subprocess.run(
         ["getpcaps", named_pid], check=True, text=True, capture_output=True
-    ).stderr.strip()
-    caps = re.sub("^Capabilities for .*: =( )?", "", raw_caps)
-    if not caps:
-        return []
+    ).stdout.strip()
+    caps = re.sub(r"^\d+: ( )?", "", raw_caps)
     return sorted(caps.split(","))
 
 
@@ -51,8 +49,8 @@ def test_state_from_unknown(caps_sysconfig, control_caps, state):
 @pytest.mark.parametrize(
     "state, exp_caps",
     [
-        ("enabled", ["cap_net_bind_service", "cap_sys_resource+ep"]),
-        ("disabled", []),
+        ("enabled", ["cap_net_bind_service", "cap_sys_resource=ep"]),
+        ("disabled", ["="]),
     ],
     ids=["enabled_caps", "disabled_caps"],
 )
