@@ -269,7 +269,7 @@ mkdir -p %buildroot%run_dir
 mkdir -p %buildroot%log_dir
 
 # Create a chrooted environment...
-mkdir -p %buildroot%_chrootdir/{dev,%_sysconfdir,var/run,session,zone/slave}
+mkdir -p %buildroot%_chrootdir/{dev,%_sysconfdir,var/run/named,var/log/named,session,zone/slave}
 for n in named options rndc local rfc1912 rfc1918; do
 	install -pm640 "addon/bind.$n.conf" \
 		"%buildroot%_chrootdir%_sysconfdir/$n.conf"
@@ -513,7 +513,10 @@ fi
 %dir %attr(1770,root,%named_group) %_chrootdir/zone
 %dir %attr(700,root,%named_group) %verify(not mode) %_chrootdir/zone/slave
 %dir %attr(700,root,%named_group) %verify(not mode) %_chrootdir/var
-%dir %attr(1770,root,%named_group) %_chrootdir/var/run
+%dir %attr(710,root,%named_group) %_chrootdir%_runtimedir
+%dir %attr(1770,root,%named_group) %_chrootdir%_var%run_dir
+%dir %attr(710,root,%named_group) %_chrootdir%_logdir
+%dir %attr(1770,root,%named_group) %_chrootdir%log_dir
 %dir %attr(700,root,%named_group) %_chrootdir/session
 %config(noreplace) %_chrootdir%_sysconfdir/*.conf
 %config(noreplace) %verify(not md5 mtime size) %_chrootdir%_sysconfdir/rndc.key
