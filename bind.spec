@@ -240,7 +240,9 @@ export SPHINX_BUILD=/usr/bin/sphinx-build-3
 	--enable-linux-caps \
 	--enable-fixed-rrset \
 	 %{subst_with openssl} \
-	 %{subst_with libjemalloc} \
+%if_with libjemalloc
+	 --with-jemalloc=yes \
+%endif
 %if_with libjson
 	--with-json-c=yes \
 %endif
