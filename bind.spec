@@ -124,6 +124,8 @@ BuildPreReq: libcap-devel
 BuildPreReq: libkrb5-devel
 BuildRequires: libuv-devel
 BuildRequires: libidn2-devel
+# doh support
+BuildRequires: libnghttp2-devel
 
 %package utils
 Summary: Utilities provided by ISC BIND
@@ -245,7 +247,7 @@ export SPHINX_BUILD=/usr/bin/sphinx-build-3
 	--disable-static \
 	--includedir=%{_includedir}/bind9 \
 	--with-gssapi=yes \
-	--disable-doh \
+	--enable-doh \
 	#
 
 %make_build
