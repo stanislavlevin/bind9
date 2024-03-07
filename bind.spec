@@ -84,6 +84,8 @@ BuildRequires: gdb
 %if_with system_tests
 BuildRequires: python3(dns)
 BuildRequires: python3(hypothesis)
+# /usr/bin/gnutls-cli is required by doth tests
+BuildRequires: gnutls-utils
 %if_with enginepkcs11
 # requires only for pkcs11 tests
 BuildRequires: softhsm
