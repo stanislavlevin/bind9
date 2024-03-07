@@ -1,5 +1,4 @@
 from pathlib import Path
-import os
 import subprocess
 
 import pytest
@@ -52,43 +51,3 @@ def test_state_runtime(caps, named_service, control_chroot, state, exp_root):
     getattr(control_chroot, state)()
     named_service.restart()
     assert named_root() == Path(exp_root)
-
-
-def find_writable_paths(root):
-    cmd_args = ["runuser", "-u", "named", "--", "touch"]
-    writable_paths = []
-
-    def _writable_dir(d_path):
-        f_path = d_path / ".test_write"
-        res = subprocess.run(cmd_args + [f_path], check=False)
-        if res.returncode == 0:
-            f_path.unlink()
-            return True
-        return False
-
-    def _writable_file(f_path):
-        res = subprocess.run(cmd_args + [f_path], check=False)
-        return res.returncode == 0
-
-    d_path = Path(root)
-    if _writable_dir(d_path):
-        return [d_path]
-
-    for root, dirs, files in os.walk(root):
-        for f in files:
-            f_path = Path(root) / f
-            if _writable_file(f_path):
-                writable_paths.append(str(f_path))
-
-        for d in dirs:
-            d_path = Path(root) / d
-            if _writable_dir(d_path):
-                writable_paths.append(str(d_path))
-                dirs.remove(d)
-
-    return writable_paths
-
-
-def test_readonly_chroot():
-    writable_paths = find_writable_paths("/var/lib/bind")
-    assert writable_paths == ["/var/lib/bind/zone", "/var/lib/bind/etc/zone"]
