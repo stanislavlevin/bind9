@@ -176,3 +176,8 @@ def control_caps():
 @pytest.fixture
 def control_chroot():
     yield BindControl("bind-chroot")
+
+
+@pytest.fixture
+def control_debug():
+    yield BindControl("bind-debug")
