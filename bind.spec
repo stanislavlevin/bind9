@@ -27,9 +27,9 @@
 %endif
 
 Name: bind
-Version: 9.18.24
-%define src_version 9.18.24
-Release: alt2
+Version: 9.18.25
+%define src_version 9.18.25
+Release: alt1
 
 Summary: ISC BIND - DNS server
 License: MPL-2.0
@@ -602,6 +602,9 @@ fi
 %endif
 
 %changelog
+* Wed Mar 20 2024 Stanislav Levin <slev@altlinux.org> 9.18.25-alt1
+- 9.18.24 -> 9.18.25.
+
 * Thu Mar 07 2024 Stanislav Levin <slev@altlinux.org> 9.18.24-alt2
 - Enabled DoH (closes: #49573).
 
