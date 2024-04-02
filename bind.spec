@@ -9,7 +9,7 @@
 %def_without system_tests
 # skip enginepkcs11 tests
 # https://github.com/openssl/openssl/issues/22508
-%def_without enginepkcs11
+%def_with enginepkcs11
 
 # common directory for documentation
 %define docdir %_docdir/bind-%version
