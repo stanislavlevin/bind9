@@ -208,12 +208,8 @@ stages:
 
 ### QCOW2 Image Templates
 
-.freebsd-12-amd64: &freebsd_12_amd64_image
-  image: "freebsd-12.4-x86_64"
-  <<: *libvirt_amd64
-
 .freebsd-13-amd64: &freebsd_13_amd64_image
-  image: "freebsd-13.2-x86_64"
+  image: "freebsd-13.3-x86_64"
   <<: *libvirt_amd64
 
 .freebsd-14-amd64: &freebsd_14_amd64_image
@@ -226,17 +222,19 @@ stages:
 
 ### Job Templates
 
-.api-schedules-tags-triggers-web-triggering-rules: &api_schedules_tags_triggers_web_triggering_rules
+.api-pipelines-schedules-tags-triggers-web-triggering-rules: &api_pipelines_schedules_tags_triggers_web_triggering_rules
   only:
     - api
+    - pipelines
     - schedules
     - tags
     - triggers
     - web
 
-.api-schedules-triggers-web-triggering-rules: &api_schedules_triggers_web_triggering_rules
+.api-pipelines-schedules-triggers-web-triggering-rules: &api_pipelines_schedules_triggers_web_triggering_rules
   only:
     - api
+    - pipelines
     - schedules
     - triggers
     - web
@@ -245,6 +243,7 @@ stages:
   only:
     - api
     - merge_requests
+    - pipelines
     - schedules
     - tags
     - triggers
@@ -444,15 +443,6 @@ misc:
   script:
     - sh util/check-ans-prereq.sh
     - sh util/checklibs.sh > checklibs.out
-    - sh util/tabify-changes < CHANGES > CHANGES.tmp
-    - diff -urNap CHANGES CHANGES.tmp
-    - perl util/check-changes CHANGES
-    - sh util/check-line-length.sh CHANGES
-    - test ! -f CHANGES.SE || sh util/tabify-changes < CHANGES.SE > CHANGES.tmp
-    - test ! -f CHANGES.SE || diff -urNap CHANGES.SE CHANGES.tmp
-    - test ! -f CHANGES.SE || perl util/check-changes master=0 CHANGES.SE
-    - test ! -f CHANGES.SE || sh util/check-line-length.sh CHANGES.SE
-    - rm CHANGES.tmp
     - xmllint --noout --nonet `git ls-files '*.xml' '*.docbook'`
     - sh util/check-win32util-configure
     - sh util/check-categories.sh
@@ -461,6 +451,18 @@ misc:
     paths:
       - checklibs.out
     when: on_failure
+
+changes:
+  <<: *precheck_job
+  except:
+    - pipelines
+  script:
+    - sh util/tabify-changes < CHANGES > CHANGES.tmp
+    - diff -urNap CHANGES CHANGES.tmp
+    - perl util/check-changes CHANGES
+    - sh util/check-line-length.sh CHANGES
+    - rm CHANGES.tmp
+  needs: []
 
 black:
   <<: *precheck_job
@@ -594,7 +596,7 @@ docs:
   needs: []
 
 docs:pdf:
-  <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *api_pipelines_schedules_tags_triggers_web_triggering_rules
   <<: *base_image
   stage: docs
   before_script:
@@ -658,6 +660,7 @@ gcc:alpine3.19:amd64:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON}"
+    EXTRA_CONFIGURE: "--without-gssapi"
   <<: *alpine_3_19_amd64_image
   <<: *build_job
 
@@ -774,12 +777,12 @@ gcc:buster:amd64:
     EXTRA_CONFIGURE: "--with-libidn2"
   <<: *debian_buster_amd64_image
   <<: *build_job
-  <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *api_pipelines_schedules_tags_triggers_web_triggering_rules
 
 system:gcc:buster:amd64:
   <<: *debian_buster_amd64_image
   <<: *system_test_job
-  <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *api_pipelines_schedules_tags_triggers_web_triggering_rules
   needs:
     - job: gcc:buster:amd64
       artifacts: true
@@ -787,7 +790,7 @@ system:gcc:buster:amd64:
 unit:gcc:buster:amd64:
   <<: *debian_buster_amd64_image
   <<: *unit_test_job
-  <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *api_pipelines_schedules_tags_triggers_web_triggering_rules
   needs:
     - job: gcc:buster:amd64
       artifacts: true
@@ -969,7 +972,7 @@ gcc:tarball:
 system:gcc:tarball:
   <<: *base_image
   <<: *system_test_job
-  <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *api_pipelines_schedules_tags_triggers_web_triggering_rules
   before_script:
     - cd bind-*
     - *setup_interfaces
@@ -980,7 +983,7 @@ system:gcc:tarball:
 unit:gcc:tarball:
   <<: *base_image
   <<: *unit_test_job
-  <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *api_pipelines_schedules_tags_triggers_web_triggering_rules
   before_script:
     - cd bind-*
   needs:
@@ -993,7 +996,7 @@ gcc:tumbleweed:amd64:
   variables:
     CC: gcc
     CFLAGS: "${CFLAGS_COMMON} -DDEBUG"
-    EXTRA_CONFIGURE: "--with-libidn2"
+    EXTRA_CONFIGURE: "--with-libidn2 --with-gssapi=krb5-config"
   <<: *tumbleweed_latest_amd64_image
   <<: *build_job
 
@@ -1239,38 +1242,14 @@ unit:gcc:softhsm2.6:
     - job: gcc:softhsm2.6
       artifacts: true
 
-# Jobs for Clang builds on FreeBSD 12 (amd64)
-
-clang:freebsd12:amd64:
-  variables:
-    CFLAGS: "${CFLAGS_COMMON}"
-    EXTRA_CONFIGURE: "--with-gssapi=krb5-config"
-    USER: gitlab-runner
-  <<: *freebsd_12_amd64_image
-  <<: *build_job
-
-system:clang:freebsd12:amd64:
-  <<: *freebsd_12_amd64_image
-  <<: *system_test_job
-  variables:
-    USER: gitlab-runner
-  needs:
-    - job: clang:freebsd12:amd64
-      artifacts: true
-
-unit:clang:freebsd12:amd64:
-  <<: *freebsd_12_amd64_image
-  <<: *unit_test_job
-  needs:
-    - job: clang:freebsd12:amd64
-      artifacts: true
-
 # Jobs for Clang builds on FreeBSD 13 (amd64)
 
 clang:freebsd13:amd64:
   variables:
     CFLAGS: "${CFLAGS_COMMON}"
-    EXTRA_CONFIGURE: "--with-gssapi=/usr/bin/krb5-config"
+    # Use MIT Kerberos5 for BIND 9 GSS-API support because of FreeBSD Heimdal
+    # incompatibility; see https://bugs.freebsd.org/275241.
+    EXTRA_CONFIGURE: "--with-gssapi=/usr/local/bin/krb5-config"
     USER: gitlab-runner
   <<: *freebsd_13_amd64_image
   <<: *build_job
@@ -1296,8 +1275,9 @@ unit:clang:freebsd13:amd64:
 clang:freebsd14:amd64:
   variables:
     CFLAGS: "${CFLAGS_COMMON}"
-    # Disable BIND 9 GSS-API support because of Heimdal incompatibility; see FreeBSD bug #275241.
-    EXTRA_CONFIGURE: "${WITH_READLINE_LIBEDIT} --without-gssapi"
+    # Use MIT Kerberos5 for BIND 9 GSS-API support because of FreeBSD Heimdal
+    # incompatibility; see https://bugs.freebsd.org/275241.
+    EXTRA_CONFIGURE: "--with-gssapi=/usr/local/bin/krb5-config"
     USER: gitlab-runner
   <<: *freebsd_14_amd64_image
   <<: *build_job
@@ -1374,14 +1354,14 @@ system:msvc:windows:amd64:
 msvc-debug:windows:amd64:
   <<: *windows_server_2016_amd64_image
   <<: *windows_build_job
-  <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *api_pipelines_schedules_tags_triggers_web_triggering_rules
   variables:
     VSCONF: Debug
 
 system:msvc-debug:windows:amd64:
   <<: *windows_server_2016_amd64_image
   <<: *windows_system_test_job
-  <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *api_pipelines_schedules_tags_triggers_web_triggering_rules
   variables:
     VSCONF: Debug
   needs:
@@ -1573,7 +1553,7 @@ respdiff-short:tsan:
 
 respdiff-long:
   <<: *respdiff_job
-  <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *api_pipelines_schedules_tags_triggers_web_triggering_rules
   <<: *respdiff_debian_bookworm_amd64_image
   variables:
     CC: gcc
@@ -1584,7 +1564,7 @@ respdiff-long:
 
 respdiff-long:asan:
   <<: *respdiff_job
-  <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *api_pipelines_schedules_tags_triggers_web_triggering_rules
   <<: *debian_bookworm_amd64_image
   variables:
     CC: gcc
@@ -1596,7 +1576,7 @@ respdiff-long:asan:
 
 respdiff-long:tsan:
   <<: *respdiff_job
-  <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *api_pipelines_schedules_tags_triggers_web_triggering_rules
   <<: *tsan_debian_bookworm_amd64_image
   variables:
     CC: gcc
@@ -1613,7 +1593,7 @@ respdiff-long:tsan:
 
 respdiff-long-third-party:
   <<: *respdiff_job
-  <<: *api_schedules_tags_triggers_web_triggering_rules
+  <<: *api_pipelines_schedules_tags_triggers_web_triggering_rules
   <<: *debian_bookworm_amd64_image
   variables:
     CC: gcc
@@ -1736,8 +1716,7 @@ stress:rpz:fedora:39:arm64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /linux/i && $BIND_STRESS_TEST_MODE =~ /rpz/i && $BIND_STRESS_TEST_ARCH =~ /arm64/i)
 
-stress:authoritative:freebsd12:amd64:
-  <<: *freebsd_12_amd64_image
+stress:authoritative:freebsd13:amd64:
   <<: *freebsd_stress_amd64
   <<: *stress_job
   variables:
@@ -1751,8 +1730,7 @@ stress:authoritative:freebsd12:amd64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /freebsd/i && $BIND_STRESS_TEST_MODE =~ /authoritative/i && $BIND_STRESS_TEST_ARCH =~ /amd64/i)
 
-stress:recursive:freebsd12:amd64:
-  <<: *freebsd_12_amd64_image
+stress:recursive:freebsd13:amd64:
   <<: *freebsd_stress_amd64
   <<: *stress_job
   variables:
@@ -1766,8 +1744,7 @@ stress:recursive:freebsd12:amd64:
     variables:
       - $CI_COMMIT_TAG || ($BIND_STRESS_TEST_OS =~ /freebsd/i && $BIND_STRESS_TEST_MODE =~ /recursive/i && $BIND_STRESS_TEST_ARCH =~ /amd64/i)
 
-stress:rpz:freebsd12:amd64:
-  <<: *freebsd_12_amd64_image
+stress:rpz:freebsd13:amd64:
   <<: *freebsd_stress_amd64
   <<: *stress_job
   variables:

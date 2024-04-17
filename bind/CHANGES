@@ -1,3 +1,30 @@
+	--- 9.16.50 released ---
+
+6364.	[protocol]	Add RESOLVER.ARPA to the built in empty zones.
+			[GL #4580]
+
+6338.	[func]		Optimize slabheader placement, so the infrastructure
+			records are put in the beginning of the slabheader
+			linked list. [GL !8675]
+
+	--- 9.16.49 released ---
+
+6356.	[bug]		Create the pruning task in the dns_cache_flush(), so
+			the cache pruning still works after the flush.
+			[GL #4621]
+
+6353.	[bug]		Improve the TTL-based cleaning by removing the expired
+			headers from the heap, so they don't block the next
+			cleaning round and clean more than a single item for
+			each new addition to the RBTDB. [GL #4591]
+
+6352.	[bug]		Decrease lock contention during RBTDB tree pruning
+			introduced in change 6319 by making the prunenodes list
+			bucketed and not cleaning up nodes recursively within a
+			single prune_tree() call. [GL #4596]
+
+6350.	[bug]		Address use after free in expire_lru_headers. [GL #4495]
+
 	--- 9.16.48 released ---
 
 6343.	[bug]		Fix case insensitive setting for isc_ht hashtable.
@@ -8,6 +35,10 @@
 6322.	[security]	Specific DNS answers could cause a denial-of-service
 			condition due to DNS validation taking a long time.
 			(CVE-2023-50387) [GL #4424]
+
+			The same code change also addresses another problem:
+			preparing NSEC3 closest encloser proofs could exhaust
+			available CPU resources. (CVE-2023-50868) [GL #4459]
 
 6321.	[security]	Change 6315 inadvertently introduced regressions that
 			could cause named to crash. [GL #4234]

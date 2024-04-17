@@ -9,9 +9,19 @@
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
 
-$TTL 300
-@ IN SOA a.root-servers.nil. hostmaster.example.net. 0 0 0 0 0
-@ IN NS a.root-servers.nil.
-10.in-addr.arpa	TXT turn off redirect
-* IN A 100.100.100.1
-* IN AAAA 2001:ffff:ffff::100.100.100.1
+$TTL 30	; 5 minutes
+@			IN SOA	mname1. . (
+				2000042407 ; serial
+				20         ; refresh (20 seconds)
+				20         ; retry (20 seconds)
+				1814400    ; expire (3 weeks)
+				30       ; minimum (1 hour)
+				)
+			NS	ns2
+ns2			A	10.53.0.2
+ns3			A	10.53.0.3
+
+a			A	10.0.0.1
+*.a			A	10.0.0.3
+b			A	10.0.0.2
+d			A	10.0.0.4
