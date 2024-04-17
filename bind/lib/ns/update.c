@@ -3390,6 +3390,34 @@ update_action(isc_task_t *task, isc_event_t *event) {
 						continue;
 					}
 				}
+				/*
+				 * Don't remove DNSKEY, CDNSKEY, CDS records
+				 * that are in use (under our control).
+				 */
+				if (dns_rdatatype_iskeymaterial(rdata.type)) {
+					isc_result_t r;
+					bool inuse = false;
+					r = dns_zone_dnskey_inuse(zone, &rdata,
+								  &inuse);
+					if (r != ISC_R_SUCCESS) {
+						FAIL(r);
+					}
+					if (inuse) {
+						char typebuf
+							[DNS_RDATATYPE_FORMATSIZE];
+
+						dns_rdatatype_format(
+							rdata.type, typebuf,
+							sizeof(typebuf));
+						update_log(client, zone,
+							   LOGLEVEL_PROTOCOL,
+							   "attempt to "
+							   "delete in use "
+							   "%s ignored",
+							   typebuf);
+						continue;
+					}
+				}
 			}
 			dns_name_format(name, namestr, sizeof(namestr));
 			dns_rdatatype_format(rdata.type, typestr,

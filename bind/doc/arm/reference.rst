@@ -1026,10 +1026,10 @@ responses such as NXDOMAIN.
 :any:`parental-agents` Block Definition and Usage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:any:`parental-agents` lists allow for a common set of parental agents to be easily
-used by multiple primary and secondary zones.
-A parental agent is the entity that is allowed to
-change a zone's delegation information (defined in :rfc:`7344`).
+:any:`parental-agents` lists allow for a common set of parental agents to be
+easily used by multiple primary and secondary zones. A "parental agent" is a
+trusted DNS server that is queried to check if DS records for a given zones
+are up-to-date.
 
 :any:`primaries` Block Grammar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4909,6 +4909,7 @@ The current list of empty zones is:
 -  B.E.F.IP6.ARPA
 -  EMPTY.AS112.ARPA
 -  HOME.ARPA
+-  RESOLVER.ARPA
 
 Empty zones can be set at the view level and only apply to views of
 class IN. Disabled empty zones are only inherited from options if there
@@ -6045,6 +6046,25 @@ uses a temporary key and certificate created for the current :iscman:`named`
 session only, and ``none``, which can be used when setting up an HTTP
 listener with no encryption.
 
+The main motivation behind having the ``ephemeral`` configuration is
+to aid in testing, as trusted certificate authorities do not issue the
+certificates associated with this configuration. Thus, these
+certificates will never be trusted by any clients that verify TLS
+certificates. They provide encryption of the traffic but no
+authentification of the transmission channel. That might be enough in
+the case of deployment in a controlled environment.
+
+It should be noted that on reconfiguration, the ``ephemeral`` TLS key
+and the certificate are recreated, and all TLS certificates and keys,
+as well as associated data, are reloaded from the disk. In that case,
+listening sockets associated with TLS remain intact.
+
+Please keep in mind that doing reconfiguration can cause a short
+interruption in BIND's ability to process inbound client packets. The
+length of interruption is environment and configuration-specific. A
+good example of when reconfiguration is necessary is when TLS keys and
+certificates are updated on the disk.
+
 BIND supports the following TLS authentication mechanisms described in
 the RFC 9103, Section 9.3: Opportunistic TLS, Strict TLS, and Mutual
 TLS.
@@ -6444,10 +6464,11 @@ The following options can be specified in a :any:`dnssec-policy` statement:
     must be more than the publication interval (which is the sum of
     :any:`dnskey-ttl`, :any:`publish-safety`, and :any:`zone-propagation-delay`).
     It must also be more than the retire interval (which is the sum of
-    :any:`max-zone-ttl`, :any:`retire-safety` and :any:`zone-propagation-delay`
-    for ZSKs, and the sum of :any:`parent-ds-ttl`, :any:`retire-safety`, and
-    :any:`parent-propagation-delay` for KSKs and CSKs). BIND 9 treats a key
-    lifetime that is too short as an error.
+    :any:`max-zone-ttl`, :any:`retire-safety`, :any:`zone-propagation-delay`,
+    and signing delay (:any:`signatures-validity` minus
+    :any:`signatures-refresh`) for ZSKs, and the sum of :any:`parent-ds-ttl`,
+    :any:`retire-safety`, and :any:`parent-propagation-delay` for KSKs and
+    CSKs). BIND 9 treats a key lifetime that is too short as an error.
 
     The ``algorithm`` parameter specifies the key's algorithm, expressed
     either as a string ("rsasha256", "ecdsa384", etc.) or as a decimal
@@ -7489,7 +7510,7 @@ the zone's filename, unless :any:`inline-signing` is enabled.
      send
      EOF
 
-   The ruletype field has 20 values: ``name``, ``subdomain``, ``zonesub``,
+   The ruletype field has 18 values: ``name``, ``subdomain``, ``zonesub``,
    ``wildcard``, ``self``, ``selfsub``, ``selfwild``, ``ms-self``,
    ``ms-selfsub``, ``ms-subdomain``, ``ms-subdomain-self-rhs``, ``krb5-self``,
    ``krb5-selfsub``, ``krb5-subdomain``,  ``krb5-subdomain-self-rhs``,

@@ -1,3 +1,66 @@
+	--- 9.18.26 released ---
+
+6364.	[protocol]	Add RESOLVER.ARPA to the built in empty zones.
+			[GL #4580]
+
+6363.	[bug]		dig/mdig +ednsflags=<non-zero-value> did not re-enable
+			EDNS if it had been disabled. [GL #4641]
+
+6361.	[bug]		Some invalid ISO 8601 durations were accepted
+			erroneously. [GL #4624]
+
+6360.	[bug]		Don't return static-stub synthesised NS RRset.
+			[GL #4608]
+
+6359.	[bug]		Fix bug in Depends (keymgr_dep) function. [GL #4552]
+
+6351.	[protocol]	Support for the RESINFO record type has been added.
+			[GL #4413]
+
+6346.	[bug]		Cleaned up several minor bugs in the RBTDB dbiterator
+			implementation. [GL !8741]
+
+6345.	[bug]		Added missing dns_rdataset_disassociate calls in
+			validator.c:findnsec3proofs. [GL #4571]
+
+6340.	[test]		Fix incorrectly reported errors when running tests
+			with `make test` on platforms with older pytest.
+			[GL #4560]
+
+6338.	[func]		Optimize slabheader placement, so the infrastructure
+			records are put in the beginning of the slabheader
+			linked list. [GL !8675]
+
+6334.	[doc]		Improve ARM parental-agents definition. [GL #4531]
+
+6333.	[bug]		Fix the DNS_GETDB_STALEFIRST flag, which was defined
+			incorrectly in lib/ns/query.c. [GL !8683]
+
+6330.	[doc]		Update ZSK minimum lifetime documentation in ARM, also
+			depends on signing delay. [GL #4510]
+
+6328.	[func]		Add workaround to enforce dynamic linker to pull
+			jemalloc earlier than libc to ensure all memory
+			allocations are done via jemalloc. [GL #4404]
+
+6326.	[bug]		Changes to "listen-on" statements were ignored on
+			reconfiguration unless the port or interface address was
+			changed, making it impossible to change a related
+			listener transport type. Thanks to Thomas Amgarten.
+			[GL #4518] [GL #4528]
+
+6325.	[func]		Expose the TCP client count in statistics channel.
+			[GL #4425]
+
+6324.	[bug]		Fix a possible crash in 'dig +nssearch +nofail' and
+			'host -C' commands when one of the name servers returns
+			SERVFAIL. [GL #4508]
+
+6313.	[bug]		When dnssec-policy is in effect the DNSKEY's TTLs in
+			the zone where not being updated to match the policy.
+			This lead to failures when DNSKEYs where updated as the
+			TTLs mismatched. [GL #4466]
+
 	--- 9.18.25 released ---
 
 6356.	[bug]		Create the pruning task in the dns_cache_flush(), so
@@ -25,6 +88,10 @@
 6322.	[security]	Specific DNS answers could cause a denial-of-service
 			condition due to DNS validation taking a long time.
 			(CVE-2023-50387) [GL #4424]
+
+			The same code change also addresses another problem:
+			preparing NSEC3 closest encloser proofs could exhaust
+			available CPU resources. (CVE-2023-50868) [GL #4459]
 
 6321.	[security]	Change 6315 inadvertently introduced regressions that
 			could cause named to crash. [GL #4234]
