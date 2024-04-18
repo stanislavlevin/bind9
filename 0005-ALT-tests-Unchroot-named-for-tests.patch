@@ -6,24 +6,10 @@ Subject: [PATCH] ALT: tests: Unchroot named for tests
 Upstream tests runner expects unchrooted named.
 Exposed as ALT_NAMED_OPTIONS=' -t /'.
 ---
- bind/bin/tests/system/rrl/tests.sh     | 2 +-
  bind/bin/tests/system/runtime/tests.sh | 2 +-
  bind/bin/tests/system/start.pl         | 5 +++++
  3 files changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/bind/bin/tests/system/rrl/tests.sh b/bind/bin/tests/system/rrl/tests.sh
-index 911ccd11d4a..da34e3fa3a9 100644
---- a/bind/bin/tests/system/rrl/tests.sh
-+++ b/bind/bin/tests/system/rrl/tests.sh
-@@ -276,7 +276,7 @@ $DIG $DIGOPTS @$ns4 TXT big.tld4 > /dev/null 2>&1
- grep "would limit" ns4/named.run >/dev/null 2>&1 ||
- setret "\"would limit\" not found in log file."
- 
--$NAMED -D rrl-ns5 -gc broken.conf >broken.out 2>&1 &
-+$NAMED -D rrl-ns5 -gc broken.conf $ALT_NAMED_OPTIONS >broken.out 2>&1 &
- sleep 2
- grep "min-table-size 1" broken.out >/dev/null || setret "min-table-size 0 was not changed to 1"
- 
 diff --git a/bind/bin/tests/system/runtime/tests.sh b/bind/bin/tests/system/runtime/tests.sh
 index 81184099b81..70212814e2a 100644
 --- a/bind/bin/tests/system/runtime/tests.sh
@@ -58,14 +44,14 @@ index 89cada2bb77..3fe1e3b562b 100755
 --- a/bind/bin/tests/system/shutdown/tests_shutdown.py
 +++ b/bind/bin/tests/system/shutdown/tests_shutdown.py
 @@ -188,6 +188,8 @@ def test_named_shutdown(named_port, control_port, kill_method):
-     resolver.port = named_port
+     resolver.port = named_ports.dns
  
-     named_cmdline = [named, "-c", cfg_file, "-f"]
+     named_cmdline = [named, "-c", cfg_file, "-d", "99", "-g"]
 +    # ALT options for named
 +    named_cmdline.extend(os.getenv("ALT_NAMED_OPTIONS", "").split())
-     with subprocess.Popen(named_cmdline, cwd=cfg_dir) as named_proc:
-         try:
-             assert named_proc.poll() is None, "named isn't running"
+     with open(os.path.join(cfg_dir, "named.run"), "ab") as named_log:
+         with subprocess.Popen(
+             named_cmdline, cwd=cfg_dir, stderr=named_log
 -- 
 2.42.1
 
