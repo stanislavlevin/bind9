@@ -1,3 +1,10 @@
+	--- 9.18.27 released ---
+
+6374.	[bug]		Skip to next RRSIG if signature has expired or is in
+			the future rather than failing immediately. [GL #4586]
+
+6372.	[func]		Implement signature jitter for dnssec-policy. [GL #4554]
+
 	--- 9.18.26 released ---
 
 6364.	[protocol]	Add RESOLVER.ARPA to the built in empty zones.
