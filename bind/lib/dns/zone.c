@@ -309,6 +309,8 @@ struct dns_zone {
 	uint32_t minretry;
 
 	uint32_t maxrecords;
+	uint32_t maxrrperset;
+	uint32_t maxtypepername;
 
 	isc_sockaddr_t *primaries;
 	dns_name_t **primarykeynames;
@@ -2327,30 +2329,12 @@ zone_load(dns_zone_t *zone, unsigned int flags, bool locked) {
 	dns_zone_logc(zone, DNS_LOGCATEGORY_ZONELOAD, ISC_LOG_DEBUG(1),
 		      "starting load");
 
-	result = dns_db_create(zone->mctx, zone->db_argv[0], &zone->origin,
-			       (zone->type == dns_zone_stub) ? dns_dbtype_stub
-							     : dns_dbtype_zone,
-			       zone->rdclass, zone->db_argc - 1,
-			       zone->db_argv + 1, &db);
-
+	result = dns_zone_makedb(zone, &db);
 	if (result != ISC_R_SUCCESS) {
 		dns_zone_logc(zone, DNS_LOGCATEGORY_ZONELOAD, ISC_LOG_ERROR,
 			      "loading zone: creating database: %s",
 			      isc_result_totext(result));
 		goto cleanup;
-	}
-	dns_db_settask(db, zone->task, zone->task);
-
-	if (zone->type == dns_zone_primary ||
-	    zone->type == dns_zone_secondary || zone->type == dns_zone_mirror)
-	{
-		result = dns_db_setgluecachestats(db, zone->gluecachestats);
-		if (result == ISC_R_NOTIMPLEMENTED) {
-			result = ISC_R_SUCCESS;
-		}
-		if (result != ISC_R_SUCCESS) {
-			goto cleanup;
-		}
 	}
 
 	if (!dns_db_ispersistent(db)) {
@@ -6271,6 +6255,32 @@ unlock:
 	UNLOCK_ZONE(zone);
 }
 
+static bool
+has_pf(const isc_sockaddr_t *addresses, size_t count, int pf) {
+	for (size_t i = 0; i < count; i++) {
+		if (isc_sockaddr_pf(&addresses[i]) == pf) {
+			return (true);
+		}
+	}
+	return (false);
+}
+
+static void
+report_no_active_addresses(dns_zone_t *zone, const isc_sockaddr_t *addresses,
+			   size_t count, const char *what) {
+	if (isc_net_probeipv4() == ISC_R_DISABLED) {
+		if (!has_pf(addresses, count, AF_INET6)) {
+			dns_zone_log(zone, ISC_LOG_NOTICE,
+				     "IPv4 disabled and no IPv6 %s", what);
+		}
+	} else if (isc_net_probeipv6() == ISC_R_DISABLED) {
+		if (!has_pf(addresses, count, AF_INET)) {
+			dns_zone_log(zone, ISC_LOG_NOTICE,
+				     "IPv6 disabled and no IPv4 %s", what);
+		}
+	}
+}
+
 void
 dns_zone_setprimaries(dns_zone_t *zone, const isc_sockaddr_t *primaries,
 		      dns_name_t **keynames, dns_name_t **tlsnames,
@@ -6325,6 +6335,8 @@ dns_zone_setprimaries(dns_zone_t *zone, const isc_sockaddr_t *primaries,
 	if (count == 0) {
 		goto unlock;
 	}
+
+	report_no_active_addresses(zone, primaries, count, "primaries");
 
 	/*
 	 * primariesok must contain count elements
@@ -6381,6 +6393,8 @@ dns_zone_setparentals(dns_zone_t *zone, const isc_sockaddr_t *parentals,
 	if (count == 0) {
 		goto unlock;
 	}
+
+	report_no_active_addresses(zone, parentals, count, "parental-agents");
 
 	/*
 	 * Now set up the parentals and parental key lists
@@ -10017,6 +10031,7 @@ cleanup:
 	}
 
 	dns_diff_clear(&_sig_diff);
+	dns_diff_clear(&post_diff);
 
 	for (i = 0; i < nkeys; i++) {
 		dst_key_free(&zone_keys[i]);
@@ -12286,6 +12301,26 @@ dns_zone_setmaxrecords(dns_zone_t *zone, uint32_t val) {
 	zone->maxrecords = val;
 }
 
+void
+dns_zone_setmaxrrperset(dns_zone_t *zone, uint32_t val) {
+	REQUIRE(DNS_ZONE_VALID(zone));
+
+	zone->maxrrperset = val;
+	if (zone->db != NULL) {
+		dns_db_setmaxrrperset(zone->db, val);
+	}
+}
+
+void
+dns_zone_setmaxtypepername(dns_zone_t *zone, uint32_t val) {
+	REQUIRE(DNS_ZONE_VALID(zone));
+
+	zone->maxtypepername = val;
+	if (zone->db != NULL) {
+		dns_db_setmaxtypepername(zone->db, val);
+	}
+}
+
 static bool
 notify_isqueued(dns_zone_t *zone, unsigned int flags, dns_name_t *name,
 		isc_sockaddr_t *addr, dns_tsigkey_t *key,
@@ -12486,8 +12521,14 @@ notify_find_address(dns_notify_t *notify) {
 	unsigned int options;
 
 	REQUIRE(DNS_NOTIFY_VALID(notify));
-	options = DNS_ADBFIND_WANTEVENT | DNS_ADBFIND_INET | DNS_ADBFIND_INET6 |
-		  DNS_ADBFIND_RETURNLAME;
+
+	options = DNS_ADBFIND_WANTEVENT | DNS_ADBFIND_RETURNLAME;
+	if (isc_net_probeipv4() != ISC_R_DISABLED) {
+		options |= DNS_ADBFIND_INET;
+	}
+	if (isc_net_probeipv6() != ISC_R_DISABLED) {
+		options |= DNS_ADBFIND_INET6;
+	}
 
 	if (notify->zone->view->adb == NULL) {
 		goto destroy;
@@ -12892,6 +12933,17 @@ zone_notify(dns_zone_t *zone, isc_time_t *now) {
 		/* TODO: glue the transport to the notify */
 
 		dst = zone->notify[i];
+
+		if (isc_sockaddr_disabled(&dst)) {
+			if (key != NULL) {
+				dns_tsigkey_detach(&key);
+			}
+			if (transport != NULL) {
+				dns_transport_detach(&transport);
+			}
+			continue;
+		}
+
 		if (notify_isqueued(zone, flags, NULL, &dst, key, transport)) {
 			if (key != NULL) {
 				dns_tsigkey_detach(&key);
@@ -14482,8 +14534,12 @@ again:
 	INSIST(zone->curprimary < zone->primariescnt);
 
 	zone->primaryaddr = zone->primaries[zone->curprimary];
-
 	isc_netaddr_fromsockaddr(&primaryip, &zone->primaryaddr);
+
+	if (isc_sockaddr_disabled(&zone->primaryaddr)) {
+		goto skip_primary;
+	}
+
 	/*
 	 * First, look for a tsig key in the primaries statement, then
 	 * try for a server key.
@@ -14753,6 +14809,9 @@ ns_query(dns_zone_t *zone, dns_rdataset_t *soardataset, dns_stub_t *stub) {
 				goto cleanup;
 			}
 			dns_db_settask(stub->db, zone->task, zone->task);
+			dns_db_setmaxrrperset(stub->db, zone->maxrrperset);
+			dns_db_setmaxtypepername(stub->db,
+						 zone->maxtypepername);
 		}
 
 		result = dns_db_newversion(stub->db, &stub->version);
@@ -17857,6 +17916,8 @@ zone_replacedb(dns_zone_t *zone, dns_db_t *db, bool dump) {
 	}
 	zone_attachdb(zone, db);
 	dns_db_settask(zone->db, zone->task, zone->task);
+	dns_db_setmaxrrperset(zone->db, zone->maxrrperset);
+	dns_db_setmaxtypepername(zone->db, zone->maxtypepername);
 	DNS_ZONE_SETFLAG(zone, DNS_ZONEFLG_LOADED | DNS_ZONEFLG_NEEDNOTIFY);
 	return (ISC_R_SUCCESS);
 
@@ -18600,12 +18661,19 @@ sendtoprimary(dns_forward_t *forward) {
 		return (ISC_R_CANCELED);
 	}
 
+next:
 	if (forward->which >= forward->zone->primariescnt) {
 		UNLOCK_ZONE(forward->zone);
 		return (ISC_R_NOMORE);
 	}
 
 	forward->addr = forward->zone->primaries[forward->which];
+
+	if (isc_sockaddr_disabled(&forward->addr)) {
+		forward->which++;
+		goto next;
+	}
+
 	/*
 	 * Always use TCP regardless of whether the original update
 	 * used TCP.
@@ -21762,6 +21830,16 @@ checkds_send(dns_zone_t *zone) {
 
 		dst = zone->parentals[i];
 
+		if (isc_sockaddr_disabled(&dst)) {
+			if (key != NULL) {
+				dns_tsigkey_detach(&key);
+			}
+			if (transport != NULL) {
+				dns_transport_detach(&transport);
+			}
+			continue;
+		}
+
 		/* TODO: glue the transport to the checkds request */
 
 		if (checkds_isqueued(zone, &dst, key, transport)) {
@@ -21789,6 +21867,12 @@ checkds_send(dns_zone_t *zone) {
 				     "checkds: create DS query for "
 				     "parent %d failed",
 				     i);
+			if (key != NULL) {
+				dns_tsigkey_detach(&key);
+			}
+			if (transport != NULL) {
+				dns_transport_detach(&transport);
+			}
 			continue;
 		}
 		zone_iattach(zone, &checkds->zone);
@@ -22563,7 +22647,11 @@ failure:
 		 * Something went wrong; try again in ten minutes or
 		 * after a key refresh interval, whichever is shorter.
 		 */
-		dnssec_log(zone, ISC_LOG_DEBUG(3),
+		int loglevel = ISC_LOG_DEBUG(3);
+		if (result != DNS_R_NOTLOADED) {
+			loglevel = ISC_LOG_ERROR;
+		}
+		dnssec_log(zone, loglevel,
 			   "zone_rekey failure: %s (retry in %u seconds)",
 			   isc_result_totext(result),
 			   ISC_MIN(zone->refreshkeyinterval, 600));
@@ -24223,4 +24311,46 @@ zmgr_tlsctx_attach(dns_zonemgr_t *zmgr, isc_tlsctx_cache_t **ptlsctx_cache) {
 	isc_tlsctx_cache_attach(zmgr->tlsctx_cache, ptlsctx_cache);
 
 	RWUNLOCK(&zmgr->tlsctx_cache_rwlock, isc_rwlocktype_read);
+}
+
+isc_result_t
+dns_zone_makedb(dns_zone_t *zone, dns_db_t **dbp) {
+	REQUIRE(DNS_ZONE_VALID(zone));
+	REQUIRE(dbp != NULL && *dbp == NULL);
+
+	dns_db_t *db = NULL;
+
+	isc_result_t result = dns_db_create(
+		zone->mctx, zone->db_argv[0], &zone->origin,
+		(zone->type == dns_zone_stub) ? dns_dbtype_stub
+					      : dns_dbtype_zone,
+		zone->rdclass, zone->db_argc - 1, zone->db_argv + 1, &db);
+	if (result != ISC_R_SUCCESS) {
+		return (result);
+	}
+
+	switch (zone->type) {
+	case dns_zone_primary:
+	case dns_zone_secondary:
+	case dns_zone_mirror:
+		result = dns_db_setgluecachestats(db, zone->gluecachestats);
+		if (result == ISC_R_NOTIMPLEMENTED) {
+			result = ISC_R_SUCCESS;
+		}
+		if (result != ISC_R_SUCCESS) {
+			dns_db_detach(&db);
+			return (result);
+		}
+		break;
+	default:
+		break;
+	}
+
+	dns_db_settask(db, zone->task, zone->task);
+	dns_db_setmaxrrperset(db, zone->maxrrperset);
+	dns_db_setmaxtypepername(db, zone->maxtypepername);
+
+	*dbp = db;
+
+	return (ISC_R_SUCCESS);
 }

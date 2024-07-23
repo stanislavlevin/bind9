@@ -79,42 +79,19 @@ typedef struct wire_ok {
 	unsigned int loop;
 } wire_ok_t;
 
-#define COMPARE(r1, r2, answer)          \
-	{                                \
-		r1, r2, answer, __LINE__ \
-	}
-#define COMPARE_SENTINEL()              \
-	{                               \
-		NULL, NULL, 0, __LINE__ \
-	}
+#define COMPARE(r1, r2, answer) { r1, r2, answer, __LINE__ }
+#define COMPARE_SENTINEL()	{ NULL, NULL, 0, __LINE__ }
 
-#define TEXT_VALID_CHANGED(data_in, data_out) \
-	{                                     \
-		data_in, data_out, 0          \
-	}
-#define TEXT_VALID(data)      \
-	{                     \
-		data, data, 0 \
-	}
-#define TEXT_VALID_LOOP(loop, data) \
-	{                           \
-		data, data, loop    \
-	}
-#define TEXT_VALID_LOOPCHG(loop, data_in, data_out) \
-	{                                           \
-		data_in, data_out, loop             \
-	}
-#define TEXT_INVALID(data)    \
-	{                     \
-		data, NULL, 0 \
-	}
-#define TEXT_SENTINEL() TEXT_INVALID(NULL)
+#define TEXT_VALID_CHANGED(data_in, data_out)	    { data_in, data_out, 0 }
+#define TEXT_VALID(data)			    { data, data, 0 }
+#define TEXT_VALID_LOOP(loop, data)		    { data, data, loop }
+#define TEXT_VALID_LOOPCHG(loop, data_in, data_out) { data_in, data_out, loop }
+#define TEXT_INVALID(data)			    { data, NULL, 0 }
+#define TEXT_SENTINEL()				    TEXT_INVALID(NULL)
 
 #define VARGC(...) (sizeof((unsigned char[]){ __VA_ARGS__ }))
-#define WIRE_TEST(ok, loop, ...)                              \
-	{                                                     \
-		{ __VA_ARGS__ }, VARGC(__VA_ARGS__), ok, loop \
-	}
+#define WIRE_TEST(ok, loop, ...) \
+	{ { __VA_ARGS__ }, VARGC(__VA_ARGS__), ok, loop }
 #define WIRE_VALID(...)		   WIRE_TEST(true, 0, __VA_ARGS__)
 #define WIRE_VALID_LOOP(loop, ...) WIRE_TEST(true, loop, __VA_ARGS__)
 /*
@@ -2517,8 +2494,8 @@ ISC_RUN_TEST_IMPL(https_svcb) {
 		TEXT_INVALID("0"),
 		/* minimal record */
 		TEXT_VALID_LOOP(0, "0 ."),
-		/* Alias form requires SvcFieldValue to be empty */
-		TEXT_INVALID("0 . alpn=\"h2\""),
+		/* Alias form possible future extension */
+		TEXT_VALID_LOOP(1, "0 . alpn=\"h2\""),
 		/* no "key" prefix */
 		TEXT_INVALID("2 svc.example.net. 0=\"2222\""),
 		/* no key value */
@@ -2638,7 +2615,7 @@ ISC_RUN_TEST_IMPL(https_svcb) {
 		 */
 		WIRE_VALID(0x00, 0x00, 0x00),
 		/*
-		 * Alias with non-empty SvcFieldValue (key7="").
+		 * Alias with invalid dohpath.
 		 */
 		WIRE_INVALID(0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00),
 		/*

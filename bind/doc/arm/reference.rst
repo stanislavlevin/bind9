@@ -2147,7 +2147,7 @@ Boolean Options
    :short: Controls whether BIND 9 responds to root key sentinel probes.
 
    If ``yes``, respond to root key sentinel probes as described in
-   `draft-ietf-dnsop-kskroll-sentinel-08 <https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-kskroll-sentinel-08>`_. The default is ``yes``.
+   :rfc:`8509`:. The default is ``yes``.
 
 .. namedconf:statement:: reuseport
    :tags: server
@@ -3765,6 +3765,54 @@ system.
 
    This sets the maximum number of records permitted in a zone. The default is
    zero, which means the maximum is unlimited.
+
+.. namedconf:statement:: max-records-per-type
+   :tags: server
+   :short: Sets the maximum number of records that can be stored in an RRset
+
+   This sets the maximum number of resource records that can be stored
+   in an RRset in a database. When configured in :namedconf:ref:`options`
+   or :namedconf:ref:`view`, it controls the cache database; it also sets
+   the default value for zone databases, which can be overridden by setting
+   it at the :namedconf:ref:`zone` level.
+
+   If set to a positive value, any attempt to cache or to add to a zone
+   an RRset with more than the specified number of records will result in
+   a failure.  If set to 0, there is no cap on RRset size.  The default is
+   100.
+
+.. namedconf:statement:: max-types-per-name
+   :tags: server
+   :short: Sets the maximum number of RR types that can be stored for an owner name
+
+   This sets the maximum number of resource record types that can be stored
+   for a single owner name in a database. When configured in
+   :namedconf:ref:`options` or :namedconf:ref:`view`, it controls the cache
+   database and sets the default value for zone databases, which can be
+   overridden by setting it at the :namedconf:ref:`zone` level.
+
+   An RR type and its corresponding signature are counted as two types. So,
+   for example, a signed node containing A and AAAA records has four types:
+   A, RRSIG(A), AAAA, and RRSIG(AAAA).
+
+   The behavior is slightly different for zone and cache databases:
+
+   In a zone, if :any:`max-types-per-name` is set to a positive number, any
+   attempt to add a new resource record set to a name that already has the
+   specified number of types will fail.
+
+   In a cache, if :any:`max-types-per-name` is set to a positive number, an
+   attempt to add a new resource record set to a name that already has the
+   specified number of types will temporarily succeed so that the query can
+   be answered. However, the newly added RRset will immediately be purged.
+
+   Certain high-priority types, including SOA, CNAME, DNSKEY, and their
+   corresponding signatures, are always cached. If :any:`max-types-per-name`
+   is set to a very low value, then it may be ignored to allow high-priority
+   types to be cached.
+
+   When :any:`max-types-per-name` is set to 0, there is no cap on the number
+   of RR types.  The default is 100.
 
 .. namedconf:statement:: recursive-clients
    :tags: query
@@ -6586,7 +6634,7 @@ The following options can be specified in a :any:`dnssec-policy` statement:
        Do not use extra :term:`iterations <Iterations>`, :term:`salt <Salt>`, and
        :term:`opt-out <Opt-out>` unless their implications are fully understood.
        A higher number of iterations causes interoperability problems and opens
-       servers to CPU-exhausting DoS attacks.
+       servers to CPU-exhausting DoS attacks. See :rfc:`9276`.
 
 .. namedconf:statement:: zone-propagation-delay
    :tags: dnssec, zone
@@ -7420,7 +7468,7 @@ the zone's filename, unless :any:`inline-signing` is enabled.
    updates are allowed. It specifies a set of rules, in which each rule
    either grants or denies permission for one or more names in the zone to
    be updated by one or more identities. Identity is determined by the key
-   that signed the update request, using either TSIG or SIG(0). In most
+   that signed the update request, using TSIG. In most
    cases, :any:`update-policy` rules only apply to key-based identities. There
    is no way to specify update permissions based on the client source address.
 
@@ -7477,7 +7525,7 @@ the zone's filename, unless :any:`inline-signing` is enabled.
    field. Details for each rule type are described below.
 
    The ``identity`` field must be set to a fully qualified domain name. In
-   most cases, this represents the name of the TSIG or SIG(0) key that
+   most cases, this represents the name of the TSIG key that
    must be used to sign the update request. If the specified name is a
    wildcard, it is subject to DNS wildcard expansion, and the rule may
    apply to multiple identities. When a TKEY exchange has been used to
@@ -8244,3 +8292,6 @@ exceptions are noted in the descriptions.
 
 ``<TYPE>RecvErr``
     This indicates the number of errors in socket receive operations, including errors of send operations on a connected UDP socket, notified by an ICMP error message.
+
+``TCP4Clients``/``TCP6Clients``
+    This indicates the number of IPv4/IPv6 clients currently connected over TCP.
