@@ -16,7 +16,7 @@
 #
 m4_define([bind_VERSION_MAJOR], 9)dnl
 m4_define([bind_VERSION_MINOR], 18)dnl
-m4_define([bind_VERSION_PATCH], 28)dnl
+m4_define([bind_VERSION_PATCH], 29)dnl
 m4_define([bind_VERSION_EXTRA], )dnl
 m4_define([bind_DESCRIPTION], [(Extended Support Version)])dnl
 m4_define([bind_SRCID], [m4_esyscmd_s([git rev-parse --short HEAD | cut -b1-7])])dnl
@@ -1199,10 +1199,10 @@ AM_CONDITIONAL([HAVE_XELATEX], [test -n "$XELATEX" && test -n "$LATEXMK"])
 AM_CONDITIONAL([BUILD_MANPAGES], [test -e doc/man/named.conf.5in || test -n "$SPHINX_BUILD"])
 
 #
-# Pull release date from CHANGES file last modification date
+# Pull release date from changelog.rst file last modification date
 # for reproducible builds
 #
-release_date=`date -u -r CHANGES +%Y-%m-%d`
+release_date=`date -u -r doc/arm/changelog.rst +%Y-%m-%d`
 AC_SUBST([RELEASE_DATE], $release_date)
 
 #

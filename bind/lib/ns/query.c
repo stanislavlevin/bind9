@@ -85,12 +85,6 @@
 #define dns64_bis_return_excluded_addresses 1
 #endif /* if 0 */
 
-/*%
- * Maximum number of chained queries before we give up
- * to prevent CNAME loops.
- */
-#define MAX_RESTARTS 16
-
 #define QUERY_ERROR(qctx, r)                  \
 	do {                                  \
 		(qctx)->result = r;           \
@@ -2095,10 +2089,10 @@ addname:
 	/*
 	 * In some cases, a record that has been added as additional
 	 * data may *also* trigger the addition of additional data.
-	 * This cannot go more than MAX_RESTARTS levels deep.
+	 * This cannot go more than 'max-restarts' levels deep.
 	 */
 	if (trdataset != NULL && dns_rdatatype_followadditional(type)) {
-		if (client->additionaldepth++ < MAX_RESTARTS) {
+		if (client->additionaldepth++ < client->view->max_restarts) {
 			eresult = dns_rdataset_additionaldata(
 				trdataset, fname, query_additional_cb, qctx);
 		}
@@ -11910,7 +11904,7 @@ isc_result_t
 ns_query_done(query_ctx_t *qctx) {
 	isc_result_t result = ISC_R_UNSET;
 	const dns_namelist_t *secs = qctx->client->message->sections;
-	bool nodetach;
+	bool nodetach, partial_result_with_servfail = false;
 
 	CCTRACE(ISC_LOG_DEBUG(3), "ns_query_done");
 
@@ -11944,13 +11938,38 @@ ns_query_done(query_ctx_t *qctx) {
 	/*
 	 * Do we need to restart the query (e.g. for CNAME chaining)?
 	 */
-	if (qctx->want_restart && qctx->client->query.restarts < MAX_RESTARTS) {
-		qctx->client->query.restarts++;
-		return (ns__query_start(qctx));
+	if (qctx->want_restart) {
+		if (qctx->client->query.restarts <
+		    qctx->client->view->max_restarts)
+		{
+			qctx->client->query.restarts++;
+			return (ns__query_start(qctx));
+		} else {
+			/*
+			 * This is e.g. a long CNAME chain which we cut short.
+			 */
+			qctx->client->query.attributes |=
+				NS_QUERYATTR_PARTIALANSWER;
+			qctx->client->message->rcode = dns_rcode_servfail;
+			qctx->result = DNS_R_SERVFAIL;
+
+			/*
+			 * Send the answer back with a SERVFAIL result even
+			 * if recursion was requested.
+			 */
+			partial_result_with_servfail = true;
+
+			ns_client_extendederror(qctx->client, 0,
+						"max. restarts reached");
+			ns_client_log(qctx->client, NS_LOGCATEGORY_CLIENT,
+				      NS_LOGMODULE_QUERY, ISC_LOG_INFO,
+				      "query iterations limit reached");
+		}
 	}
 
 	if (qctx->result != ISC_R_SUCCESS &&
-	    (!PARTIALANSWER(qctx->client) || WANTRECURSION(qctx->client) ||
+	    (!PARTIALANSWER(qctx->client) ||
+	     (WANTRECURSION(qctx->client) && !partial_result_with_servfail) ||
 	     qctx->result == DNS_R_DROP))
 	{
 		if (qctx->result == DNS_R_DUPLICATE ||
