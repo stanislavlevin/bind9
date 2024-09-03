@@ -15,10 +15,10 @@ https://lists.gnu.org/archive/html/qemu-devel/2023-06/msg01966.html
  bind/bin/tests/system/tsiggss/tests.sh          | 2 +-
  3 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/bind/bin/tests/system/tsiggss/clean.sh b/bind/bin/tests/system/tsiggss/clean.sh
+diff --git a/bin/tests/system/tsiggss/clean.sh b/bin/tests/system/tsiggss/clean.sh
 index 0ace209efb5..70e7c74338d 100644
---- a/bind/bin/tests/system/tsiggss/clean.sh
-+++ b/bind/bin/tests/system/tsiggss/clean.sh
+--- a/bin/tests/system/tsiggss/clean.sh
++++ b/bin/tests/system/tsiggss/clean.sh
 @@ -15,7 +15,7 @@
  # Clean up after tsiggss tests.
  #
@@ -28,10 +28,10 @@ index 0ace209efb5..70e7c74338d 100644
  rm -f ns1/*.db ns1/K*.key ns1/K*.private
  rm -f ns1/_default.tsigkeys
  rm -f */named.memstats
-diff --git a/bind/bin/tests/system/tsiggss/ns1/named.conf.in b/bind/bin/tests/system/tsiggss/ns1/named.conf.in
+diff --git a/bin/tests/system/tsiggss/ns1/named.conf.in b/bin/tests/system/tsiggss/ns1/named.conf.in
 index 1dfa49a900d..91cc9911c63 100644
---- a/bind/bin/tests/system/tsiggss/ns1/named.conf.in
-+++ b/bind/bin/tests/system/tsiggss/ns1/named.conf.in
+--- a/bin/tests/system/tsiggss/ns1/named.conf.in
++++ b/bin/tests/system/tsiggss/ns1/named.conf.in
 @@ -41,7 +41,7 @@ zone "example.nil." IN {
  	update-policy {
  		grant Administrator@EXAMPLE.NIL wildcard * A AAAA SRV CNAME;
@@ -41,10 +41,10 @@ index 1dfa49a900d..91cc9911c63 100644
  	};
  
  	/* we need to use check-names ignore so _msdcs A records can be created */
-diff --git a/bind/bin/tests/system/tsiggss/tests.sh b/bind/bin/tests/system/tsiggss/tests.sh
+diff --git a/bin/tests/system/tsiggss/tests.sh b/bin/tests/system/tsiggss/tests.sh
 index 2d5dc8e06ed..185a15b5576 100644
---- a/bind/bin/tests/system/tsiggss/tests.sh
-+++ b/bind/bin/tests/system/tsiggss/tests.sh
+--- a/bin/tests/system/tsiggss/tests.sh
++++ b/bin/tests/system/tsiggss/tests.sh
 @@ -118,7 +118,7 @@ status=$((status+ret))
  
  echo_i "testing external update policy (CNAME) with auth sock ($n)"

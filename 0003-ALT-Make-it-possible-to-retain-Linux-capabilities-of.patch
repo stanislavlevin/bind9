@@ -82,10 +82,10 @@ Fixes: https://bugzilla.altlinux.org/show_bug.cgi?id=33300
  bind/bin/named/unix/os.c               | 36 +++++++++++++++++++++++---
  5 files changed, 42 insertions(+), 6 deletions(-)
 
-diff --git a/bind/bin/named/include/named/globals.h b/bind/bin/named/include/named/globals.h
+diff --git a/bin/named/include/named/globals.h b/bin/named/include/named/globals.h
 index 82b632ef043..4436ef8eb61 100644
---- a/bind/bin/named/include/named/globals.h
-+++ b/bind/bin/named/include/named/globals.h
+--- a/bin/named/include/named/globals.h
++++ b/bin/named/include/named/globals.h
 @@ -111,6 +111,7 @@ EXTERN isc_resourcevalue_t named_g_initopenfiles INIT(0);
  /*
   * Misc.
@@ -94,10 +94,10 @@ index 82b632ef043..4436ef8eb61 100644
  EXTERN bool named_g_coreok	     INIT(true);
  EXTERN const char *named_g_chrootdir INIT(NULL);
  EXTERN bool named_g_foreground	     INIT(false);
-diff --git a/bind/bin/named/include/named/main.h b/bind/bin/named/include/named/main.h
+diff --git a/bin/named/include/named/main.h b/bin/named/include/named/main.h
 index ee790b96ca3..ee4a451b3dd 100644
---- a/bind/bin/named/include/named/main.h
-+++ b/bind/bin/named/include/named/main.h
+--- a/bin/named/include/named/main.h
++++ b/bin/named/include/named/main.h
 @@ -23,7 +23,7 @@
  /*
   * Commandline arguments for named; also referenced in win32/ntservice.c
@@ -107,10 +107,10 @@ index ee790b96ca3..ee4a451b3dd 100644
  
  ISC_PLATFORM_NORETURN_PRE void
  named_main_earlyfatal(const char *format, ...)
-diff --git a/bind/bin/named/main.c b/bind/bin/named/main.c
+diff --git a/bin/named/main.c b/bin/named/main.c
 index 97cd36f6925..25c3313fc35 100644
---- a/bind/bin/named/main.c
-+++ b/bind/bin/named/main.c
+--- a/bin/named/main.c
++++ b/bin/named/main.c
 @@ -345,7 +345,7 @@ usage(void) {
  	fprintf(stderr, "usage: named [-4|-6] [-c conffile] [-d debuglevel] "
  			"[-D comment] [-E engine]\n"
@@ -130,10 +130,10 @@ index 97cd36f6925..25c3313fc35 100644
  		case 's':
  			/* XXXRTH temporary syntax */
  			want_stats = true;
-diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
+diff --git a/bin/named/server.c b/bin/named/server.c
 index 0c0fdc409bd..3a5e2e15cd7 100644
---- a/bind/bin/named/server.c
-+++ b/bind/bin/named/server.c
+--- a/bin/named/server.c
++++ b/bin/named/server.c
 @@ -9194,7 +9194,9 @@ load_configuration(const char *filename, named_server_t *server,
  	 */
  	if (first_time) {
@@ -145,10 +145,10 @@ index 0c0fdc409bd..3a5e2e15cd7 100644
  	}
  
  	/*
-diff --git a/bind/bin/named/unix/os.c b/bind/bin/named/unix/os.c
+diff --git a/bin/named/unix/os.c b/bin/named/unix/os.c
 index 44faacde85e..090b1654fd3 100644
---- a/bind/bin/named/unix/os.c
-+++ b/bind/bin/named/unix/os.c
+--- a/bin/named/unix/os.c
++++ b/bin/named/unix/os.c
 @@ -197,6 +197,28 @@ linux_initialprivs(void) {
  	FREE_CAP;
  }

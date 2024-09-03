@@ -55,10 +55,10 @@ Note: upstream raised this timeout to 10sec, but it's not enough.
  bind/bin/tests/system/cds/checktime.pl | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/bind/bin/tests/system/cds/checktime.pl b/bind/bin/tests/system/cds/checktime.pl
+diff --git a/bin/tests/system/cds/checktime.pl b/bin/tests/system/cds/checktime.pl
 index d85fd9125c4..039a8c6159d 100644
---- a/bind/bin/tests/system/cds/checktime.pl
-+++ b/bind/bin/tests/system/cds/checktime.pl
+--- a/bin/tests/system/cds/checktime.pl
++++ b/bin/tests/system/cds/checktime.pl
 @@ -24,4 +24,4 @@ while (<>) {
  die "missing notbefore time" unless $notbefore;
  die "missing inception time" unless $inception;

@@ -61,6 +61,8 @@ Source50: bind.service
 Source51: bind.tmpfiles.conf
 
 # NB: there must be at least one patch :)
+# snapshot of upstream's branch (bind-9.16)
+Patch0000: %name-%version-%release.patch
 Patch0001: 0001-ALT-defaults-Reintroduce-chrooted-named-by-default.patch
 Patch0002: 0002-ALT-Minimize-linux-capabilities.patch
 Patch0003: 0003-ALT-Make-it-possible-to-retain-Linux-capabilities-of.patch
@@ -184,7 +186,7 @@ a working BIND %src_version installation.
 %setup
 
 # NB: there must be at least one patch :)
-%autopatch -p2
+%autopatch -p1
 
 mkdir addon
 install -pm644 \

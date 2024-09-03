@@ -22,10 +22,10 @@ https://gitlab.isc.org/isc-projects/bind9/-/wikis/BIND-9-PKCS11
  bind/bin/tests/system/start.pl        |  4 ++
  7 files changed, 122 insertions(+), 30 deletions(-)
 
-diff --git a/bind/bin/tests/prepare-softhsm2.sh b/bind/bin/tests/prepare-softhsm2.sh
+diff --git a/bin/tests/prepare-softhsm2.sh b/bin/tests/prepare-softhsm2.sh
 index f1fa19433de..452e0515ebe 100755
---- a/bind/bin/tests/prepare-softhsm2.sh
-+++ b/bind/bin/tests/prepare-softhsm2.sh
+--- a/bin/tests/prepare-softhsm2.sh
++++ b/bin/tests/prepare-softhsm2.sh
 @@ -11,12 +11,31 @@
  # See the COPYRIGHT file distributed with this work for additional
  # information regarding copyright ownership.
@@ -59,10 +59,10 @@ index f1fa19433de..452e0515ebe 100755
 +    fi
  fi
  exit 0
-diff --git a/bind/bin/tests/system/cleanpkcs11.sh b/bind/bin/tests/system/cleanpkcs11.sh
+diff --git a/bin/tests/system/cleanpkcs11.sh b/bin/tests/system/cleanpkcs11.sh
 index ff8acd0b184..a21f07e4a28 100644
---- a/bind/bin/tests/system/cleanpkcs11.sh
-+++ b/bind/bin/tests/system/cleanpkcs11.sh
+--- a/bin/tests/system/cleanpkcs11.sh
++++ b/bin/tests/system/cleanpkcs11.sh
 @@ -13,6 +13,9 @@
  
  . "$SYSTEMTESTTOP/conf.sh"
@@ -76,10 +76,10 @@ index ff8acd0b184..a21f07e4a28 100644
 +    PK11DELBIN=$(echo "$PK11DEL" | awk '{ print $1 }')
 +    [ -x "$PK11DELBIN" ] && $PK11DEL -w0 >/dev/null 2>&1
 +fi
-diff --git a/bind/bin/tests/system/conf.sh.in b/bind/bin/tests/system/conf.sh.in
+diff --git a/bin/tests/system/conf.sh.in b/bin/tests/system/conf.sh.in
 index b9641c42b2d..974b4405134 100644
---- a/bind/bin/tests/system/conf.sh.in
-+++ b/bind/bin/tests/system/conf.sh.in
+--- a/bin/tests/system/conf.sh.in
++++ b/bin/tests/system/conf.sh.in
 @@ -54,9 +54,15 @@ NSEC3HASH=$TOP/bin/tools/nsec3hash
  export NSLOOKUP=$TOP/bin/dig/nslookup
  export NSUPDATE=$TOP/bin/nsupdate/nsupdate
@@ -99,10 +99,10 @@ index b9641c42b2d..974b4405134 100644
  export REVOKE=$TOP/bin/dnssec/dnssec-revoke
  export RNDC=$TOP/bin/rndc/rndc
  export RNDCCONFGEN=$TOP/bin/confgen/rndc-confgen
-diff --git a/bind/bin/tests/system/pkcs11/setup.sh b/bind/bin/tests/system/pkcs11/setup.sh
+diff --git a/bin/tests/system/pkcs11/setup.sh b/bin/tests/system/pkcs11/setup.sh
 index b592fd095ca..140b16d447e 100644
---- a/bind/bin/tests/system/pkcs11/setup.sh
-+++ b/bind/bin/tests/system/pkcs11/setup.sh
+--- a/bin/tests/system/pkcs11/setup.sh
++++ b/bin/tests/system/pkcs11/setup.sh
 @@ -17,7 +17,7 @@ SYSTEMTESTTOP=..
  
  set -u
@@ -200,10 +200,10 @@ index b592fd095ca..140b16d447e 100644
  done
 -echo_i "Generated keys for Native PKCS#11: $algs"
 +echo_i "Generated keys for ${PKCS11_ENGINE:-Native PKCS#11}: $algs"
-diff --git a/bind/bin/tests/system/pkcs11/tests.sh b/bind/bin/tests/system/pkcs11/tests.sh
+diff --git a/bin/tests/system/pkcs11/tests.sh b/bin/tests/system/pkcs11/tests.sh
 index e8d7cb63744..43018529957 100644
---- a/bind/bin/tests/system/pkcs11/tests.sh
-+++ b/bind/bin/tests/system/pkcs11/tests.sh
+--- a/bin/tests/system/pkcs11/tests.sh
++++ b/bin/tests/system/pkcs11/tests.sh
 @@ -47,7 +47,11 @@ n=0
  while read -r alg; do
    zonefile=ns1/$alg.example.db
@@ -299,10 +299,10 @@ index e8d7cb63744..43018529957 100644
    count=$(grep -c "pkcs11-$alg-[kz]sk[0-9]*" "pkcs11-list.out.$alg" || true)
    [ "$count" -eq 0 ] || ret=1
    test_done
-diff --git a/bind/bin/tests/system/run.sh b/bind/bin/tests/system/run.sh
+diff --git a/bin/tests/system/run.sh b/bin/tests/system/run.sh
 index 14a10670fa8..e2cf3f36413 100755
---- a/bind/bin/tests/system/run.sh
-+++ b/bind/bin/tests/system/run.sh
+--- a/bin/tests/system/run.sh
++++ b/bin/tests/system/run.sh
 @@ -182,7 +182,7 @@ fi
  
  # Check for PKCS#11 support
@@ -312,10 +312,10 @@ index 14a10670fa8..e2cf3f36413 100755
  then
    : pkcs11 ok
  else
-diff --git a/bind/bin/tests/system/start.pl b/bind/bin/tests/system/start.pl
+diff --git a/bin/tests/system/start.pl b/bin/tests/system/start.pl
 index 657d9880807..70b59838d02 100755
---- a/bind/bin/tests/system/start.pl
-+++ b/bind/bin/tests/system/start.pl
+--- a/bin/tests/system/start.pl
++++ b/bin/tests/system/start.pl
 @@ -282,6 +282,10 @@ sub construct_ns_command {
  		$command .= "-c named.conf -d 99 -g -U 4 -T maxcachesize=2097152";
  	}

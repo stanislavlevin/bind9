@@ -40,10 +40,10 @@ at all.
  bind/bin/named/main.c                  | 7 ++++++-
  2 files changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/bind/bin/named/include/named/globals.h b/bind/bin/named/include/named/globals.h
+diff --git a/bin/named/include/named/globals.h b/bin/named/include/named/globals.h
 index 82b632ef043..490d13e2904 100644
---- a/bind/bin/named/include/named/globals.h
-+++ b/bind/bin/named/include/named/globals.h
+--- a/bin/named/include/named/globals.h
++++ b/bin/named/include/named/globals.h
 @@ -112,7 +112,7 @@ EXTERN isc_resourcevalue_t named_g_initopenfiles INIT(0);
   * Misc.
   */
@@ -53,10 +53,10 @@ index 82b632ef043..490d13e2904 100644
  EXTERN bool named_g_foreground	     INIT(false);
  EXTERN bool named_g_logstderr	     INIT(false);
  EXTERN bool named_g_nosyslog	     INIT(false);
-diff --git a/bind/bin/named/main.c b/bind/bin/named/main.c
+diff --git a/bin/named/main.c b/bin/named/main.c
 index 97cd36f6925..58289ef20da 100644
---- a/bind/bin/named/main.c
-+++ b/bind/bin/named/main.c
+--- a/bin/named/main.c
++++ b/bin/named/main.c
 @@ -964,7 +964,12 @@ parse_command_line(int argc, char *argv[]) {
  			break;
  		case 't':

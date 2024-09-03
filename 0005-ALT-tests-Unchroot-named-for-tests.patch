@@ -11,10 +11,10 @@ Exposed as ALT_NAMED_OPTIONS=' -t /'.
  bind/bin/tests/system/start.pl         | 5 +++++
  3 files changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/bind/bin/tests/system/rrl/tests.sh b/bind/bin/tests/system/rrl/tests.sh
+diff --git a/bin/tests/system/rrl/tests.sh b/bin/tests/system/rrl/tests.sh
 index 911ccd11d4a..da34e3fa3a9 100644
---- a/bind/bin/tests/system/rrl/tests.sh
-+++ b/bind/bin/tests/system/rrl/tests.sh
+--- a/bin/tests/system/rrl/tests.sh
++++ b/bin/tests/system/rrl/tests.sh
 @@ -276,7 +276,7 @@ $DIG $DIGOPTS @$ns4 TXT big.tld4 > /dev/null 2>&1
  grep "would limit" ns4/named.run >/dev/null 2>&1 \
    || setret "\"would limit\" not found in log file."
@@ -24,10 +24,10 @@ index 911ccd11d4a..da34e3fa3a9 100644
  sleep 2
  grep "min-table-size 1" broken.out >/dev/null || setret "min-table-size 0 was not changed to 1"
  
-diff --git a/bind/bin/tests/system/runtime/tests.sh b/bind/bin/tests/system/runtime/tests.sh
+diff --git a/bin/tests/system/runtime/tests.sh b/bin/tests/system/runtime/tests.sh
 index 81184099b81..70212814e2a 100644
---- a/bind/bin/tests/system/runtime/tests.sh
-+++ b/bind/bin/tests/system/runtime/tests.sh
+--- a/bin/tests/system/runtime/tests.sh
++++ b/bin/tests/system/runtime/tests.sh
 @@ -18,7 +18,7 @@ SYSTEMTESTTOP=..
  set -e
  
@@ -37,10 +37,10 @@ index 81184099b81..70212814e2a 100644
  
  kill_named() {
  	pidfile="${1}"
-diff --git a/bind/bin/tests/system/start.pl b/bind/bin/tests/system/start.pl
+diff --git a/bin/tests/system/start.pl b/bin/tests/system/start.pl
 index 657d9880807..1cf465ff5eb 100755
---- a/bind/bin/tests/system/start.pl
-+++ b/bind/bin/tests/system/start.pl
+--- a/bin/tests/system/start.pl
++++ b/bin/tests/system/start.pl
 @@ -286,6 +286,11 @@ sub construct_ns_command {
  		$command .= " -T notcp"
  	}

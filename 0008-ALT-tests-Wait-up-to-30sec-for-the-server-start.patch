@@ -9,10 +9,10 @@ Subject: [PATCH] ALT: tests: Wait up to 30sec for the server start
  bind/bin/tests/system/start.pl | 6 +++---
  1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/bind/bin/tests/system/start.pl b/bind/bin/tests/system/start.pl
+diff --git a/bin/tests/system/start.pl b/bin/tests/system/start.pl
 index 657d9880807..1084a84349a 100755
---- a/bind/bin/tests/system/start.pl
-+++ b/bind/bin/tests/system/start.pl
+--- a/bin/tests/system/start.pl
++++ b/bin/tests/system/start.pl
 @@ -203,12 +203,12 @@ sub start_server {
  	my $child = `$command`;
  	chomp($child);

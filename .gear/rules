@@ -11,3 +11,4 @@ copy: *.patch
 copy: *.sysconfig
 copy: *.service
 tar: bind
+diff: v@version@:. bind-9.16:. exclude=version exclude=**/.gitignore

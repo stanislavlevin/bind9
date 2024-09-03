@@ -9,10 +9,10 @@ Fixes:
  bind/bin/tests/system/conf.sh.in | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/bind/bin/tests/system/conf.sh.in b/bind/bin/tests/system/conf.sh.in
+diff --git a/bin/tests/system/conf.sh.in b/bin/tests/system/conf.sh.in
 index d5b5996473e..42fbf90c5e3 100644
---- a/bind/bin/tests/system/conf.sh.in
-+++ b/bind/bin/tests/system/conf.sh.in
+--- a/bin/tests/system/conf.sh.in
++++ b/bin/tests/system/conf.sh.in
 @@ -33,7 +33,7 @@ export CHECKDS=$TOP/bin/python/dnssec-checkds
  export CHECKZONE=$TOP/bin/check/named-checkzone
  export COVERAGE=$TOP/bin/python/dnssec-coverage

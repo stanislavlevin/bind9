@@ -24,10 +24,10 @@ of forcing process credential changes over all threads.
  bind/bin/named/unix/os.c               | 59 +++++++++++++++++++++++---
  3 files changed, 58 insertions(+), 5 deletions(-)
 
-diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
+diff --git a/bin/named/server.c b/bin/named/server.c
 index dcd4f0e696d..0c0fdc409bd 100644
---- a/bind/bin/named/server.c
-+++ b/bind/bin/named/server.c
+--- a/bin/named/server.c
++++ b/bin/named/server.c
 @@ -9194,6 +9194,7 @@ load_configuration(const char *filename, named_server_t *server,
  	 */
  	if (first_time) {
@@ -36,10 +36,10 @@ index dcd4f0e696d..0c0fdc409bd 100644
  	}
  
  	/*
-diff --git a/bind/bin/named/unix/include/named/os.h b/bind/bin/named/unix/include/named/os.h
+diff --git a/bin/named/unix/include/named/os.h b/bin/named/unix/include/named/os.h
 index 7f167b1c2d1..ea17fecd086 100644
---- a/bind/bin/named/unix/include/named/os.h
-+++ b/bind/bin/named/unix/include/named/os.h
+--- a/bin/named/unix/include/named/os.h
++++ b/bin/named/unix/include/named/os.h
 @@ -54,6 +54,9 @@ named_os_minprivs(void);
  FILE *
  named_os_openfile(const char *filename, mode_t mode, bool switch_user);
@@ -50,10 +50,10 @@ index 7f167b1c2d1..ea17fecd086 100644
  void
  named_os_writepidfile(const char *filename, bool first_time);
  
-diff --git a/bind/bin/named/unix/os.c b/bind/bin/named/unix/os.c
+diff --git a/bin/named/unix/os.c b/bin/named/unix/os.c
 index 1ab428baee3..44faacde85e 100644
---- a/bind/bin/named/unix/os.c
-+++ b/bind/bin/named/unix/os.c
+--- a/bin/named/unix/os.c
++++ b/bin/named/unix/os.c
 @@ -41,7 +41,9 @@
  #include <isc/result.h>
  #include <isc/strerr.h>
