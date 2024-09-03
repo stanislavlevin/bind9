@@ -1,8 +1,8 @@
 trigger:
-- sisyphus
+- p11-ci
 
 variables:
-  DISTRO_BRANCH: sisyphus
+  DISTRO_BRANCH: p11
   DOCKER_BUILD_IMAGE: ${{ format('stanislavlevin/freeipa-build-altlinux:{0}', variables.DISTRO_BRANCH) }}
   VM_IMAGE: 'ubuntu-24.04'
   TESTS_CONTAINER: 'bind_test'
