@@ -181,7 +181,7 @@ jobs:
       sudo systemctl restart docker
     displayName: Configure Docker to allow IPv6
 
-  - task: DownloadPipelineArtifact@0
+  - task: DownloadPipelineArtifact@2
     inputs:
       artifactName: $(BIND_IMAGE_ARTIFACT)
       targetPath: $(Build.Repository.LocalPath)
