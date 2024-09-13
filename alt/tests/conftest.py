@@ -168,6 +168,17 @@ def chroot(request, named_service):
     subprocess.run(["control", "bind-chroot", request.param], check=True)
 
 
+@pytest.fixture(
+    params=(
+        pytest.param("enabled", id="enabled_debug"),
+        pytest.param("disabled", id="disabled_debug"),
+    ),
+)
+def debug(request, named_service):
+    named_service.stop()
+    subprocess.run(["control", "bind-debug", request.param], check=True)
+
+
 @pytest.fixture
 def control_caps():
     yield BindControl("bind-caps")
