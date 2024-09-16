@@ -124,10 +124,18 @@ def test_rndc_default_paths_chroot_nondebug(
     rndc_cmdfile_path.unlink(missing_ok=True)
 
     rndc_result = rndc(rndc_cmd)
-    assert rndc_result.returncode == 1, rndc_result
-    # actual stderr depends on command
-    expected_err_msg = f"rndc: '{rndc_cmd[0]}' failed: permission denied"
-    assert expected_err_msg in rndc_result.stderr.splitlines()
+
+    # https://gitlab.isc.org/isc-projects/bind9/-/issues/4944
+    # rndc dumpdb prints no error and exits with 0
+    if rndc_cmd[0] == "dumpdb":
+        assert rndc_result.returncode == 0, rndc_result
+        assert not rndc_result.stderr
+        pytest.xfail("https://gitlab.isc.org/isc-projects/bind9/-/issues/4944")
+    else:
+        assert rndc_result.returncode == 1, rndc_result
+        # actual stderr depends on command
+        expected_err_msg = f"rndc: '{rndc_cmd[0]}' failed: permission denied"
+        assert expected_err_msg in rndc_result.stderr.splitlines()
     assert not rndc_result.stdout
     assert not rndc_cmdfile_path.exists()
 
