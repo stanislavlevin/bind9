@@ -2,13 +2,36 @@ trigger:
 - sisyphus
 
 variables:
-  DOCKER_BUILD_IMAGE: 'stanislavlevin/freeipa-build-altlinux:sisyphus'
+  DISTRO_BRANCH: sisyphus
+  DOCKER_BUILD_IMAGE: ${{ format('stanislavlevin/freeipa-build-altlinux:{0}', variables.DISTRO_BRANCH) }}
   VM_IMAGE: 'ubuntu-20.04'
   TESTS_CONTAINER: 'bind_test'
   SHELL_CMD: '/bin/bash --noprofile --norc -eu'
 
 jobs:
+- job: Precheck
+  displayName: Precheck CI run
+  pool:
+    vmImage: $(VM_IMAGE)
+  steps:
+    - script: |
+        set -e
+        git remote add gears https://git.altlinux.org/gears/b/bind.git
+        printf 'Fetching gears\n'
+        git fetch gears
+        # make sure CI runs over repo synced to distro
+        git merge-base --is-ancestor "gears/$(DISTRO_BRANCH)" @ ||
+          {
+             printf 'Error: CI branch is not descendant of distro one.\n' ;
+             printf 'Last distro tag: %s\n' "$(git describe --tags 'gears/$(DISTRO_BRANCH)')" ;
+             printf 'Last CI tag: %s\n' "$(git describe --tags  --abbrev=0 @)" ;
+             exit 1 ;
+          }
+      displayName: Check branch inheritence ($(DISTRO_BRANCH))
+
 - job: Build
+  dependsOn:
+    - Precheck
   displayName: Build and run system tests
   pool:
     vmImage: $(VM_IMAGE)
