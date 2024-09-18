@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # SPDX-License-Identifier: MPL-2.0
@@ -9,6 +11,6 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+set -e
 
-def test_enginepkcs11(run_tests_sh):
-    run_tests_sh()
+rm -f ./named.run.*

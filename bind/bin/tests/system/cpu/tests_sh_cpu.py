@@ -10,5 +10,5 @@
 # information regarding copyright ownership.
 
 
-def test_enginepkcs11(run_tests_sh):
+def test_cpu(run_tests_sh):
     run_tests_sh()

@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # SPDX-License-Identifier: MPL-2.0
@@ -9,6 +11,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+. ../conf.sh
 
-def test_enginepkcs11(run_tests_sh):
-    run_tests_sh()
+command -v cpuset >/dev/null || command -v numactl >/dev/null || command -v taskset >/dev/null || {
+  echo_i "This test requires cpuset, numactl, or taskset." >&2
+  exit 255
+}
+
+exit 0
