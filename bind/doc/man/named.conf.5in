@@ -35,7 +35,7 @@ named.conf \- configuration file for **named**
 \fBnamed.conf\fP
 .SH DESCRIPTION
 .sp
-\fBnamed.conf\fP is the configuration file for \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'\&.
+\fBnamed.conf\fP is the configuration file for \fI\%named\fP\&.
 .sp
 For complete documentation about the configuration statements, please refer to
 the Configuration Reference section in the BIND 9 Administrator Reference
@@ -1022,7 +1022,7 @@ zone <string> [ <class> ] {
 \fB@sysconfdir@/named.conf\fP
 .SH SEE ALSO
 .sp
-\X'tty: link #std-iscman-named'\fI\%named(8)\fP\X'tty: link', \X'tty: link #std-iscman-named-checkconf'\fI\%named\-checkconf(8)\fP\X'tty: link', \X'tty: link #std-iscman-rndc'\fI\%rndc(8)\fP\X'tty: link', \X'tty: link #std-iscman-rndc-confgen'\fI\%rndc\-confgen(8)\fP\X'tty: link', \X'tty: link #std-iscman-tsig-keygen'\fI\%tsig\-keygen(8)\fP\X'tty: link', BIND 9 Administrator Reference Manual.
+\fI\%named(8)\fP, \fI\%named\-checkconf(8)\fP, \fI\%rndc(8)\fP, \fI\%rndc\-confgen(8)\fP, \fI\%tsig\-keygen(8)\fP, BIND 9 Administrator Reference Manual.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT

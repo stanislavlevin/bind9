@@ -456,12 +456,11 @@ isc__nm_tlsdns_lb_socket(isc_nm_t *mgr, sa_family_t sa_family) {
 	result = isc__nm_socket(sa_family, SOCK_STREAM, 0, &sock);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
-	(void)isc__nm_socket_incoming_cpu(sock);
 	(void)isc__nm_socket_v6only(sock, sa_family);
 
 	/* FIXME: set mss */
 
-	result = isc__nm_socket_reuse(sock);
+	result = isc__nm_socket_reuse(sock, 1);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
 	if (mgr->load_balance_sockets) {

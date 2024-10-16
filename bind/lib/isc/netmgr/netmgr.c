@@ -3278,7 +3278,7 @@ isc__nm_socket_freebind(uv_os_sock_t fd, sa_family_t sa_family) {
 }
 
 isc_result_t
-isc__nm_socket_reuse(uv_os_sock_t fd) {
+isc__nm_socket_reuse(uv_os_sock_t fd, int val) {
 	/*
 	 * Generally, the SO_REUSEADDR socket option allows reuse of
 	 * local addresses.
@@ -3295,12 +3295,12 @@ isc__nm_socket_reuse(uv_os_sock_t fd) {
 	 */
 
 #if defined(SO_REUSEPORT) && !defined(__linux__)
-	if (setsockopt_on(fd, SOL_SOCKET, SO_REUSEPORT) == -1) {
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &val, sizeof(val)) == -1) {
 		return (ISC_R_FAILURE);
 	}
 	return (ISC_R_SUCCESS);
 #elif defined(SO_REUSEADDR)
-	if (setsockopt_on(fd, SOL_SOCKET, SO_REUSEADDR) == -1) {
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val)) == -1) {
 		return (ISC_R_FAILURE);
 	}
 	return (ISC_R_SUCCESS);
@@ -3338,20 +3338,6 @@ isc__nm_socket_reuse_lb(uv_os_sock_t fd) {
 	UNUSED(fd);
 	return (ISC_R_NOTIMPLEMENTED);
 #endif
-}
-
-isc_result_t
-isc__nm_socket_incoming_cpu(uv_os_sock_t fd) {
-#ifdef SO_INCOMING_CPU
-	if (setsockopt_on(fd, SOL_SOCKET, SO_INCOMING_CPU) == -1) {
-		return (ISC_R_FAILURE);
-	} else {
-		return (ISC_R_SUCCESS);
-	}
-#else
-	UNUSED(fd);
-#endif
-	return (ISC_R_NOTIMPLEMENTED);
 }
 
 isc_result_t
