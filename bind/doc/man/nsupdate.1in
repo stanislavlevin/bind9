@@ -369,14 +369,12 @@ server for \fBexample.com\fP\&.
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 # nsupdate
 > update delete oldhost.example.com A
 > update add newhost.example.com 86400 A 172.16.1.1
 > send
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -386,14 +384,12 @@ newly added record has a TTL of 1 day (86400 seconds).
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 # nsupdate
 > prereq nxdomain nickname.example.com
 > update add nickname.example.com 86400 CNAME somehost.example.com
 > send
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp

@@ -33,10 +33,15 @@ import dns.rdataclass
 import dns.rdatatype
 import dns.rrset
 
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "ns1/K*",
+        "ns1/example.nil.db",
+    ]
+)
+
 
 class CraftedTKEYQuery:
-    # pylint: disable=too-few-public-methods
-
     """
     A class for preparing crafted TKEY queries
     """
@@ -81,8 +86,6 @@ class CraftedTKEYQuery:
 
 
 class ASN1Encoder:
-    # pylint: disable=too-few-public-methods
-
     """
     A custom ASN1 encoder which allows preparing malformed GSSAPI tokens
     """

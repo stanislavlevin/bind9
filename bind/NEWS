@@ -14,10 +14,12 @@
 Changelog
 =========
 
-.. note:: The following list contains detailed information about BIND9's
+.. note:: The following list contains detailed information about BIND 9
    development. Regular users should refer to :ref:`Release Notes <relnotes>`
    for changes relevant to them.
 
+.. include:: ../changelog/changelog-9.18.32-S1.rst
+.. include:: ../changelog/changelog-9.18.32.rst
 .. include:: ../changelog/changelog-9.18.31-S1.rst
 .. include:: ../changelog/changelog-9.18.31.rst
 .. include:: ../changelog/changelog-9.18.30-S1.rst

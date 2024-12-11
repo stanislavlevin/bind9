@@ -476,14 +476,12 @@ DS records can be imported from them (\fI\%\-g\fP).
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 % dnssec\-signzone \-g \-o example.com db.example.com \e
 Kexample.com.+013+17247
 db.example.com.signed
 %
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -496,14 +494,12 @@ The private keys are assumed to be in the current directory.
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 % cp db.example.com.signed db.example.com
 % dnssec\-signzone \-o example.com db.example.com
 db.example.com.signed
 %
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .SH SEE ALSO

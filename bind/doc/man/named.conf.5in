@@ -53,8 +53,7 @@ Unix style: # to end of line
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 acl <string> { <address_match_element>; ... }; // may occur multiple times
 
 controls {
@@ -660,8 +659,7 @@ view <string> [ <class> ] {
 }; // may occur multiple times
 
 
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -669,8 +667,7 @@ Any of these zone statements can also be set inside the view statement.
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 zone <string> [ <class> ] {
 	type primary;
 	allow\-query { <address_match_element>; ... };
@@ -736,15 +733,13 @@ zone <string> [ <class> ] {
 	zone\-statistics ( full | terse | none | <boolean> );
 };
 
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 zone <string> [ <class> ] {
 	type secondary;
 	allow\-notify { <address_match_element>; ... };
@@ -813,15 +808,13 @@ zone <string> [ <class> ] {
 	zone\-statistics ( full | terse | none | <boolean> );
 };
 
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 zone <string> [ <class> ] {
 	type mirror;
 	allow\-notify { <address_match_element>; ... };
@@ -868,15 +861,13 @@ zone <string> [ <class> ] {
 	zone\-statistics ( full | terse | none | <boolean> );
 };
 
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 zone <string> [ <class> ] {
 	type forward;
 	delegation\-only <boolean>; // deprecated
@@ -884,15 +875,13 @@ zone <string> [ <class> ] {
 	forwarders [ port <integer> ]  { ( <ipv4_address> | <ipv6_address> ) [ port <integer> ]; ... };
 };
 
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 zone <string> [ <class> ] {
 	type hint;
 	check\-names ( fail | warn | ignore );
@@ -900,15 +889,13 @@ zone <string> [ <class> ] {
 	file <quoted_string>;
 };
 
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 zone <string> [ <class> ] {
 	type redirect;
 	allow\-query { <address_match_element>; ... };
@@ -925,15 +912,13 @@ zone <string> [ <class> ] {
 	zone\-statistics ( full | terse | none | <boolean> );
 };
 
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 zone <string> [ <class> ] {
 	type static\-stub;
 	allow\-query { <address_match_element>; ... };
@@ -948,15 +933,13 @@ zone <string> [ <class> ] {
 	zone\-statistics ( full | terse | none | <boolean> );
 };
 
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 zone <string> [ <class> ] {
 	type stub;
 	allow\-query { <address_match_element>; ... };
@@ -987,34 +970,29 @@ zone <string> [ <class> ] {
 	zone\-statistics ( full | terse | none | <boolean> );
 };
 
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 zone <string> [ <class> ] {
 	type delegation\-only;
 };
 
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 zone <string> [ <class> ] {
 	in\-view <string>;
 };
 
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .SH FILES
