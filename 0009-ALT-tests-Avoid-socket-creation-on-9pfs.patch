@@ -15,19 +15,18 @@ https://lists.gnu.org/archive/html/qemu-devel/2023-06/msg01966.html
  bind/bin/tests/system/tsiggss/tests.sh          | 2 +-
  3 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/bind/bin/tests/system/tsiggss/clean.sh b/bind/bin/tests/system/tsiggss/clean.sh
-index 0ace209efb5..70e7c74338d 100644
---- a/bind/bin/tests/system/tsiggss/clean.sh
-+++ b/bind/bin/tests/system/tsiggss/clean.sh
-@@ -15,7 +15,7 @@
- # Clean up after tsiggss tests.
- #
- 
--rm -f ns1/*.jnl ns1/update.txt ns1/auth.sock
-+rm -f ns1/*.jnl ns1/update.txt ns1/auth.sock /tmp/tsiggss.auth.sock
- rm -f ns1/*.db ns1/K*.key ns1/K*.private
- rm -f ns1/_default.tsigkeys
- rm -f */named.memstats
+diff --git a/bind/bin/tests/system/tsiggss/tests_sh_tsiggss.py b/bind/bin/tests/system/tsiggss/tests_sh_tsiggss.py
+index fee2ecc821e..5f26550fab5 100644
+--- a/bind/bin/tests/system/tsiggss/tests_sh_tsiggss.py
++++ b/bind/bin/tests/system/tsiggss/tests_sh_tsiggss.py
+@@ -15,6 +15,7 @@ pytestmark = pytest.mark.extra_artifacts(
+     [
+         "authsock.pid",
+         "authsock.log",
++        "/tmp/tsiggss.auth.sock",
+         "nsupdate.out*",
+         "ns1/K*",
+         "ns1/_default.tsigkeys",
 diff --git a/bind/bin/tests/system/tsiggss/ns1/named.conf.in b/bind/bin/tests/system/tsiggss/ns1/named.conf.in
 index 1dfa49a900d..91cc9911c63 100644
 --- a/bind/bin/tests/system/tsiggss/ns1/named.conf.in
