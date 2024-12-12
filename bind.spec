@@ -27,8 +27,8 @@
 %endif
 
 Name: bind
-Version: 9.18.31
-%define src_version 9.18.31
+Version: 9.18.32
+%define src_version 9.18.32
 Release: alt1
 
 Summary: ISC BIND - DNS server
@@ -601,6 +601,9 @@ fi
 %endif
 
 %changelog
+* Thu Dec 12 2024 Stanislav Levin <slev@altlinux.org> 9.18.32-alt1
+- 9.18.31 -> 9.18.32.
+
 * Mon Oct 21 2024 Stanislav Levin <slev@altlinux.org> 9.18.31-alt1
 - 9.18.30 -> 9.18.31.
 
