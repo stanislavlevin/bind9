@@ -310,7 +310,7 @@ ln -s %_chrootdir/dev/log %buildroot%_sysconfdir/syslog.d/bind
 
 # ALT docs
 mkdir -p %buildroot%docdir
-cp -a README.md %SOURCE3 %SOURCE4 CHANGES %buildroot%docdir/
+cp -a README.md %SOURCE3 %SOURCE4 %buildroot%docdir/
 
 %if_with docs
 mkdir -p %buildroot%docdir/arm
@@ -517,7 +517,6 @@ fi
 
 %files
 %dir %docdir
-%docdir/CHANGES
 %docdir/README.md
 %docdir/README.ALT
 # plugins
