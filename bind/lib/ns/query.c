@@ -18,6 +18,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include <isc/counter.h>
 #include <isc/hex.h>
 #include <isc/mem.h>
 #include <isc/once.h>
@@ -763,6 +764,9 @@ query_reset(ns_client_t *client, bool everything) {
 				    sizeof(*client->query.rpz_st));
 			client->query.rpz_st = NULL;
 		}
+	}
+	if (client->query.qc != NULL) {
+		isc_counter_detach(&client->query.qc);
 	}
 	client->query.origqname = NULL;
 	client->query.dboptions = 0;
@@ -2094,7 +2098,8 @@ addname:
 	if (trdataset != NULL && dns_rdatatype_followadditional(type)) {
 		if (client->additionaldepth++ < client->view->max_restarts) {
 			eresult = dns_rdataset_additionaldata(
-				trdataset, fname, query_additional_cb, qctx);
+				trdataset, fname, query_additional_cb, qctx,
+				DNS_RDATASET_MAXADDITIONAL);
 		}
 		client->additionaldepth--;
 	}
@@ -2194,7 +2199,7 @@ regular:
 	 * We don't care if dns_rdataset_additionaldata() fails.
 	 */
 	(void)dns_rdataset_additionaldata(rdataset, name, query_additional_cb,
-					  qctx);
+					  qctx, DNS_RDATASET_MAXADDITIONAL);
 	CTRACE(ISC_LOG_DEBUG(3), "query_additional: done");
 }
 
@@ -2220,7 +2225,8 @@ query_addrrset(query_ctx_t *qctx, dns_name_t **namep,
 	 * To the current response for 'client', add the answer RRset
 	 * '*rdatasetp' and an optional signature set '*sigrdatasetp', with
 	 * owner name '*namep', to section 'section', unless they are
-	 * already there.  Also add any pertinent additional data.
+	 * already there.  Also add any pertinent additional data, unless
+	 * the query was for type ANY.
 	 *
 	 * If 'dbuf' is not NULL, then '*namep' is the name whose data is
 	 * stored in 'dbuf'.  In this case, query_addrrset() guarantees that
@@ -2275,7 +2281,9 @@ query_addrrset(query_ctx_t *qctx, dns_name_t **namep,
 	 */
 	query_addtoname(mname, rdataset);
 	query_setorder(qctx, mname, rdataset);
-	query_additional(qctx, mname, rdataset);
+	if (qctx->qtype != dns_rdatatype_any) {
+		query_additional(qctx, mname, rdataset);
+	}
 
 	/*
 	 * Note: we only add SIGs if we've added the type they cover, so
@@ -2614,8 +2622,8 @@ query_prefetch(ns_client_t *client, dns_name_t *qname,
 	options = client->query.fetchoptions | DNS_FETCHOPT_PREFETCH;
 	result = dns_resolver_createfetch(
 		client->view->resolver, qname, rdataset->type, NULL, NULL, NULL,
-		peeraddr, client->message->id, options, 0, NULL, client->task,
-		prefetch_done, client, tmprdataset, NULL,
+		peeraddr, client->message->id, options, 0, NULL, NULL,
+		client->task, prefetch_done, client, tmprdataset, NULL,
 		&client->query.prefetch);
 	if (result != ISC_R_SUCCESS) {
 		if (client->recursionquota != NULL) {
@@ -2838,7 +2846,7 @@ query_rpzfetch(ns_client_t *client, dns_name_t *qname, dns_rdatatype_t type) {
 	isc_nmhandle_attach(client->handle, &client->prefetchhandle);
 	result = dns_resolver_createfetch(
 		client->view->resolver, qname, type, NULL, NULL, NULL, peeraddr,
-		client->message->id, options, 0, NULL, client->task,
+		client->message->id, options, 0, NULL, NULL, client->task,
 		prefetch_done, client, tmprdataset, NULL,
 		&client->query.prefetch);
 	if (result != ISC_R_SUCCESS) {
@@ -6614,8 +6622,8 @@ ns_query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qname,
 	result = dns_resolver_createfetch(
 		client->view->resolver, qname, qtype, qdomain, nameservers,
 		NULL, peeraddr, client->message->id, client->query.fetchoptions,
-		0, NULL, client->task, fetch_callback, client, rdataset,
-		sigrdataset, &client->query.fetch);
+		0, NULL, client->query.qc, client->task, fetch_callback, client,
+		rdataset, sigrdataset, &client->query.fetch);
 	if (result != ISC_R_SUCCESS) {
 		if (client->recursionquota != NULL) {
 			isc_quota_detach(&client->recursionquota);
@@ -12544,6 +12552,17 @@ ns_query_start(ns_client_t *client, isc_nmhandle_t *handle) {
 	 */
 	if (WANTDNSSEC(client) || WANTAD(client)) {
 		message->flags |= DNS_MESSAGEFLAG_AD;
+	}
+
+	/*
+	 * Start global outgoing query count.
+	 */
+	result = isc_counter_create(client->manager->mctx,
+				    client->view->max_queries,
+				    &client->query.qc);
+	if (result != ISC_R_SUCCESS) {
+		query_next(client, result);
+		return;
 	}
 
 	(void)query_setup(client, qtype);
