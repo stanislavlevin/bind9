@@ -86,6 +86,8 @@ BuildRequires: python3-module-dnspython
 BuildRequires: python3(hypothesis)
 # /usr/bin/gnutls-cli is required by doth tests
 BuildRequires: gnutls-utils
+# taskset is required by cpu tests
+BuildRequires: schedutils
 %if_with enginepkcs11
 # requires only for pkcs11 tests
 BuildRequires: softhsm
