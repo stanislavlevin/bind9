@@ -61,7 +61,11 @@ Source50: bind.service
 Source51: bind.tmpfiles.conf
 
 # NB: there must be at least one patch :)
-# snapshot of upstream's branch (bind-9.16)
+# snapshot of upstream's branch (bind-9.16), prepared with:
+# git remote update
+# git branch -f bind-9.16 upstream/bind-9.16
+# git merge -sours bind-9.16 -m "Merge branch 'bind-9.16' into p10" -m 'Synced to:'$'\n'"$(git show --format=oneline bind-9.16)"$'\n''(https://gitlab.isc.org/isc-projects/bind9/-/tree/bind-9.16)'
+# gear-store-tags -ac
 Patch0000: %name-%version-%release.patch
 Patch0001: 0001-ALT-defaults-Reintroduce-chrooted-named-by-default.patch
 Patch0002: 0002-ALT-Minimize-linux-capabilities.patch
