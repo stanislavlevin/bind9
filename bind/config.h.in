@@ -553,9 +553,6 @@
 /* If the compiler supports a TLS storage class, define it to that here */
 #undef TLS
 
-/* Define to use default system tuning. */
-#undef TUNE_LARGE
-
 /* Enable DNS Response Policy Service API */
 #undef USE_DNSRPS
 
