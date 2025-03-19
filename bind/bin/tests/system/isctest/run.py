@@ -30,6 +30,7 @@ def cmd(
     log_stderr=True,
     input_text: Optional[bytes] = None,
     raise_on_exception=True,
+    env: Optional[dict] = None,
 ):
     """Execute a command with given args as subprocess."""
     isctest.log.debug(f"command: {' '.join(args)}")
@@ -45,6 +46,9 @@ def cmd(
                     f"~~~ cmd stderr ~~~\n{procdata.stderr.decode('utf-8')}\n~~~~~~~~~~~~~~~~~~"
                 )
 
+    if env is None:
+        env = dict(os.environ)
+
     try:
         proc = subprocess.run(
             args,
@@ -54,6 +58,7 @@ def cmd(
             check=True,
             cwd=cwd,
             timeout=timeout,
+            env=env,
         )
         print_debug_logs(proc)
         return proc
@@ -63,6 +68,18 @@ def cmd(
         if raise_on_exception:
             raise exc
         return exc
+
+
+class Dig:
+    def __init__(self, base_params: str = ""):
+        self.base_params = base_params
+
+    def __call__(self, params: str) -> str:
+        """Run the dig command with the given parameters and return the decoded output."""
+        return cmd(
+            [os.environ.get("DIG")] + f"{self.base_params} {params}".split(),
+            log_stdout=True,
+        ).stdout.decode("utf-8")
 
 
 def retry_with_timeout(func, timeout, delay=1, msg=None):

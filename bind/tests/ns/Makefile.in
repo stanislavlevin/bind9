@@ -155,8 +155,8 @@ plugin_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(LIBDNS_LIBS) \
 	$(LIBNS_LIBS) $(am__DEPENDENCIES_1) \
 	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_3)
-query_test_SOURCES = query_test.c
-query_test_OBJECTS = query_test.$(OBJEXT)
+am_query_test_OBJECTS = query_test.$(OBJEXT) netmgr_wrap.$(OBJEXT)
+query_test_OBJECTS = $(am_query_test_OBJECTS)
 query_test_LDADD = $(LDADD)
 query_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(LIBDNS_LIBS) \
 	$(LIBNS_LIBS) $(am__DEPENDENCIES_1) \
@@ -178,8 +178,8 @@ DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/listenlist_test.Po \
-	./$(DEPDIR)/notify_test.Po ./$(DEPDIR)/plugin_test.Po \
-	./$(DEPDIR)/query_test.Po
+	./$(DEPDIR)/netmgr_wrap.Po ./$(DEPDIR)/notify_test.Po \
+	./$(DEPDIR)/plugin_test.Po ./$(DEPDIR)/query_test.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -199,9 +199,10 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = listenlist_test.c notify_test.c plugin_test.c query_test.c
+SOURCES = listenlist_test.c notify_test.c plugin_test.c \
+	$(query_test_SOURCES)
 DIST_SOURCES = listenlist_test.c notify_test.c plugin_test.c \
-	query_test.c
+	$(query_test_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -698,6 +699,10 @@ LIBBIND9_CFLAGS = \
 LIBBIND9_LIBS = \
 	$(top_builddir)/lib/bind9/libbind9.la
 
+query_test_SOURCES = \
+	query_test.c		\
+	netmgr_wrap.c
+
 EXTRA_DIST = testdata
 @HAVE_CMOCKA_TRUE@TESTS = $(check_PROGRAMS)
 LOG_COMPILER = $(top_builddir)/tests/unit-test-driver.sh
@@ -768,6 +773,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/listenlist_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/netmgr_wrap.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/notify_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/plugin_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/query_test.Po@am__quote@ # am--include-marker
@@ -1125,6 +1131,7 @@ clean-am: clean-checkPROGRAMS clean-generic clean-libtool \
 
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/listenlist_test.Po
+	-rm -f ./$(DEPDIR)/netmgr_wrap.Po
 	-rm -f ./$(DEPDIR)/notify_test.Po
 	-rm -f ./$(DEPDIR)/plugin_test.Po
 	-rm -f ./$(DEPDIR)/query_test.Po
@@ -1178,6 +1185,7 @@ installcheck-am:
 
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/listenlist_test.Po
+	-rm -f ./$(DEPDIR)/netmgr_wrap.Po
 	-rm -f ./$(DEPDIR)/notify_test.Po
 	-rm -f ./$(DEPDIR)/plugin_test.Po
 	-rm -f ./$(DEPDIR)/query_test.Po
