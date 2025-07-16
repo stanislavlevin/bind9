@@ -1381,8 +1381,8 @@ process_cookie(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
 	if (alwaysvalid) {
 		now = when;
 	}
-	if (isc_serial_gt(when, (now + 300)) /* In the future. */ ||
-	    isc_serial_lt(when, (now - 3600)) /* In the past. */)
+	if (isc_serial_gt(when, now + 300) /* In the future. */ ||
+	    isc_serial_lt(when, now - 3600) /* In the past. */)
 	{
 		ns_stats_increment(client->sctx->nsstats,
 				   ns_statscounter_cookiebadtime);
@@ -1611,6 +1611,9 @@ process_opt(ns_client_t *client, dns_rdataset_t *opt) {
 		while (isc_buffer_remaininglength(&optbuf) >= 4) {
 			optcode = isc_buffer_getuint16(&optbuf);
 			optlen = isc_buffer_getuint16(&optbuf);
+
+			INSIST(isc_buffer_remaininglength(&optbuf) >= optlen);
+
 			switch (optcode) {
 			case DNS_OPT_NSID:
 				if (!WANTNSID(client)) {

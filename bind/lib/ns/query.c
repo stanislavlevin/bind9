@@ -4462,7 +4462,7 @@ cleanup:
 #ifdef USE_DNSRPS
 	if (st->popt.dnsrps_enabled && st->m.policy != DNS_RPZ_POLICY_ERROR &&
 	    !dnsrps_set_p(&emsg, client, st, qtype, &rdataset,
-			  (qresult_type != qresult_type_recurse)))
+			  qresult_type != qresult_type_recurse))
 	{
 		rpz_log_fail(client, DNS_RPZ_ERROR_LEVEL, NULL,
 			     DNS_RPZ_TYPE_BAD, emsg.c, DNS_R_SERVFAIL);
@@ -5743,6 +5743,13 @@ ns__query_start(query_ctx_t *qctx) {
 		}
 	}
 
+	/*
+	 * If this is a chained query (e.g. CNAME), these bits should be reset
+	 * to not use the settings from the previous query.
+	 */
+	qctx->options &= ~DNS_GETDB_STALEFIRST;
+	qctx->client->query.dboptions &= ~DNS_DBFIND_STALETIMEOUT;
+
 	if (!qctx->is_zone && (qctx->view->staleanswerclienttimeout == 0) &&
 	    dns_view_staleanswerenabled(qctx->view))
 	{
@@ -5762,6 +5769,7 @@ ns__query_start(query_ctx_t *qctx) {
 	 * when it completes, this option is not expected to be set.
 	 */
 	qctx->options &= ~DNS_GETDB_STALEFIRST;
+	qctx->client->query.dboptions &= ~DNS_DBFIND_STALETIMEOUT;
 
 cleanup:
 	return result;
