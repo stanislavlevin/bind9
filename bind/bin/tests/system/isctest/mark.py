@@ -13,6 +13,7 @@
 
 import os
 from pathlib import Path
+import platform
 import shutil
 import ssl
 import subprocess
@@ -31,7 +32,9 @@ live_internet_test = pytest.mark.skipif(
 
 
 def feature_test(feature):
-    feature_test_bin = os.environ["FEATURETEST"]
+    feature_test_bin = os.environ.get("FEATURETEST")
+    if not feature_test_bin:  # this can be the case when running doctest
+        return False
     try:
         subprocess.run([feature_test_bin, feature], check=True)
     except subprocess.CalledProcessError as exc:
@@ -54,8 +57,8 @@ def is_dnsrps_available():
     return True
 
 
-def with_tsan(*args):  # pylint: disable=unused-argument
-    return feature_test("--tsan")
+def is_host_freebsd_13(*_):
+    return platform.system() == "FreeBSD" and platform.release().startswith("13")
 
 
 have_libxml2 = pytest.mark.skipif(
@@ -86,20 +89,3 @@ softhsm2_environment = pytest.mark.skipif(
     ),
     reason="SOFTHSM2_CONF and SOFTHSM2_MODULE environmental variables must be set and pkcs11-tool and softhsm2-util tools present",
 )
-
-try:
-    import flaky as flaky_pkg  # type: ignore
-except ModuleNotFoundError:
-    # In case the flaky package is not installed, run the tests as usual
-    # without any attempts to re-run them.
-    # pylint: disable=unused-argument
-    def flaky(*args, **kwargs):
-        """Mock decorator that doesn't do anything special, just returns the function."""
-
-        def wrapper(wrapped_obj):
-            return wrapped_obj
-
-        return wrapper
-
-else:
-    flaky = flaky_pkg.flaky

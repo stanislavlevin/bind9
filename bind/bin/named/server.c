@@ -377,10 +377,11 @@ const char *empty_zones[] = {
 	"255.255.255.255.IN-ADDR.ARPA", /* BROADCAST */
 
 	/* Local IPv6 Unicast Addresses */
-	"0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.IP6."
-	"ARPA",
-	"1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.IP6."
-	"ARPA",
+	/* clang-format off */
+	"0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.IP6.ARPA",
+	"1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.IP6.ARPA",
+	/* clang-format on */
+
 	/* LOCALLY ASSIGNED LOCAL ADDRESS SCOPE */
 	"D.F.IP6.ARPA", "8.E.F.IP6.ARPA", /* LINK LOCAL */
 	"9.E.F.IP6.ARPA",		  /* LINK LOCAL */
@@ -9356,6 +9357,13 @@ load_configuration(const char *filename, named_server_t *server,
 				      false));
 	}
 	server->interface_interval = interface_interval;
+
+	/*
+	 * FreeBSD workaround: Trigger the interface rescan immediately
+	 * otherwise the server will start listening only after
+	 * 'interface-interval' first tick, possibly never.
+	 */
+	(void)ns_interfacemgr_scan(server->interfacemgr, false, false);
 
 	/*
 	 * Enable automatic interface scans.

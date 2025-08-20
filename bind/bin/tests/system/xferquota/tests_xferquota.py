@@ -60,8 +60,8 @@ def test_xferquota(named_port, servers):
 
     isctest.run.retry_with_timeout(check_line_count, timeout=360)
 
-    axfr_msg = dns.message.make_query("zone000099.example.", "AXFR")
-    a_msg = dns.message.make_query("a.changing.", "A")
+    axfr_msg = isctest.query.create("zone000099.example.", "AXFR")
+    a_msg = isctest.query.create("a.changing.", "A")
 
     def query_and_compare(msg):
         ns1response = isctest.query.tcp(msg, "10.53.0.1")
@@ -75,9 +75,6 @@ def test_xferquota(named_port, servers):
         f"transfer of 'changing/IN' from 10.53.0.1#{named_port}: "
         f"Transfer completed: .*\\(serial 2\\)"
     )
-    with servers["ns2"].watch_log_from_start() as watcher:
-        watcher.wait_for_line(
-            pattern,
-            timeout=30,
-        )
+    with servers["ns2"].watch_log_from_start(timeout=30) as watcher:
+        watcher.wait_for_line(pattern)
     query_and_compare(a_msg)
