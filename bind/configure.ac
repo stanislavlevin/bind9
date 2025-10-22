@@ -16,7 +16,7 @@
 #
 m4_define([bind_VERSION_MAJOR], 9)dnl
 m4_define([bind_VERSION_MINOR], 18)dnl
-m4_define([bind_VERSION_PATCH], 39)dnl
+m4_define([bind_VERSION_PATCH], 41)dnl
 m4_define([bind_VERSION_EXTRA], )dnl
 m4_define([bind_DESCRIPTION], [(Extended Support Version)])dnl
 m4_define([bind_SRCID], [m4_esyscmd_s([git rev-parse --short HEAD | cut -b1-7])])dnl
@@ -1538,7 +1538,7 @@ AC_CONFIG_FILES([fuzz/Makefile])
 
 # Misc
 
-AC_CONFIG_FILES([util/check-make-install])
+AC_CONFIG_FILES([util/check-make-install.sh])
 
 #
 # Do it
