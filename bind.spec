@@ -83,6 +83,7 @@ BuildRequires: python3(sphinx_rtd_theme)
 BuildRequires: gdb
 BuildRequires: python3-module-dnspython
 BuildRequires: python3-module-jinja2
+BuildRequires: python3-module-requests
 %if_with system_tests
 BuildRequires: python3(hypothesis)
 # /usr/bin/gnutls-cli is required by doth tests
