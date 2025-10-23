@@ -26,7 +26,7 @@
 Name: bind
 Version: 9.16.50
 %define src_version 9.16.50
-Release: alt2
+Release: alt3
 
 Summary: ISC BIND - DNS server
 License: MPL-2.0
@@ -555,6 +555,9 @@ fi
 %endif
 
 %changelog
+* Thu Oct 23 2025 Stanislav Levin <slev@altlinux.org> 9.16.50-alt3
+- Synced to upstream (fixes: CVE-2025-40778, CVE-2025-40780).
+
 * Fri Jan 31 2025 Stanislav Levin <slev@altlinux.org> 9.16.50-alt2
 - Synced to upstream (fixes: CVE-2024-11187).
 
