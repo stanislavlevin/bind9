@@ -16,7 +16,7 @@
 #
 m4_define([bind_VERSION_MAJOR], 9)dnl
 m4_define([bind_VERSION_MINOR], 18)dnl
-m4_define([bind_VERSION_PATCH], 44)dnl
+m4_define([bind_VERSION_PATCH], 45)dnl
 m4_define([bind_VERSION_EXTRA], )dnl
 m4_define([bind_DESCRIPTION], [(Extended Support Version)])dnl
 m4_define([bind_SRCID], [m4_esyscmd_s([git rev-parse --short HEAD | cut -b1-7])])dnl
@@ -240,7 +240,7 @@ AM_CONDITIONAL([HAVE_PERL], [test -n "$PERL"])
 #
 # Python is optional, it is used only by some of the system test scripts.
 #
-AM_PATH_PYTHON([3.6], [], [:])
+AM_PATH_PYTHON([3.10], [], [:])
 AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ":"])
 
 AC_PATH_PROGS([PYTEST], [pytest-3 py.test-3 pytest py.test pytest-pypy], [])

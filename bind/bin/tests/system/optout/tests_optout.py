@@ -19,7 +19,7 @@ import sys
 import isctest
 import pytest
 
-pytest.importorskip("dns", minversion="2.0.0")
+import dns
 import dns.exception
 import dns.message
 import dns.name
@@ -27,7 +27,6 @@ import dns.query
 import dns.rcode
 import dns.rdataclass
 import dns.rdatatype
-
 
 pytestmark = [
     pytest.mark.skipif(
