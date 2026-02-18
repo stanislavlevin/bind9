@@ -38,6 +38,9 @@ VCS: https://gitlab.isc.org/isc-projects/bind9.git
 
 # ftp://ftp.isc.org/isc/bind9/%src_version/bind-%src_version.tar.xz
 Source0: %name-%version.tar
+%if_with check
+Source1: %pyproject_deps_config_name
+%endif
 Source3: README.bind-devel
 Source4: README.ALT
 
@@ -73,13 +76,11 @@ Patch0009: 0009-ALT-tests-Avoid-socket-creation-on-9pfs.patch
 Patch0010: 0010-ALT-tests-Handle-unset-TSAN_OPTIONS.patch
 
 %if_with check
+BuildRequires(pre): rpm-build-pyproject
 # for backtraces
 BuildRequires: gdb
-BuildRequires: python3-module-dnspython
-BuildRequires: python3-module-jinja2
-BuildRequires: python3-module-requests
+%pyproject_builddeps_check
 %if_with system_tests
-BuildRequires: python3(hypothesis)
 # /usr/bin/gnutls-cli is required by doth tests
 BuildRequires: gnutls-utils
 # taskset is required by cpu tests
@@ -100,7 +101,6 @@ BuildRequires: iproute2
 BuildRequires: perl-Net-DNS
 BuildRequires: perl-File-Fetch
 BuildRequires: perl-Digest-HMAC
-BuildRequires: python3(pytest)
 %endif
 
 Provides: bind-chroot(%_chrootdir)
@@ -209,6 +209,10 @@ s,@RUN_DIR@,%run_dir,g;
 s,@NAMED_USER@,%named_user,g;
 s,@LOG_DIR@,%log_dir,g;
 ' --
+
+%if_with check
+%pyproject_deps_resync_check_pipreqfile bin/tests/system/requirements.txt
+%endif
 
 %build
 # https://bugzilla.redhat.com/show_bug.cgi?id=2122841#c30

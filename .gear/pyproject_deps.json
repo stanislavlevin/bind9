@@ -1,0 +1,20 @@
+{
+  "sources": {
+    "check": {
+      "deps": [
+        "cryptography",
+        "dnspython>=2.7.0",
+        "flaky",
+        "hypothesis>=4.41.2",
+        "jinja2",
+        "pytest-xdist",
+        "pytest>=7.0.0",
+        "requests"
+      ],
+      "srcargs": [
+        "bin/tests/system/requirements.txt"
+      ],
+      "srctype": "pip_reqfile"
+    }
+  }
+}

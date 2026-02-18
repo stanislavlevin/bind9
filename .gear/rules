@@ -11,3 +11,4 @@ copy: *.patch
 copy: *.sysconfig
 copy: *.service
 tar: bind
+copy: .gear/pyproject_deps.json
