@@ -1,7 +1,6 @@
 %define _unpackaged_files_terminate_build 1
 
 # build rules
-%def_without docs
 %def_with openssl
 %def_with libjson
 %def_with libjemalloc
@@ -72,11 +71,6 @@ Patch0005: 0005-ALT-tests-Unchroot-named-for-tests.patch
 Patch0007: 0007-ALT-tests-Raise-expected-delta-time-for-cds.patch
 Patch0009: 0009-ALT-tests-Avoid-socket-creation-on-9pfs.patch
 Patch0010: 0010-ALT-tests-Handle-unset-TSAN_OPTIONS.patch
-
-%if_with docs
-BuildRequires: python3(sphinx)
-BuildRequires: python3(sphinx_rtd_theme)
-%endif
 
 %if_with check
 # for backtraces
@@ -155,14 +149,6 @@ Requires: libbind = %EVR
 Provides: libisc-export-devel = %EVR
 Obsoletes: libisc-export-devel < %version
 
-%if_with docs
-%package doc
-Summary: Documentation for ISC BIND
-Group: Development/Other
-BuildArch: noarch
-Prefix: %prefix
-%endif
-
 %description
 The Berkeley Internet Name Domain (BIND) implements an Internet domain
 name server.  BIND is the most widely-used name server software on the
@@ -186,12 +172,6 @@ pages for libdns, libisc, libisccc, libisccfg. These are
 only needed if you want to compile packages that need more BIND
 %src_version nameserver API than the resolver code provided by
 glibc.
-
-%if_with docs
-%description doc
-This package provides various documents that are useful for maintaining
-a working BIND %src_version installation.
-%endif
 
 %prep
 %setup
@@ -231,11 +211,6 @@ s,@LOG_DIR@,%log_dir,g;
 ' --
 
 %build
-%if_with docs
-# see HTMLTARGET in configure.ac and doc/arm/Makefile.in
-export SPHINX_BUILD=/usr/bin/sphinx-build-3
-%endif
-
 # https://bugzilla.redhat.com/show_bug.cgi?id=2122841#c30
 %add_optflags -DOPENSSL_API_COMPAT=10100
 
@@ -259,10 +234,6 @@ export SPHINX_BUILD=/usr/bin/sphinx-build-3
 	#
 
 %make_build
-
-%if_with docs
-%make doc
-%endif
 
 %install
 %makeinstall_std
@@ -315,11 +286,6 @@ ln -s %_chrootdir/dev/log %buildroot%_sysconfdir/syslog.d/bind
 # ALT docs
 mkdir -p %buildroot%docdir
 cp -a README.md %SOURCE3 %SOURCE4 %buildroot%docdir/
-
-%if_with docs
-mkdir -p %buildroot%docdir/arm
-cp -a doc/arm/_build/html %buildroot%docdir/arm/
-%endif
 
 # alternative path for plugins
 mkdir -p %buildroot%_libdir/named
@@ -597,12 +563,6 @@ fi
 %_man1dir/host.*
 %_man1dir/nslookup.*
 %_man1dir/nsupdate.*
-
-%if_with docs
-%files doc
-%dir %docdir
-%docdir/arm
-%endif
 
 %changelog
 * Thu Jan 22 2026 Stanislav Levin <slev@altlinux.org> 9.18.44-alt1
