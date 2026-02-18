@@ -74,6 +74,7 @@ Patch0005: 0005-ALT-tests-Unchroot-named-for-tests.patch
 Patch0007: 0007-ALT-tests-Raise-expected-delta-time-for-cds.patch
 Patch0009: 0009-ALT-tests-Avoid-socket-creation-on-9pfs.patch
 Patch0010: 0010-ALT-tests-Handle-unset-TSAN_OPTIONS.patch
+Patch0011: 0011-tests-allow-to-run-tests-in-dnspython-2.7.0-environm.patch
 
 %if_with check
 BuildRequires(pre): rpm-build-pyproject

@@ -1,0 +1,46 @@
+From 45d0e0a6eca83602fa079a1f096c839c55b36a02 Mon Sep 17 00:00:00 2001
+From: Stanislav Levin <slev@altlinux.org>
+Date: Wed, 18 Feb 2026 17:06:26 +0300
+Subject: [PATCH] tests: allow to run tests in dnspython < 2.7.0 environments
+
+Partially reverts 00b21e55fa5172281fee9870644c3ca92163cfc4.
+
+Sisyphus dnspython is quite outdated (2.6.1):
+https://packages.altlinux.org/en/sisyphus/srpms/python3-module-dns/
+---
+ .../system/dnssec-malformed-dnskey/tests_malformed_dnskey.py  | 3 +++
+ bind/bin/tests/system/names/tests_names.py                    | 4 ++++
+ 2 files changed, 7 insertions(+)
+
+diff --git a/bind/bin/tests/system/dnssec-malformed-dnskey/tests_malformed_dnskey.py b/bind/bin/tests/system/dnssec-malformed-dnskey/tests_malformed_dnskey.py
+index 05545c1ef4..c028b5259b 100644
+--- a/bind/bin/tests/system/dnssec-malformed-dnskey/tests_malformed_dnskey.py
++++ b/bind/bin/tests/system/dnssec-malformed-dnskey/tests_malformed_dnskey.py
+@@ -16,6 +16,9 @@ import os
+ import pytest
+ 
+ pytest.importorskip("cryptography")
++pytest.importorskip(
++    "dns", minversion="2.7.0"
++)  # dns.dnssec.sign_zone(deterministic=...) needed
+ 
+ from cryptography.hazmat.primitives.asymmetric import ec
+ 
+diff --git a/bind/bin/tests/system/names/tests_names.py b/bind/bin/tests/system/names/tests_names.py
+index 38fc983d08..b72fcbec98 100644
+--- a/bind/bin/tests/system/names/tests_names.py
++++ b/bind/bin/tests/system/names/tests_names.py
+@@ -9,6 +9,10 @@
+ # See the COPYRIGHT file distributed with this work for additional
+ # information regarding copyright ownership.
+ 
++import pytest
++
++pytest.importorskip("dns", minversion="2.7.0")
++
+ import isctest
+ 
+ 
+-- 
+2.50.1
+
