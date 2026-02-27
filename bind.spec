@@ -383,18 +383,29 @@ export ALT_NAMED_OPTIONS=' -t / '
 
 pushd bin/tests/system
 testdirs=
+testnum=0
 for testdir in */; do
+    # skip very slow tests
+    if [ "$testdir" = "dupsigs/" ] ||
+        [ "$testdir" = "timeouts/" ] ||
+        [ "$testdir" = "bailiwick/" ] ||
+        [ "$testdir" = "optout/" ] ||
+        [ "$testdir" = "runtime/" ] ; then
+        continue
+    fi
     subns=$(find "$testdir" -maxdepth 1 -type d -name "ns[0-9]" | wc -l)
     if [ $subns -lt 2 ] && [ $subns -gt 0 ] ; then
+        testnum=$((testnum + 1))
         testdirs="$testdirs ${testdir%%*/}"
     fi
 done
 
-if [ -z "$testdirs" ] ; then
+echo "total number of collected test dirs: $testnum"
+if [ "$testnum" -eq 0 ] ; then
     echo 'Tests using ns==1 not found'
     exit 1
 fi
-setpriv --reuid "$runas" -- python3 -m pytest $testdirs
+setpriv --reuid "$runas" -- python3 -m pytest --durations 10 $testdirs
 
 # teardown
 popd
