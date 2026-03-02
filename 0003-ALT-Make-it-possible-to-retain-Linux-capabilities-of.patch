@@ -134,13 +134,20 @@ diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
 index 0c0fdc409bd..3a5e2e15cd7 100644
 --- a/bind/bin/named/server.c
 +++ b/bind/bin/named/server.c
-@@ -9194,7 +9194,9 @@ load_configuration(const char *filename, named_server_t *server,
+@@ -9194,7 +9194,16 @@ load_configuration(const char *filename, named_server_t *server,
  	 */
  	if (first_time) {
  		named_os_changeuser();
 -		named_os_dropprivs();
 +		if (!named_g_retain_caps) {
++			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
++				      NAMED_LOGMODULE_SERVER, ISC_LOG_INFO,
++				      "dropping all capabilities");
 +			named_os_dropprivs();
++		} else {
++			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
++				      NAMED_LOGMODULE_SERVER, ISC_LOG_INFO,
++				      "retaining required capabilities");
 +		}
  	}
  
