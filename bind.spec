@@ -405,7 +405,17 @@ if [ "$testnum" -eq 0 ] ; then
     echo 'Tests using ns==1 not found'
     exit 1
 fi
-setpriv --reuid "$runas" -- python3 -m pytest --durations 10 $testdirs
+if ! setpriv --reuid "$runas" -- python3 -m pytest --noclean --durations 10 $testdirs
+    echo 'hooks_async_plugin ns1 log:'
+    cat hooks_async_plugin/ns1/named.run ||:
+    echo 'end of hooks_async_plugin ns1 log'
+
+    echo 'transport-acl_sh_transport_acl ns1 log:'
+    cat transport-acl_sh_transport_acl/ns1/named.run ||:
+    echo 'end of transport-acl_sh_transport_acl ns1 log'
+
+    exit 1
+fi
 
 # teardown
 popd
