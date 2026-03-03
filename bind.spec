@@ -418,7 +418,12 @@ setpriv --reuid "$runas" -- python3 -m pytest --durations 10 $testdirs
 popd
 sh bin/tests/system/ifconfig.sh down
 _EOF
-time vm-run --kvm=cond --sbin -- /bin/bash --norc --noprofile -eu run_smoke.sh "$(id -un)"
+# limit cpu count: every worker listens on every ip address for both udp and tcp
+# which leads to out of available file descriptors for named in build
+# environments having not big enough nofile limit (e.g. girar has 4096) and big
+# enough cpu count (e.g. girar's x86_64 has 128).
+# 16 is the last working count.
+time vm-run --maxcpu=16 --kvm=cond --sbin -- /bin/bash --norc --noprofile -eu run_smoke.sh "$(id -un)"
 %endif
 
 %pre
