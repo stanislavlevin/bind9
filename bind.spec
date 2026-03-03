@@ -373,6 +373,13 @@ cat > run_smoke.sh <<'_EOF'
 # setup
 set -x
 ulimit -n $(ulimit -Hn)
+
+echo 'runner soft limits'
+ulimit -a -S
+
+echo 'runner hard limits'
+ulimit -a -H
+
 runas="$1"
 perl bin/tests/system/testsock.pl || sh -x bin/tests/system/ifconfig.sh up
 ip a
