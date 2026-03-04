@@ -356,7 +356,9 @@ EOF
 pushd bin/tests/system
 # named must be unchrooted for upstream tests
 export ALT_NAMED_OPTIONS=' -t / '
-SYSTEMTEST_NO_CLEAN=1 %make_build -k test V=1
+# preserve tests artifacts
+export PYTEST_ADDOPTS="--noclean"
+%make_build -k check V=1
 
 # teardown
 popd

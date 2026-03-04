@@ -131,6 +131,7 @@ jobs:
         mkdir "$logs_dir"
         pushd $(Build.Repository.LocalPath)/rpmbuild/BUILD/bind-*
         tar \
+            -v \
             --ignore-failed-read \
             --warning=no-failed-read  \
             -czf "$logs_dir/system_tests.tar.gz" \
