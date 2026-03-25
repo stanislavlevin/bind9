@@ -393,12 +393,15 @@ export ALT_NAMED_OPTIONS=' -t / '
 pushd bin/tests/system
 testdirs=
 testnum=0
+# ednscompliance and formerr crash with kernel BUG at fs/netfs/iterator.c:248!
 for testdir in */; do
     # skip very slow tests
     if [ "$testdir" = "dupsigs/" ] ||
         [ "$testdir" = "timeouts/" ] ||
         [ "$testdir" = "bailiwick/" ] ||
         [ "$testdir" = "optout/" ] ||
+        [ "$testdir" = "ednscompliance/" ] ||
+        [ "$testdir" = "formerr/" ] ||
         [ "$testdir" = "runtime/" ] ; then
         continue
     fi
