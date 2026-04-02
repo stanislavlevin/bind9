@@ -8,14 +8,14 @@ Partially reverts 00b21e55fa5172281fee9870644c3ca92163cfc4.
 Sisyphus dnspython is quite outdated (2.6.1):
 https://packages.altlinux.org/en/sisyphus/srpms/python3-module-dns/
 ---
- .../system/dnssec-malformed-dnskey/tests_malformed_dnskey.py  | 3 +++
+ .../system/dnssec_malformed_dnskey/tests_malformed_dnskey.py  | 3 +++
  bind/bin/tests/system/names/tests_names.py                    | 4 ++++
  2 files changed, 7 insertions(+)
 
-diff --git a/bind/bin/tests/system/dnssec-malformed-dnskey/tests_malformed_dnskey.py b/bind/bin/tests/system/dnssec-malformed-dnskey/tests_malformed_dnskey.py
+diff --git a/bind/bin/tests/system/dnssec_malformed_dnskey/tests_malformed_dnskey.py b/bind/bin/tests/system/dnssec_malformed_dnskey/tests_malformed_dnskey.py
 index 05545c1ef4..c028b5259b 100644
---- a/bind/bin/tests/system/dnssec-malformed-dnskey/tests_malformed_dnskey.py
-+++ b/bind/bin/tests/system/dnssec-malformed-dnskey/tests_malformed_dnskey.py
+--- a/bind/bin/tests/system/dnssec_malformed_dnskey/tests_malformed_dnskey.py
++++ b/bind/bin/tests/system/dnssec_malformed_dnskey/tests_malformed_dnskey.py
 @@ -16,6 +16,9 @@ import os
  import pytest
  
