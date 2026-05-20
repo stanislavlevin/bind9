@@ -5,6 +5,7 @@
         "cryptography",
         "dnspython>=2.7.0",
         "flaky",
+        "h2",
         "hypothesis>=4.41.2",
         "jinja2",
         "pytest-xdist",
