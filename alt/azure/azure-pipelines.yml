@@ -38,6 +38,7 @@ jobs:
   container:
     image: $(DOCKER_BUILD_IMAGE)
     options: --security-opt seccomp=unconfined --privileged --env container=docker --sysctl net.ipv6.conf.all.disable_ipv6=0
+    mapDockerSocket: true
   steps:
     - script: |
         set -eu
