@@ -8,14 +8,14 @@ all of the supported configurations. But this requirement conflicts
 with one of the ALT policies (readonly chroot). So, to allow such
 distro policy the requirement is relaxed (error => log error).
 ---
- bind/bin/named/server.c                |  3 ---
- bind/bin/tests/system/runtime/tests.sh | 22 +++++++++++++++++++---
+ bin/named/server.c                |  3 ---
+ bin/tests/system/runtime/tests.sh | 22 +++++++++++++++++++---
  2 files changed, 19 insertions(+), 6 deletions(-)
 
-diff --git a/bind/bin/named/server.c b/bind/bin/named/server.c
+diff --git a/bin/named/server.c b/bin/named/server.c
 index b4cbd953a9f..dcd4f0e696d 100644
---- a/bind/bin/named/server.c
-+++ b/bind/bin/named/server.c
+--- a/bin/named/server.c
++++ b/bin/named/server.c
 @@ -6847,7 +6847,6 @@ directory_callback(const char *clausename, const cfg_obj_t *obj, void *arg) {
  		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
  			      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
@@ -33,10 +33,10 @@ index b4cbd953a9f..dcd4f0e696d 100644
  	}
  
  #ifdef HAVE_LMDB
-diff --git a/bind/bin/tests/system/runtime/tests.sh b/bind/bin/tests/system/runtime/tests.sh
+diff --git a/bin/tests/system/runtime/tests.sh b/bin/tests/system/runtime/tests.sh
 index 81184099b81..72a8e7f61f3 100644
---- a/bind/bin/tests/system/runtime/tests.sh
-+++ b/bind/bin/tests/system/runtime/tests.sh
+--- a/bin/tests/system/runtime/tests.sh
++++ b/bin/tests/system/runtime/tests.sh
 @@ -105,15 +105,26 @@ status=$((status + ret))
  
  n=$((n + 1))
@@ -89,10 +89,10 @@ index 81184099b81..72a8e7f61f3 100644
 -- 
 2.33.4
 
-diff --git a/bind/bin/tests/system/runtime/ns2/named-alt4.conf.in b/bind/bin/tests/system/runtime/ns2/named-alt4.conf.in
+diff --git a/bin/tests/system/runtime/ns2/named-alt4.conf.in b/bin/tests/system/runtime/ns2/named-alt4.conf.in
 index 4c0312acd54..f4faf7b7446 100644
---- a/bind/bin/tests/system/runtime/ns2/named-alt4.conf.in
-+++ b/bind/bin/tests/system/runtime/ns2/named-alt4.conf.in
+--- a/bin/tests/system/runtime/ns2/named-alt4.conf.in
++++ b/bin/tests/system/runtime/ns2/named-alt4.conf.in
 @@ -20,3 +20,12 @@ options {
  	recursion no;
  	dnssec-validation no;

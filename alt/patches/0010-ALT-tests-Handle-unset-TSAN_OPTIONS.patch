@@ -6,13 +6,13 @@ Subject: [PATCH] ALT: tests: Handle unset TSAN_OPTIONS
 Fixes:
 ./conf.sh: line 36: TSAN_OPTIONS: unbound variable
 ---
- bind/bin/tests/system/conf.sh.in | 2 +-
+ bin/tests/system/conf.sh.in | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/bind/bin/tests/system/conf.sh.in b/bind/bin/tests/system/conf.sh.in
+diff --git a/bin/tests/system/conf.sh.in b/bin/tests/system/conf.sh.in
 index d5b5996473e..42fbf90c5e3 100644
---- a/bind/bin/tests/system/conf.sh.in
-+++ b/bind/bin/tests/system/conf.sh.in
+--- a/bin/tests/system/conf.sh.in
++++ b/bin/tests/system/conf.sh.in
 @@ -33,7 +33,7 @@ export CHECKDS=$TOP/bin/python/dnssec-checkds
  export CDS=$TOP_BUILDDIR/bin/dnssec/dnssec-cds
  export CHECKCONF=$TOP_BUILDDIR/bin/check/named-checkconf

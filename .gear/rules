@@ -11,5 +11,6 @@ copy: alt/*.localhost
 copy: alt/patches/*.patch
 copy: alt/*.sysconfig
 copy: alt/*.service
-tar: v@version@:.
 copy: .gear/pyproject_deps.json
+tar: v@version@:.
+diff: v@version@:. . name=@name@-@version@-alt.patch exclude=.gear/** exclude=alt/**

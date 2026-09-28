@@ -9,13 +9,13 @@ Sisyphus dnspython is quite outdated (2.6.1):
 https://packages.altlinux.org/en/sisyphus/srpms/python3-module-dns/
 ---
  .../system/dnssec_malformed_dnskey/tests_malformed_dnskey.py  | 3 +++
- bind/bin/tests/system/names/tests_names.py                    | 4 ++++
+ bin/tests/system/names/tests_names.py                    | 4 ++++
  2 files changed, 7 insertions(+)
 
-diff --git a/bind/bin/tests/system/dnssec_malformed_dnskey/tests_malformed_dnskey.py b/bind/bin/tests/system/dnssec_malformed_dnskey/tests_malformed_dnskey.py
+diff --git a/bin/tests/system/dnssec_malformed_dnskey/tests_malformed_dnskey.py b/bin/tests/system/dnssec_malformed_dnskey/tests_malformed_dnskey.py
 index 05545c1ef4..c028b5259b 100644
---- a/bind/bin/tests/system/dnssec_malformed_dnskey/tests_malformed_dnskey.py
-+++ b/bind/bin/tests/system/dnssec_malformed_dnskey/tests_malformed_dnskey.py
+--- a/bin/tests/system/dnssec_malformed_dnskey/tests_malformed_dnskey.py
++++ b/bin/tests/system/dnssec_malformed_dnskey/tests_malformed_dnskey.py
 @@ -16,6 +16,9 @@ import os
  import pytest
  
@@ -26,10 +26,10 @@ index 05545c1ef4..c028b5259b 100644
  
  from cryptography.hazmat.primitives.asymmetric import ec
  
-diff --git a/bind/bin/tests/system/names/tests_names.py b/bind/bin/tests/system/names/tests_names.py
+diff --git a/bin/tests/system/names/tests_names.py b/bin/tests/system/names/tests_names.py
 index 38fc983d08..b72fcbec98 100644
---- a/bind/bin/tests/system/names/tests_names.py
-+++ b/bind/bin/tests/system/names/tests_names.py
+--- a/bin/tests/system/names/tests_names.py
++++ b/bin/tests/system/names/tests_names.py
 @@ -9,6 +9,10 @@
  # See the COPYRIGHT file distributed with this work for additional
  # information regarding copyright ownership.
