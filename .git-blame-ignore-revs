@@ -1,0 +1,40 @@
+# Since version 2.23 (released in August 2019), git-blame has a feature
+# to ignore or bypass certain commits.
+#
+# This file contains a list of commits that are not likely what you
+# are looking for in a blame, such as mass reformatting or renaming.
+# You can set this file as a default ignore file for blame by running
+# the following command.
+#
+# $ git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# remove trailing whitespace
+644a0b80c8e69ede97a083069c1a1f3c44e1c76e
+# arithmetic expansion in system tests
+6f07ba6b7d29b2980657156472e6c8d25efed6f4
+# arithmetic expansion in system tests
+e577b1eca70856b816ffa36199f14078e4b76b58
+# subshell notation in system tests
+59e5fa42179366049fb31265532d504208f0329f
+# reformat shell scripts with shfmt
+b8b9b4ac2c0ae88de85f4d83982edb97694959d7
+# Reformat sources with up-to-date clang-format-17
+6a85e79c0b349003449f9c9a64eba74a97653826
+# Reformat sources with up-to-date clang-format-18
+26b6ce9a569105df86911160ca9cb686b230c49a
+# Reformat sources with up-to-date clang-format-19
+fe8d6023e05416ba5c030bb65878a24a57aa16cb
+# Reformat sources with up-to-date clang-format-19
+50221d6ff1ebfbd7bc97d11a17d12f0a5926d18a
+# Remove redundant semicolons after the closing braces of functions
+b3d8f2796a2a060b35a5e77d808dd031db2a3a37
+# Remove redundant parentheses from the return statement
+c5bac96fd07493a13e791ea81de1d05697b983f6
+# Reformat sources with up-to-date clang-format-20
+a6dba44b6594117689d4c10cad73a80211175a51
+# Add and apply InsertBraces statement
+a464171243a8216a3bc8278e145406489b210aa3
+# Use ControlStatementsExceptControlMacros for SpaceBeforeParens
+83396152357fa1d1373be09151ffffa6ee6cd97f
+# Use clang-format-22 to update formatting
+be2ee6bfa0a0d9611996dc9618eb82db870a7d02
