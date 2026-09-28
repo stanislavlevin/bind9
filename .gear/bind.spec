@@ -6,8 +6,6 @@
 %def_with libjemalloc
 %def_with check
 %def_without system_tests
-# skip enginepkcs11 tests
-# https://github.com/openssl/openssl/issues/22508
 %def_with enginepkcs11
 
 # common directory for documentation
