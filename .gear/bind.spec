@@ -123,6 +123,8 @@ BuildRequires: libuv-devel
 BuildRequires: libidn2-devel
 # doh support
 BuildRequires: libnghttp2-devel
+# build man pages
+BuildRequires: python3-module-sphinx
 
 %package utils
 Summary: Utilities provided by ISC BIND
@@ -208,6 +210,9 @@ s,@LOG_DIR@,%log_dir,g;
 %endif
 
 %build
+# build man pages
+export SPHINX_BUILD=/usr/bin/sphinx-build-3
+
 # https://bugzilla.redhat.com/show_bug.cgi?id=2122841#c30
 %add_optflags -DOPENSSL_API_COMPAT=10100
 
