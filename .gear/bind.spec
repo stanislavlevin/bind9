@@ -27,16 +27,12 @@
 
 Name: bind
 Version: 9.18.50
-%define src_version 9.18.50
 Release: alt1
-
 Summary: ISC BIND - DNS server
 License: MPL-2.0
 Group: System/Servers
 Url: https://www.isc.org/bind/
 VCS: https://gitlab.isc.org/isc-projects/bind9.git
-
-# ftp://ftp.isc.org/isc/bind9/%src_version/bind-%src_version.tar.xz
 Source0: %name-%version.tar
 %if_with check
 Source1: %pyproject_deps_config_name
@@ -155,24 +151,20 @@ The Berkeley Internet Name Domain (BIND) implements an Internet domain
 name server.  BIND is the most widely-used name server software on the
 Internet, and is supported by the Internet Software Consortium (ISC).
 
-This package provides the %src_version server and related
-configuration files.
+This package provides the server and related configuration files.
 
 %description utils
 This package contains various utilities related to DNS that are derived
-from the BIND %src_version source tree, including dig, host,
-nslookup and nsupdate.
+from the BIND source tree, including dig, host, nslookup and nsupdate.
 
 %description -n libbind
-This package contains shared libraries used by BIND's %src_version
-daemons and clients.
+This package contains shared libraries used by BIND's daemons and clients.
 
 %description devel
 This package contains development libraries, header files, and API man
 pages for libdns, libisc, libisccc, libisccfg. These are
-only needed if you want to compile packages that need more BIND
-%src_version nameserver API than the resolver code provided by
-glibc.
+only needed if you want to compile packages that need more BIND nameserver API
+than the resolver code provided by glibc.
 
 %prep
 %setup

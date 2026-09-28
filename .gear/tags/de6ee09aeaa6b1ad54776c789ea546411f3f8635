@@ -1,0 +1,13 @@
+object ad1a84a99f853f5194ec0afc52a152f2b9579074
+type commit
+tag v9.18.50
+tagger Nicki Křížek <nicki@isc.org> 1780926631 +0200
+
+BIND 9.18.50
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYKAB0WIQQenrxMWseszT2nKSgBYjubZSogpwUCaibIpwAKCRABYjubZSog
+p3oOAQDRG7eDaBep+3RZCxKPlmKAhBp/6FLve3a6lHtjip45zgEAxgds8VgcISXY
+x9Mnub3c9tzWqiq+Kp2t3KWDjabZ0Qo=
+=L+9o
+-----END PGP SIGNATURE-----
