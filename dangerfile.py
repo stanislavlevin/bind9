@@ -1,4 +1,3 @@
-############################################################################
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # SPDX-License-Identifier: MPL-2.0
@@ -9,7 +8,6 @@
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
-############################################################################
 
 import glob
 import os
@@ -64,7 +62,7 @@ is_full_backport = is_backport and "Backport::Partial" not in mr_labels
 
 gl = gitlab.Gitlab(
     url=f"https://{os.environ['CI_SERVER_HOST']}",
-    private_token=os.environ["BIND_TEAM_API_TOKEN"],
+    private_token=os.environ["DANGER_GITLAB_API_TOKEN"],
 )
 proj = gl.projects.get(os.environ["CI_PROJECT_ID"])
 mr = proj.mergerequests.get(os.environ["CI_MERGE_REQUEST_IID"])
@@ -297,8 +295,6 @@ if is_backport:
                 if not is_full_backport:
                     message(msg)
                 else:
-                    if target_branch.startswith("security-"):
-                        msg += ":bulb: Try running the `autorebase-merge-request` job. "
                     msg += (
                         "Please use `-x` when cherry-picking to include "
                         "the full original commit ID. Alternatively, use the "
@@ -432,25 +428,6 @@ if switches_added:
             "non-empty value (e.g. `1`). This will cause the `pairwise` "
             "job to exercise the new `./configure` switches."
         )
-
-###############################################################################
-# PRE-RELEASE TESTING
-###############################################################################
-#
-# WARN if the merge request is marked with the "Security" label, but not with
-# the label used for marking merge requests for pre-release testing (if the
-# latter is defined by the relevant environment variable).
-
-pre_release_testing_label = os.getenv("PRE_RELEASE_TESTING_LABEL")
-if (
-    pre_release_testing_label
-    and "Security" in mr_labels
-    and pre_release_testing_label not in mr_labels
-):
-    warn(
-        "This merge request is marked with the *Security* label, but it is not "
-        f"marked for pre-release testing (*{pre_release_testing_label}*)."
-    )
 
 ###############################################################################
 # USER-VISIBLE LOG LEVELS

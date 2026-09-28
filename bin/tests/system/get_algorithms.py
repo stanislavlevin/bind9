@@ -1,11 +1,9 @@
-#!/usr/bin/python3
-
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # SPDX-License-Identifier: MPL-2.0
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -35,11 +33,14 @@ STABLE_PERIOD = 3600 * 3
 class Algorithm(NamedTuple):
     name: str
     number: int
+    dst: int
     bits: int
 
 
 class AlgorithmSet(NamedTuple):
-    """Collection of DEFAULT, ALTERNATIVE and DISABLED algorithms"""
+    """
+    Collection of DEFAULT, ALTERNATIVE and DISABLED algorithms
+    """
 
     default: Union[Algorithm, List[Algorithm]]
     """DEFAULT is the algorithm for testing."""
@@ -53,16 +54,18 @@ class AlgorithmSet(NamedTuple):
     "disable-algorithms" configuration option."""
 
 
-RSASHA1 = Algorithm("RSASHA1", 5, 1280)
-RSASHA256 = Algorithm("RSASHA256", 8, 1280)
-RSASHA512 = Algorithm("RSASHA512", 10, 1280)
-ECDSAP256SHA256 = Algorithm("ECDSAP256SHA256", 13, 256)
-ECDSAP384SHA384 = Algorithm("ECDSAP384SHA384", 14, 384)
-ED25519 = Algorithm("ED25519", 15, 256)
-ED448 = Algorithm("ED448", 16, 456)
+RSASHA1 = Algorithm("RSASHA1", 5, 5, 2048)
+NSEC3RSASHA1 = Algorithm("NSEC3RSASHA1", 7, 7, 2048)
+RSASHA256 = Algorithm("RSASHA256", 8, 8, 2048)
+RSASHA512 = Algorithm("RSASHA512", 10, 10, 2048)
+ECDSAP256SHA256 = Algorithm("ECDSAP256SHA256", 13, 13, 256)
+ECDSAP384SHA384 = Algorithm("ECDSAP384SHA384", 14, 14, 384)
+ED25519 = Algorithm("ED25519", 15, 15, 256)
+ED448 = Algorithm("ED448", 16, 16, 456)
 
 ALL_ALGORITHMS = [
     RSASHA1,
+    NSEC3RSASHA1,
     RSASHA256,
     RSASHA512,
     ECDSAP256SHA256,
@@ -105,7 +108,9 @@ logging.debug('choosing from ALGORITHM_SET "%s"', ALGORITHM_SET)
 
 
 def is_supported(alg: Algorithm) -> bool:
-    """Test whether a given algorithm is supported on the current platform."""
+    """
+    Test whether a given algorithm is supported on the current platform.
+    """
     try:
         subprocess.run(
             f"{TESTCRYPTO} -q {alg.name}",
@@ -125,7 +130,9 @@ def is_supported(alg: Algorithm) -> bool:
 
 
 def filter_supported(algs: AlgorithmSet) -> AlgorithmSet:
-    """Select supported algorithms from the set."""
+    """
+    Select supported algorithms from the set.
+    """
     filtered = {}
     for alg_type in algs._fields:
         candidates = getattr(algs, alg_type)
@@ -144,7 +151,8 @@ def filter_supported(algs: AlgorithmSet) -> AlgorithmSet:
 
 
 def select_random(algs: AlgorithmSet, stable_period=STABLE_PERIOD) -> AlgorithmSet:
-    """Select random DEFAULT, ALTERNATIVE and DISABLED algorithms from the set.
+    """
+    Select random DEFAULT, ALTERNATIVE and DISABLED algorithms from the set.
 
     The algorithm selection is deterministic for a given time period and
     platform. This should make potential issues more reproducible.
@@ -201,12 +209,15 @@ def select_random(algs: AlgorithmSet, stable_period=STABLE_PERIOD) -> AlgorithmS
 
 
 def algorithms_env(algs: AlgorithmSet) -> Dict[str, str]:
-    """Return environment variables with selected algorithms as a dict."""
+    """
+    Return environment variables with selected algorithms as a dict.
+    """
     algs_env: Dict[str, str] = {}
 
     def set_alg_env(alg: Algorithm, prefix):
         algs_env[f"{prefix}_ALGORITHM"] = alg.name
         algs_env[f"{prefix}_ALGORITHM_NUMBER"] = str(alg.number)
+        algs_env[f"{prefix}_ALGORITHM_DST_NUMBER"] = str(alg.dst)
         algs_env[f"{prefix}_BITS"] = str(alg.bits)
 
     assert isinstance(algs.default, Algorithm)
@@ -235,6 +246,11 @@ def main():
         raise
     for name, value in algs_env.items():
         print(f"export {name}={value}")
+    # Indicate per-algorithm support, so that markers like
+    # isctest.mark.with_algorithm() and with_eddsa work on this branch.
+    for alg in ALL_ALGORITHMS:
+        supported = 1 if is_supported(alg) else 0
+        print(f"export {alg.name}_SUPPORTED={supported}")
 
 
 if __name__ == "__main__":

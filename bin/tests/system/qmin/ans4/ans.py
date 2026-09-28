@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -15,11 +15,12 @@ import sys
 import signal
 import socket
 import select
-from datetime import datetime, timedelta
 import time
-import functools
 
-import dns, dns.message, dns.query, dns.flags
+import dns
+import dns.message
+import dns.query
+import dns.flags
 from dns.rdatatype import *
 from dns.rdataclass import *
 from dns.rcode import *
@@ -320,9 +321,9 @@ else:
 while running:
     try:
         inputready, outputready, exceptready = select.select(input, [], [])
-    except select.error as e:
+    except select.error:
         break
-    except socket.error as e:
+    except socket.error:
         break
     except KeyboardInterrupt:
         break

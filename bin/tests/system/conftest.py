@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -38,7 +38,6 @@ isctest.log.avoid_duplicated_logs()
 
 # ----------------------- Globals definition -----------------------------
 
-XDIST_WORKER = os.environ.get("PYTEST_XDIST_WORKER", "")
 FILE_DIR = os.path.abspath(Path(__file__).parent)
 ENV_RE = Re(b"([^=]+)=(.*)")
 PORT_MIN = 5001
@@ -74,7 +73,9 @@ SYMLINK_REPLACEMENT_RE = Re(r"/tests_(.*)\.py")
 
 
 def parse_env(env_bytes):
-    """Parse the POSIX env format into Python dictionary."""
+    """
+    Parse the POSIX env format into Python dictionary.
+    """
     out = {}
     for line in env_bytes.splitlines():
         match = ENV_RE.match(line)
@@ -109,6 +110,30 @@ CONF_ENV = get_env_bytes(". ./conf.sh && env")
 os.environb.update(CONF_ENV)
 isctest.log.debug("variables in env: %s", ", ".join([str(key) for key in CONF_ENV]))
 
+# ---- Fix pytest-xdist loadscope for node IDs containing "::" ----------
+
+# LoadScopeScheduling._split_scope uses rsplit("::", 1) which breaks when
+# test parameters contain "::" (e.g. IPv6 addresses like "cafe:cafe::cafe").
+# This causes tests from the same file to be assigned to different workers,
+# each paying the full fixture setup cost.  Override to split on ".py::"
+# which is unambiguous.
+# https://github.com/pytest-dev/pytest-xdist/issues/1335
+try:
+    from xdist.scheduler.loadscope import LoadScopeScheduling
+
+    # pylint: disable=protected-access
+    _orig_split_scope = LoadScopeScheduling._split_scope
+
+    def _fixed_split_scope(self, nodeid):
+        if ".py::" in nodeid:
+            return nodeid.split(".py::")[0] + ".py"
+        return _orig_split_scope(self, nodeid)
+
+    LoadScopeScheduling._split_scope = _fixed_split_scope
+    # pylint: enable=protected-access
+except ImportError:
+    pass
+
 # --------------------------- pytest hooks -------------------------------
 
 
@@ -121,23 +146,10 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
-    # Ensure this hook only runs on the main pytest instance if xdist is
-    # used to spawn other workers.
-    if not XDIST_WORKER:
-        if config.pluginmanager.has_plugin("xdist") and config.option.numprocesses:
-            # system tests depend on module scope for setup & teardown
-            # enforce use "loadscope" scheduler or disable paralelism
-            try:
-                import xdist.scheduler.loadscope  # pylint: disable=unused-import
-            except ImportError:
-                isctest.log.debug(
-                    "xdist is too old and does not have "
-                    "scheduler.loadscope, disabling parallelism"
-                )
-                config.option.dist = "no"
-            else:
-                config.option.dist = "loadscope"
+def pytest_configure(config):  # pylint: disable=unused-argument
+    # Probe feature support and export the FEATURE_* environment variables
+    # before test collection, since isctest.mark reads them at import time.
+    isctest.features.init_features()
 
 
 def pytest_ignore_collect(collection_path):
@@ -158,7 +170,9 @@ def pytest_ignore_collect(collection_path):
 
 
 def pytest_collection_modifyitems(items):
-    """Schedule long-running tests first to get more benefit from parallelism."""
+    """
+    Schedule long-running tests first to get more benefit from parallelism.
+    """
     priority = []
     other = []
     for item in items:
@@ -194,7 +208,9 @@ class NodeResult:
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item):
-    """Hook that is used to expose test results to session (for use in fixtures)."""
+    """
+    Hook that is used to expose test results to session (for use in fixtures).
+    """
     # execute all other hooks to obtain the report object
     outcome = yield
     report = outcome.get_result()
@@ -265,14 +281,18 @@ def module_base_ports(modules):
 
 @pytest.fixture(scope="module")
 def base_port(request, module_base_ports):
-    """Start of the port range assigned to a particular test module."""
+    """
+    Start of the port range assigned to a particular test module.
+    """
     port = module_base_ports[request.fspath]
     return port
 
 
 @pytest.fixture(scope="module")
 def ports(base_port):
-    """Dictionary containing port names and their assigned values."""
+    """
+    Dictionary containing port names and their assigned values.
+    """
     return {
         "PORT": base_port,
         "TLSPORT": base_port + 1,
@@ -311,8 +331,33 @@ def control_port(ports):
 
 
 @pytest.fixture(scope="module")
+def default_algorithm():
+    return isctest.algorithms.Algorithm.default()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def configure_algorithm_set(request):
+    """
+    Skip modules which request an algorithm set this branch cannot switch to.
+
+    Newer branches can switch the algorithm set per test module; here the set
+    is fixed when conf.sh is sourced, so a module requesting any other set is
+    skipped.
+    """
+    mark = request.node.get_closest_marker("algorithm_set")
+    current = os.environ.get("ALGORITHM_SET", "stable")
+    if mark and mark.args and mark.args[0] != current:
+        pytest.skip(
+            f"algorithm set {mark.args[0]!r} is not selected "
+            f"(running with {current!r})"
+        )
+
+
+@pytest.fixture(scope="module")
 def env(ports):
-    """Dictionary containing environment variables for the test."""
+    """
+    Dictionary containing environment variables for the test.
+    """
     env = os.environ.copy()
     for portname, portnum in ports.items():
         env[portname] = str(portnum)
@@ -321,19 +366,27 @@ def env(ports):
     env["HYPOTHESIS_STORAGE_DIRECTORY"] = (
         f"{env['TOP_BUILDDIR']}/{SYSTEM_TEST_DIR_GIT_PATH}/.hypothesis"
     )
+    # Export the variables right away, so that code which reads them from
+    # os.environ (e.g. server instance construction) sees the same values as
+    # the shell scripts; the system_test fixture re-exports them later.
+    os.environ.update(env)
     return env
 
 
 @pytest.fixture(scope="module")
 def system_test_name(request):
-    """Name of the system test directory."""
+    """
+    Name of the system test directory.
+    """
     path = Path(request.fspath)
     return path.parent.name
 
 
 @pytest.fixture(autouse=True)
 def wait_for_zones_loaded(request, servers):
-    """Wait for all zones to be loaded by specified named instances."""
+    """
+    Wait for all zones to be loaded by specified named instances.
+    """
     instances = request.node.get_closest_marker("requires_zones_loaded")
     if not instances:
         return
@@ -345,7 +398,9 @@ def wait_for_zones_loaded(request, servers):
 
 @pytest.fixture(autouse=True)
 def logger(request, system_test_name):
-    """Sets up logging facility specific to a particular test."""
+    """
+    Sets up logging facility specific to a particular test.
+    """
     isctest.log.init_test_logger(system_test_name, request.node.name)
     yield
     isctest.log.deinit_test_logger()
@@ -355,11 +410,15 @@ def logger(request, system_test_name):
 def expected_artifacts(request):
     common_artifacts = [
         ".libs/*",  # possible build artifacts, see GL #5055
-        "ns*/named.conf",
+        "ans*/keys",
+        "ans*/zones",
+        "ns*/keys",
+        "ns*/named*.conf",
         "ns*/named.lock",
         "ns*/named.memstats",
         "ns*/named.run",
         "ns*/named.run.prev",
+        "ns*/zones",
         "core.[0-9]*-backtrace.txt",
         "core.[0-9]*.gz",
         "pytest.log.txt",
@@ -395,8 +454,10 @@ def system_test_dir(request, env, system_test_name, expected_artifacts):
     """
 
     def get_test_result():
-        """Aggregate test results from all individual tests from this module
-        into a single result: failed > skipped > passed."""
+        """
+        Aggregate test results from all individual tests from this module
+        into a single result: failed > skipped > passed.
+        """
         try:
             all_test_results = request.session.test_results
         except AttributeError:
@@ -536,7 +597,9 @@ def _run_script(
     script: str,
     args: Optional[List[str]] = None,
 ):
-    """Helper function for the shell / perl script invocations (through fixtures below)."""
+    """
+    Helper function for the shell / perl script invocations (through fixtures below).
+    """
     if args is None:
         args = []
     path = Path(script)
@@ -573,19 +636,25 @@ def _run_script(
 
 @pytest.fixture(scope="module")
 def shell(env, system_test_dir):
-    """Function to call a shell script with arguments."""
+    """
+    Function to call a shell script with arguments.
+    """
     return partial(_run_script, env, system_test_dir, env["SHELL"])
 
 
 @pytest.fixture(scope="module")
 def perl(env, system_test_dir):
-    """Function to call a perl script with arguments."""
+    """
+    Function to call a perl script with arguments.
+    """
     return partial(_run_script, env, system_test_dir, env["PERL"])
 
 
 @pytest.fixture(scope="module")
 def run_tests_sh(system_test_dir, shell):
-    """Utility function to execute tests.sh as a python test."""
+    """
+    Utility function to execute tests.sh as a python test.
+    """
 
     def run_tests():
         shell(f"{system_test_dir}/tests.sh")
@@ -712,20 +781,20 @@ def system_test(
 
 
 @pytest.fixture(scope="module")
-def servers(ports, system_test_dir):
+def servers(system_test_dir):
     instances = {}
     for entry in system_test_dir.rglob("*"):
         if entry.is_dir():
-            try:
-                dir_name = entry.name
-                # LATER: Make ports fixture return NamedPorts directly
-                named_ports = isctest.instance.NamedPorts(
-                    dns=int(ports["PORT"]), rndc=int(ports["CONTROLPORT"])
-                )
-                instance = isctest.instance.NamedInstance(dir_name, named_ports)
-                instances[dir_name] = instance
-            except ValueError:
-                continue
+            dir_name = entry.name
+            for instance_class in (
+                isctest.instance.NamedInstance,
+                isctest.instance.AnsInstance,
+            ):
+                try:
+                    instances[dir_name] = instance_class(dir_name)
+                    break
+                except ValueError:
+                    continue
     return instances
 
 
@@ -782,3 +851,58 @@ def ns10(servers):
 @pytest.fixture(scope="module")
 def ns11(servers):
     return servers["ns11"]
+
+
+@pytest.fixture(scope="module")
+def ans1(servers):
+    return servers["ans1"]
+
+
+@pytest.fixture(scope="module")
+def ans2(servers):
+    return servers["ans2"]
+
+
+@pytest.fixture(scope="module")
+def ans3(servers):
+    return servers["ans3"]
+
+
+@pytest.fixture(scope="module")
+def ans4(servers):
+    return servers["ans4"]
+
+
+@pytest.fixture(scope="module")
+def ans5(servers):
+    return servers["ans5"]
+
+
+@pytest.fixture(scope="module")
+def ans6(servers):
+    return servers["ans6"]
+
+
+@pytest.fixture(scope="module")
+def ans7(servers):
+    return servers["ans7"]
+
+
+@pytest.fixture(scope="module")
+def ans8(servers):
+    return servers["ans8"]
+
+
+@pytest.fixture(scope="module")
+def ans9(servers):
+    return servers["ans9"]
+
+
+@pytest.fixture(scope="module")
+def ans10(servers):
+    return servers["ans10"]
+
+
+@pytest.fixture(scope="module")
+def ans11(servers):
+    return servers["ans11"]

@@ -65,7 +65,9 @@
 #include <dns/rootns.h>
 #include <dns/stats.h>
 #include <dns/tsig.h>
+#include <dns/types.h>
 #include <dns/validator.h>
+#include <dns/view.h>
 #include <dns/zone.h>
 
 /* Detailed logging of fctx attach/detach */
@@ -692,10 +694,10 @@ fctx_destroy(fetchctx_t *fctx, bool exiting);
 static void
 send_shutdown_events(dns_resolver_t *res);
 static isc_result_t
-ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
-		  dns_rdatatype_t covers, isc_stdtime_t now, dns_ttl_t minttl,
-		  dns_ttl_t maxttl, bool optout, bool secure,
-		  dns_rdataset_t *ardataset, isc_result_t *eresultp);
+ncache_adderesult(fetchctx_t *fctx, dns_message_t *message, dns_dbnode_t *node,
+		  dns_rdatatype_t covers, isc_stdtime_t now, dns_ttl_t maxttl,
+		  bool optout, bool secure, dns_rdataset_t *ardataset,
+		  isc_result_t *eresultp);
 static void
 validated(isc_task_t *task, isc_event_t *event);
 static void
@@ -705,7 +707,8 @@ add_bad(fetchctx_t *fctx, dns_message_t *rmessage, dns_adbaddrinfo_t *addrinfo,
 	isc_result_t reason, badnstype_t badtype);
 static isc_result_t
 findnoqname(fetchctx_t *fctx, dns_message_t *message, dns_name_t *name,
-	    dns_rdatatype_t type, dns_name_t **noqname);
+	    dns_rdatatype_t type, dns_name_t **noqnamep,
+	    dns_rdatatype_t *noqnametypep);
 
 #define fctx_attach(fctx, fctxp) \
 	fctx__attach(fctx, fctxp, __FILE__, __LINE__, __func__)
@@ -850,7 +853,6 @@ typedef struct respctx {
 	dns_rdataset_t *ns_rdataset; /* NS rdataset */
 
 	dns_name_t *soa_name; /* SOA name in a negative answer */
-	dns_name_t *ds_name;  /* DS name in a negative answer */
 
 	dns_name_t *found_name;	    /* invalid name in negative
 				     * response */
@@ -5564,6 +5566,76 @@ has_000_label(dns_rdataset_t *nsecset) {
 }
 
 /*
+ * After a (non-error) negative-cache add, 'rdataset' is bound to whatever
+ * rdataset the cache authoritatively holds for the queried name and type.
+ * Map that to the result code the fetch should report:
+ *
+ *   - A negative cache entry (the one we just added, or a pre-existing one):
+ *     DNS_R_NCACHENXDOMAIN or DNS_R_NCACHENXRRSET, depending on NXDOMAIN vs
+ *     NODATA.
+ *
+ *   - A positive rdataset that was already cached at higher trust, which
+ *     caused our negative entry to be discarded (e.g. a CNAME or DNAME cached
+ *     by a concurrent query): ISC_R_SUCCESS, because that cached positive
+ *     answer is what gets returned.  Note the specific case for CNAME and
+ *     DNAME *if* the query type is not the same as the rdataset type. There
+ *     is a chain to follow *only* if the query type doesn't ask for the CNAME
+ *     or the DNAME.
+ */
+static isc_result_t
+fctx_setresult(fetchctx_t *fctx, dns_rdataset_t *rdataset) {
+	isc_result_t result = ISC_R_SUCCESS;
+
+	if (NEGATIVE(rdataset)) {
+		result = NXDOMAIN(rdataset) ? DNS_R_NCACHENXDOMAIN
+					    : DNS_R_NCACHENXRRSET;
+	} else if (result == ISC_R_SUCCESS && rdataset->type != fctx->type) {
+		switch (rdataset->type) {
+		case dns_rdatatype_cname:
+			result = DNS_R_CNAME;
+			break;
+		case dns_rdatatype_dname:
+			result = DNS_R_DNAME;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return result;
+}
+
+static bool
+get_and_check_signer_name(dns_name_t *signer, dns_rdataset_t *sigrdataset) {
+	dns_rdata_rrsig_t rrsig;
+	isc_result_t result;
+	dns_rdata_t rdata;
+
+	if (dns_rdataset_first(sigrdataset) != ISC_R_SUCCESS) {
+		return false;
+	}
+
+	rdata = (dns_rdata_t)DNS_RDATA_INIT;
+	dns_rdataset_current(sigrdataset, &rdata);
+	result = dns_rdata_tostruct(&rdata, &rrsig, NULL);
+	INSIST(result == ISC_R_SUCCESS);
+	dns_name_copy(&rrsig.signer, signer);
+
+	while (dns_rdataset_next(sigrdataset) == ISC_R_SUCCESS) {
+		rdata = (dns_rdata_t)DNS_RDATA_INIT;
+		dns_rdataset_current(sigrdataset, &rdata);
+		result = dns_rdata_tostruct(&rdata, &rrsig, NULL);
+		INSIST(result == ISC_R_SUCCESS);
+
+		if (!dns_name_equal(signer, &rrsig.signer)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/*
  * The validator has finished.
  */
 static void
@@ -5593,6 +5665,8 @@ validated(isc_task_t *task, isc_event_t *event) {
 	dns_fixedname_t fwild;
 	dns_name_t *wild = NULL;
 	dns_message_t *message = NULL;
+	dns_fixedname_t fsigner;
+	dns_name_t *signer = NULL;
 
 	UNUSED(task); /* for now */
 
@@ -5836,8 +5910,7 @@ validated(isc_task_t *task, isc_event_t *event) {
 			ttl = 0;
 		}
 
-		result = ncache_adderesult(message, fctx->cache, node, covers,
-					   now, fctx->res->view->minncachettl,
+		result = ncache_adderesult(fctx, message, node, covers, now,
 					   ttl, vevent->optout, vevent->secure,
 					   ardataset, &eresult);
 		if (result != ISC_R_SUCCESS) {
@@ -5853,26 +5926,25 @@ validated(isc_task_t *task, isc_event_t *event) {
 	if (vevent->proofs[DNS_VALIDATOR_NOQNAMEPROOF] != NULL) {
 		result = dns_rdataset_addnoqname(
 			vevent->rdataset,
-			vevent->proofs[DNS_VALIDATOR_NOQNAMEPROOF]);
-		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+			vevent->proofs[DNS_VALIDATOR_NOQNAMEPROOF],
+			vevent->noqnametype);
+		if (result != ISC_R_SUCCESS) {
+			goto noanswer_response;
+		}
 		INSIST(vevent->sigrdataset != NULL);
 		vevent->sigrdataset->ttl = vevent->rdataset->ttl;
-		if (vevent->proofs[DNS_VALIDATOR_CLOSESTENCLOSER] != NULL) {
-			result = dns_rdataset_addclosest(
-				vevent->rdataset,
-				vevent->proofs[DNS_VALIDATOR_CLOSESTENCLOSER]);
-			RUNTIME_CHECK(result == ISC_R_SUCCESS);
-		}
 	} else if (vevent->rdataset->trust == dns_trust_answer &&
 		   vevent->rdataset->type != dns_rdatatype_rrsig)
 	{
 		isc_result_t tresult;
 		dns_name_t *noqname = NULL;
+		dns_rdatatype_t noqnametype = dns_rdatatype_none;
 		tresult = findnoqname(fctx, message, vevent->name,
-				      vevent->rdataset->type, &noqname);
+				      vevent->rdataset->type, &noqname,
+				      &noqnametype);
 		if (tresult == ISC_R_SUCCESS && noqname != NULL) {
 			tresult = dns_rdataset_addnoqname(vevent->rdataset,
-							  noqname);
+							  noqname, noqnametype);
 			RUNTIME_CHECK(tresult == ISC_R_SUCCESS);
 		}
 	}
@@ -5980,10 +6052,20 @@ answer_response:
 			}
 
 			/*
-			 * Don't cache NSEC if missing NSEC or RRSIG types.
+			 * Don't cache if all the RRSIGs don't have the same
+			 * signer.
+			 */
+			signer = dns_fixedname_initname(&fsigner);
+			if (!get_and_check_signer_name(signer, sigrdataset)) {
+				continue;
+			}
+
+			/*
+			 * Don't cache NSEC if missing NSEC or RRSIG
+			 * types.
 			 */
 			if (rdataset->type == dns_rdatatype_nsec &&
-			    !dns_nsec_requiredtypespresent(rdataset))
+			    !dns_nsec_is_legal(rdataset, signer))
 			{
 				continue;
 			}
@@ -6081,23 +6163,7 @@ answer_response:
 		 */
 		INSIST(hevent->rdataset != NULL);
 		if (dns_rdataset_isassociated(hevent->rdataset)) {
-			if (NEGATIVE(hevent->rdataset)) {
-				INSIST(eresult == DNS_R_NCACHENXDOMAIN ||
-				       eresult == DNS_R_NCACHENXRRSET);
-			} else if (eresult == ISC_R_SUCCESS &&
-				   hevent->rdataset->type != fctx->type)
-			{
-				switch (hevent->rdataset->type) {
-				case dns_rdatatype_cname:
-					eresult = DNS_R_CNAME;
-					break;
-				case dns_rdatatype_dname:
-					eresult = DNS_R_DNAME;
-					break;
-				default:
-					break;
-				}
-			}
+			eresult = fctx_setresult(fctx, hevent->rdataset);
 		}
 
 		hevent->result = eresult;
@@ -6140,7 +6206,8 @@ fctx_log(void *arg, int level, const char *fmt, ...) {
 
 static isc_result_t
 findnoqname(fetchctx_t *fctx, dns_message_t *message, dns_name_t *name,
-	    dns_rdatatype_t type, dns_name_t **noqnamep) {
+	    dns_rdatatype_t type, dns_name_t **noqnamep,
+	    dns_rdatatype_t *noqnametypep) {
 	dns_rdataset_t *nrdataset, *next, *sigrdataset;
 	dns_rdata_rrsig_t rrsig;
 	isc_result_t result;
@@ -6158,6 +6225,7 @@ findnoqname(fetchctx_t *fctx, dns_message_t *message, dns_name_t *name,
 	FCTXTRACE("findnoqname");
 
 	REQUIRE(noqnamep != NULL && *noqnamep == NULL);
+	REQUIRE(noqnametypep != NULL);
 
 	/*
 	 * Find the SIG for this rdataset, if we have it.
@@ -6268,6 +6336,7 @@ findnoqname(fetchctx_t *fctx, dns_message_t *message, dns_name_t *name,
 		}
 		if (sigrdataset != NULL) {
 			*noqnamep = noqname;
+			*noqnametypep = found;
 		}
 	}
 	return result;
@@ -6511,14 +6580,18 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_message_t *message,
 				{
 					isc_result_t tresult;
 					dns_name_t *noqname = NULL;
+					dns_rdatatype_t noqnametype =
+						dns_rdatatype_none;
 					tresult = findnoqname(
 						fctx, message, name,
-						rdataset->type, &noqname);
+						rdataset->type, &noqname,
+						&noqnametype);
 					if (tresult == ISC_R_SUCCESS &&
 					    noqname != NULL)
 					{
 						(void)dns_rdataset_addnoqname(
-							rdataset, noqname);
+							rdataset, noqname,
+							noqnametype);
 					}
 				}
 				if ((fctx->options & DNS_FETCHOPT_PREFETCH) !=
@@ -6684,12 +6757,15 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_message_t *message,
 			{
 				isc_result_t tresult;
 				dns_name_t *noqname = NULL;
+				dns_rdatatype_t noqnametype =
+					dns_rdatatype_none;
 				tresult = findnoqname(fctx, message, name,
-						      rdataset->type, &noqname);
+						      rdataset->type, &noqname,
+						      &noqnametype);
 				if (tresult == ISC_R_SUCCESS && noqname != NULL)
 				{
-					(void)dns_rdataset_addnoqname(rdataset,
-								      noqname);
+					(void)dns_rdataset_addnoqname(
+						rdataset, noqname, noqnametype);
 				}
 			}
 
@@ -6747,24 +6823,7 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_message_t *message,
 			 * event->result.
 			 */
 			if (dns_rdataset_isassociated(event->rdataset)) {
-				if (NEGATIVE(event->rdataset)) {
-					INSIST(eresult ==
-						       DNS_R_NCACHENXDOMAIN ||
-					       eresult == DNS_R_NCACHENXRRSET);
-				} else if (eresult == ISC_R_SUCCESS &&
-					   event->rdataset->type != fctx->type)
-				{
-					switch (event->rdataset->type) {
-					case dns_rdatatype_cname:
-						eresult = DNS_R_CNAME;
-						break;
-					case dns_rdatatype_dname:
-						eresult = DNS_R_DNAME;
-						break;
-					default:
-						break;
-					}
-				}
+				eresult = fctx_setresult(fctx, event->rdataset);
 			}
 			event->result = eresult;
 			if (adbp != NULL && *adbp != NULL) {
@@ -6833,12 +6892,14 @@ cache_message(fetchctx_t *fctx, dns_message_t *message,
  * eresult.
  */
 static isc_result_t
-ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
-		  dns_rdatatype_t covers, isc_stdtime_t now, dns_ttl_t minttl,
-		  dns_ttl_t maxttl, bool optout, bool secure,
-		  dns_rdataset_t *ardataset, isc_result_t *eresultp) {
+ncache_adderesult(fetchctx_t *fctx, dns_message_t *message, dns_dbnode_t *node,
+		  dns_rdatatype_t covers, isc_stdtime_t now, dns_ttl_t maxttl,
+		  bool optout, bool secure, dns_rdataset_t *ardataset,
+		  isc_result_t *eresultp) {
 	isc_result_t result;
 	dns_rdataset_t rdataset;
+	dns_db_t *cache = fctx->cache;
+	dns_ttl_t minttl = fctx->res->view->minncachettl;
 
 	if (ardataset == NULL) {
 		dns_rdataset_init(&rdataset);
@@ -6854,37 +6915,13 @@ ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 	}
 	if (result == DNS_R_UNCHANGED || result == ISC_R_SUCCESS) {
 		/*
-		 * If the cache now contains a negative entry and we
-		 * care about whether it is DNS_R_NCACHENXDOMAIN or
-		 * DNS_R_NCACHENXRRSET then extract it.
+		 * The cache settled successfully (DNS_R_UNCHANGED means our
+		 * negative entry was discarded in favour of existing
+		 * higher-trust data).  Either way 'ardataset' is now bound to
+		 * the rdataset the cache holds for this name and type; derive
+		 * the result code from it.
 		 */
-		if (NEGATIVE(ardataset)) {
-			/*
-			 * The cache data is a negative cache entry.
-			 */
-			if (NXDOMAIN(ardataset)) {
-				*eresultp = DNS_R_NCACHENXDOMAIN;
-			} else {
-				*eresultp = DNS_R_NCACHENXRRSET;
-			}
-		} else {
-			/*
-			 * The attempt to add a negative cache entry
-			 * was rejected.  Set *eresultp to reflect
-			 * the type of the dataset being returned.
-			 */
-			switch (ardataset->type) {
-			case dns_rdatatype_cname:
-				*eresultp = DNS_R_CNAME;
-				break;
-			case dns_rdatatype_dname:
-				*eresultp = DNS_R_DNAME;
-				break;
-			default:
-				*eresultp = ISC_R_SUCCESS;
-				break;
-			}
-		}
+		*eresultp = fctx_setresult(fctx, ardataset);
 		result = ISC_R_SUCCESS;
 	}
 	if (ardataset == &rdataset && dns_rdataset_isassociated(ardataset)) {
@@ -7029,8 +7066,7 @@ ncache_message(fetchctx_t *fctx, dns_message_t *message,
 		ttl = 0;
 	}
 
-	result = ncache_adderesult(message, fctx->cache, node, covers, now,
-				   fctx->res->view->minncachettl, ttl, false,
+	result = ncache_adderesult(fctx, message, node, covers, now, ttl, false,
 				   false, ardataset, &eresult);
 	if (result != ISC_R_SUCCESS) {
 		goto unlock;
@@ -8404,7 +8440,6 @@ rctx_answer_init(respctx_t *rctx) {
 	rctx->ns_rdataset = NULL;
 
 	rctx->soa_name = NULL;
-	rctx->ds_name = NULL;
 	rctx->found_name = NULL;
 }
 
@@ -9727,32 +9762,33 @@ rctx_authority_dnssec(respctx_t *rctx) {
 				 * marked.
 				 */
 				break;
-			case dns_rdatatype_ds:
+			case dns_rdatatype_ds:;
 				/*
-				 * DS or SIG DS.
+				 * DS or RRSIG(DS).
 				 *
 				 * These should only be here if this is
 				 * a referral, and there should only be
 				 * one DS RRset.
 				 */
+				const char *typestr = (rdataset->type ==
+						       dns_rdatatype_ds)
+							      ? "DS"
+							      : "RRSIG(DS)";
+
 				if (rctx->ns_name == NULL) {
-					log_formerr(fctx,
-						    "DS with no referral");
+					log_formerr(fctx, "%s with no referral",
+						    typestr);
 					rctx->result = DNS_R_FORMERR;
 					return ISC_R_COMPLETE;
 				}
 
-				if (rdataset->type == dns_rdatatype_ds) {
-					if (rctx->ds_name != NULL &&
-					    name != rctx->ds_name)
-					{
-						log_formerr(fctx,
-							    "DS doesn't match "
-							    "referral (NS)");
-						rctx->result = DNS_R_FORMERR;
-						return ISC_R_COMPLETE;
-					}
-					rctx->ds_name = name;
+				if (name != rctx->ns_name) {
+					log_formerr(fctx,
+						    "%s doesn't match the "
+						    "delegation owner name",
+						    typestr);
+					rctx->result = DNS_R_FORMERR;
+					return ISC_R_COMPLETE;
 				}
 
 				name->attributes |= DNS_NAMEATTR_CACHE;

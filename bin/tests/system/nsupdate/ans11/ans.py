@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -29,13 +29,9 @@ import dns.rdataclass
 import dns.rdatatype
 import dns.rrset
 
-from isctest.asyncserver import (
-    AsyncDnsServer,
-    DnsResponseSend,
-    DomainHandler,
-    QueryContext,
-    ResponseAction,
-)
+from isctest.asyncserver import AsyncDnsServer, QueryContext, ResponseHandler
+from isctest.asyncserver.actions import DnsResponseSend
+from isctest.asyncserver.matchers import Domain
 
 ZONE = dns.name.from_text("sigaxfr.nil.")
 NS_NAME = dns.name.from_text("ns.sigaxfr.nil.")
@@ -45,20 +41,24 @@ SOA_TEXT = "ns.sigaxfr.nil. hostmaster.sigaxfr.nil. 1 3600 1200 604800 3600"
 
 
 def _make_sig_rdata(covered_text):
-    """Produce a legacy SIG (24) rdata via RRSIG (46) round-trip."""
+    """
+    Produce a legacy SIG (24) rdata via RRSIG (46) round-trip.
+    """
     rrsig = dns.rdata.from_text(dns.rdataclass.IN, dns.rdatatype.RRSIG, covered_text)
     wire = rrsig.to_digestable()
     return dns.rdata.from_wire(dns.rdataclass.IN, dns.rdatatype.SIG, wire, 0, len(wire))
 
 
-class SigAxfrServer(DomainHandler):
-    """Serve SOA and AXFR for sigaxfr.nil.; other qtypes get NOERROR/NODATA."""
+class SigAxfrServer(ResponseHandler):
+    """
+    Serve SOA and AXFR for sigaxfr.nil.; other qtypes get NOERROR/NODATA.
+    """
 
-    domains = ["sigaxfr.nil."]
+    matcher = Domain("sigaxfr.nil.")
 
     async def get_responses(
         self, qctx: QueryContext
-    ) -> AsyncGenerator[ResponseAction, None]:
+    ) -> AsyncGenerator[DnsResponseSend, None]:
         soa_rrset = dns.rrset.from_text(
             ZONE, 3600, dns.rdataclass.IN, dns.rdatatype.SOA, SOA_TEXT
         )

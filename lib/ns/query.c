@@ -1711,6 +1711,10 @@ query_additional_cb(void *arg, const dns_name_t *name, dns_rdatatype_t qtype,
 
 	CTRACE(ISC_LOG_DEBUG(3), "query_additional_cb");
 
+	if (client->additionaltotal++ >= DNS_RDATASET_MAXADDITIONAL * 2) {
+		return DNS_R_TOOMANYRECORDS;
+	}
+
 	dns_clientinfomethods_init(&cm, ns_client_sourceip);
 	dns_clientinfo_init(&ci, client, NULL);
 
@@ -2110,7 +2114,9 @@ addname:
 
 cleanup:
 	CTRACE(ISC_LOG_DEBUG(3), "query_additional_cb: cleanup");
-	ns_client_putrdataset(client, &rdataset);
+	if (rdataset != NULL) {
+		ns_client_putrdataset(client, &rdataset);
+	}
 	if (sigrdataset != NULL) {
 		ns_client_putrdataset(client, &sigrdataset);
 	}
@@ -7591,7 +7597,8 @@ query_rpzcname(query_ctx_t *qctx, dns_name_t *cname) {
 					      qctx->fname, NULL);
 		if (result == DNS_R_NAMETOOLONG) {
 			client->message->rcode = dns_rcode_yxdomain;
-		} else if (result != ISC_R_SUCCESS) {
+		}
+		if (result != ISC_R_SUCCESS) {
 			return result;
 		}
 	} else {
@@ -7952,41 +7959,7 @@ query_addnoqnameproof(query_ctx_t *qctx) {
 		goto cleanup;
 	}
 
-	result = dns_rdataset_getnoqname(qctx->noqname, fname, neg, negsig);
-	RUNTIME_CHECK(result == ISC_R_SUCCESS);
-
-	query_addrrset(qctx, &fname, &neg, &negsig, dbuf,
-		       DNS_SECTION_AUTHORITY);
-
-	if ((qctx->noqname->attributes & DNS_RDATASETATTR_CLOSEST) == 0) {
-		goto cleanup;
-	}
-
-	if (fname == NULL) {
-		dbuf = ns_client_getnamebuf(client);
-		if (dbuf == NULL) {
-			goto cleanup;
-		}
-		fname = ns_client_newname(client, dbuf, &b);
-	}
-
-	if (neg == NULL) {
-		neg = ns_client_newrdataset(client);
-	} else if (dns_rdataset_isassociated(neg)) {
-		dns_rdataset_disassociate(neg);
-	}
-
-	if (negsig == NULL) {
-		negsig = ns_client_newrdataset(client);
-	} else if (dns_rdataset_isassociated(negsig)) {
-		dns_rdataset_disassociate(negsig);
-	}
-
-	if (fname == NULL || neg == NULL || negsig == NULL) {
-		goto cleanup;
-	}
-	result = dns_rdataset_getclosest(qctx->noqname, fname, neg, negsig);
-	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+	CHECK(dns_rdataset_getnoqname(qctx->noqname, fname, neg, negsig));
 
 	query_addrrset(qctx, &fname, &neg, &negsig, dbuf,
 		       DNS_SECTION_AUTHORITY);
@@ -8341,6 +8314,7 @@ query_addanswer(query_ctx_t *qctx) {
 		}
 	} else if (qctx->client->query.dns64_aaaaok != NULL) {
 		query_filter64(qctx);
+		qctx->noqname = NULL;
 		ns_client_putrdataset(qctx->client, &qctx->rdataset);
 		isc_mem_put(qctx->client->mctx,
 			    qctx->client->query.dns64_aaaaok,
@@ -10370,10 +10344,10 @@ query_coveringnsec(query_ctx_t *qctx) {
 	}
 
 	/*
-	 * If NSEC or RRSIG are missing from the type map
-	 * reject the NSEC RRset.
+	 * Check that the NSEC entry is legal.
+	 * (NSEC + RRSIG present and the entry isn't out-of-zone)
 	 */
-	if (!dns_nsec_requiredtypespresent(qctx->rdataset)) {
+	if (!dns_nsec_is_legal(qctx->rdataset, signer)) {
 		goto cleanup;
 	}
 
