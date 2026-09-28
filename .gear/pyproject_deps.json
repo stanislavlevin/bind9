@@ -3,8 +3,9 @@
     "check": {
       "deps": [
         "cryptography",
-        "dnspython>=2.7.0",
+        "dnspython>=2.8.0",
         "flaky",
+        "gssapi",
         "h2",
         "hypothesis>=4.41.2",
         "jinja2",
